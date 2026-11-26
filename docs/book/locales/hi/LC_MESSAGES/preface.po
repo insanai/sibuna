@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,18 +22,37 @@ msgid "Preface"
 msgstr "प्रस्तावना"
 
 #: ../../preface.rst:4
-msgid "Why put another program in front of an application? Running two copies lets us keep serving while one restarts. Both copies are still vulnerable to an expensive request repeated a thousand times. Sibuna grew out of these two problems. This book asks what a program at the entrance can decide, what each decision costs, and how we can check that it was right."
-msgstr "किसी एप्लिकेशन के सामने एक और प्रोग्राम क्यों रखें? दो प्रतियाँ चलाने पर एक के फिर से शुरू होते समय दूसरी जवाब दे सकती है। फिर भी, बहुत काम माँगने वाला अनुरोध हज़ार बार दोहराया जाए तो दोनों पर बोझ पड़ेगा। Sibuna की शुरुआत इन्हीं दो समस्याओं से हुई। हम देखेंगे कि प्रवेश बिंदु पर कौन से निर्णय लिए जा सकते हैं, उनकी लागत क्या है और उनकी शुद्धता कैसे जाँची जा सकती है।"
+msgid ""
+"Why put another program in front of an application? Running two copies "
+"lets us keep serving while one restarts. Both copies are still vulnerable "
+"to an expensive request repeated a thousand times. Sibuna grew out of "
+"these two problems. This book asks what a program at the entrance can "
+"decide, what each decision costs, and how we can check that it was right."
+msgstr ""
+"किसी एप्लिकेशन के सामने एक और प्रोग्राम क्यों रखें? दो प्रतियाँ चलाने पर "
+"एक के फिर से शुरू होते समय दूसरी जवाब दे सकती है। फिर भी, बहुत काम माँगने "
+"वाला अनुरोध हज़ार बार दोहराया जाए तो दोनों पर बोझ पड़ेगा। Sibuna की "
+"शुरुआत इन्हीं दो समस्याओं से हुई। हम देखेंगे कि प्रवेश बिंदु पर कौन से "
+"निर्णय लिए जा सकते हैं, उनकी लागत क्या है और उनकी शुद्धता कैसे जाँची जा "
+"सकती है।"
 
 #: ../../preface.rst:6
-msgid "We begin with a journey that needs no knowledge of Rust, cryptography or configuration. In the design chapters we follow the same decisions into algorithms and code. The measurements and operating procedures come later, once we know what the system is trying to achieve."
-msgstr "पहला उदाहरण समझने के लिए Rust, क्रिप्टोग्राफ़ी या कॉन्फ़िगरेशन का ज्ञान आवश्यक नहीं है। डिज़ाइन के अध्यायों में हम इन्हीं निर्णयों को एल्गोरिदम और कोड तक ले जाते हैं। प्रणाली का उद्देश्य समझने के बाद हम मापन और संचालन पर आते हैं।"
+msgid ""
+"We begin with a journey that needs no knowledge of Rust, cryptography or "
+"configuration. In the design chapters we follow the same decisions into "
+"algorithms and code. The measurements and operating procedures come "
+"later, once we know what the system is trying to achieve."
+msgstr ""
+"पहला उदाहरण समझने के लिए Rust, क्रिप्टोग्राफ़ी या कॉन्फ़िगरेशन का ज्ञान "
+"आवश्यक नहीं है। डिज़ाइन के अध्यायों में हम इन्हीं निर्णयों को एल्गोरिदम "
+"और कोड तक ले जाते हैं। प्रणाली का उद्देश्य समझने के बाद हम मापन और संचालन "
+"पर आते हैं।"
 
-#: ../../preface.rst:20
+#: ../../preface.rst:8
 msgid "Sibuna 1.0.0-rc.2, November 2026"
 msgstr "Sibuna 1.0.0-rc.2, नवंबर 2026"
 
-#: ../../preface.rst:22
+#: ../../preface.rst:10
 msgid ""
 "Sources, exercises, and reproducible measurements accompany the Sibuna "
 "repository."

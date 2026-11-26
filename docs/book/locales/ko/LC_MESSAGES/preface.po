@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,18 +22,32 @@ msgid "Preface"
 msgstr "머리말"
 
 #: ../../preface.rst:4
-msgid "Why put another program in front of an application? Running two copies lets us keep serving while one restarts. Both copies are still vulnerable to an expensive request repeated a thousand times. Sibuna grew out of these two problems. This book asks what a program at the entrance can decide, what each decision costs, and how we can check that it was right."
-msgstr "애플리케이션 앞에 프로그램을 하나 더 두는 이유는 무엇일까요? 복사본 두 개를 실행하면 하나가 재시작하는 동안에도 서비스를 제공할 수 있습니다. 그러나 처리 비용이 큰 요청을 천 번 반복하면 두 복사본 모두 부담을 받습니다. Sibuna는 이 두 문제에서 출발했습니다. 입구에서 무엇을 판단할 수 있는지, 각 판단의 비용은 얼마인지, 판단이 옳았는지 어떻게 확인하는지 살펴봅니다."
+msgid ""
+"Why put another program in front of an application? Running two copies "
+"lets us keep serving while one restarts. Both copies are still vulnerable "
+"to an expensive request repeated a thousand times. Sibuna grew out of "
+"these two problems. This book asks what a program at the entrance can "
+"decide, what each decision costs, and how we can check that it was right."
+msgstr ""
+"애플리케이션 앞에 프로그램을 하나 더 두는 이유는 무엇일까요? 복사본 두 개를 실행하면 하나가 재시작하는 동안에도 서비스를 제공할 "
+"수 있습니다. 그러나 처리 비용이 큰 요청을 천 번 반복하면 두 복사본 모두 부담을 받습니다. Sibuna는 이 두 문제에서 "
+"출발했습니다. 입구에서 무엇을 판단할 수 있는지, 각 판단의 비용은 얼마인지, 판단이 옳았는지 어떻게 확인하는지 살펴봅니다."
 
 #: ../../preface.rst:6
-msgid "We begin with a journey that needs no knowledge of Rust, cryptography or configuration. In the design chapters we follow the same decisions into algorithms and code. The measurements and operating procedures come later, once we know what the system is trying to achieve."
-msgstr "처음 예제를 읽는 데 Rust나 암호학, 설정 파일에 관한 지식은 필요하지 않습니다. 설계 장에서는 같은 판단을 알고리즘과 코드까지 따라갑니다. 시스템의 목적을 이해한 뒤에 측정과 운영 절차로 넘어갑니다."
+msgid ""
+"We begin with a journey that needs no knowledge of Rust, cryptography or "
+"configuration. In the design chapters we follow the same decisions into "
+"algorithms and code. The measurements and operating procedures come "
+"later, once we know what the system is trying to achieve."
+msgstr ""
+"처음 예제를 읽는 데 Rust나 암호학, 설정 파일에 관한 지식은 필요하지 않습니다. 설계 장에서는 같은 판단을 알고리즘과 코드까지 "
+"따라갑니다. 시스템의 목적을 이해한 뒤에 측정과 운영 절차로 넘어갑니다."
 
-#: ../../preface.rst:20
+#: ../../preface.rst:8
 msgid "Sibuna 1.0.0-rc.2, November 2026"
 msgstr "Sibuna 1.0.0-rc.2, 2026년 11월"
 
-#: ../../preface.rst:22
+#: ../../preface.rst:10
 msgid ""
 "Sources, exercises, and reproducible measurements accompany the Sibuna "
 "repository."

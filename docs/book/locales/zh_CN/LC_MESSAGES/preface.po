@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,18 +22,30 @@ msgid "Preface"
 msgstr "前言"
 
 #: ../../preface.rst:4
-msgid "Why put another program in front of an application? Running two copies lets us keep serving while one restarts. Both copies are still vulnerable to an expensive request repeated a thousand times. Sibuna grew out of these two problems. This book asks what a program at the entrance can decide, what each decision costs, and how we can check that it was right."
-msgstr "为什么要在应用前面再放一个程序？运行两个副本，其中一个重启时，另一个还可以提供服务。但是，如果一个代价高昂的请求被重复一千次，两个副本都会受到影响。Sibuna 源于这两个问题。本书探讨入口处的程序可以做哪些判断，每个判断的成本是多少，以及我们如何验证判断是否正确。"
+msgid ""
+"Why put another program in front of an application? Running two copies "
+"lets us keep serving while one restarts. Both copies are still vulnerable "
+"to an expensive request repeated a thousand times. Sibuna grew out of "
+"these two problems. This book asks what a program at the entrance can "
+"decide, what each decision costs, and how we can check that it was right."
+msgstr ""
+"为什么要在应用前面再放一个程序？运行两个副本，其中一个重启时，另一个还可以提供服务。但是，如果一个代价高昂的请求被重复一千次，两个副本都会受到影响。Sibuna "
+"源于这两个问题。本书探讨入口处的程序可以做哪些判断，每个判断的成本是多少，以及我们如何验证判断是否正确。"
 
 #: ../../preface.rst:6
-msgid "We begin with a journey that needs no knowledge of Rust, cryptography or configuration. In the design chapters we follow the same decisions into algorithms and code. The measurements and operating procedures come later, once we know what the system is trying to achieve."
-msgstr "读开篇的例子不需要了解 Rust、密码学或配置文件。在设计章节中，我们将沿着这些判断深入算法和代码。等弄清了系统要解决的问题，再来讨论测量和运维。"
+msgid ""
+"We begin with a journey that needs no knowledge of Rust, cryptography or "
+"configuration. In the design chapters we follow the same decisions into "
+"algorithms and code. The measurements and operating procedures come "
+"later, once we know what the system is trying to achieve."
+msgstr ""
+"读开篇的例子不需要了解 Rust、密码学或配置文件。在设计章节中，我们将沿着这些判断深入算法和代码。等弄清了系统要解决的问题，再来讨论测量和运维。"
 
-#: ../../preface.rst:20
+#: ../../preface.rst:8
 msgid "Sibuna 1.0.0-rc.2, November 2026"
 msgstr "Sibuna 1.0.0-rc.2，2026 年 11 月"
 
-#: ../../preface.rst:22
+#: ../../preface.rst:10
 msgid ""
 "Sources, exercises, and reproducible measurements accompany the Sibuna "
 "repository."

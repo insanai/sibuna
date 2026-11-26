@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,8 +22,14 @@ msgid "How to Read This Book"
 msgstr "本書の読み方"
 
 #: ../../learning.rst:4
-msgid "The timetable example gives us two questions to carry into the design chapters. Which requests does the edge admit, and which server handles an admitted request? The first chapters develop the cost and correctness of admission. Later chapters show how a single edge selects a server and how multiple edges cooperate."
-msgstr "時刻表の例から、設計を読むための二つの問いが得られます。エッジはどのリクエストを通し、通したリクエストはどのサーバーが処理するのでしょうか。最初の数章では入場判定のコストと正しさを扱います。その後で、エッジによるサーバーの選択と、複数のエッジの協調を調べます。"
+msgid ""
+"The timetable example gives us two questions to carry into the design "
+"chapters. Which requests does the edge admit, and which server handles an "
+"admitted request? The first chapters develop the cost and correctness of "
+"admission. Later chapters show how a single edge selects a server and how "
+"multiple edges cooperate."
+msgstr ""
+"時刻表の例から、設計を読むための二つの問いが得られます。エッジはどのリクエストを通し、通したリクエストはどのサーバーが処理するのでしょうか。最初の数章では入場判定のコストと正しさを扱います。その後で、エッジによるサーバーの選択と、複数のエッジの協調を調べます。"
 
 #: ../../learning.rst:10
 msgid "Question"
@@ -135,8 +141,14 @@ msgstr ""
 "第I部から第IV部を順に読み、次に第VI部の実行トレースの例、そして第VII部に進みます。ロードバランサーについては第VIII部、次に第IX部を読みます。この二部に必要なのは第I部と第V部の所有権の考え方だけです。演習を解いてください。巻末の解答と比べるのはその後にします。トレースが共有テーブルや借用したスライスに達したら、第V部に戻ります。"
 
 #: ../../learning.rst:37
-msgid "For a first deployment, we work through :doc:`jlavi` after meeting frontends, routes and pools in :doc:`introduction`. Part XI then explains how to install, observe and reload the running system. Parts XII and XIII provide the reference and the command summary."
-msgstr "初めて配備する場合は、 :doc:`introduction` でフロントエンド、ルート、プールを学んでから :doc:`jlavi` に進みます。第XI部ではインストール、稼働状況の観察、設定の再読み込みを扱います。第XII部と第XIII部はリファレンスとコマンド早見表です。"
+msgid ""
+"For a first deployment, we work through :doc:`jlavi` after meeting "
+"frontends, routes and pools in :doc:`introduction`. Part XI then explains "
+"how to install, observe and reload the running system. Parts XII and XIII "
+"provide the reference and the command summary."
+msgstr ""
+"初めて配備する場合は、 :doc:`introduction` でフロントエンド、ルート、プールを学んでから :doc:`jlavi` "
+"に進みます。第XI部ではインストール、稼働状況の観察、設定の再読み込みを扱います。第XII部と第XIII部はリファレンスとコマンド早見表です。"
 
 #: ../../learning.rst:38
 msgid ""

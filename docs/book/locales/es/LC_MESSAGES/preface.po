@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:14+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,18 +22,38 @@ msgid "Preface"
 msgstr "Prefacio"
 
 #: ../../preface.rst:4
-msgid "Why put another program in front of an application? Running two copies lets us keep serving while one restarts. Both copies are still vulnerable to an expensive request repeated a thousand times. Sibuna grew out of these two problems. This book asks what a program at the entrance can decide, what each decision costs, and how we can check that it was right."
-msgstr "¿Por qué poner otro programa delante de una aplicación? Con dos copias podemos seguir atendiendo solicitudes mientras una se reinicia. Ambas siguen siendo vulnerables a una solicitud costosa que se repite mil veces. Sibuna nació de estos dos problemas. Estudiaremos qué puede decidir un programa en el punto de entrada, cuánto cuesta cada decisión y cómo podemos comprobar su acierto."
+msgid ""
+"Why put another program in front of an application? Running two copies "
+"lets us keep serving while one restarts. Both copies are still vulnerable "
+"to an expensive request repeated a thousand times. Sibuna grew out of "
+"these two problems. This book asks what a program at the entrance can "
+"decide, what each decision costs, and how we can check that it was right."
+msgstr ""
+"¿Por qué poner otro programa delante de una aplicación? Con dos copias "
+"podemos seguir atendiendo solicitudes mientras una se reinicia. Ambas "
+"siguen siendo vulnerables a una solicitud costosa que se repite mil "
+"veces. Sibuna nació de estos dos problemas. Estudiaremos qué puede "
+"decidir un programa en el punto de entrada, cuánto cuesta cada decisión y "
+"cómo podemos comprobar su acierto."
 
 #: ../../preface.rst:6
-msgid "We begin with a journey that needs no knowledge of Rust, cryptography or configuration. In the design chapters we follow the same decisions into algorithms and code. The measurements and operating procedures come later, once we know what the system is trying to achieve."
-msgstr "Empezamos con un recorrido que no exige conocimientos de Rust, criptografía ni configuración. En los capítulos de diseño seguimos esas mismas decisiones hasta los algoritmos y el código. Las mediciones y los procedimientos operativos vienen después, una vez entendido el propósito del sistema."
+msgid ""
+"We begin with a journey that needs no knowledge of Rust, cryptography or "
+"configuration. In the design chapters we follow the same decisions into "
+"algorithms and code. The measurements and operating procedures come "
+"later, once we know what the system is trying to achieve."
+msgstr ""
+"Empezamos con un recorrido que no exige conocimientos de Rust, "
+"criptografía ni configuración. En los capítulos de diseño seguimos esas "
+"mismas decisiones hasta los algoritmos y el código. Las mediciones y los "
+"procedimientos operativos vienen después, una vez entendido el propósito "
+"del sistema."
 
-#: ../../preface.rst:20
+#: ../../preface.rst:8
 msgid "Sibuna 1.0.0-rc.2, November 2026"
 msgstr "Sibuna 1.0.0-rc.2, noviembre de 2026"
 
-#: ../../preface.rst:22
+#: ../../preface.rst:10
 msgid ""
 "Sources, exercises, and reproducible measurements accompany the Sibuna "
 "repository."

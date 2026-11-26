@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -288,102 +288,95 @@ msgid ""
 "Clients reach a DNS or ECMP router, which sends flows to nodes A, B and "
 "C. The three nodes are joined pairwise by dashed mesh edges. All three "
 "send flows to the servers of the pools. A PostgreSQL database of "
-"revisions is joined to each node by a dotted edge."
+"revisions is joined to the group of the three nodes by a dotted edge."
 msgstr ""
 "Clients erreichen einen DNS- oder ECMP-Router, der Flüsse an die Knoten "
 "A, B und C sendet. Die drei Knoten sind paarweise durch gestrichelte "
 "Mesh-Kanten verbunden. Alle drei senden Flüsse an die Server der Pools. "
-"Eine PostgreSQL-Datenbank mit Revisionen ist mit jedem Knoten durch eine "
-"gepunktete Kante verbunden."
+"Eine PostgreSQL-Datenbank mit Revisionen ist mit der Gruppe der drei "
+"Knoten durch eine gepunktete Kante verbunden."
 
 #: ../../cluster.rst:67
 msgid ""
-"digraph cluster_topology {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.6, ranksep=0.45, "
-"pad=0.12];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
-"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, margin=\"0.12,0.05\"];\n"
-"  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
-"color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
-"  clients [label=\"Clients\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
-"  router [label=\"DNS or ECMP router\", fillcolor=\"#ffffff\", "
-"color=\"#172033\"];\n"
-"  a [label=\"Node A\"];\n"
-"  b [label=\"Node B\"];\n"
-"  c [label=\"Node C\"];\n"
-"  servers [label=\"Servers of the pools\", color=\"#15803d\", "
-"fillcolor=\"#f0fdf4\"];\n"
-"  db [label=\"PostgreSQL\\nrevisions (SID 0028)\", shape=cylinder, "
-"color=\"#7c3aed\", fillcolor=\"#f5f3ff\"];\n"
-"  { rank=same; a; b; c; }\n"
-"  clients -> router;\n"
-"  router -> a;\n"
-"  router -> b;\n"
-"  router -> c;\n"
-"  a -> b [dir=both, style=dashed, color=\"#d97706\", "
-"fontcolor=\"#b45309\", label=\"mesh\"];\n"
-"  b -> c [dir=both, style=dashed, color=\"#d97706\", "
-"fontcolor=\"#b45309\", label=\"mesh\"];\n"
-"  a -> c [dir=both, style=dashed, color=\"#d97706\", "
-"fontcolor=\"#b45309\", label=\"mesh\"];\n"
-"  a -> servers;\n"
-"  b -> servers;\n"
-"  c -> servers;\n"
-"  a -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
-"  b -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
-"  c -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
-"}"
+"// cluster.rst: a cluster of three nodes. The router spreads the clients; "
+"the dashed edges\n"
+"// are the mesh; the dotted edge is the database of SID 0028, which every "
+"node may use.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#flow(\n"
+"  spacing: (14mm, 9mm),\n"
+"  party((1, 0), \"Clients\", name: <clients>),\n"
+"  step((1, 1), \"DNS or ECMP router\", name: <router>),\n"
+"  sibuna((0, 2), \"Node A\", name: <a>),\n"
+"  sibuna((1, 2), \"Node B\", name: <b>),\n"
+"  sibuna((2, 2), \"Node C\", name: <c>),\n"
+"  group((<a>, <b>, <c>), name: <nodes>, inset: 6pt),\n"
+"  party((1, 3.2), \"Servers of the pools\", name: <servers>),\n"
+"  store((3.2, 2), \"PostgreSQL\", \"revisions (SID 0028)\", name: <db>),\n"
+"  edge(<clients>, <router>, \"-|>\"),\n"
+"  edge(<router>, <a>, \"-|>\"),\n"
+"  edge(<router>, <b>, \"-|>\"),\n"
+"  edge(<router>, <c>, \"-|>\"),\n"
+"  edge(<a>, <b>, \"<|-|>\", dash: \"dashed\", stroke: thin + gold-deep,\n"
+"    say-in(\"wait\", \"mesh\"), label-side: left),\n"
+"  edge(<b>, <c>, \"<|-|>\", dash: \"dashed\", stroke: thin + gold-deep,\n"
+"    say-in(\"wait\", \"mesh\"), label-side: left),\n"
+"  edge(<a>, <c>, \"<|-|>\", dash: \"dashed\", stroke: thin + gold-deep, "
+"bend: -24deg),\n"
+"  main-edge(<a>, <servers>, \"-|>\"),\n"
+"  main-edge(<b>, <servers>, \"-|>\"),\n"
+"  main-edge(<c>, <servers>, \"-|>\"),\n"
+"  edge(<db>, <nodes>, \"-|>\", dash: \"dotted\"),\n"
+")\n"
 msgstr ""
-"digraph cluster_topology {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.6, ranksep=0.45, "
-"pad=0.12];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
-"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, margin=\"0.12,0.05\"];\n"
-"  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
-"color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
-"  clients [label=\"Clients\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
-"  router [label=\"DNS- oder ECMP-Router\", fillcolor=\"#ffffff\", "
-"color=\"#172033\"];\n"
-"  a [label=\"Knoten A\"];\n"
-"  b [label=\"Knoten B\"];\n"
-"  c [label=\"Knoten C\"];\n"
-"  servers [label=\"Server der Pools\", color=\"#15803d\", "
-"fillcolor=\"#f0fdf4\"];\n"
-"  db [label=\"PostgreSQL\\nRevisionen (SID 0028)\", shape=cylinder, "
-"color=\"#7c3aed\", fillcolor=\"#f5f3ff\"];\n"
-"  { rank=same; a; b; c; }\n"
-"  clients -> router;\n"
-"  router -> a;\n"
-"  router -> b;\n"
-"  router -> c;\n"
-"  a -> b [dir=both, style=dashed, color=\"#d97706\", "
-"fontcolor=\"#b45309\", label=\"mesh\"];\n"
-"  b -> c [dir=both, style=dashed, color=\"#d97706\", "
-"fontcolor=\"#b45309\", label=\"mesh\"];\n"
-"  a -> c [dir=both, style=dashed, color=\"#d97706\", "
-"fontcolor=\"#b45309\", label=\"mesh\"];\n"
-"  a -> servers;\n"
-"  b -> servers;\n"
-"  c -> servers;\n"
-"  a -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
-"  b -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
-"  c -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
-"}"
+"// cluster.rst: a cluster of three nodes. The router spreads the clients; "
+"the dashed edges\n"
+"// are the mesh; the dotted edge is the database of SID 0028, which every "
+"node may use.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"de\")\n"
+"\n"
+"#flow(\n"
+"  spacing: (14mm, 9mm),\n"
+"  party((1, 0), \"Clients\", name: <clients>),\n"
+"  step((1, 1), \"DNS- oder ECMP-Router\", name: <router>),\n"
+"  sibuna((0, 2), \"Knoten A\", name: <a>),\n"
+"  sibuna((1, 2), \"Knoten B\", name: <b>),\n"
+"  sibuna((2, 2), \"Knoten C\", name: <c>),\n"
+"  group((<a>, <b>, <c>), name: <nodes>, inset: 6pt),\n"
+"  party((1, 3.2), \"Server der Pools\", name: <servers>),\n"
+"  store((3.2, 2), \"PostgreSQL\", \"Revisionen (SID 0028)\", name: "
+"<db>),\n"
+"  edge(<clients>, <router>, \"-|>\"),\n"
+"  edge(<router>, <a>, \"-|>\"),\n"
+"  edge(<router>, <b>, \"-|>\"),\n"
+"  edge(<router>, <c>, \"-|>\"),\n"
+"  edge(<a>, <b>, \"<|-|>\", dash: \"dashed\", stroke: thin + gold-deep,\n"
+"    say-in(\"wait\", \"Mesh\"), label-side: left),\n"
+"  edge(<b>, <c>, \"<|-|>\", dash: \"dashed\", stroke: thin + gold-deep,\n"
+"    say-in(\"wait\", \"Mesh\"), label-side: left),\n"
+"  edge(<a>, <c>, \"<|-|>\", dash: \"dashed\", stroke: thin + gold-deep, "
+"bend: -24deg),\n"
+"  main-edge(<a>, <servers>, \"-|>\"),\n"
+"  main-edge(<b>, <servers>, \"-|>\"),\n"
+"  main-edge(<c>, <servers>, \"-|>\"),\n"
+"  edge(<db>, <nodes>, \"-|>\", dash: \"dotted\"),\n"
+")\n"
 
 #: ../../cluster.rst:67
 msgid ""
 "A cluster of three nodes. The router spreads the clients; the dashed "
-"edges are the mesh; the dotted edges are the database of SID 0028, which "
-"a cluster may use instead of sending files."
+"edges are the mesh; the dotted edge is the database of SID 0028, which a "
+"cluster may use instead of sending files."
 msgstr ""
 "Ein Cluster aus drei Knoten. Der Router verteilt die Clients; die "
-"gestrichelten Kanten sind das Mesh; die gepunkteten Kanten sind die "
+"gestrichelten Kanten sind das Mesh; die gepunktete Kante ist die "
 "Datenbank von SID 0028, die ein Cluster statt des Versands von Dateien "
 "verwenden kann."
 
-#: ../../cluster.rst:97
+#: ../../cluster.rst:70
 msgid ""
 "Every pair of nodes exchanges the same things. The next figure shows one "
 "pair."
@@ -391,7 +384,7 @@ msgstr ""
 "Jedes Knotenpaar tauscht dieselben Dinge aus. Die nächste Abbildung zeigt "
 "ein Paar."
 
-#: ../../cluster.rst:100
+#: ../../cluster.rst:73
 msgid ""
 "Node A and node B joined by three edges. The first, UDP on the mesh port "
 "7946, carries probes, bans (kind 3), commands (kind 4), lifts (kind 5), "
@@ -406,48 +399,65 @@ msgstr ""
 "und ihren Digest. Die dritte, TCP und UDP auf dem Mesh-Port plus eins, "
 "trägt weitergeleitete Flüsse."
 
-#: ../../cluster.rst:100
+#: ../../cluster.rst:73
 msgid ""
-"digraph mesh_pair {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.4, ranksep=2.2, "
-"pad=0.12];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
-"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.5, margin=\"0.14,0.06\"];\n"
-"  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
-"color=\"#64748b\", arrowsize=0.65, penwidth=1.1, dir=both];\n"
-"  a [label=\"Node A\"];\n"
-"  b [label=\"Node B\"];\n"
-"  a -> b [color=\"#d97706\", fontcolor=\"#b45309\", label=\"UDP, mesh "
-"port 7946 (SID 0015, 0022, 0025)\\nprobes; bans (3); commands (4); lifts "
-"(5);\\nsticky entries (6); status of shares (7)\"];\n"
-"  a -> b [label=\"TCP, mesh port 7946 (SID 0023)\\nthe configuration "
-"file; the digest of the file\"];\n"
-"  a -> b [color=\"#15803d\", fontcolor=\"#166534\", label=\"TCP and UDP, "
-"mesh port + 1 (SID 0026)\\nforwarded connections and datagrams\"];\n"
-"}"
+"// cluster.rst: what flows between two nodes, by port. The kind of each "
+"datagram is in\n"
+"// parentheses.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#let channel(y, title, body, kind) = edge((0, y), (2, y), \"<|-|>\",\n"
+"  stroke: thin + tones.at(kind).at(1), label-side: left, label-sep: 2pt,\n"
+"  block(width: 78mm, align(center, text(fill: "
+"tones.at(kind).at(1).darken(20%),\n"
+"    weight: \"semibold\", size: 8.5pt, rich(title)) + linebreak() + "
+"small(body))))\n"
+"\n"
+"#flow(\n"
+"  spacing: (2mm, 15mm),\n"
+"  sibuna((0, 1), \"Node A\", name: <a>, enclose: ((0, 0.2), (0, 3.1))),\n"
+"  sibuna((2, 1), \"Node B\", name: <b>, enclose: ((2, 0.2), (2, 3.1))),\n"
+"  node((1, 0), none, width: 80mm, height: 1pt, stroke: none),\n"
+"  channel(1, \"UDP, mesh port 7946 (SID 0015, 0022, 0025)\",\n"
+"    \"probes; bans (3); commands (4); lifts (5);\\nsticky entries (6); "
+"status of shares (7)\", \"wait\"),\n"
+"  channel(2, \"TCP, mesh port 7946 (SID 0023)\",\n"
+"    \"the configuration file; the digest of the file\", \"step\"),\n"
+"  channel(3, \"TCP and UDP, mesh port + 1 (SID 0026)\",\n"
+"    \"forwarded connections and datagrams\", \"accent\"),\n"
+")\n"
 msgstr ""
-"digraph mesh_pair {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.4, ranksep=2.2, "
-"pad=0.12];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
-"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.5, margin=\"0.14,0.06\"];\n"
-"  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
-"color=\"#64748b\", arrowsize=0.65, penwidth=1.1, dir=both];\n"
-"  a [label=\"Knoten A\"];\n"
-"  b [label=\"Knoten B\"];\n"
-"  a -> b [color=\"#d97706\", fontcolor=\"#b45309\", label=\"UDP, "
-"Mesh-Port 7946 (SID 0015, 0022, 0025)\\nPrüfungen; Sperren (3); Befehle "
-"(4); Aufhebungen (5);\\nSticky-Einträge (6); Status der Anteile (7)\"];\n"
-"  a -> b [label=\"TCP, Mesh-Port 7946 (SID 0023)\\ndie "
-"Konfigurationsdatei; der Digest der Datei\"];\n"
-"  a -> b [color=\"#15803d\", fontcolor=\"#166534\", label=\"TCP und UDP, "
-"Mesh-Port + 1 (SID 0026)\\nweitergeleitete Verbindungen und "
-"Datagramme\"];\n"
-"}"
+"// cluster.rst: what flows between two nodes, by port. The kind of each "
+"datagram is in\n"
+"// parentheses.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"de\")\n"
+"\n"
+"#let channel(y, title, body, kind) = edge((0, y), (2, y), \"<|-|>\",\n"
+"  stroke: thin + tones.at(kind).at(1), label-side: left, label-sep: 2pt,\n"
+"  block(width: 78mm, align(center, text(fill: "
+"tones.at(kind).at(1).darken(20%),\n"
+"    weight: \"semibold\", size: 8.5pt, rich(title)) + linebreak() + "
+"small(body))))\n"
+"\n"
+"#flow(\n"
+"  spacing: (2mm, 15mm),\n"
+"  sibuna((0, 1), \"Knoten A\", name: <a>, enclose: ((0, 0.2), (0, "
+"3.1))),\n"
+"  sibuna((2, 1), \"Knoten B\", name: <b>, enclose: ((2, 0.2), (2, "
+"3.1))),\n"
+"  node((1, 0), none, width: 80mm, height: 1pt, stroke: none),\n"
+"  channel(1, \"UDP, Mesh-Port 7946 (SID 0015, 0022, 0025)\",\n"
+"    \"Prüfungen; Sperren (3); Befehle (4); Aufhebungen "
+"(5);\\nSticky-Einträge (6); Status der Anteile (7)\", \"wait\"),\n"
+"  channel(2, \"TCP, Mesh-Port 7946 (SID 0023)\",\n"
+"    \"die Konfigurationsdatei; der Digest der Datei\", \"step\"),\n"
+"  channel(3, \"TCP und UDP, Mesh-Port + 1 (SID 0026)\",\n"
+"    \"weitergeleitete Verbindungen und Datagramme\", \"accent\"),\n"
+")\n"
 
-#: ../../cluster.rst:100
+#: ../../cluster.rst:73
 msgid ""
 "What flows between two nodes, by port. The kind of each datagram is in "
 "parentheses."
@@ -455,7 +465,7 @@ msgstr ""
 "Was zwischen zwei Knoten fließt, nach Port. Die Art jedes Datagramms "
 "steht in Klammern."
 
-#: ../../cluster.rst:114
+#: ../../cluster.rst:76
 msgid ""
 "Every node sends to every other directly. A node never forwards a "
 "datagram it received. With a full roster every node hears every writer, "
@@ -470,11 +480,11 @@ msgstr ""
 "in großen Gruppen mit wechselnden Mitgliedern; eine Mitgliederliste von "
 "höchstens 64 festen Knoten hat keine Verwendung dafür."
 
-#: ../../cluster.rst:116
+#: ../../cluster.rst:78
 msgid "Bans merged by a maximum"
 msgstr "Sperren, zusammengeführt durch ein Maximum"
 
-#: ../../cluster.rst:119
+#: ../../cluster.rst:81
 msgid ""
 "A ban is a pair: a client key and the Unix second at which the ban ends. "
 "The state of a node is a map from keys to ends. Two states merge by "
@@ -489,13 +499,13 @@ msgstr ""
 "Zusammenführung. Für jeden Schlüssel ist sie das Maximum zweier Zahlen, "
 "also hat sie die drei Gesetze des Maximums."
 
-#: ../../cluster.rst:121
+#: ../../cluster.rst:83
 msgid ""
 "a \\sqcup b = b \\sqcup a, \\qquad (a \\sqcup b) \\sqcup c = a \\sqcup (b "
 "\\sqcup c), \\qquad a \\sqcup a = a."
 msgstr ""
 
-#: ../../cluster.rst:125
+#: ../../cluster.rst:87
 msgid ""
 "These three laws are the whole proof of convergence. The first says that "
 "the order of arrival does not matter. The second says that a node may "
@@ -517,7 +527,7 @@ msgstr ""
 "(Join-Semilattice), der zustandsbasierte replizierte Datentyp von Shapiro "
 "und Kollegen (2011)."
 
-#: ../../cluster.rst:127
+#: ../../cluster.rst:89
 msgid ""
 "A datagram carries the end, not the remaining time. A remaining time "
 "would not depend on the clocks of the nodes, but a replayed datagram "
@@ -536,7 +546,7 @@ msgstr ""
 "Empfänger kappt ein Ende auf 30 Tage vor seiner eigenen Uhr und ignoriert "
 "ein bereits vergangenes Ende."
 
-#: ../../cluster.rst:129
+#: ../../cluster.rst:91
 msgid ""
 "A node sends each ban it issues three times: at once, one second later, "
 "and four seconds after that. Three sends survive the loss of two packets. "
@@ -562,11 +572,11 @@ msgstr ""
 "der Replikation fallen und zählt sie, und die Sperre gilt weiterhin auf "
 "dem Knoten, der sie ausgesprochen hat."
 
-#: ../../cluster.rst:131
+#: ../../cluster.rst:93
 msgid "Implementation: ``Log::merge``"
 msgstr "Implementierung: ``Log::merge``"
 
-#: ../../cluster.rst:133
+#: ../../cluster.rst:95
 msgid ""
 "Merges one ban into the map of the mesh thread and returns its end when "
 "the merge added or extended it. In ``crates/lb/src/mesh/bans.rs`` (crate "
@@ -577,7 +587,7 @@ msgstr ""
 "hat. In ``crates/lb/src/mesh/bans.rs`` (Crate ``sibuna-lb``). "
 "``keep_larger`` hält das Maximum."
 
-#: ../../cluster.rst:135
+#: ../../cluster.rst:97
 msgid ""
 "pub fn merge(&mut self, key: &[u8], until: u64, now: u64) -> "
 "Result<Option<u64>, ()> {\n"
@@ -591,7 +601,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:147
+#: ../../cluster.rst:109
 msgid ""
 "A lift cannot be a smaller end: the next datagram of a peer would bring "
 "the ban back. So a lift is an entry of a third map, from the client key "
@@ -613,7 +623,7 @@ msgstr ""
 "Ein abgeschnittener Peer kann die Sperre nicht zurückbringen, weil die "
 "Aufhebung ihr Ende abdeckt."
 
-#: ../../cluster.rst:149
+#: ../../cluster.rst:111
 msgid ""
 "Run-time commands travel the same way. Their map goes from a key, such as "
 "``s`` and ``POOL/NAME`` for the state of a server, to a number that "
@@ -638,11 +648,11 @@ msgstr ""
 "keine Mitglieder an, weil jeder Knoten im selben Moment dieselbe Tabelle "
 "bauen muss. Seine Server ändern sich über die Datei."
 
-#: ../../cluster.rst:151
+#: ../../cluster.rst:113
 msgid "Why a rate counter stays local"
 msgstr "Warum ein Ratenzähler lokal bleibt"
 
-#: ../../cluster.rst:154
+#: ../../cluster.rst:116
 msgid ""
 "A rate limiter counts the requests of a client in a window. Let each of "
 ":math:`n` nodes admit :math:`r` requests of a client in a window. A "
@@ -670,7 +680,7 @@ msgstr ""
 "0022 belässt die Begrenzer deshalb auf ihren Knoten und sagt das auch: "
 "Jeder Knoten begrenzt, was er bedient."
 
-#: ../../cluster.rst:156
+#: ../../cluster.rst:118
 msgid ""
 "A limit for the cluster comes from the other direction. Peer forwarding "
 "(SID 0026, below) gives every client one owner, and the key of the owner "
@@ -687,11 +697,11 @@ msgstr ""
 "Weiterleitung läuft, und bis zu 1,5 s nach einer Änderung der "
 "Erreichbarkeit können zwei Knoten je einen Teil eines Clients zählen."
 
-#: ../../cluster.rst:158
+#: ../../cluster.rst:120
 msgid "One file for the cluster"
 msgstr "Eine Datei für den Cluster"
 
-#: ../../cluster.rst:161
+#: ../../cluster.rst:123
 msgid ""
 "SID 0023 makes the configuration file the same on every node, byte for "
 "byte. Its ``mesh`` section lists every node under ``nodes``. A node finds "
@@ -707,7 +717,7 @@ msgstr ""
 "belegte Adresse zählt als lokal, weil der laufende Daemon sie hält. Die "
 "anderen Adressen sind die Peers."
 
-#: ../../cluster.rst:163
+#: ../../cluster.rst:125
 msgid ""
 "``reload cluster`` checks the file of the node it is given on, reloads "
 "that node, and then sends the file to every peer at once over TCP, on the "
@@ -746,7 +756,7 @@ msgstr ""
 "abweichen. Auf drei Hosts kehrte der Befehl, als alle drei dieselbe Datei "
 "hielten, in 30 ms zurück (Teil X)."
 
-#: ../../cluster.rst:165
+#: ../../cluster.rst:127
 msgid ""
 "The file has no history and no rollback, a node that was down keeps its "
 "old file, and files that the topology names by path are not sent. SID "
@@ -757,11 +767,11 @@ msgstr ""
 "über einen Pfad nennt, werden nicht gesendet. SID 0028, später in diesem "
 "Kapitel, beantwortet die ersten beiden Punkte."
 
-#: ../../cluster.rst:167
+#: ../../cluster.rst:129
 msgid "Exercise 9.1"
 msgstr "Übung 9.1"
 
-#: ../../cluster.rst:169
+#: ../../cluster.rst:131
 msgid ""
 "Node A bans a client until second 1,300. At second 900 an operator lifts "
 "the ban on node C, which knows that end. Node D was cut off and now sends "
@@ -776,7 +786,7 @@ msgstr ""
 "Welche Aufhebung sendet C, und welche der drei Sperren gilt auf welchem "
 "Knoten?"
 
-#: ../../cluster.rst:171
+#: ../../cluster.rst:133
 msgid ""
 "Hint: Compute the lift as the operator's node does, then compare each end "
 "with it. Then read the first known gap of SID 0022."
@@ -785,13 +795,13 @@ msgstr ""
 "tut, und dann jedes Ende damit vergleichen. Dann die erste bekannte Lücke "
 "von SID 0022 lesen."
 
-#: ../../cluster.rst:173 ../../cluster.rst:227 ../../cluster.rst:333
-#: ../../cluster.rst:442 ../../cluster.rst:519 ../../cluster.rst:549
-#: ../../cluster.rst:590
+#: ../../cluster.rst:135 ../../cluster.rst:189 ../../cluster.rst:295
+#: ../../cluster.rst:404 ../../cluster.rst:481 ../../cluster.rst:511
+#: ../../cluster.rst:543
 msgid "Explain the invariant"
 msgstr "Die Invariante erklären"
 
-#: ../../cluster.rst:175
+#: ../../cluster.rst:137
 msgid ""
 "Explain why a ban datagram that arrives twice, late, or before an older "
 "one cannot change what a node bans. Then explain why the same argument "
@@ -804,15 +814,15 @@ msgstr ""
 "als kleineres Ende gesendet würde, und was die Abbildung der Aufhebungen "
 "stattdessen tut."
 
-#: ../../cluster.rst:177
+#: ../../cluster.rst:139
 msgid "Shared Affinity"
 msgstr "Gemeinsame Affinität"
 
-#: ../../cluster.rst:180
+#: ../../cluster.rst:142
 msgid "Three kinds of stickiness"
 msgstr "Drei Arten von Stickiness"
 
-#: ../../cluster.rst:183
+#: ../../cluster.rst:145
 msgid ""
 "A pool keeps a client on its server in one of three ways (SID 0019, SID "
 "0025). With ``sticky: \"cookie\"`` the client presents a token, a keyed "
@@ -840,11 +850,11 @@ msgstr ""
 "der Edge keinen Server berechnen kann. Nur die dritte Art braucht "
 "Replikation."
 
-#: ../../cluster.rst:185
+#: ../../cluster.rst:147
 msgid "The entry and its order"
 msgstr "Der Eintrag und seine Ordnung"
 
-#: ../../cluster.rst:188
+#: ../../cluster.rst:150
 msgid ""
 "An entry maps a key of 16 bytes to a server and an end. The key is a "
 "keyed hash of the client address, or of the value of the cookie, under a "
@@ -862,13 +872,13 @@ msgstr ""
 "größere Paar aus Ende und Server behalten wird, in dieser Reihenfolge "
 "verglichen:"
 
-#: ../../cluster.rst:190
+#: ../../cluster.rst:152
 msgid ""
 "(e_1, s_1) \\sqcup (e_2, s_2) = \\max_{\\mathrm{lex}}\\big((e_1, s_1), "
 "(e_2, s_2)\\big)."
 msgstr ""
 
-#: ../../cluster.rst:194
+#: ../../cluster.rst:156
 msgid ""
 "The lexicographic order on pairs of numbers is total: of two different "
 "pairs, one is larger. The maximum over a total order is commutative, "
@@ -885,7 +895,7 @@ msgstr ""
 "Millisekunde mit demselben ``ttl`` zwei Server für einen Client gelernt "
 "haben, jeder für immer seinen eigenen Eintrag behalten."
 
-#: ../../cluster.rst:196
+#: ../../cluster.rst:158
 msgid ""
 "The end is also the version of the entry. A node *learns* when a flow is "
 "placed on a server that the table did not name; the new end is the later "
@@ -908,11 +918,11 @@ msgstr ""
 "begrenzt den Schaden einer falschen Uhr: Ein empfangenes Ende, das mehr "
 "als 24 Stunden und 60 Sekunden voraus liegt, wird ignoriert."
 
-#: ../../cluster.rst:198
+#: ../../cluster.rst:160
 msgid "Implementation: ``Affinity::wins_over``"
 msgstr "Implementierung: ``Affinity::wins_over``"
 
-#: ../../cluster.rst:200
+#: ../../cluster.rst:162
 msgid ""
 "Decides the merge of two entries of one key. In "
 "``crates/lb/src/affinity.rs`` (crate ``sibuna-lb``). "
@@ -924,7 +934,7 @@ msgstr ""
 "``AffinityTable::keep`` in derselben Datei speichert einen Eintrag nur, "
 "wenn er gegen den gehaltenen gewinnt."
 
-#: ../../cluster.rst:202
+#: ../../cluster.rst:164
 msgid ""
 "/// Whether `self` wins over `other` in a merge: the later end, then the "
 "larger\n"
@@ -941,7 +951,7 @@ msgstr ""
 "    (self.ends, self.server) > (other.ends, other.server)\n"
 "}"
 
-#: ../../cluster.rst:210
+#: ../../cluster.rst:172
 msgid ""
 "The table is an array of slots in buckets of four. A slot is five atomic "
 "words: a sequence number, two words of key, the server and the end. A "
@@ -969,7 +979,7 @@ msgstr ""
 "sollte. Ein Nachschlagen dauerte in einem optimierten Build 172 ns, auf "
 "einer Tabelle mit 65.536 Slots und 49.152 Clients."
 
-#: ../../cluster.rst:212
+#: ../../cluster.rst:174
 msgid ""
 "The table only advises the choice of a server for a new flow. An "
 "established flow holds a reservation on its server and never reads the "
@@ -985,11 +995,11 @@ msgstr ""
 "sonst nichts, und ein genannter Server bedient nur, solange er wählbar "
 "ist: im Pool, gesund, nicht im Draining, mit Platz."
 
-#: ../../cluster.rst:214
+#: ../../cluster.rst:176
 msgid "Replication, partition and the window of a race"
 msgstr "Replikation, Partition und das Fenster eines Wettlaufs"
 
-#: ../../cluster.rst:217
+#: ../../cluster.rst:179
 msgid ""
 "A worker hands the key of each entry it wrote to the mesh thread through "
 "a bounded queue of 4,096 keys, without waiting. The mesh thread sends the "
@@ -1018,7 +1028,7 @@ msgstr ""
 "einer Seite ändert sich für den nächsten neuen Fluss dieses Clients. "
 "Laufende Flüsse bleiben."
 
-#: ../../cluster.rst:219
+#: ../../cluster.rst:181
 msgid ""
 "Replication is asynchronous, so there is a window. A choice reaches a "
 "peer after the hand-over to the mesh thread, one send and one network "
@@ -1050,11 +1060,11 @@ msgstr ""
 "ohne den ersten Fluss auf die Peers warten zu lassen, was der Entwurf "
 "ablehnt."
 
-#: ../../cluster.rst:221
+#: ../../cluster.rst:183
 msgid "Exercise 9.2"
 msgstr "Übung 9.2"
 
-#: ../../cluster.rst:223
+#: ../../cluster.rst:185
 msgid ""
 "Nodes A and B learn a server for the same new client in the same "
 "millisecond, with the same ``ttl``. A chose the server whose hash is "
@@ -1068,7 +1078,7 @@ msgstr ""
 "Fluss platziert. Welchen Eintrag hält jeder Knoten, nachdem sich die "
 "Datagramme gekreuzt haben? Welche Flüsse ziehen um?"
 
-#: ../../cluster.rst:225
+#: ../../cluster.rst:187
 msgid ""
 "Hint: Compare the pairs of end and server. Then recall what an "
 "established flow reads."
@@ -1076,7 +1086,7 @@ msgstr ""
 "Hinweis: Die Paare aus Ende und Server vergleichen. Dann daran denken, "
 "was ein bestehender Fluss liest."
 
-#: ../../cluster.rst:229
+#: ../../cluster.rst:191
 msgid ""
 "Explain why the merge of sticky entries needs a total order and not just "
 "the later end. Then explain why no loss of a datagram, and no eviction "
@@ -1087,15 +1097,15 @@ msgstr ""
 "weder der Verlust eines Datagramms noch die Verdrängung aus einem vollen "
 "Bucket einen bereits bestehenden Fluss verschieben kann."
 
-#: ../../cluster.rst:231
+#: ../../cluster.rst:193
 msgid "A Cap for the Whole Fleet"
 msgstr "Eine Obergrenze für die ganze Flotte"
 
-#: ../../cluster.rst:234
+#: ../../cluster.rst:196
 msgid "The invariant"
 msgstr "Die Invariante"
 
-#: ../../cluster.rst:237
+#: ../../cluster.rst:199
 msgid ""
 "A server with ``max_flows: 100`` behind :math:`n` nodes receives up to "
 ":math:`100n` flows when each node enforces the limit alone. With "
@@ -1111,7 +1121,7 @@ msgstr ""
 ":math:`i` und :math:`u_i` seine Flüsse auf dem Server. Das Protokoll hält "
 "zwei Ungleichungen ein:"
 
-#: ../../cluster.rst:239
+#: ../../cluster.rst:201
 msgid ""
 "u_i \\le s_i \\ \\text{for every node}, \\qquad \\sum_i s_i \\le L, "
 "\\qquad \\text{so} \\qquad \\sum_i u_i \\le L."
@@ -1119,7 +1129,7 @@ msgstr ""
 "u_i \\le s_i \\ \\text{für jeden Knoten}, \\qquad \\sum_i s_i \\le L, "
 "\\qquad \\text{also} \\qquad \\sum_i u_i \\le L."
 
-#: ../../cluster.rst:243
+#: ../../cluster.rst:205
 msgid ""
 "The first is local: a node admits a flow only while its flows are fewer "
 "than its share. The second must hold for every loss, repetition, delay "
@@ -1132,11 +1142,11 @@ msgstr ""
 "jeder Partition und für jede Menge von Knoten, die anhalten oder neu "
 "starten."
 
-#: ../../cluster.rst:245
+#: ../../cluster.rst:207
 msgid "Counters that only grow"
 msgstr "Zähler, die nur wachsen"
 
-#: ../../cluster.rst:248
+#: ../../cluster.rst:210
 msgid ""
 "The first design moved shares with messages: \"take 5\". Such a message "
 "must arrive exactly once. Lost, it loses five places for good; repeated, "
@@ -1156,7 +1166,7 @@ msgstr ""
 "Zähler von Balegas und Kollegen (2015), aufgebaut auf der Zusammenführung "
 "von SID 0022."
 
-#: ../../cluster.rst:250
+#: ../../cluster.rst:212
 msgid ""
 "The nodes of the roster are ordered by address, and node :math:`i` of "
 ":math:`n` has the base share"
@@ -1164,13 +1174,13 @@ msgstr ""
 "Die Knoten der Mitgliederliste sind nach Adresse geordnet, und Knoten "
 ":math:`i` von :math:`n` hat den Basisanteil"
 
-#: ../../cluster.rst:252
+#: ../../cluster.rst:214
 msgid ""
 "b_i = \\lfloor L/n \\rfloor + [\\, i < L \\bmod n \\,], \\qquad \\sum_i "
 "b_i = L."
 msgstr ""
 
-#: ../../cluster.rst:256
+#: ../../cluster.rst:218
 msgid ""
 "Every node computes the bases from the file. For each peer :math:`j`, "
 "node :math:`i` keeps two numbers that only grow: :math:`g_{ij}`, all it "
@@ -1183,11 +1193,11 @@ msgstr ""
 ":math:`h_{ij}`, das größte :math:`g_{ji}`, das er von :math:`j` gehört "
 "hat. Sein Anteil ist"
 
-#: ../../cluster.rst:258
+#: ../../cluster.rst:220
 msgid "s_i = b_i - \\sum_j g_{ij} + \\sum_j h_{ij}."
 msgstr ""
 
-#: ../../cluster.rst:262
+#: ../../cluster.rst:224
 msgid ""
 "A receiver holds only numbers that the giver sent, and the giver lowered "
 "its share before it sent them, so :math:`h_{ji} \\le g_{ij}` at every "
@@ -1198,13 +1208,13 @@ msgstr ""
 ":math:`h_{ji} \\le g_{ij}`. Summiert man über die Knoten und benennt die "
 "Indizes der letzten Summe um, ergibt sich"
 
-#: ../../cluster.rst:264
+#: ../../cluster.rst:226
 msgid ""
 "\\sum_i s_i = L - \\sum_{i,j} g_{ij} + \\sum_{i,j} h_{ji} = L - "
 "\\sum_{i,j} \\big(g_{ij} - h_{ji}\\big) \\le L."
 msgstr ""
 
-#: ../../cluster.rst:268
+#: ../../cluster.rst:230
 msgid ""
 "A lost datagram leaves :math:`h_{ji} < g_{ij}` for a while. The "
 "difference is counted on neither node: it is stranded for one period of "
@@ -1214,11 +1224,11 @@ msgstr ""
 "Die Differenz wird auf keinem Knoten gezählt: Sie ist für eine Periode "
 "von 500 ms gestrandet, nie verdoppelt."
 
-#: ../../cluster.rst:270
+#: ../../cluster.rst:232
 msgid "Moving shares to the demand"
 msgstr "Anteile zur Nachfrage verschieben"
 
-#: ../../cluster.rst:273
+#: ../../cluster.rst:235
 msgid ""
 "Each node computes, for each capped server, its free share :math:`f = s - "
 "u` and a headroom :math:`r = \\max(1, \\lceil u/4 \\rceil)`. It *wants* "
@@ -1246,7 +1256,7 @@ msgstr ""
 "Überschuss bis zur Höhe dieses Geschenks zurück, sodass die Anteile eines "
 "untätigen Clusters zu den Basisanteilen zurückkehren."
 
-#: ../../cluster.rst:275
+#: ../../cluster.rst:237
 msgid ""
 "Three rules bound a gift. It comes from the free share, so the giver's "
 "flows stay within its share. A node lends only its base: with "
@@ -1270,11 +1280,11 @@ msgstr ""
 "verleihen, der dann das ganze Limit hält. Sie begrenzt den Weg, und der "
 "Neustart unten braucht sie."
 
-#: ../../cluster.rst:277
+#: ../../cluster.rst:239
 msgid "Implementation: ``Cell::enter`` and ``Cell::lower``"
 msgstr "Implementierung: ``Cell::enter`` und ``Cell::lower``"
 
-#: ../../cluster.rst:279
+#: ../../cluster.rst:241
 msgid ""
 "The admission of a flow on a worker, and the lowering of the share by the "
 "mesh thread before a gift. In ``crates/lb/src/quota.rs`` (crate "
@@ -1289,7 +1299,7 @@ msgstr ""
 "``crates/lb/src/mesh/shares.rs`` bedient die Wünsche einmal in jeder "
 "Periode."
 
-#: ../../cluster.rst:281
+#: ../../cluster.rst:243
 msgid ""
 "pub fn enter(&self) -> bool {\n"
 "    if self.used.fetch_add(1, Ordering::SeqCst) < "
@@ -1302,7 +1312,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:292
+#: ../../cluster.rst:254
 msgid ""
 "The worker adds itself to the count first and reads the share second. "
 "``lower`` stores the lowered share first and reads the count second; when "
@@ -1325,11 +1335,11 @@ msgstr ""
 "Anteil. Kein Fluss tritt auf einem weggegebenen Anteil ein, und keine "
 "Sperre wird genommen."
 
-#: ../../cluster.rst:294
+#: ../../cluster.rst:256
 msgid "Restarts and epochs"
 msgstr "Neustarts und Epochen"
 
-#: ../../cluster.rst:297
+#: ../../cluster.rst:259
 msgid ""
 "A node that restarts has no flows and has lost its ledger. Its peers "
 "still hold theirs, and they may serve flows on shares it gave them. It "
@@ -1348,7 +1358,7 @@ msgstr ""
 "gehört hat, sein *Echo*. Ein Empfänger ignoriert ein Datagramm, dessen "
 "Absender-Epoche unter der größten liegt, die er für diesen Peer kennt."
 
-#: ../../cluster.rst:299
+#: ../../cluster.rst:261
 msgid ""
 "A node that starts is unsynchronised with every peer. By the rule that it "
 "lends only its base, it gave at most its base to all peers together, so "
@@ -1360,14 +1370,14 @@ msgstr ""
 "höchstens seinen Basisanteil gegeben, also zählt er nichts von seinem "
 "Basisanteil und nur, was synchronisierte Peers ihm netto gegeben haben:"
 
-#: ../../cluster.rst:301
+#: ../../cluster.rst:263
 msgid ""
 "s_i = \\sum_{j\\ \\text{synced}} \\max\\big(0,\\ h_{ij} - g_{ij}\\big)."
 msgstr ""
 "s_i = \\sum_{j\\ \\text{synchronisiert}} \\max\\big(0,\\ h_{ij} - "
 "g_{ij}\\big)."
 
-#: ../../cluster.rst:305
+#: ../../cluster.rst:267
 msgid ""
 "It becomes synchronised with peer :math:`j` when a datagram of :math:`j` "
 "echoes its new epoch. It then takes over the ledger that :math:`j` kept: "
@@ -1382,7 +1392,7 @@ msgstr ""
 "Das Echo beweist, dass :math:`j` die neue Epoche gehört hatte, bevor es "
 "sendete, sodass die beiden Hauptbücher von da an übereinstimmen."
 
-#: ../../cluster.rst:307
+#: ../../cluster.rst:269
 msgid ""
 "No timer returns the share of a silent node. Silence does not tell a "
 "stopped node from one that is cut off and still serves the flows it "
@@ -1413,11 +1423,11 @@ msgstr ""
 "fehlenden Knoten startet, bedient keinen Fluss auf einem begrenzten "
 "Server, bis dieser Knoten antwortet."
 
-#: ../../cluster.rst:309
+#: ../../cluster.rst:271
 msgid "Worked example: three nodes and a limit of 30"
 msgstr "Durchgerechnetes Beispiel: drei Knoten und ein Limit von 30"
 
-#: ../../cluster.rst:311
+#: ../../cluster.rst:273
 msgid ""
 "Nodes A, B and C share a server with :math:`L = 30`. The bases are "
 ":math:`\\lfloor 30/3 \\rfloor = 10` each. A holds 10 flows and refused "
@@ -1427,7 +1437,7 @@ msgstr ""
 "Basisanteile sind je :math:`\\lfloor 30/3 \\rfloor = 10`. A hält 10 "
 "Flüsse und hat einen abgelehnt. B hält 2 und C keinen."
 
-#: ../../cluster.rst:313
+#: ../../cluster.rst:275
 msgid ""
 "*Period 1.* A has :math:`f = 0` and :math:`r = \\lceil 10/4 \\rceil = 3`, "
 "so it wants 3, with the flag. B has :math:`f = 8`, :math:`r = 1`, surplus "
@@ -1450,7 +1460,7 @@ msgstr ""
 "keiner ist verdoppelt. Wenn A sie hört, gilt :math:`h_{AB} = h_{AC} = 3` "
 "und :math:`s_A = 10 + 3 + 3 = 16`. Die Summe ist 30."
 
-#: ../../cluster.rst:315
+#: ../../cluster.rst:277
 msgid ""
 "*Period 2.* A fills its 16 places and refuses again: :math:`r = \\lceil "
 "16/4 \\rceil = 4`, want 4. B has share 7, :math:`f = 5`, surplus 4, and "
@@ -1465,7 +1475,7 @@ msgstr ""
 "g_{CA} = 7`, und die Anteile sind :math:`s_A = 10 + 7 + 7 = 24`, "
 ":math:`s_B = s_C = 3`. Die Summe ist 30."
 
-#: ../../cluster.rst:317
+#: ../../cluster.rst:279
 msgid ""
 "*C stops.* A keeps :math:`h_{AC} = 7` and its share of 24. C's share of 3 "
 "is stranded: the cluster can hold at most 27 flows on the server until C "
@@ -1475,7 +1485,7 @@ msgstr ""
 "Anteil von 3 ist gestrandet: Der Cluster kann höchstens 27 Flüsse auf dem "
 "Server halten, bis C zurückkehrt, und kein Timer ändert das."
 
-#: ../../cluster.rst:319
+#: ../../cluster.rst:281
 msgid ""
 "*C restarts* with a new epoch. It is unsynchronised with both peers and "
 "counts :math:`s_C = 0`. A's next status echoes the new epoch and carries "
@@ -1491,7 +1501,7 @@ msgstr ""
 ":math:`g_{CA} = 7`. Bs Status liefert Nullen. Mit beiden synchronisiert, "
 "zählt C :math:`s_C = 10 - 7 = 3`, und die Summe ist wieder 30."
 
-#: ../../cluster.rst:321
+#: ../../cluster.rst:283
 msgid ""
 "Two counterfactuals show why the design is as it is. Had B sent the "
 "message \"take 3\" and the network repeated it, A would have counted 33 "
@@ -1504,7 +1514,7 @@ msgstr ""
 "gestartet, hätte es 10 neben As 24 und Bs 3 gezählt: 37 Plätze bei einem "
 "Limit von 30."
 
-#: ../../cluster.rst:323
+#: ../../cluster.rst:285
 msgid ""
 "The same rules predict the measured steps. On two hosts with :math:`L = "
 "20`, both bases are 10. A node with 10 flows that refuses wants "
@@ -1525,7 +1535,7 @@ msgstr ""
 "etwa drei Perioden, länger als eine; die SID hält die Schritte fest, "
 "nicht die Ursache."
 
-#: ../../cluster.rst:325
+#: ../../cluster.rst:287
 msgid ""
 "The model ``docs/sid/assets/shared-affinity.lean`` is checked by Lean 4 "
 "without libraries. For the cap it proves that when every node holds at "
@@ -1571,11 +1581,11 @@ msgstr ""
 "``no_flow_enters_on_a_share_that_is_given_away_while_workers_race`` "
 "testet das Zweite."
 
-#: ../../cluster.rst:327
+#: ../../cluster.rst:289
 msgid "Exercise 9.3"
 msgstr "Übung 9.3"
 
-#: ../../cluster.rst:329
+#: ../../cluster.rst:291
 msgid ""
 "Four nodes share a server with :math:`L = 10`. Compute the bases. Node D, "
 "the last, holds 2 flows and refuses one; the others hold none. What does "
@@ -1590,7 +1600,7 @@ msgstr ""
 "viele Flüsse kann der Cluster auf dem Server halten, und was muss der "
 "Betreiber tun, um den Rest zurückzugewinnen?"
 
-#: ../../cluster.rst:331
+#: ../../cluster.rst:293
 msgid ""
 "Hint: The remainder of :math:`10/4` goes to the first nodes. Every peer "
 "serves the want it heard, independently."
@@ -1598,7 +1608,7 @@ msgstr ""
 "Hinweis: Der Rest von :math:`10/4` geht an die ersten Knoten. Jeder Peer "
 "bedient den gehörten Wunsch unabhängig."
 
-#: ../../cluster.rst:335
+#: ../../cluster.rst:297
 msgid ""
 "Prove :math:`\\sum_i s_i \\le L` from :math:`h_{ji} \\le g_{ij}`. Then "
 "explain why a restarted node may not count its base, and why a timer that "
@@ -1609,11 +1619,11 @@ msgstr ""
 "zählen darf und warum ein Timer, der den Anteil eines schweigenden "
 "Knotens zurückgäbe, die Obergrenze bräche."
 
-#: ../../cluster.rst:337
+#: ../../cluster.rst:299
 msgid "One Owner for Each Client"
 msgstr "Ein Besitzer für jeden Client"
 
-#: ../../cluster.rst:340
+#: ../../cluster.rst:302
 msgid ""
 "When a node joins or leaves, or when the router rehashes, a client lands "
 "on another node. That node has none of the client's state: its UDP "
@@ -1632,11 +1642,11 @@ msgstr ""
 "Mesh-Netz an den Besitzer, und der Besitzer bedient ihn unter der wahren "
 "Clientadresse."
 
-#: ../../cluster.rst:342
+#: ../../cluster.rst:304
 msgid "Rendezvous hashing"
 msgstr "Rendezvous-Hashing"
 
-#: ../../cluster.rst:345
+#: ../../cluster.rst:307
 msgid ""
 "The key of a client is its IPv4 address, or the first 64 bits of its IPv6 "
 "address; these are the keys of the rate limiters. Each node :math:`n` of "
@@ -1665,7 +1675,7 @@ msgstr ""
 "sodass ein Client nicht berechnen kann, welche Adressen einen Besitzer "
 "teilen."
 
-#: ../../cluster.rst:347
+#: ../../cluster.rst:309
 msgid ""
 "Why does a join move so little? Model the scores of one client as "
 "independent and uniform; with 64-bit scores, ties are negligible. When a "
@@ -1682,11 +1692,11 @@ msgstr ""
 "Aus Symmetriegründen ist jeder der :math:`n` Knoten mit derselben "
 "Wahrscheinlichkeit der größte, also gilt"
 
-#: ../../cluster.rst:349
+#: ../../cluster.rst:311
 msgid "P(\\text{the client moves}) = \\frac{1}{n}."
 msgstr "P(\\text{der Client zieht um}) = \\frac{1}{n}."
 
-#: ../../cluster.rst:353
+#: ../../cluster.rst:315
 msgid ""
 "When the new node is not the largest, the largest of the old scores is "
 "still the largest, and the owner stays. So the clients that move all move "
@@ -1710,11 +1720,11 @@ msgstr ""
 "Knoten verschieben, und sie muss bei jeder Änderung der Erreichbarkeit "
 "neu gebaut und veröffentlicht werden."
 
-#: ../../cluster.rst:355
+#: ../../cluster.rst:317
 msgid "Worked example: a fourth node joins"
 msgstr "Durchgerechnetes Beispiel: ein vierter Knoten tritt bei"
 
-#: ../../cluster.rst:357
+#: ../../cluster.rst:319
 msgid ""
 "Four clients p, q, r and s, and three nodes A, B and C. We use made-up "
 "scores from 0 to 99 in place of wyhash outputs."
@@ -1722,116 +1732,116 @@ msgstr ""
 "Vier Clients p, q, r und s und drei Knoten A, B und C. Wir verwenden "
 "erfundene Bewertungen von 0 bis 99 anstelle von wyhash-Ausgaben."
 
-#: ../../cluster.rst:363
+#: ../../cluster.rst:325
 msgid "Client"
 msgstr "Client"
 
-#: ../../cluster.rst:364 ../../cluster.rst:374
+#: ../../cluster.rst:326 ../../cluster.rst:336
 msgid "A"
 msgstr ""
 
-#: ../../cluster.rst:365 ../../cluster.rst:381 ../../cluster.rst:383
-#: ../../cluster.rst:395 ../../cluster.rst:397
+#: ../../cluster.rst:327 ../../cluster.rst:343 ../../cluster.rst:345
+#: ../../cluster.rst:357 ../../cluster.rst:359
 msgid "B"
 msgstr ""
 
-#: ../../cluster.rst:366 ../../cluster.rst:388 ../../cluster.rst:390
+#: ../../cluster.rst:328 ../../cluster.rst:350 ../../cluster.rst:352
 msgid "C"
 msgstr ""
 
-#: ../../cluster.rst:367
+#: ../../cluster.rst:329
 msgid "Owner of three"
 msgstr "Besitzer unter drei"
 
-#: ../../cluster.rst:368 ../../cluster.rst:376
+#: ../../cluster.rst:330 ../../cluster.rst:338
 msgid "D"
 msgstr ""
 
-#: ../../cluster.rst:369
+#: ../../cluster.rst:331
 msgid "Owner of four"
 msgstr "Besitzer unter vier"
 
-#: ../../cluster.rst:370
+#: ../../cluster.rst:332
 msgid "p"
 msgstr ""
 
-#: ../../cluster.rst:371
+#: ../../cluster.rst:333
 msgid "71"
 msgstr ""
 
-#: ../../cluster.rst:372
+#: ../../cluster.rst:334
 msgid "15"
 msgstr ""
 
-#: ../../cluster.rst:373
+#: ../../cluster.rst:335
 msgid "42"
 msgstr ""
 
-#: ../../cluster.rst:375
+#: ../../cluster.rst:337
 msgid "88"
 msgstr ""
 
-#: ../../cluster.rst:377
+#: ../../cluster.rst:339
 msgid "q"
 msgstr ""
 
-#: ../../cluster.rst:378
+#: ../../cluster.rst:340
 msgid "23"
 msgstr ""
 
-#: ../../cluster.rst:379
+#: ../../cluster.rst:341
 msgid "90"
 msgstr ""
 
-#: ../../cluster.rst:380
+#: ../../cluster.rst:342
 msgid "57"
 msgstr ""
 
-#: ../../cluster.rst:382
+#: ../../cluster.rst:344
 msgid "12"
 msgstr ""
 
-#: ../../cluster.rst:384
+#: ../../cluster.rst:346
 msgid "r"
 msgstr ""
 
-#: ../../cluster.rst:385
+#: ../../cluster.rst:347
 msgid "64"
 msgstr ""
 
-#: ../../cluster.rst:386
+#: ../../cluster.rst:348
 msgid "38"
 msgstr ""
 
-#: ../../cluster.rst:387
+#: ../../cluster.rst:349
 msgid "81"
 msgstr ""
 
-#: ../../cluster.rst:389
+#: ../../cluster.rst:351
 msgid "30"
 msgstr ""
 
-#: ../../cluster.rst:391
+#: ../../cluster.rst:353
 msgid "s"
 msgstr ""
 
-#: ../../cluster.rst:392
+#: ../../cluster.rst:354
 msgid "9"
 msgstr ""
 
-#: ../../cluster.rst:393
+#: ../../cluster.rst:355
 msgid "47"
 msgstr ""
 
-#: ../../cluster.rst:394
+#: ../../cluster.rst:356
 msgid "33"
 msgstr ""
 
-#: ../../cluster.rst:396
+#: ../../cluster.rst:358
 msgid "41"
 msgstr ""
 
-#: ../../cluster.rst:399
+#: ../../cluster.rst:361
 msgid ""
 "Node D joins. Only p, whose score at D exceeds its three old scores, "
 "moves, and it moves to D. q, r and s keep their owners, because each old "
@@ -1845,7 +1855,7 @@ msgstr ""
 "vier Clients ist umgezogen, das erwartete :math:`1/4`. Wäre stattdessen C "
 "ausgeschieden, zöge nur r um, zu A, seiner zweitgrößten Bewertung."
 
-#: ../../cluster.rst:401
+#: ../../cluster.rst:363
 msgid ""
 "Compare the obvious rule, the owner :math:`h \\bmod n` for a hash "
 ":math:`h`. Going from three nodes to four, a client stays only when "
@@ -1861,11 +1871,11 @@ msgstr ""
 "12 \\in \\{0, 1, 2\\}` überein: drei von zwölf Resten. Also ziehen drei "
 "Viertel der Clients um, die meisten davon zwischen alten Knoten."
 
-#: ../../cluster.rst:403
+#: ../../cluster.rst:365
 msgid "Implementation: ``Peering::owner_among``"
 msgstr "Implementierung: ``Peering::owner_among``"
 
-#: ../../cluster.rst:405
+#: ../../cluster.rst:367
 msgid ""
 "The scan that names the owner of a client among this node and the "
 "eligible peers, given as a bit set. In ``crates/lb/src/forward.rs`` "
@@ -1876,7 +1886,7 @@ msgstr ""
 "``crates/lb/src/forward.rs`` (Crate ``sibuna-lb``). Es gibt ``None`` "
 "zurück, wenn dieser Knoten den Client besitzt."
 
-#: ../../cluster.rst:407
+#: ../../cluster.rst:369
 msgid ""
 "let key = client_key(client);\n"
 "let mut best = (wyhash::hash(self.seed, &key), self.rank);\n"
@@ -1911,11 +1921,11 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../cluster.rst:425
+#: ../../cluster.rst:387
 msgid "One hop, and what it does not repair"
 msgstr "Ein Hop, und was er nicht repariert"
 
-#: ../../cluster.rst:428
+#: ../../cluster.rst:390
 msgid ""
 "A peer is eligible when it can take a flow now. The mesh probes do not "
 "show that, because another thread answers them on another port, so the "
@@ -1931,7 +1941,7 @@ msgstr ""
 "Fluss abgelehnt hat oder bei dem ein Verbindungsaufbau fehlgeschlagen "
 "ist, wird eine Sekunde lang zurückgestellt."
 
-#: ../../cluster.rst:430
+#: ../../cluster.rst:392
 msgid ""
 "For a TCP or HTTP connection the receiving node first applies its own "
 "checks: drain, its connection rate, a free flow slot. It then computes "
@@ -1971,7 +1981,7 @@ msgstr ""
 "sodass der Client die Antwort von der Adresse kommen sieht, an die er "
 "gesendet hat."
 
-#: ../../cluster.rst:432
+#: ../../cluster.rst:394
 msgid ""
 "Two rules make this safe. A flow that arrived from a peer is served where "
 "it lands and is never forwarded again, whatever that node believes about "
@@ -1999,7 +2009,7 @@ msgstr ""
 "ihrer ersten Zeile 79 bis 91 us mehr und ein Austausch auf einer "
 "bestehenden Verbindung 19 bis 21 us mehr."
 
-#: ../../cluster.rst:434
+#: ../../cluster.rst:396
 msgid ""
 "Forwarding keeps the *node* of a client, not a TCP connection. When the "
 "router moves the packets of an established TCP connection to another "
@@ -2025,11 +2035,11 @@ msgstr ""
 "gemessenen Roundtrip-Zeit zu seinen Peers 3 ms übersteigt, und aus dem "
 "Weitverkehrsregime erst wieder betritt, wenn sie unter 1,5 ms fällt."
 
-#: ../../cluster.rst:436
+#: ../../cluster.rst:398
 msgid "Exercise 9.4"
 msgstr "Übung 9.4"
 
-#: ../../cluster.rst:438
+#: ../../cluster.rst:400
 msgid ""
 "A cluster of four nodes owns 1,000 clients evenly. (a) A fifth node "
 "joins: how many clients move in expectation, and where to? (b) Instead, "
@@ -2042,7 +2052,7 @@ msgstr ""
 "Welche Clients ziehen um, und wohin? (c) Wie viele würden beim Übergang "
 "von vier auf fünf Knoten unter :math:`h \\bmod n` umziehen?"
 
-#: ../../cluster.rst:440
+#: ../../cluster.rst:402
 msgid ""
 "Hint: For (c), count the residues of :math:`h \\bmod 20` at which "
 ":math:`h \\bmod 4 = h \\bmod 5`."
@@ -2050,7 +2060,7 @@ msgstr ""
 "Hinweis: Für (c) die Reste von :math:`h \\bmod 20` zählen, bei denen "
 ":math:`h \\bmod 4 = h \\bmod 5` gilt."
 
-#: ../../cluster.rst:444
+#: ../../cluster.rst:406
 msgid ""
 "Explain why a join under rendezvous hashing moves only the clients that "
 "the new node now owns, why a forwarded flow is never forwarded again, and "
@@ -2063,11 +2073,11 @@ msgstr ""
 "eine bestehende TCP-Verbindung retten kann, deren Pakete der Router an "
 "einen anderen Knoten sendet."
 
-#: ../../cluster.rst:446
+#: ../../cluster.rst:408
 msgid "A Disk Under the Sticky Table"
 msgstr "Eine Platte unter der Sticky-Tabelle"
 
-#: ../../cluster.rst:449
+#: ../../cluster.rst:411
 msgid ""
 "The sticky table forgets twice: when more clients come than it has slots, "
 "and when the daemon restarts. SID 0027 puts a second tier under it, a "
@@ -2087,11 +2097,11 @@ msgstr ""
 "jetzt bedienen darf. Keine Sperre, kein Zähler und kein laufender Fluss "
 "hängt von der Datei ab."
 
-#: ../../cluster.rst:451
+#: ../../cluster.rst:413
 msgid "The file and its slots"
 msgstr "Die Datei und ihre Slots"
 
-#: ../../cluster.rst:454
+#: ../../cluster.rst:416
 msgid ""
 "The file starts with two pages of 4,096 bytes, the header and one write "
 "counter for each of 64 shards, and continues with :math:`64 \\times B "
@@ -2126,11 +2136,11 @@ msgstr ""
 "wartet nie auf sie, und eine volle Warteschlange lässt die Arbeit fallen "
 "und zählt sie."
 
-#: ../../cluster.rst:456
+#: ../../cluster.rst:418
 msgid "Admission by frequency"
 msgstr "Zulassung nach Häufigkeit"
 
-#: ../../cluster.rst:459
+#: ../../cluster.rst:421
 msgid ""
 "A bucket of four slots is often full. A new key then competes with a "
 "victim, the live slot whose key was seen least often, and wins only when "
@@ -2164,7 +2174,7 @@ msgstr ""
 "Zählungen für jeden Slot des Shards wird jeder Zähler halbiert, sodass "
 "ein Schlüssel immer wieder kommen muss, um seine Schätzung zu behalten."
 
-#: ../../cluster.rst:461
+#: ../../cluster.rst:423
 msgid ""
 "The classical bound of Cormode and Muthukrishnan explains why the "
 "estimate is good. Let :math:`N` keys be counted. Fix a key :math:`x` and "
@@ -2181,11 +2191,11 @@ msgstr ""
 "diesen Zähler mit Wahrscheinlichkeit höchstens :math:`4/m`. Der erwartete "
 "Überschuss des Zählers ist daher"
 
-#: ../../cluster.rst:463
+#: ../../cluster.rst:425
 msgid "\\lambda \\le \\frac{4N}{m}."
 msgstr ""
 
-#: ../../cluster.rst:467
+#: ../../cluster.rst:429
 msgid ""
 "By Markov's inequality the excess reaches :math:`t` with probability at "
 "most :math:`\\lambda/t`. The estimate is the smallest of four counters, "
@@ -2205,11 +2215,11 @@ msgstr ""
 ":math:`\\lambda`, was eine schärfere Schätzung als die Markow-Schranke "
 "liefert."
 
-#: ../../cluster.rst:469
+#: ../../cluster.rst:431
 msgid "Worked example: the error of the sketch"
 msgstr "Durchgerechnetes Beispiel: der Fehler des Sketches"
 
-#: ../../cluster.rst:471
+#: ../../cluster.rst:433
 msgid ""
 "A file of ``64m`` holds 1,048,064 slots (Part XI), so a shard holds "
 ":math:`S = 16{,}376`. Eight counters for each slot would be 131,008. The "
@@ -2224,7 +2234,7 @@ msgstr ""
 "Bytes für jeden Slot. Der Sketch halbiert nach :math:`4S = 65{,}504` "
 "Zählungen."
 
-#: ../../cluster.rst:473
+#: ../../cluster.rst:435
 msgid ""
 "We take the first window after a start, when the sketch begins at zero, "
 "and look at its middle, :math:`N = 2S = 32{,}752` counts. Then "
@@ -2242,14 +2252,14 @@ msgstr ""
 ":math:`t = 4` auf allen vier Zählern. Die Markow-Schranke ergibt "
 "höchstens :math:`(2/4)^4 = 1/16`. Die Poisson-Schätzung ist schärfer:"
 
-#: ../../cluster.rst:475
+#: ../../cluster.rst:437
 msgid ""
 "P(X \\ge 4) = 1 - e^{-2}\\Big(1 + 2 + 2 + \\tfrac{4}{3}\\Big) = 1 - "
 "0.1353 \\times 6.333 \\approx 0.143, \\qquad 0.143^4 \\approx 4.2 \\times "
 "10^{-4}."
 msgstr ""
 
-#: ../../cluster.rst:479
+#: ../../cluster.rst:441
 msgid ""
 "So about four keys seen once in ten thousand look like keys seen five "
 "times, at the middle of the first window. Later windows begin from halved "
@@ -2270,11 +2280,11 @@ msgstr ""
 "behielt eine Datei von 256 MiB bis auf 10 bis 15 alle der etwa 1.044.000 "
 "Schlüssel einer Arbeitsmenge, die sie vor der Flut hielt."
 
-#: ../../cluster.rst:481
+#: ../../cluster.rst:443
 msgid "Implementation: ``Sketch::touch``"
 msgstr "Implementierung: ``Sketch::touch``"
 
-#: ../../cluster.rst:483
+#: ../../cluster.rst:445
 msgid ""
 "Counts one key with the conservative update and ages the sketch when its "
 "sample is full. In ``crates/spill/src/sketch.rs`` (crate "
@@ -2286,7 +2296,7 @@ msgstr ""
 "``sibuna-spill``). ``Sketch::estimate`` gibt den kleinsten der vier "
 "Zähler zurück."
 
-#: ../../cluster.rst:485
+#: ../../cluster.rst:447
 msgid ""
 "pub fn touch(&mut self, hash: u64) {\n"
 "    let least = u64::from(self.estimate(hash));\n"
@@ -2306,7 +2316,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:504
+#: ../../cluster.rst:466
 msgid ""
 "The two tiers meet in ``SpillStore`` (``crates/lb/src/hints.rs``), which "
 "implements the trait ``AffinityStore`` of SID 0025 with the table in "
@@ -2336,11 +2346,11 @@ msgstr ""
 "300 Clients für 191 von ihnen einen anderen Server, und der zweite Fluss "
 "fand für alle 300 den gemerkten Server."
 
-#: ../../cluster.rst:506
+#: ../../cluster.rst:468
 msgid "Crash safety, memory and the file system"
 msgstr "Absturzsicherheit, Speicher und das Dateisystem"
 
-#: ../../cluster.rst:509
+#: ../../cluster.rst:471
 msgid ""
 "A new file is never created in place. The function ``create`` in "
 "``crates/spill/src/open.rs`` removes whatever lies at the path with "
@@ -2372,7 +2382,7 @@ msgstr ""
 "kostet seinen Hinweis, und ein alter Slot ist ein gültiger älterer "
 "Hinweis, den der Pool vor der Verwendung prüft."
 
-#: ../../cluster.rst:511
+#: ../../cluster.rst:473
 msgid ""
 "Two properties of the host matter. The pages of the file count as memory "
 "of the process. Under a memory limit below the size of the file, a 256 "
@@ -2403,11 +2413,11 @@ msgstr ""
 "beendet. Teil XI nennt die Einstellungen für systemd, Docker und "
 "Kubernetes."
 
-#: ../../cluster.rst:513
+#: ../../cluster.rst:475
 msgid "Exercise 9.5"
 msgstr "Übung 9.5"
 
-#: ../../cluster.rst:515
+#: ../../cluster.rst:477
 msgid ""
 "A shard whose slot count lies just under a power of two keeps the full "
 "eight counters for each slot. Compute :math:`\\lambda` at the middle and "
@@ -2420,7 +2430,7 @@ msgstr ""
 "ein einmal gesehener Schlüssel an jedem der beiden Punkte eine Schätzung "
 "von 5 erreicht."
 
-#: ../../cluster.rst:517
+#: ../../cluster.rst:479
 msgid ""
 "Hint: Only the ratio :math:`N/m` matters. At :math:`\\lambda = 1`, "
 ":math:`e^{-1} \\approx 0.3679`."
@@ -2428,7 +2438,7 @@ msgstr ""
 "Hinweis: Nur das Verhältnis :math:`N/m` zählt. Bei :math:`\\lambda = 1` "
 "ist :math:`e^{-1} \\approx 0.3679`."
 
-#: ../../cluster.rst:521
+#: ../../cluster.rst:483
 msgid ""
 "Explain why a torn, copied or foreign slot can cost a hint and never "
 "choose a server that may not serve, why the path never names a half-made "
@@ -2440,11 +2450,11 @@ msgstr ""
 "darf, warum der Pfad nie eine halb fertige Datei nennt und warum der "
 "Sketch eine Häufigkeit überschätzen, aber nie unterschätzen kann."
 
-#: ../../cluster.rst:523
+#: ../../cluster.rst:485
 msgid "A Database as the Authority"
 msgstr "Eine Datenbank als Authority"
 
-#: ../../cluster.rst:526
+#: ../../cluster.rst:488
 msgid ""
 "SID 0023 sends one file to the peers. Two operators who send two files at "
 "the same time each win on some nodes, a node that was down keeps its old "
@@ -2467,7 +2477,7 @@ msgstr ""
 "sodass ein Knoten eine Revision mit einer Anweisung vollständig liest und "
 "eine ablehnt, deren Digest nicht stimmt."
 
-#: ../../cluster.rst:528
+#: ../../cluster.rst:490
 msgid ""
 "The revisions are numbered 1, 2, 3 without a gap, and a committed "
 "revision never changes. ``sibuna authority apply`` evaluates a source, "
@@ -2481,14 +2491,14 @@ msgstr ""
 "einer Bedingung: Der Kopf ist noch die Revision, die es gelesen hat. Der "
 "Commit ist eine Transaktion aus zwei Anweisungen."
 
-#: ../../cluster.rst:530
+#: ../../cluster.rst:492
 msgid ""
 "UPDATE edge_head SET revision = :expected + 1 WHERE id = 1 AND revision = "
 ":expected\n"
 "INSERT INTO edge_revisions (revision, ...) VALUES (:expected + 1, ...)"
 msgstr ""
 
-#: ../../cluster.rst:535
+#: ../../cluster.rst:497
 msgid ""
 "When the first statement changes no row, the head moved, and the command "
 "fails with ``DBA002 REVISION CONFLICT`` and commits nothing. This is a "
@@ -2513,11 +2523,11 @@ msgstr ""
 "Dokument, weil das Zurücksetzen des Kopfs „5 angewandt“ zwischen vor und "
 "nach 7 mehrdeutig machen würde."
 
-#: ../../cluster.rst:537
+#: ../../cluster.rst:499
 msgid "Implementation: ``Store::commit``"
 msgstr "Implementierung: ``Store::commit``"
 
-#: ../../cluster.rst:539
+#: ../../cluster.rst:501
 msgid ""
 "The trait ``Store`` has seven operations: ``head``, ``revision``, "
 "``commit``, ``history``, ``report``, ``nodes`` and ``wait``. ``commit`` "
@@ -2540,7 +2550,7 @@ msgstr ""
 "fehlschlug, indem es fragt, ob der Kopf die neue Revision mit dem neuen "
 "Digest ist."
 
-#: ../../cluster.rst:541
+#: ../../cluster.rst:503
 msgid ""
 "Every node follows on a thread of its own, ``edge-authority``. It looks "
 "at the head when PostgreSQL sends ``NOTIFY``, when its poll passes, at "
@@ -2584,11 +2594,11 @@ msgstr ""
 "einem Debug-Build wandten zwei Knoten mit PostgreSQL eine Revision 128 "
 "bis 155 ms nach Beginn von ``apply`` an."
 
-#: ../../cluster.rst:543
+#: ../../cluster.rst:505
 msgid "Exercise 9.6"
 msgstr "Übung 9.6"
 
-#: ../../cluster.rst:545
+#: ../../cluster.rst:507
 msgid ""
 "Two operators run ``diff`` against head 7 and then ``apply`` at the same "
 "moment, one adding a server and one removing a frontend. What does each "
@@ -2602,12 +2612,12 @@ msgstr ""
 "der zweite Betreiber tun? Warum wäre ein ``apply``, das als Bedingung den "
 "Kopf zum Zeitpunkt des Commits setzt, falsch?"
 
-#: ../../cluster.rst:547
+#: ../../cluster.rst:509
 msgid "Hint: Follow the ``UPDATE`` of each transaction under the row lock."
 msgstr ""
 "Hinweis: Dem ``UPDATE`` jeder Transaktion unter der Zeilensperre folgen."
 
-#: ../../cluster.rst:551
+#: ../../cluster.rst:513
 msgid ""
 "Explain why the revisions have no gap and never change, why the last word "
 "on whether a node serves a revision belongs to the node and not to the "
@@ -2618,15 +2628,26 @@ msgstr ""
 "Knoten gehört und nicht dem Befehl, und warum ein Rollback anhängt, statt "
 "den Kopf zu verschieben."
 
-#: ../../cluster.rst:553
+#: ../../cluster.rst:515
 msgid "Replacing the Binary"
 msgstr "Die Binärdatei ersetzen"
 
-#: ../../cluster.rst:556
-msgid "With ``global.reuse_port`` each process has its own TCP accept queue. The old process closes its TCP listeners when the drain begins. Established streams can finish while the replacement accepts new connections. A connection still queued on the old listener can reset. The replacement starts with an empty UDP mapping table."
-msgstr "Mit ``global.reuse_port`` hat jeder Prozess seine eigene TCP-Warteschlange. Der alte Prozess schließt seine TCP-Listener, sobald er mit dem Leeren beginnt. Bestehende Verbindungen können zu Ende laufen, während der neue Prozess weitere annimmt. Eine Verbindung in der alten Warteschlange kann zurückgesetzt werden. Der neue Prozess beginnt mit einer leeren UDP-Zuordnungstabelle."
+#: ../../cluster.rst:518
+msgid ""
+"With ``global.reuse_port`` each process has its own TCP accept queue. The "
+"old process closes its TCP listeners when the drain begins. Established "
+"streams can finish while the replacement accepts new connections. A "
+"connection still queued on the old listener can reset. The replacement "
+"starts with an empty UDP mapping table."
+msgstr ""
+"Mit ``global.reuse_port`` hat jeder Prozess seine eigene "
+"TCP-Warteschlange. Der alte Prozess schließt seine TCP-Listener, sobald "
+"er mit dem Leeren beginnt. Bestehende Verbindungen können zu Ende laufen, "
+"während der neue Prozess weitere annimmt. Eine Verbindung in der alten "
+"Warteschlange kann zurückgesetzt werden. Der neue Prozess beginnt mit "
+"einer leeren UDP-Zuordnungstabelle."
 
-#: ../../cluster.rst:558
+#: ../../cluster.rst:520
 msgid ""
 "SID 0029 passes the sockets instead. The old process listens on a Unix "
 "socket, ``global.upgrade_socket``. The replacement checks its file, "
@@ -2641,45 +2662,71 @@ msgstr ""
 "Enden prüfen die Anmeldedaten des Gegenübers mit ``SO_PEERCRED`` und "
 "lehnen einen anderen Benutzer ab."
 
-#: ../../cluster.rst:560
+#: ../../cluster.rst:523
 msgid ""
+"The old process pauses UDP at READY and passes the mappings. The "
+"replacement adopts them and accepts TCP before DONE. It then reads UDP "
+"while the old process drains."
+msgstr ""
+"Bei READY pausiert der alte Prozess UDP und übergibt die Zuordnungen. Der "
+"neue übernimmt sie und akzeptiert vor DONE TCP. Danach liest er UDP, "
+"während der alte Prozess seine Verbindungen beendet."
+
+#: ../../cluster.rst:523
+msgid ""
+"// cluster.rst and operations.rst: the listener handoff of SID 0029.\n"
 "#import \"style.typ\": *\n"
-"#show: sheet.with(lang: \"en\")\n"
+"#show: figure-frame.with(lang: \"en\")\n"
 "\n"
 "#sequence(\n"
-"  (\"Replacement\", \"Old process\"),\n"
 "  (\n"
-"    (0, 1, \"HELLO\"),\n"
-"    (1, 0, \"LISTENERS · SCM_RIGHTS\"),\n"
-"    (0, 1, \"READY · pause UDP\"),\n"
-"    (1, 0, \"FLOWS · COMMIT\"),\n"
-"    (0, 1, \"DONE\"),\n"
+"    actor(\"old\", \"Old process\"),\n"
+"    actor(\"new\", \"Replacement\", kind: \"accent\"),\n"
 "  ),\n"
-"  notes: ((4, 0, \"adopt mappings · accept TCP\"), (5, 0, \"read UDP\"), (5, 1, \"drain TCP\")),\n"
+"  (\n"
+"    msg(\"new\", \"old\", \"`HELLO`\"),\n"
+"    msg(\"old\", \"new\", \"`LISTENERS` with `SCM_RIGHTS`\"),\n"
+"    msg(\"new\", \"old\", \"`READY`\", accent: true, note: \"Nobody reads "
+"UDP; the kernel holds the datagrams\"),\n"
+"    act(\"old\", \"Pause UDP, keep accepting TCP\"),\n"
+"    msg(\"old\", \"new\", \"`FLOWS`, then `COMMIT`\"),\n"
+"    act(\"new\", \"Adopt the mappings, accept TCP\"),\n"
+"    msg(\"new\", \"old\", \"`DONE`\", accent: true),\n"
+"    act(\"new\", \"Read UDP\", accent: true),\n"
+"    act(\"old\", \"Drain TCP, exit\"),\n"
+"  ),\n"
+"  spacing: 60,\n"
 ")\n"
 msgstr ""
+"// cluster.rst and operations.rst: the listener handoff of SID 0029.\n"
 "#import \"style.typ\": *\n"
-"#show: sheet.with(lang: \"de\")\n"
+"#show: figure-frame.with(lang: \"de\")\n"
 "\n"
 "#sequence(\n"
-"  (\"Ersatzprozess\", \"Alter Prozess\"),\n"
 "  (\n"
-"    (0, 1, \"HELLO\"),\n"
-"    (1, 0, \"LISTENERS · SCM_RIGHTS\"),\n"
-"    (0, 1, \"READY · UDP pausieren\"),\n"
-"    (1, 0, \"FLOWS · COMMIT\"),\n"
-"    (0, 1, \"DONE\"),\n"
+"    actor(\"old\", \"Alter Prozess\"),\n"
+"    actor(\"new\", \"Ersatzprozess\", kind: \"accent\"),\n"
 "  ),\n"
-"  notes: ((4, 0, \"Zuordnungen übernehmen · TCP annehmen\"), (5, 0, \"UDP lesen\"), (5, 1, \"TCP auslaufen lassen\")),\n"
+"  (\n"
+"    msg(\"new\", \"old\", \"`HELLO`\"),\n"
+"    msg(\"old\", \"new\", \"`LISTENERS` mit `SCM_RIGHTS`\"),\n"
+"    msg(\"new\", \"old\", \"`READY`\", accent: true, note: \"Niemand "
+"liest UDP; der Kernel hält die Datagramme\"),\n"
+"    act(\"old\", \"UDP pausieren, TCP weiter annehmen\"),\n"
+"    msg(\"old\", \"new\", \"`FLOWS`, dann `COMMIT`\"),\n"
+"    act(\"new\", \"Zuordnungen übernehmen, TCP annehmen\"),\n"
+"    msg(\"new\", \"old\", \"`DONE`\", accent: true),\n"
+"    act(\"new\", \"UDP lesen\", accent: true),\n"
+"    act(\"old\", \"TCP auslaufen lassen, beenden\"),\n"
+"  ),\n"
+"  spacing: 60,\n"
 ")\n"
 
+#: ../../cluster.rst:523
 msgid "Listener handoff on Linux."
 msgstr "Listener-Übergabe unter Linux."
 
-msgid "The old process pauses UDP at READY and passes the mappings. The replacement adopts them and accepts TCP before DONE. It then reads UDP while the old process drains."
-msgstr "Bei READY pausiert der alte Prozess UDP und übergibt die Zuordnungen. Der neue übernimmt sie und akzeptiert vor DONE TCP. Danach liest er UDP, während der alte Prozess seine Verbindungen beendet."
-
-#: ../../cluster.rst:573
+#: ../../cluster.rst:526
 msgid ""
 "Two invariants govern the cutover. At every instant some live process "
 "accepts on each TCP listener: two acceptors on one socket lose nothing, "
@@ -2709,11 +2756,11 @@ msgstr ""
 "der alte Prozess nach 10 s ohne DONE den Ersatz und wartet auf das "
 "Schließen."
 
-#: ../../cluster.rst:575
+#: ../../cluster.rst:528
 msgid "Implementation: ``Giving::end_peer``"
 msgstr "Implementierung: ``Giving::end_peer``"
 
-#: ../../cluster.rst:577
+#: ../../cluster.rst:530
 msgid ""
 "Ends a silent replacement and waits for its connection to close, which "
 "proves that it reads no socket. In ``crates/upgrade/src/give.rs`` (crate "
@@ -2732,7 +2779,7 @@ msgstr ""
 "Dokuments. Auf der Edge-Seite stoppt ``Edge::freeze_datagrams`` in "
 "``crates/lb/src/handoff.rs`` das Lesen von UDP."
 
-#: ../../cluster.rst:579
+#: ../../cluster.rst:532
 msgid ""
 "pub fn end_peer(&mut self, patience: Duration) -> bool {\n"
 "    // The signal can fail when the process is gone already. The closed "
@@ -2750,7 +2797,7 @@ msgstr ""
 "    self.channel.wait_closed(patience)\n"
 "}"
 
-#: ../../cluster.rst:588
+#: ../../cluster.rst:541
 msgid ""
 "What is handed over: the TCP and UDP listeners, and every UDP mapping of "
 "a ``udp`` frontend with its connected server socket, so the server sees "
@@ -2792,7 +2839,7 @@ msgstr ""
 "``single_reader``, ``always_an_acceptor`` und ``failure_returns_service`` "
 "für den Zustandsautomaten; es ist nicht aus dem Code abgeleitet."
 
-#: ../../cluster.rst:592
+#: ../../cluster.rst:545
 msgid ""
 "Explain why the TCP listeners may have two acceptors for an instant while "
 "the UDP sockets must have none, and why the old process trusts a closed "
@@ -2803,11 +2850,11 @@ msgstr ""
 "alte Prozess einer geschlossenen Verbindung vertraut und nicht einer Uhr, "
 "bevor er wieder liest."
 
-#: ../../cluster.rst:594
+#: ../../cluster.rst:547
 msgid "The Fleet in the Console"
 msgstr "Die Flotte in der Konsole"
 
-#: ../../cluster.rst:597
+#: ../../cluster.rst:550
 msgid ""
 "SID 0031 starts the console of SID 0007 beside the edge. Its ``console`` "
 "section lists every member under ``nodes``, at most 64, so the section is "
@@ -2846,11 +2893,11 @@ msgstr ""
 "Messung die Kosten gemeinsam genutzter Prozessoren sah und nicht die der "
 "Kopplung."
 
-#: ../../cluster.rst:599
+#: ../../cluster.rst:552
 msgid "What Three Hosts Measured"
 msgstr "Was drei Hosts gemessen haben"
 
-#: ../../cluster.rst:602
+#: ../../cluster.rst:555
 msgid ""
 "Part X records the cluster on three hosts with 16, 16 and 32 CPUs, in "
 "containers on one network, each host running a node, an origin and a load "
@@ -2882,11 +2929,11 @@ msgstr ""
 "Wirkung beobachtete und alle 5 ms gesendet wurde. Das sind Einzelläufe "
 "auf gemeinsam genutzten Hosts; Teil X nennt die Tabellen und die Methode."
 
-#: ../../cluster.rst:604
+#: ../../cluster.rst:557
 msgid "Limits"
 msgstr "Grenzen"
 
-#: ../../cluster.rst:607
+#: ../../cluster.rst:560
 msgid ""
 "We list the known gaps of each record. They are taken from the records "
 "and are not repaired at the time of writing."
@@ -2894,7 +2941,7 @@ msgstr ""
 "Wir listen die bekannten Lücken jedes Dokuments auf. Sie stammen aus den "
 "Dokumenten und sind zum Zeitpunkt des Schreibens nicht behoben."
 
-#: ../../cluster.rst:609
+#: ../../cluster.rst:562
 msgid ""
 "**SID 0022, bans and commands.** A ban issued after a lift holds on every "
 "node only when it ends after the lifted ban would have; a shorter ban "
@@ -2933,7 +2980,7 @@ msgstr ""
 "Teil X ist die einzige Messung über Hosts hinweg. Die Replikation läuft "
 "nur im Edge-Modus."
 
-#: ../../cluster.rst:611
+#: ../../cluster.rst:564
 msgid ""
 "**SID 0023, one file.** Files that the topology names by path, and files "
 "that a JLV file imports, are not sent. A node that was down keeps its old "
@@ -2950,7 +2997,7 @@ msgstr ""
 "annimmt. Ein Knoten wird an der Quelladresse der Verbindung erkannt. Die "
 "Übertragung ist authentifiziert und nicht verschlüsselt."
 
-#: ../../cluster.rst:613
+#: ../../cluster.rst:566
 msgid ""
 "**SID 0025, affinity and caps.** The share of a stopped node does not "
 "return after any bound; a cluster that starts with one node missing "
@@ -2979,7 +3026,7 @@ msgstr ""
 "des Replikationsfensters verwendet, auf zwei Hosts unter 50 ms, kann auf "
 "zwei Server treffen."
 
-#: ../../cluster.rst:615
+#: ../../cluster.rst:568
 msgid ""
 "**SID 0026, forwarding.** An established TCP connection breaks when the "
 "router moves its packets to another node. HTTP/3 and frontends with "
@@ -3005,7 +3052,7 @@ msgstr ""
 "Relays nach zehn Sekunden haben keinen Prozesstest. Ein weitergeleitetes "
 "Datagramm kann innerhalb einer Epoche wiedereingespielt werden."
 
-#: ../../cluster.rst:617
+#: ../../cluster.rst:570
 msgid ""
 "**SID 0027, the spill cache.** A memory limit below the size of the file "
 "kills the daemon or stalls the disk tier. A truncation of the file or a "
@@ -3016,9 +3063,10 @@ msgid ""
 "with several workers at once. The first flow of a client after a restart "
 "goes without its hint. One storage thread serves one to three million "
 "operations a second and sheds beyond that. The checksum is not keyed. "
-"Power loss remains untested. At 50 million distinct candidates, the first lookup retained 93.84% of seeded server choices against the 99.9% target (SID 0027)."
-" A ``spill`` section without a pool that uses the "
-"table costs the file and does nothing, without a warning."
+"Power loss remains untested. At 50 million distinct candidates, the first "
+"lookup retained 93.84% of seeded server choices against the 99.9% target "
+"(SID 0027). A ``spill`` section without a pool that uses the table costs "
+"the file and does nothing, without a warning."
 msgstr ""
 "**SID 0027, der Spill-Cache.** Ein Speicherlimit unterhalb der Dateigröße "
 "beendet den Daemon oder legt die Plattenebene lahm. Ein Abschneiden der "
@@ -3030,12 +3078,14 @@ msgstr ""
 "mit mehreren gleichzeitigen Workern getestet. Der erste Fluss eines "
 "Clients nach einem Neustart geht ohne seinen Hinweis. Ein Speicherthread "
 "bedient eine bis drei Millionen Operationen pro Sekunde und wirft darüber "
-"hinaus Arbeit ab. Die Prüfsumme ist nicht geschlüsselt. Ein Stromausfall ist ungetestet. Bei 50 Millionen verschiedenen Kandidaten lieferte die erste Abfrage für 93,84 % der zuvor gespeicherten Zuordnungen den ursprünglichen Server. Das Ziel liegt bei 99,9 % (SID 0027)."
-" Ein ``spill``-Abschnitt ohne "
-"einen Pool, der die Tabelle verwendet, kostet die Datei und tut nichts, "
-"ohne Warnung."
+"hinaus Arbeit ab. Die Prüfsumme ist nicht geschlüsselt. Ein Stromausfall "
+"ist ungetestet. Bei 50 Millionen verschiedenen Kandidaten lieferte die "
+"erste Abfrage für 93,84 % der zuvor gespeicherten Zuordnungen den "
+"ursprünglichen Server. Das Ziel liegt bei 99,9 % (SID 0027). Ein "
+"``spill``-Abschnitt ohne einen Pool, der die Tabelle verwendet, kostet "
+"die Datei und tut nichts, ohne Warnung."
 
-#: ../../cluster.rst:619
+#: ../../cluster.rst:572
 msgid ""
 "**SID 0028, the database.** The history is never pruned. Two nodes with "
 "the same name overwrite each other's report. ``global``, ``mesh`` and "
@@ -3054,7 +3104,7 @@ msgstr ""
 "Mesh und Datenbank zugleich sowie TLS zu PostgreSQL sind nicht über die "
 "Binärdatei getestet. Nur Linux ist getestet."
 
-#: ../../cluster.rst:621
+#: ../../cluster.rst:574
 msgid ""
 "**SID 0029, the upgrade.** Adopted UDP mappings are outside the count of "
 "a fleet-wide cap. A mapping that a peer forwarded is answered directly "
@@ -3083,7 +3133,7 @@ msgstr ""
 "einen schweigenden Ersatz verwendet eine Prozess-ID, die der Kernel "
 "wiederverwenden kann."
 
-#: ../../cluster.rst:623
+#: ../../cluster.rst:576
 msgid ""
 "**SID 0031, the console.** The overhead criterion is not established. A "
 "member that joins is used after a restart only. The console does not "
@@ -3101,3 +3151,159 @@ msgstr ""
 "hält einen Anfrage-Thread bis zu fünf Sekunden fest, wenn ein Mitglied "
 "schweigt, und zeigt höchstens 256 Server. Die Konsolen-Threads sind nicht "
 "an eigene Prozessoren gebunden."
+
+#~ msgid ""
+#~ "digraph cluster_topology {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.6, "
+#~ "ranksep=0.45, pad=0.12];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+#~ "fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, "
+#~ "margin=\"0.12,0.05\"];\n"
+#~ "  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
+#~ "color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
+#~ "  clients [label=\"Clients\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  router [label=\"DNS or ECMP router\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  a [label=\"Node A\"];\n"
+#~ "  b [label=\"Node B\"];\n"
+#~ "  c [label=\"Node C\"];\n"
+#~ "  servers [label=\"Servers of the pools\", color=\"#15803d\", "
+#~ "fillcolor=\"#f0fdf4\"];\n"
+#~ "  db [label=\"PostgreSQL\\nrevisions (SID 0028)\", shape=cylinder, "
+#~ "color=\"#7c3aed\", fillcolor=\"#f5f3ff\"];\n"
+#~ "  { rank=same; a; b; c; }\n"
+#~ "  clients -> router;\n"
+#~ "  router -> a;\n"
+#~ "  router -> b;\n"
+#~ "  router -> c;\n"
+#~ "  a -> b [dir=both, style=dashed, color=\"#d97706\", "
+#~ "fontcolor=\"#b45309\", label=\"mesh\"];\n"
+#~ "  b -> c [dir=both, style=dashed, color=\"#d97706\", "
+#~ "fontcolor=\"#b45309\", label=\"mesh\"];\n"
+#~ "  a -> c [dir=both, style=dashed, color=\"#d97706\", "
+#~ "fontcolor=\"#b45309\", label=\"mesh\"];\n"
+#~ "  a -> servers;\n"
+#~ "  b -> servers;\n"
+#~ "  c -> servers;\n"
+#~ "  a -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+#~ "  b -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+#~ "  c -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph cluster_topology {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", nodesep=0.6, "
+#~ "ranksep=0.45, pad=0.12];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+#~ "fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, "
+#~ "margin=\"0.12,0.05\"];\n"
+#~ "  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
+#~ "color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
+#~ "  clients [label=\"Clients\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  router [label=\"DNS- oder ECMP-Router\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  a [label=\"Knoten A\"];\n"
+#~ "  b [label=\"Knoten B\"];\n"
+#~ "  c [label=\"Knoten C\"];\n"
+#~ "  servers [label=\"Server der Pools\", color=\"#15803d\", "
+#~ "fillcolor=\"#f0fdf4\"];\n"
+#~ "  db [label=\"PostgreSQL\\nRevisionen (SID 0028)\", shape=cylinder, "
+#~ "color=\"#7c3aed\", fillcolor=\"#f5f3ff\"];\n"
+#~ "  { rank=same; a; b; c; }\n"
+#~ "  clients -> router;\n"
+#~ "  router -> a;\n"
+#~ "  router -> b;\n"
+#~ "  router -> c;\n"
+#~ "  a -> b [dir=both, style=dashed, color=\"#d97706\", "
+#~ "fontcolor=\"#b45309\", label=\"mesh\"];\n"
+#~ "  b -> c [dir=both, style=dashed, color=\"#d97706\", "
+#~ "fontcolor=\"#b45309\", label=\"mesh\"];\n"
+#~ "  a -> c [dir=both, style=dashed, color=\"#d97706\", "
+#~ "fontcolor=\"#b45309\", label=\"mesh\"];\n"
+#~ "  a -> servers;\n"
+#~ "  b -> servers;\n"
+#~ "  c -> servers;\n"
+#~ "  a -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+#~ "  b -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+#~ "  c -> db [dir=back, style=dotted, color=\"#7c3aed\"];\n"
+#~ "}"
+
+#~ msgid ""
+#~ "digraph mesh_pair {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.4, "
+#~ "ranksep=2.2, pad=0.12];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+#~ "fillcolor=\"#eff6ff\", penwidth=1.1, height=0.5, "
+#~ "margin=\"0.14,0.06\"];\n"
+#~ "  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
+#~ "color=\"#64748b\", arrowsize=0.65, penwidth=1.1, dir=both];\n"
+#~ "  a [label=\"Node A\"];\n"
+#~ "  b [label=\"Node B\"];\n"
+#~ "  a -> b [color=\"#d97706\", fontcolor=\"#b45309\", label=\"UDP, mesh "
+#~ "port 7946 (SID 0015, 0022, 0025)\\nprobes; bans (3); commands (4); "
+#~ "lifts (5);\\nsticky entries (6); status of shares (7)\"];\n"
+#~ "  a -> b [label=\"TCP, mesh port 7946 (SID 0023)\\nthe configuration "
+#~ "file; the digest of the file\"];\n"
+#~ "  a -> b [color=\"#15803d\", fontcolor=\"#166534\", label=\"TCP and "
+#~ "UDP, mesh port + 1 (SID 0026)\\nforwarded connections and "
+#~ "datagrams\"];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph mesh_pair {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.4, "
+#~ "ranksep=2.2, pad=0.12];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+#~ "fillcolor=\"#eff6ff\", penwidth=1.1, height=0.5, "
+#~ "margin=\"0.14,0.06\"];\n"
+#~ "  edge [fontname=\"Helvetica\", fontsize=8.5, fontcolor=\"#475569\", "
+#~ "color=\"#64748b\", arrowsize=0.65, penwidth=1.1, dir=both];\n"
+#~ "  a [label=\"Knoten A\"];\n"
+#~ "  b [label=\"Knoten B\"];\n"
+#~ "  a -> b [color=\"#d97706\", fontcolor=\"#b45309\", label=\"UDP, "
+#~ "Mesh-Port 7946 (SID 0015, 0022, 0025)\\nPrüfungen; Sperren (3); "
+#~ "Befehle (4); Aufhebungen (5);\\nSticky-Einträge (6); Status der "
+#~ "Anteile (7)\"];\n"
+#~ "  a -> b [label=\"TCP, Mesh-Port 7946 (SID 0023)\\ndie "
+#~ "Konfigurationsdatei; der Digest der Datei\"];\n"
+#~ "  a -> b [color=\"#15803d\", fontcolor=\"#166534\", label=\"TCP und "
+#~ "UDP, Mesh-Port + 1 (SID 0026)\\nweitergeleitete Verbindungen und "
+#~ "Datagramme\"];\n"
+#~ "}"
+
+#~ msgid ""
+#~ "#import \"style.typ\": *\n"
+#~ "#show: sheet.with(lang: \"en\")\n"
+#~ "\n"
+#~ "#sequence(\n"
+#~ "  (\"Replacement\", \"Old process\"),\n"
+#~ "  (\n"
+#~ "    (0, 1, \"HELLO\"),\n"
+#~ "    (1, 0, \"LISTENERS · SCM_RIGHTS\"),\n"
+#~ "    (0, 1, \"READY · pause UDP\"),\n"
+#~ "    (1, 0, \"FLOWS · COMMIT\"),\n"
+#~ "    (0, 1, \"DONE\"),\n"
+#~ "  ),\n"
+#~ "  notes: ((4, 0, \"adopt mappings · accept TCP\"), (5, 0, \"read "
+#~ "UDP\"), (5, 1, \"drain TCP\")),\n"
+#~ ")\n"
+#~ msgstr ""
+#~ "#import \"style.typ\": *\n"
+#~ "#show: sheet.with(lang: \"de\")\n"
+#~ "\n"
+#~ "#sequence(\n"
+#~ "  (\"Ersatzprozess\", \"Alter Prozess\"),\n"
+#~ "  (\n"
+#~ "    (0, 1, \"HELLO\"),\n"
+#~ "    (1, 0, \"LISTENERS · SCM_RIGHTS\"),\n"
+#~ "    (0, 1, \"READY · UDP pausieren\"),\n"
+#~ "    (1, 0, \"FLOWS · COMMIT\"),\n"
+#~ "    (0, 1, \"DONE\"),\n"
+#~ "  ),\n"
+#~ "  notes: ((4, 0, \"Zuordnungen übernehmen · TCP annehmen\"), (5, 0, "
+#~ "\"UDP lesen\"), (5, 1, \"TCP auslaufen lassen\")),\n"
+#~ ")\n"
