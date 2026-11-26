@@ -7,7 +7,7 @@
 :sid-created: 2026-11-26
 :sid-updated: 2026-11-26
 :sid-discussion: No external discussion URL assigned
-:sid-summary: Lets an HTTP route name a wildcard host such as *.example.org or a list of hosts, and lets a TLS inspection rule name a wildcard server name. Refuses a route, a rule or a host that an earlier wildcard hides. Repairs three edges of the PROXY protocol: a header for a client and a listener of different address families, the probes of a pool that sends headers, and the health checks of a load balancer in front of a frontend that reads them.
+:sid-summary: Lets an HTTP route name a wildcard host such as ``*.example.org`` or a list of hosts, and lets a TLS inspection rule name a wildcard server name. Refuses a route, a rule or a host that an earlier wildcard hides. Repairs three edges of the PROXY protocol: a header for a client and a listener of different address families, the probes of a pool that sends headers, and the health checks of a load balancer in front of a frontend that reads them.
 :sid-labels: ["architecture","edge","routing","proxy-protocol"]
 
 Host Wildcards and PROXY Header Repairs
