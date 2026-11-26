@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="{{ site_base }}assets/language.css">
 <script type="module" src="{{ site_base }}assets/site-language.js"></script>
 {% if not route %}<script type="module" src="{{ site_base }}assets/admission-animation.js"></script>{% endif %}
+{% if pagename[:9] == "articles/" and language == "en" %}<script defer src="{{ edition_url }}_static/typography.js"></script>{% endif %}
 </head><body>
 <a class="skip" href="#main">{{ _('Skip to content') }}</a>
 <header class="nav"><a class="brand" href="{{ edition_url }}" translate="no"><i aria-hidden="true">s.</i>sibuna</a>

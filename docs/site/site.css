@@ -634,20 +634,66 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
   .edge-map {padding-bottom:12px}
 }
 
-.editorial {max-width:52rem;margin:clamp(2rem,5vw,4rem) auto 5rem}
-.editorial h1 {font-size:clamp(2.15rem,5vw,3.7rem);max-width:22ch}
-.editorial h2 {margin-block:2.5rem .8rem;font-size:clamp(1.5rem,3vw,2rem)}
-.editorial p {max-width:72ch}
-.editorial figure {margin:2rem 0;padding:clamp(.75rem,2vw,1.6rem);border:1px solid var(--line);border-radius:10px}
-.editorial figure img {display:block;margin:auto;max-width:100%;height:auto}
-.editorial figcaption {margin-top:.65rem;font-size:.95rem;color:var(--muted)}
-.editorial pre {padding:1rem;overflow-x:auto;border-radius:6px;color:#e6f1e9;background:var(--code);line-height:1.5}
-.article-meta {display:flex;gap:1.2rem;align-items:baseline;font-size:.95rem}
+.editorial,.magazine {
+  --story-title:Georgia,"Times New Roman",serif;
+  --column:65ch;
+  margin:clamp(2.5rem,5vw,5rem) 0 5rem
+}
+.editorial {font-size:clamp(1rem,.96rem + .25vw,1.125rem)}
+.editorial > section > * {max-inline-size:var(--column);margin-inline:auto}
+.editorial h1,.editorial h2,.magazine h1,.magazine .postlist li > p:first-child a {
+  font-family:var(--story-title);font-weight:500;text-wrap:balance
+}
+.editorial h1 {font-size:clamp(2.35rem,5vw,4.4rem);line-height:1.05;margin-block:0 .3em}
+.editorial h1 + p {color:var(--muted);font-size:clamp(1.125rem,1.6vw,1.35rem);margin-block:0}
+.editorial > section > section {inline-size:100%;border-block-start:1px solid var(--line);margin-block:2.5rem}
+.editorial h2 {margin-block:1.25rem .75rem;font-size:clamp(1.65rem,3vw,2.25rem)}
+.editorial section p {margin-block-end:1em}
+.editorial figure {margin:2rem 0}
 .editorial img {display:block;max-width:100%;height:auto;margin:1.5rem auto}
-.editorial h1,.editorial h2,.magazine h1,.magazine .postlist li > p:first-child a {font-family:Georgia,"Times New Roman",serif;font-weight:500}
+.editorial figure img {margin:0 auto}
+.editorial figcaption {padding-block-start:.65rem;border-block-start:1px solid var(--line);font-size:.92rem;color:var(--muted)}
+.editorial pre {padding:1rem;overflow-x:auto;border-radius:6px;color:#e6f1e9;background:var(--code);line-height:1.5}
+.editorial :is(code,pre) {direction:ltr;unicode-bidi:isolate}
+.article-meta {
+  display:flex;flex-wrap:wrap;gap:.5rem 1.25rem;align-items:baseline;
+  border-block-start:2px solid var(--green);padding-block:1rem 1.75rem;font-size:.95rem
+}
+.article-meta time,.magazine .postlist li > p:first-child {font:500 .85rem ui-monospace,monospace;color:var(--green)}
+.article-outline {margin-inline-start:auto;max-inline-size:100%}
+.article-outline summary {color:var(--green);cursor:pointer}
+.article-outline nav {max-inline-size:35ch}
+.article-outline ul {list-style:none;padding:0;margin:.5rem 0}
+.article-outline li + li {margin-block-start:.35rem}
+.article-outline a {text-decoration-thickness:1px}
+.article-outline summary:focus-visible {outline:3px solid var(--gold);outline-offset:4px}
 .editorial .headerlink,.magazine .headerlink {font:.65em system-ui;opacity:0;margin-inline-start:.35em;text-decoration:none}
 .editorial :is(h1,h2,h3):hover .headerlink,.magazine h1:hover .headerlink,.home .headerlink:focus {opacity:1}
-.magazine {margin:clamp(2.5rem,5vw,5rem) 0}
+.gd-article :where(section > p,.postlist li > p:not(:first-child),dd) {
+  text-wrap:pretty;-webkit-hyphens:auto;hyphens:auto;hyphenate-limit-chars:6 3 3
+}
+.gd-article :is(code,kbd,samp) {-webkit-hyphens:manual;hyphens:manual}
+/* Guidedog measures whole paragraphs. Its line spans supply only visual breaks. */
+.gd-article [data-layout="knuth-plass"] {-webkit-hyphens:none;hyphens:none}
+.gd-typeset-line {display:block;white-space:nowrap;text-wrap:nowrap}
+.gd-typeset-line:not(:last-child) {text-align:justify;text-align-last:justify}
+.gd-typeset-line[data-hyphen]::after {content:"\2010"}
+.gd-line-space {font-size:0}
+@media print, (max-width:39.99rem) {
+  .gd-typeset-line {display:inline;white-space:normal;text-wrap:pretty;word-spacing:normal!important}
+  .gd-typeset-line[data-hyphen]::after {content:none}
+  .gd-line-space {font-size:inherit}
+}
+@media (min-width:52rem) {
+  /* The excerpt and lead illustration form the same spread as the magazine card. */
+  .editorial > section:has(> h1 + p + img) {
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:clamp(2rem,5vw,5rem)
+  }
+  .editorial > section:where(:has(> h1 + p + img)) > * {grid-column:1 / -1}
+  .editorial > section:has(> h1 + p + img) > :is(h1,h1 + p) {grid-column:1;margin-inline:0}
+  .editorial > section:has(> h1 + p + img) > h1 {align-self:end}
+  .editorial > section > h1 + p + img {grid-column:2;grid-row:1 / 3;align-self:center}
+}
 .magazine h1 {font-size:clamp(3.1rem,8vw,7.1rem);line-height:1.02;letter-spacing:-.045em;margin:0}
 .magazine h1 + p {margin:.8rem 0 1.8rem;color:var(--muted);max-width:64ch}
 .magazine .postlist ul {list-style:none;padding:0;margin:0}
@@ -656,14 +702,16 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
   align-content:start;padding:clamp(1.2rem,3vw,2.5rem) 0;border-top:2px solid var(--green)
 }
 .magazine .postlist li > p {grid-column:1;margin:.6rem 0;align-self:start}
-.magazine .postlist li > p:first-child {align-self:end;font:500 .85rem ui-monospace,monospace;color:var(--green)}
+.magazine .postlist li > p:first-child {align-self:end}
 .magazine .postlist li > p:first-child a {display:block;margin:.8rem 0 .25rem;font-size:clamp(2rem,3.8vw,3.6rem);line-height:1.08;letter-spacing:-.035em;text-decoration:none;color:var(--ink)}
 .magazine .postlist li > p:first-child a:hover {text-decoration:underline;text-decoration-thickness:1px}
 .magazine .postlist li > img {grid-column:2;grid-row:1/span 2;align-self:center;width:100%;border-radius:6px}
 .magazine .postlist li:not(:has(> img)) {grid-template-columns:minmax(0,72ch)}
+:is(.editorial,.magazine):is(:lang(ar),:lang(hi),:lang(ja),:lang(ko),:lang(zh))
+  :is(h1,h2,.postlist li > p:first-child a) {letter-spacing:normal;line-height:1.25}
 @media(max-width:700px) {
   .nav nav {flex-wrap:wrap}
   .magazine .postlist li {display:flex;flex-direction:column}
-  .magazine .postlist li > img {order:-1;margin-bottom:.9rem}
+  .magazine .postlist li > img {margin-block-start:.9rem}
   .magazine .postlist li > p:first-child {align-self:start}
 }

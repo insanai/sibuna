@@ -560,3 +560,6 @@ msgstr "· التحقق من الإثبات في Sibuna"
 
 msgid "Articles"
 msgstr "مقالات"
+
+msgid "On this page"
+msgstr "في هذه الصفحة"

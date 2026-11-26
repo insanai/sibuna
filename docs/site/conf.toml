@@ -10,7 +10,8 @@ base_url = "https://insanai.github.io/sibuna"
 name = "home"
 source = "home"
 output = ""
-exclude = ["search.html", "genindex.html", "_static/**", "_sources/**", "gd-dependencies.json", "objects.inv", "searchindex.js"]
+# Publish Guidedog's self-contained _static/typography.js for the reading pages.
+exclude = ["search.html", "genindex.html", "_static/*.css", "_static/guidedog.js", "_static/searchindex.js", "_sources/**", "gd-dependencies.json", "objects.inv", "searchindex.js"]
 editions = [
   {language = "en", output = ""},
   {language = "zh_CN", output = "zh-hans"},
