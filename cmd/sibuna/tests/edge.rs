@@ -150,7 +150,11 @@ fn serve_tag(listener: TcpListener, tag: u8) -> std::thread::JoinHandle<()> {
 }
 
 fn get(client: &mut BufReader<TcpStream>, path: &str) -> (u16, Vec<u8>) {
-    write!(client.get_mut(), "GET {path} HTTP/1.1\r\nHost: api.example\r\n\r\n").unwrap();
+    get_from(client, "api.example", path)
+}
+
+fn get_from(client: &mut BufReader<TcpStream>, host: &str, path: &str) -> (u16, Vec<u8>) {
+    write!(client.get_mut(), "GET {path} HTTP/1.1\r\nHost: {host}\r\n\r\n").unwrap();
     let mut line = String::new();
     client.read_line(&mut line).unwrap();
     let status = line.split_ascii_whitespace().nth(1).unwrap().parse().unwrap();
@@ -211,6 +215,38 @@ fn firewall_routes_each_admitted_request_on_a_persistent_connection() {
     assert_eq!(get(&mut client, "/read/a"), (200, b"A".to_vec()));
     assert_eq!(get(&mut client, "/read/b"), (200, b"B".to_vec()));
     assert_eq!(get(&mut client, "/blocked").0, 403);
+    a.join().unwrap();
+    b.join().unwrap();
+}
+
+#[test]
+fn wildcard_routes_choose_a_pool_for_each_request_of_one_connection() {
+    let listener = || TcpListener::bind("127.0.0.1:0").unwrap();
+    let (vip, a, b) = (listener().local_addr().unwrap(), listener(), listener());
+    let first = a.local_addr().unwrap();
+    let second = b.local_addr().unwrap();
+    let path = std::env::temp_dir().join(format!(
+        "sibuna-wildcard-{}-{}.json",
+        std::process::id(),
+        vip.port()
+    ));
+    let source = format!(
+        r#"{{
+        "frontends":{{"web":{{"proto":"http","binds":["{vip}"],"default_backend":"a",
+        "firewall":false,
+        "routes":[{{"hosts":["*.example.org"],"backend":"b"}}]}}}},
+        "backends":{{"a":{{"mode":"http","servers":[{{"name":"one","addr":"{first}"}}]}},
+        "b":{{"mode":"http","servers":[{{"name":"two","addr":"{second}"}}]}}}}
+    }}"#
+    );
+    fs::write(&path, source).unwrap();
+    let (_daemon, _) = start(path);
+    let a = serve_tag(a, b'A');
+    let b = serve_tag(b, b'B');
+    let mut client = BufReader::new(TcpStream::connect(vip).unwrap());
+    client.get_ref().set_read_timeout(Some(WAIT)).unwrap();
+    assert_eq!(get_from(&mut client, "shop.Example.org", "/"), (200, b"B".to_vec()));
+    assert_eq!(get_from(&mut client, "example.org", "/"), (200, b"A".to_vec()));
     a.join().unwrap();
     b.join().unwrap();
 }

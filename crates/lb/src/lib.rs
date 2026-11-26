@@ -33,6 +33,7 @@ mod websocket;
 pub use websocket::{TunnelPermit, TunnelRefusal, WebSocketRule};
 mod guard;
 mod hello;
+mod host_pattern;
 mod inspect;
 mod ja4;
 mod known;

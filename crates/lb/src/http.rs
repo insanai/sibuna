@@ -13,6 +13,7 @@ use sibuna_json::ObjectReader;
 
 use crate::Regime;
 use crate::config::{Backend, Config, Protocol, field, invalid, required};
+use crate::host_pattern::{self, HostPattern};
 use crate::pool::{Loads, Pool};
 
 mod choose;
@@ -359,7 +360,8 @@ fn valid_port(port: &str) -> bool {
 }
 
 pub(crate) struct Rule {
-    host: Option<String>,
+    /// The host patterns of the route (SID 0036), or `None` for every host.
+    hosts: Option<Box<[HostPattern]>>,
     path: Option<String>,
     pool: Arc<str>,
     firewall: bool,
@@ -369,7 +371,7 @@ pub(crate) struct Rule {
 
 impl Rule {
     fn matches(&self, host: &[u8], path: &[u8]) -> bool {
-        self.host.as_ref().is_none_or(|h| host.eq_ignore_ascii_case(h.as_bytes()))
+        host_pattern::any_matches(self.hosts.as_deref(), host)
             && self.path.as_ref().is_none_or(|p| has_prefix(path, p.as_bytes()))
     }
 }
@@ -380,6 +382,49 @@ impl Rule {
 fn has_prefix(path: &[u8], prefix: &[u8]) -> bool {
     let Some(rest) = path.strip_prefix(prefix) else { return false };
     prefix.ends_with(b"/") || matches!(rest.first(), None | Some(b'/' | b'?'))
+}
+
+/// Refuses `rule`, at `path`, when a route of `earlier` hides it or one of its host
+/// patterns and a wildcard is involved (SID 0036): the earlier route matches every request
+/// that the pattern would bring to `rule`. `routes` names the list in messages.
+fn refuse_hidden(earlier: &[Rule], rule: &Rule, path: &str, routes: &str) -> io::Result<()> {
+    let patterns: &[HostPattern] = rule.hosts.as_deref().unwrap_or_default();
+    let mut hidden = Vec::new();
+    for (index, pattern) in patterns.iter().enumerate() {
+        let found = earlier.iter().enumerate().find_map(|(at, route)| {
+            let prefix = covers_prefix(route.path.as_deref(), rule.path.as_deref());
+            let by = host_pattern::hiding(route.hosts.as_deref(), pattern).filter(|_| prefix)?;
+            Some((at, by))
+        });
+        if let Some(found) = found {
+            hidden.push((index, found));
+        }
+    }
+    let Some(&(index, (at, by))) = hidden.first() else { return Ok(()) };
+    let by = by.map_or_else(|| "no host".to_owned(), |pattern| format!("host \"{pattern}\""));
+    // One earlier route that hides every pattern hides the route.
+    let one_route = hidden.iter().all(|&(_, (other, _))| other == at);
+    if hidden.len() == patterns.len() && one_route {
+        return Err(invalid(format!(
+            "{path} can never match: {routes}[{at}] ({by}) comes first and matches every \
+             request it would. Hint: move {path} above {routes}[{at}], or remove it."
+        )));
+    }
+    Err(invalid(format!(
+        "{path}.hosts[{index}] \"{}\" can never bring a request to this route: \
+         {routes}[{at}] ({by}) comes first. Hint: remove it from this route, or move the \
+         route above {routes}[{at}].",
+        patterns[index]
+    )))
+}
+
+/// True when every path under `later` lies under `earlier`. `None` is every path.
+fn covers_prefix(earlier: Option<&str>, later: Option<&str>) -> bool {
+    match (earlier, later) {
+        (None, _) => true,
+        (Some(_), None) => false,
+        (Some(earlier), Some(later)) => has_prefix(later.as_bytes(), earlier.as_bytes()),
+    }
 }
 
 /// The host of an authority without its port and trailing dot.
@@ -407,18 +452,18 @@ pub(crate) fn rules(
         return Err(invalid("HTTP frontend supports up to 128 routes"));
     }
     for (i, row) in entries.iter().enumerate() {
-        let mut row =
-            field(ObjectReader::with_path(row, format!("{}[{i}]", r.field_path("routes"))))?;
-        let host = field(row.take_str("host"))?.map(str::to_ascii_lowercase);
+        let at = format!("{}[{i}]", r.field_path("routes"));
+        let mut row = field(ObjectReader::with_path(row, at.clone()))?;
+        let (host, list) = (field(row.take_str("host"))?, field(row.take_array("hosts"))?);
+        let hosts = HostPattern::parse_hosts(host, list, &at)?;
         let path = field(row.take_str("path_prefix"))?.map(str::to_owned);
         let pool = required(&mut row, "backend")?;
         let firewall = field(row.take_bool("firewall"))?.unwrap_or(firewall);
-        if host.as_deref().is_some_and(|h| !crate::hello::valid_host(h))
-            || path.as_deref().is_some_and(|p| !p.starts_with('/') || p.contains(['?', '#']))
-            || (host.is_none() && path.is_none())
+        if path.as_deref().is_some_and(|p| !p.starts_with('/') || p.contains(['?', '#']))
+            || (hosts.is_none() && path.is_none())
         {
             return Err(invalid(format!(
-                "{}: expected a DNS host or absolute path_prefix",
+                "{}: expected host, hosts or an absolute path_prefix",
                 row.path()
             )));
         }
@@ -432,7 +477,9 @@ pub(crate) fn rules(
         };
         let policy = crate::RoutePolicy::parse(&mut row, policy, tls)?;
         field(row.finish())?;
-        rules.push(Rule { host, path, pool: pool.into(), firewall, websocket, policy });
+        let rule = Rule { hosts, path, pool: pool.into(), firewall, websocket, policy };
+        refuse_hidden(&rules, &rule, &at, &r.field_path("routes"))?;
+        rules.push(rule);
     }
     Ok(rules)
 }

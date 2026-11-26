@@ -319,3 +319,56 @@ fn the_file_refuses_a_fallback_that_cannot_be_decided() {
         .replace(r#""rules":[{"when":"api","action":"use_backend","backend":"api"}]"#, r#""x":1"#);
     assert!(Config::parse(plain.as_bytes()).is_err());
 }
+
+#[test]
+fn a_wildcard_server_name_routes_every_name_under_its_domain() {
+    let ((api, a), (default, d), (_plain, p)) = (origin(), origin(), origin());
+    let vip = free::tcp();
+    let document =
+        document(vip, "", [a, d, p]).replace(r#""sni":"api.test""#, r#""sni":"*.API.test""#);
+    let _worker = Worker::start(&document);
+    for name in [&b"eu.api.test"[..], b"a.b.api.TEST"] {
+        let hello = client_hello(Some(name), &[]);
+        let _c = send(vip, &hello);
+        assert_eq!(received(&api), hello);
+    }
+    for name in [&b"api.test"[..], b"badapi.test"] {
+        let hello = client_hello(Some(name), &[]);
+        let _c = send(vip, &hello);
+        assert_eq!(received(&default), hello);
+    }
+}
+
+#[test]
+fn an_sni_rule_that_an_earlier_wildcard_hides_is_refused() {
+    let pools = [free::tcp(), free::tcp(), free::tcp()];
+    let rules = |acls: &str, rules: &str| {
+        let text = document(free::tcp(), "", pools)
+            .replace(r#""acls":{"api":{"sni":"api.test"}}"#, acls)
+            .replace(r#""rules":[{"when":"api","action":"use_backend","backend":"api"}]"#, rules);
+        Config::parse(text.as_bytes()).err().map(|error| error.to_string())
+    };
+    let acls = r#""acls":{"all":{"sni":"*.test"},"api":{"sni":"api.test"},"h2":{"alpn":"h2"}}"#;
+    let hidden = rules(
+        acls,
+        r#""rules":[{"when":"all","action":"deny"},{"when":"h2","action":"deny"},
+        {"when":"api","action":"use_backend","backend":"api"}]"#,
+    )
+    .unwrap();
+    assert!(hidden.contains("rules[2] can never match"), "{hidden}");
+    assert!(hidden.contains(r#"rules[0] (sni "*.test") comes first"#), "{hidden}");
+    let twice =
+        rules(acls, r#""rules":[{"when":"all","action":"deny"},{"when":"all","action":"deny"}]"#);
+    assert!(twice.is_some_and(|message| message.contains("rules[1] can never match")));
+    // The exact rule first is valid, and so is an exact ACL named twice.
+    assert_eq!(
+        rules(
+            acls,
+            r#""rules":[{"when":"api","action":"use_backend","backend":"api"},
+            {"when":"api","action":"deny"},{"when":"all","action":"deny"}]"#,
+        ),
+        None
+    );
+    let numeric = rules(r#""acls":{"api":{"sni":"*.0.2.7"}}"#, r#""rules":[]"#).unwrap();
+    assert!(numeric.contains("ends in a number"), "{numeric}");
+}
