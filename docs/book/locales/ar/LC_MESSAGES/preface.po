@@ -47,8 +47,8 @@ msgstr ""
 "القياسات وإجراءات التشغيل بعد فهم الغرض من النظام."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:8
-msgid "Sibuna 1.0.0-rc.6, November 2026"
-msgstr "Sibuna 1.0.0-rc.6، نوفمبر 2026"
+msgid "Sibuna 1.0.0-rc.7, November 2026"
+msgstr "Sibuna 1.0.0-rc.7، نوفمبر 2026"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:10
 msgid ""

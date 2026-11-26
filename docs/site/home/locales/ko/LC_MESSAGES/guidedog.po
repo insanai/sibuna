@@ -336,11 +336,11 @@ msgstr "공개 연결"
 msgid "Public websites"
 msgstr "공개 웹사이트"
 
-msgid "RC6 includes the load balancer, firewall and console in one executable."
-msgstr "RC2은 로드 밸런서, 방화벽, 콘솔을 실행 파일 하나로 제공합니다."
+msgid "RC7 includes the load balancer, firewall and console in one executable."
+msgstr "RC7은 로드 밸런서, 방화벽, 콘솔을 실행 파일 하나로 제공합니다."
 
-msgid "RC6 on Linux x86-64"
-msgstr "Linux x86-64용 RC6"
+msgid "RC7 on Linux x86-64"
+msgstr "Linux x86-64용 RC7"
 
 msgid "Ratio"
 msgstr "비율"

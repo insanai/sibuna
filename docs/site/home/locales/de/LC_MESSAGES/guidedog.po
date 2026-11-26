@@ -336,11 +336,11 @@ msgstr "Öffentliche Verbindung"
 msgid "Public websites"
 msgstr "Öffentliche Websites"
 
-msgid "RC6 includes the load balancer, firewall and console in one executable."
-msgstr "RC6 enthält Lastverteiler, Firewall und Konsole in einer ausführbaren Datei."
+msgid "RC7 includes the load balancer, firewall and console in one executable."
+msgstr "RC7 enthält Lastverteiler, Firewall und Konsole in einer ausführbaren Datei."
 
-msgid "RC6 on Linux x86-64"
-msgstr "RC6 unter Linux x86-64"
+msgid "RC7 on Linux x86-64"
+msgstr "RC7 unter Linux x86-64"
 
 msgid "Ratio"
 msgstr "Verhältnis"

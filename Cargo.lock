@@ -1410,7 +1410,7 @@ checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
 
 [[package]]
 name = "sibuna"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "bytes",
  "futures-util",
@@ -1453,7 +1453,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-acme"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "ring",
  "sibuna-crypto",
@@ -1463,7 +1463,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-authority"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-authority",
  "sibuna-crypto",
@@ -1474,7 +1474,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-bench"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-challenge",
  "sibuna-cidr",
@@ -1490,7 +1490,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-browser"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-encoding",
  "sibuna-http",
@@ -1499,7 +1499,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-challenge"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-core",
  "sibuna-crypto",
@@ -1510,11 +1510,11 @@ dependencies = [
 
 [[package]]
 name = "sibuna-cidr"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "sibuna-console"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-cidr",
  "sibuna-console-protocol",
@@ -1535,14 +1535,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-console-protocol"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-json",
 ]
 
 [[package]]
 name = "sibuna-console-storage"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-cidr",
  "sibuna-console-protocol",
@@ -1557,7 +1557,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-console-ui"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-console-protocol",
  "sibuna-crypto",
@@ -1567,19 +1567,19 @@ dependencies = [
 
 [[package]]
 name = "sibuna-core"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "sibuna-crypto"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "sibuna-encoding"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "sibuna-geoip"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-cidr",
  "sibuna-crypto",
@@ -1588,15 +1588,15 @@ dependencies = [
 
 [[package]]
 name = "sibuna-hook-wasm"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "sibuna-html"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "sibuna-http"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-crypto",
  "sibuna-encoding",
@@ -1604,11 +1604,11 @@ dependencies = [
 
 [[package]]
 name = "sibuna-inflate"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "sibuna-ingress"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "bytes",
  "futures-util",
@@ -1633,7 +1633,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-jlv"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "jlv-compiler",
  "jlv-core",
@@ -1645,11 +1645,11 @@ dependencies = [
 
 [[package]]
 name = "sibuna-json"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "sibuna-lb"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-cidr",
  "sibuna-crypto",
@@ -1665,25 +1665,25 @@ dependencies = [
 
 [[package]]
 name = "sibuna-net"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-http",
 ]
 
 [[package]]
 name = "sibuna-patterns"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "sibuna-plugin"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-pow",
 ]
 
 [[package]]
 name = "sibuna-policy"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-cidr",
  "sibuna-crypto",
@@ -1693,14 +1693,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-pow"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-crypto",
 ]
 
 [[package]]
 name = "sibuna-pow-wasm"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-crypto",
  "sibuna-pow",
@@ -1708,25 +1708,25 @@ dependencies = [
 
 [[package]]
 name = "sibuna-reactor"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "sibuna-serve"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-http",
 ]
 
 [[package]]
 name = "sibuna-spill"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-crypto",
 ]
 
 [[package]]
 name = "sibuna-storage"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-core",
  "sibuna-crypto",
@@ -1738,14 +1738,14 @@ dependencies = [
 
 [[package]]
 name = "sibuna-store"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-crypto",
 ]
 
 [[package]]
 name = "sibuna-tls"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "ml-kem",
  "ring",
@@ -1756,7 +1756,7 @@ dependencies = [
 
 [[package]]
 name = "sibuna-upgrade"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 
 [[package]]
 name = "slab"
@@ -2388,7 +2388,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.7"
 dependencies = [
  "sibuna-json",
 ]

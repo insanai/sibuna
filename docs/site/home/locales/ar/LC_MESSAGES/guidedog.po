@@ -336,11 +336,11 @@ msgstr "الاتصال العام"
 msgid "Public websites"
 msgstr "المواقع العامة"
 
-msgid "RC6 includes the load balancer, firewall and console in one executable."
-msgstr "يجمع RC6 موازن الحمل وجدار الحماية ووحدة التحكم في ملف تنفيذي واحد."
+msgid "RC7 includes the load balancer, firewall and console in one executable."
+msgstr "يجمع RC7 موازن الحمل وجدار الحماية ووحدة التحكم في ملف تنفيذي واحد."
 
-msgid "RC6 on Linux x86-64"
-msgstr "RC6 على Linux x86-64"
+msgid "RC7 on Linux x86-64"
+msgstr "RC7 على Linux x86-64"
 
 msgid "Ratio"
 msgstr "النسبة"

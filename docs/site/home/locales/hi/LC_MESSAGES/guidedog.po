@@ -336,11 +336,11 @@ msgstr "सार्वजनिक कनेक्शन"
 msgid "Public websites"
 msgstr "सार्वजनिक वेबसाइट"
 
-msgid "RC6 includes the load balancer, firewall and console in one executable."
-msgstr "RC6 में लोड बैलेंसर, फ़ायरवॉल और कंसोल एक ही निष्पादन योग्य फ़ाइल में हैं।"
+msgid "RC7 includes the load balancer, firewall and console in one executable."
+msgstr "RC7 में लोड बैलेंसर, फ़ायरवॉल और कंसोल एक ही निष्पादन योग्य फ़ाइल में हैं।"
 
-msgid "RC6 on Linux x86-64"
-msgstr "Linux x86-64 पर RC6"
+msgid "RC7 on Linux x86-64"
+msgstr "Linux x86-64 पर RC7"
 
 msgid "Ratio"
 msgstr "अनुपात"

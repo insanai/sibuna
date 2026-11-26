@@ -336,11 +336,11 @@ msgstr "公開側の接続"
 msgid "Public websites"
 msgstr "公開ウェブサイト"
 
-msgid "RC6 includes the load balancer, firewall and console in one executable."
-msgstr "RC6 はロードバランサー、ファイアウォール、コンソールを一つの実行ファイルで提供します。"
+msgid "RC7 includes the load balancer, firewall and console in one executable."
+msgstr "RC7 はロードバランサー、ファイアウォール、コンソールを一つの実行ファイルで提供します。"
 
-msgid "RC6 on Linux x86-64"
-msgstr "Linux x86-64 での RC6"
+msgid "RC7 on Linux x86-64"
+msgstr "Linux x86-64 での RC7"
 
 msgid "Ratio"
 msgstr "比率"

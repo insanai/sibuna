@@ -55,7 +55,7 @@ Sibuna는 단일 에지 노드 또는 메시에서 TCP, UDP, HTTP 트래픽을 �
 
 ## 로드 밸런싱
 
-Sibuna 1.0.0-rc.6에는 엣지 모드가 포함됩니다. [소스에서 릴리스 후보를 빌드](#build-from-source)할 수도 있습니다.
+Sibuna 1.0.0-rc.7에는 엣지 모드가 포함됩니다. [소스에서 릴리스 후보를 빌드](#build-from-source)할 수도 있습니다.
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -85,7 +85,7 @@ Gate 또는 Shield는 필요한 이름에만 적용하거나, 어디에도 적�
 
 ## 빠른 시작
 
-플랫폼에 맞는 [릴리스를 다운로드하세요](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.6). 기본 패키지에는 저장소와 콘솔 지원이 포함됩니다. 콘솔은 `--console` 옵션으로 시작합니다.
+플랫폼에 맞는 [릴리스를 다운로드하세요](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.7). 기본 패키지에는 저장소와 콘솔 지원이 포함됩니다. 콘솔은 `--console` 옵션으로 시작합니다.
 
 | 플랫폼 | 패키지 | 요구 사항 |
 | --- | --- | --- |
@@ -94,8 +94,8 @@ Gate 또는 Shield는 필요한 이름에만 적용하거나, 어디에도 적�
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 이상 |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 이상 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 이상; 네이티브 `sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-rc.6-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI 패키지 |
-| OpenBSD x86-64 | `sibuna-1.0.0-rc.6.tgz` | OpenBSD 7.9; CLI 패키지 |
+| FreeBSD x86-64 | `sibuna-1.0.0-rc.7-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; CLI 패키지 |
+| OpenBSD x86-64 | `sibuna-1.0.0-rc.7.tgz` | OpenBSD 7.9; CLI 패키지 |
 
 macOS 빌드에는 서명이 없습니다. 각 패키지에는 라이선스, 소스 링크와 빌드 명세가 포함됩니다. 사용하기 전에 `SHA256SUMS`로 압축 파일을 검증하세요.
 
@@ -112,8 +112,8 @@ sibuna --version
 Linux x86-64에서 앱이 3000번 포트로 요청을 받는 경우:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.6/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.6/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.7/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.7/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

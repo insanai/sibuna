@@ -2,8 +2,8 @@ apiVersion: v2
 name: sibuna
 description: Sibuna web firewall and anti-crawler proxy with persistent state and an operator-owned Secret
 type: application
-version: 1.0.0-rc.6
-appVersion: "1.0.0-rc.6"
+version: 1.0.0-rc.7
+appVersion: "1.0.0-rc.7"
 home: https://insanai.github.io/sibuna/
 sources:
   - https://github.com/insanai/sibuna

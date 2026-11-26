@@ -336,11 +336,11 @@ msgstr "Conexión pública"
 msgid "Public websites"
 msgstr "Sitios web públicos"
 
-msgid "RC6 includes the load balancer, firewall and console in one executable."
-msgstr "RC6 incluye el balanceador de carga, el cortafuegos y la consola en un solo ejecutable."
+msgid "RC7 includes the load balancer, firewall and console in one executable."
+msgstr "RC7 incluye el balanceador de carga, el cortafuegos y la consola en un solo ejecutable."
 
-msgid "RC6 on Linux x86-64"
-msgstr "RC6 en Linux x86-64"
+msgid "RC7 on Linux x86-64"
+msgstr "RC7 en Linux x86-64"
 
 msgid "Ratio"
 msgstr "Proporción"

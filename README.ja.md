@@ -55,7 +55,7 @@ Sibuna は、単一のエッジノードでもメッシュ構成でも、TCP、U
 
 ## 負荷分散
 
-Sibuna 1.0.0-rc.6 にはエッジモードが含まれます。リリース候補を[ソースからビルド](#build-from-source)することもできます。
+Sibuna 1.0.0-rc.7 にはエッジモードが含まれます。リリース候補を[ソースからビルド](#build-from-source)することもできます。
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -85,7 +85,7 @@ GateまたはShieldは、必要な名前だけに適用することも、どこ�
 
 ## クイックスタート
 
-プラットフォームに合った[リリースをダウンロード](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.6)してください。標準パッケージにはストレージとコンソールのサポートが含まれます。コンソールは`--console`で起動します。
+プラットフォームに合った[リリースをダウンロード](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.7)してください。標準パッケージにはストレージとコンソールのサポートが含まれます。コンソールは`--console`で起動します。
 
 | プラットフォーム | パッケージ | 動作要件 |
 | --- | --- | --- |
@@ -94,8 +94,8 @@ GateまたはShieldは、必要な名前だけに適用することも、どこ�
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12以降 |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12以降 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016以降、ネイティブの`sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-rc.6-freebsd-15.1-amd64.pkg` | FreeBSD 15.1、CLIパッケージ |
-| OpenBSD x86-64 | `sibuna-1.0.0-rc.6.tgz` | OpenBSD 7.9、CLIパッケージ |
+| FreeBSD x86-64 | `sibuna-1.0.0-rc.7-freebsd-15.1-amd64.pkg` | FreeBSD 15.1、CLIパッケージ |
+| OpenBSD x86-64 | `sibuna-1.0.0-rc.7.tgz` | OpenBSD 7.9、CLIパッケージ |
 
 macOS向けビルドは未署名です。各パッケージにはライセンス、ソースへのリンク、ビルドマニフェストが含まれます。使用する前に、`SHA256SUMS`と照合してアーカイブを検証してください。
 
@@ -112,8 +112,8 @@ sibuna --version
 Linux x86-64で、アプリがポート3000で待ち受けている場合：
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.6/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.6/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.7/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.7/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

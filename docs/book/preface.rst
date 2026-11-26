@@ -5,6 +5,6 @@ Why put another program in front of an application? Running two copies lets us k
 
 We begin with a journey that needs no knowledge of Rust, cryptography or configuration. In the design chapters we follow the same decisions into algorithms and code. The measurements and operating procedures come later, once we know what the system is trying to achieve.
 
-.. rubric:: Sibuna 1.0.0-rc.6, November 2026
+.. rubric:: Sibuna 1.0.0-rc.7, November 2026
 
 Sources, exercises, and reproducible measurements accompany the Sibuna repository.
