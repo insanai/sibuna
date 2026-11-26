@@ -177,5 +177,22 @@
   "2030 · Roadmap target for high-risk uses.": "2030 · उच्च जोखिम वाले उपयोगों के लिए रोडमैप का लक्ष्य।",
   "Singapore": "सिंगापुर",
   "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.": "संगत ब्राउज़र Sibuna के साथ क्वांटम हमलों का सामना करने वाली कुंजी तय कर सकता है। Sibuna वेब सर्वर से अलग कनेक्शन खोलता है, इसलिए पुराने उपकरण को चालू रखते हुए हम उसे उन्नत कर सकते हैं।",
-  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031 · निर्दिष्ट महत्वपूर्ण अवसंरचना के लिए लक्ष्य। जोखिम का सामना करने वाले अन्य संगठनों को 2035 तक बदलाव पूरा करने की सलाह है।"
+  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031 · निर्दिष्ट महत्वपूर्ण अवसंरचना के लिए लक्ष्य। जोखिम का सामना करने वाले अन्य संगठनों को 2035 तक बदलाव पूरा करने की सलाह है।",
+  "Check post-quantum TLS": "पोस्ट-क्वांटम TLS जाँचें",
+  "Does our website support post-quantum TLS?": "क्या हमारी वेबसाइट पोस्ट-क्वांटम TLS का समर्थन करती है?",
+  "A TLS handshake gives us one piece of migration evidence for our public endpoint. Assessing compliance also requires checking the systems, connections and deadlines covered by the applicable directive.": "TLS हैंडशेक हमारे सार्वजनिक एंडपॉइंट के माइग्रेशन का एक प्रमाण देता है। अनुपालन का आकलन करने के लिए हमें लागू निर्देश के दायरे में आने वाले सिस्टम, कनेक्शन और समय-सीमाएँ भी जाँचनी होती हैं।",
+  "Website URL": "वेबसाइट का URL",
+  "Open website to check": "जाँच के लिए वेबसाइट खोलें",
+  "We open the HTTPS origin in a new tab and copy one value from the browser security panel. The check runs locally.": "हम नए टैब में HTTPS ओरिजिन खोलते हैं और ब्राउज़र के सुरक्षा पैनल से एक मान कॉपी करते हैं। जाँच स्थानीय रूप से होती है।",
+  "Enter an HTTPS website or hostname without login details.": "लॉगिन विवरण के बिना HTTPS पता या होस्टनाम दर्ज करें।",
+  "Origin to inspect": "जाँच के लिए ओरिजिन",
+  "In desktop Chrome or Edge, open Developer Tools on the website. In Privacy and security, select the origin shown above and copy the Key exchange value under Connection. If the origin differs or the browser shows a certificate warning, leave the field empty.": "डेस्कटॉप Chrome या Edge में वेबसाइट के डेवलपर टूल खोलें। निजता और सुरक्षा में ऊपर दिखाया गया ओरिजिन चुनें और कनेक्शन के अंतर्गत कुंजी विनिमय का मान कॉपी करें। यदि ओरिजिन अलग हो या ब्राउज़र प्रमाणपत्र की चेतावनी दिखाए, तो फ़ील्ड खाली छोड़ें।",
+  "Key exchange reported by the browser": "ब्राउज़र द्वारा बताया गया कुंजी विनिमय",
+  "Interpret result": "परिणाम समझें",
+  "The reported group combines classical key exchange with ML-KEM. This is evidence of hybrid post-quantum key exchange on this connection.": "बताया गया समूह पारंपरिक कुंजी विनिमय और ML-KEM को मिलाता है। यह इस कनेक्शन पर हाइब्रिड पोस्ट-क्वांटम कुंजी विनिमय का प्रमाण है।",
+  "This connection used classical key exchange. A different client or another endpoint may negotiate a different group.": "इस कनेक्शन में पारंपरिक कुंजी विनिमय हुआ। कोई दूसरा क्लाइंट या एंडपॉइंट किसी अन्य समूह पर सहमत हो सकता है।",
+  "Inconclusive. We need a recognized key exchange value from a trusted connection to this origin.": "निष्कर्ष नहीं निकला। हमें इस ओरिजिन से विश्वसनीय कनेक्शन पर प्राप्त कुंजी विनिमय का ऐसा मान चाहिए जिसे हम पहचान सकें।",
+  "What this result means for migration": "माइग्रेशन के लिए इस परिणाम का अर्थ",
+  "Verify the handshake with OpenSSL": "OpenSSL से हैंडशेक सत्यापित करें",
+  "https://example.com": "https://example.com"
 }

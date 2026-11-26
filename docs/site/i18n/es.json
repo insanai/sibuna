@@ -177,5 +177,22 @@
   "2030 · Roadmap target for high-risk uses.": "2030 · Objetivo de la hoja de ruta para usos de alto riesgo.",
   "Singapore": "Singapur",
   "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.": "Un navegador compatible puede acordar con Sibuna una clave resistente a los ataques cuánticos. Sibuna abre otra conexión con el servidor web, de modo que un dispositivo antiguo puede seguir en servicio durante la migración.",
-  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031 · Objetivo para la infraestructura crítica designada. Se recomienda que las demás organizaciones expuestas migren para 2035."
+  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031 · Objetivo para la infraestructura crítica designada. Se recomienda que las demás organizaciones expuestas migren para 2035.",
+  "Check post-quantum TLS": "Comprobar TLS poscuántico",
+  "Does our website support post-quantum TLS?": "¿Admite nuestro sitio web TLS poscuántico?",
+  "A TLS handshake gives us one piece of migration evidence for our public endpoint. Assessing compliance also requires checking the systems, connections and deadlines covered by the applicable directive.": "Una negociación TLS aporta evidencia de la migración de nuestro punto de acceso público. Para evaluar el cumplimiento también debemos revisar los sistemas, las conexiones y los plazos que abarca la directiva aplicable.",
+  "Website URL": "URL del sitio web",
+  "Open website to check": "Abrir el sitio para comprobarlo",
+  "We open the HTTPS origin in a new tab and copy one value from the browser security panel. The check runs locally.": "Abrimos el origen HTTPS en otra pestaña y copiamos un valor del panel de seguridad del navegador. La comprobación se realiza en el dispositivo.",
+  "Enter an HTTPS website or hostname without login details.": "Introduzca una dirección HTTPS o un nombre de host sin credenciales.",
+  "Origin to inspect": "Origen que se va a comprobar",
+  "In desktop Chrome or Edge, open Developer Tools on the website. In Privacy and security, select the origin shown above and copy the Key exchange value under Connection. If the origin differs or the browser shows a certificate warning, leave the field empty.": "En Chrome o Edge de escritorio, abrimos las herramientas de desarrollo en el sitio web. En Privacidad y seguridad, seleccionamos el origen indicado arriba y copiamos el valor de Intercambio de claves en Conexión. Si el origen es distinto o el navegador muestra una advertencia de certificado, dejamos el campo vacío.",
+  "Key exchange reported by the browser": "Intercambio de claves indicado por el navegador",
+  "Interpret result": "Interpretar el resultado",
+  "The reported group combines classical key exchange with ML-KEM. This is evidence of hybrid post-quantum key exchange on this connection.": "El grupo indicado combina un intercambio de claves clásico con ML-KEM. Esto demuestra que en esta conexión se usó un intercambio de claves poscuántico híbrido.",
+  "This connection used classical key exchange. A different client or another endpoint may negotiate a different group.": "Esta conexión usó un intercambio de claves clásico. Otro cliente u otro punto de acceso podría negociar un grupo diferente.",
+  "Inconclusive. We need a recognized key exchange value from a trusted connection to this origin.": "Resultado no concluyente. Necesitamos un valor de intercambio de claves reconocido de una conexión de confianza con este origen.",
+  "What this result means for migration": "Qué significa el resultado para la migración",
+  "Verify the handshake with OpenSSL": "Verificar la negociación con OpenSSL",
+  "https://example.com": "https://example.com"
 }

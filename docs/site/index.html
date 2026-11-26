@@ -2,7 +2,8 @@
   <div><h1>Distributed load balancer and web application firewall</h1>
     <p class="lead">Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.</p>
     <div class="actions"><a class="button" href="/sibuna/book/introduction.html">What is Sibuna?</a>
-      <a class="button secondary" href="#use-cases">Where we use Sibuna</a></div>
+      <a class="button secondary" href="#use-cases">Where we use Sibuna</a>
+      <a class="button secondary" href="#tls-check">Check post-quantum TLS</a></div>
     <p class="meta">Open source · LGPL 3.0 · v1.0.0-rc.6</p></div>
   <figure class="edge-map">
     <input type="checkbox" id="pause-traffic"><label for="pause-traffic">Pause traffic animation</label>
@@ -67,6 +68,40 @@
       <div class="quantum-origin"><b dir="auto">Origin connection</b><span dir="auto">Classical TLS in this example</span></div>
     </figcaption>
   </figure>
+  <div class="tls-check" id="tls-check">
+    <h3>Does our website support post-quantum TLS?</h3>
+    <p>A TLS handshake gives us one piece of migration evidence for our public endpoint. Assessing compliance also requires checking the systems, connections and deadlines covered by the applicable directive.</p>
+    <div data-tls-check hidden>
+      <form id="tls-target-form">
+        <label for="tls-url">Website URL</label>
+        <div class="check-fields">
+          <input id="tls-url" aria-describedby="tls-url-hint" aria-errormessage="tls-url-error" type="text" inputmode="url" dir="ltr" placeholder="https://example.com" maxlength="2048" required autocomplete="off" spellcheck="false">
+          <button class="button" type="submit">Open website to check</button>
+        </div>
+        <p id="tls-url-hint">We open the HTTPS origin in a new tab and copy one value from the browser security panel. The check runs locally.</p>
+        <p id="tls-url-error" role="alert" hidden>Enter an HTTPS website or hostname without login details.</p>
+      </form>
+      <div id="tls-observation" hidden>
+        <p><strong>Origin to inspect</strong> <a id="tls-origin" dir="ltr" target="_blank" rel="noopener noreferrer"></a></p>
+        <p>In desktop Chrome or Edge, open Developer Tools on the website. In Privacy and security, select the origin shown above and copy the Key exchange value under Connection. If the origin differs or the browser shows a certificate warning, leave the field empty.</p>
+        <form id="tls-group-form">
+          <label for="tls-group">Key exchange reported by the browser</label>
+          <div class="check-fields">
+            <input id="tls-group" dir="ltr" maxlength="128" autocomplete="off" spellcheck="false">
+            <button class="button" type="submit">Interpret result</button>
+          </div>
+        </form>
+        <div id="tls-result" role="status" aria-live="polite">
+          <p data-outcome="hybrid" hidden>The reported group combines classical key exchange with ML-KEM. This is evidence of hybrid post-quantum key exchange on this connection.</p>
+          <p data-outcome="classical" hidden>This connection used classical key exchange. A different client or another endpoint may negotiate a different group.</p>
+          <p data-outcome="unknown" hidden>Inconclusive. We need a recognized key exchange value from a trusted connection to this origin.</p>
+        </div>
+        <a href="/sibuna/book/post-quantum-transport.html">What this result means for migration</a>
+      </div>
+    </div>
+    <a href="/sibuna/book/post-quantum-transport.html#verify-the-negotiated-group">Verify the handshake with OpenSSL</a>
+    <script type="module" src="/sibuna/assets/tls-check.js"></script>
+  </div>
   <div class="quantum-dates">
     <h3>Deadlines at a glance</h3>
     <dl>

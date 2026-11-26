@@ -177,5 +177,22 @@
   "2030 · Roadmap target for high-risk uses.": "2030년 · 고위험 용도에 대한 로드맵 목표.",
   "Singapore": "싱가포르",
   "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.": "호환되는 브라우저는 Sibuna와 양자내성 방식으로 키를 합의할 수 있습니다. Sibuna는 웹 서버로 별도 연결을 열므로 구형 장치를 계속 운영하면서 전환할 수 있습니다.",
-  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031년 · 지정 핵심 기반 시설의 전환 목표. 위험에 노출된 다른 조직에는 2035년까지 전환을 권고합니다."
+  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031년 · 지정 핵심 기반 시설의 전환 목표. 위험에 노출된 다른 조직에는 2035년까지 전환을 권고합니다.",
+  "Check post-quantum TLS": "양자내성 TLS 확인",
+  "Does our website support post-quantum TLS?": "우리 웹사이트는 양자내성 TLS를 지원합니까?",
+  "A TLS handshake gives us one piece of migration evidence for our public endpoint. Assessing compliance also requires checking the systems, connections and deadlines covered by the applicable directive.": "TLS 핸드셰이크는 공개 엔드포인트의 전환 여부를 판단하는 근거 중 하나입니다. 지침 준수 여부를 평가하려면 해당 지침이 다루는 시스템, 연결 및 기한도 확인해야 합니다.",
+  "Website URL": "웹사이트 URL",
+  "Open website to check": "웹사이트를 열어 확인",
+  "We open the HTTPS origin in a new tab and copy one value from the browser security panel. The check runs locally.": "새 탭에서 HTTPS 출처를 열고 브라우저 보안 패널에서 값 하나를 복사합니다. 검사는 로컬에서 진행됩니다.",
+  "Enter an HTTPS website or hostname without login details.": "로그인 정보 없이 HTTPS 주소 또는 호스트 이름을 입력하세요.",
+  "Origin to inspect": "확인할 출처",
+  "In desktop Chrome or Edge, open Developer Tools on the website. In Privacy and security, select the origin shown above and copy the Key exchange value under Connection. If the origin differs or the browser shows a certificate warning, leave the field empty.": "데스크톱 Chrome 또는 Edge에서 대상 웹사이트의 개발자 도구를 엽니다. 개인정보 보호 및 보안에서 위에 표시된 출처를 선택하고 연결 아래의 키 교환 값을 복사합니다. 출처가 다르거나 인증서 경고가 표시되면 입력란을 비워 둡니다.",
+  "Key exchange reported by the browser": "브라우저가 보고한 키 교환",
+  "Interpret result": "결과 해석",
+  "The reported group combines classical key exchange with ML-KEM. This is evidence of hybrid post-quantum key exchange on this connection.": "보고된 그룹은 기존 키 교환과 ML-KEM을 결합합니다. 이 연결에서 하이브리드 양자내성 키 교환을 사용했다는 근거입니다.",
+  "This connection used classical key exchange. A different client or another endpoint may negotiate a different group.": "이 연결은 기존 키 교환을 사용했습니다. 다른 클라이언트나 엔드포인트는 다른 그룹을 협상할 수 있습니다.",
+  "Inconclusive. We need a recognized key exchange value from a trusted connection to this origin.": "판정할 수 없습니다. 이 출처에 대한 신뢰할 수 있는 연결에서 얻은 식별 가능한 키 교환 값이 필요합니다.",
+  "What this result means for migration": "이 결과가 전환에 의미하는 것",
+  "Verify the handshake with OpenSSL": "OpenSSL로 핸드셰이크 검증",
+  "https://example.com": "https://example.com"
 }

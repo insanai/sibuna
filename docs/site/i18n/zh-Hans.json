@@ -177,5 +177,22 @@
   "2030 · Roadmap target for high-risk uses.": "2030 年 · 路线图对高风险用途的迁移目标。",
   "Singapore": "新加坡",
   "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.": "兼容的浏览器可以与 Sibuna 协商抗量子密钥。Sibuna 单独连接 Web 服务器，因此旧设备可以在升级期间继续提供服务。",
-  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031 年 · 指定关键信息基础设施的迁移目标。建议其他面临风险的组织在 2035 年前完成迁移。"
+  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031 年 · 指定关键信息基础设施的迁移目标。建议其他面临风险的组织在 2035 年前完成迁移。",
+  "Check post-quantum TLS": "检查后量子 TLS",
+  "Does our website support post-quantum TLS?": "我们的网站支持后量子 TLS 吗？",
+  "A TLS handshake gives us one piece of migration evidence for our public endpoint. Assessing compliance also requires checking the systems, connections and deadlines covered by the applicable directive.": "一次 TLS 握手可以为公共端点的迁移提供一项证据。评估合规性时，我们还需要核对适用指令所涵盖的系统、连接和期限。",
+  "Website URL": "网站网址",
+  "Open website to check": "打开网站并检查",
+  "We open the HTTPS origin in a new tab and copy one value from the browser security panel. The check runs locally.": "我们在新标签页打开 HTTPS 源站地址，再从浏览器的安全面板复制一个值。检查在本地进行。",
+  "Enter an HTTPS website or hostname without login details.": "请输入 HTTPS 网址或主机名，不要包含登录凭据。",
+  "Origin to inspect": "要检查的源",
+  "In desktop Chrome or Edge, open Developer Tools on the website. In Privacy and security, select the origin shown above and copy the Key exchange value under Connection. If the origin differs or the browser shows a certificate warning, leave the field empty.": "在桌面版 Chrome 或 Edge 中，打开该网站的开发者工具。在“隐私和安全”中选择上方所示的源，复制“连接”下的“密钥交换”值。如果源不一致或浏览器显示证书警告，请将此栏留空。",
+  "Key exchange reported by the browser": "浏览器报告的密钥交换",
+  "Interpret result": "解读结果",
+  "The reported group combines classical key exchange with ML-KEM. This is evidence of hybrid post-quantum key exchange on this connection.": "报告的组将经典密钥交换与 ML-KEM 相结合。这表明此连接使用了混合后量子密钥交换。",
+  "This connection used classical key exchange. A different client or another endpoint may negotiate a different group.": "此连接使用了经典密钥交换。其他客户端或端点可能会协商出不同的组。",
+  "Inconclusive. We need a recognized key exchange value from a trusted connection to this origin.": "无法得出结论。我们需要从到该源的可信连接中获取一个可识别的密钥交换值。",
+  "What this result means for migration": "结果对迁移意味着什么",
+  "Verify the handshake with OpenSSL": "使用 OpenSSL 验证握手",
+  "https://example.com": "https://example.com"
 }
