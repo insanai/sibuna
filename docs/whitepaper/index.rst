@@ -53,10 +53,9 @@ that is, when the work it saves the origin exceeds its own cost [#cost-model]_. 
 
 Sibuna reverses the asymmetry by conditioning admission on a proof of work. To earn a session, a browser finds a nonce whose SHA-256 digest has :math:`b` leading zero bits, or computes a proof of sequential work. The expected search is :math:`2^b` hash trials, 65,536 at :math:`b = 16`; the server checks one candidate. The server's check is also stateless: issuing a challenge writes nothing, and only a solution that was paid for occupies memory.
 
-.. figure:: /assets/figures/work-asymmetry.svg
+.. typst-diagram:: diagrams/charts/work-asymmetry.typ
+   :caption: Where the work goes. Above, a defense that inspects first spends its own work on every request a sender emits. Below, Sibuna asks the sender for :math:`2^b` expected hash trials and verifies the answer with one hash. The meters are a model; the verification time is measured (Hashcash verification at 16 bits, ``benchmarks/results/primitives-latest.md``).
    :alt: Two rows. In the first, a sender emits one cheap request to a defense that parses, scans with regular expressions and queries a shared store for every request; the defense's work meter is full and the sender's nearly empty. In the second, the sender solves a puzzle of 2 to the b expected hash trials, 65,536 at b equal to 16, and Sibuna verifies one hash in 70.2 ns and keeps no state until the puzzle is solved; now the sender's meter is full and Sibuna's nearly empty.
-
-   Where the work goes. Above, a defense that inspects first spends its own work on every request a sender emits. Below, Sibuna asks the sender for :math:`2^b` expected hash trials and verifies the answer with one hash. The meters are a model; the verification time is measured (Hashcash verification at 16 bits, ``benchmarks/results/primitives-latest.md``).
 
 A proof of work does not establish humanity, identity or intent. A sender can rent computers, share a session within its lifetime, or spread work across machines. The puzzle changes the price of admission; policy and inspection still decide what an admitted request may do.
 
@@ -277,10 +276,9 @@ The Sequential-Work Tier
 
 The second tier follows the proof of sequential work of Cohen and Pietrzak (EUROCRYPT 2018). Its labels form a complete binary tree of depth :math:`n`. An internal node hashes its two children. A leaf hashes the *left siblings of its ancestors* wherever its root path turned right. Those left-sibling edges make the computation sequential: a leaf cannot be labelled until every subtree to its left is complete, so the root label depends on all :math:`2^{n+1} - 1` labels in order. After computing the root :math:`\varphi`, the prover derives :math:`t` leaves by Fiat-Shamir and, for each, sends the leaf label and the :math:`n` sibling labels along its path. The verifier recomputes each opened leaf and hashes up to :math:`\varphi`, at a cost of :math:`O(tn)` label computations in a fixed workspace.
 
-.. figure:: /assets/figures/sequential-work.svg
-   :alt: Left, four cores each try a disjoint share of the nonces, and core 3 finds one at nonce 18, after which every core stops. Right, a binary tree of depth three. The path of leaf 3.5 is amber, the siblings 1.0, 2.3 and 3.4 sent in its opening are green, and dashed red arrows run from 1.0 and 3.4 into leaf 3.5.
-
-   Parallel search against sequential work. Left, Hashcash: independent nonce trials, so :math:`M` cores finish about :math:`M` times sooner. Right, the Cohen-Pietrzak tree at depth 3: the dashed left-sibling edges make leaf 3.5 wait for the subtrees to its left, and an opening of leaf 3.5 sends its label and the three green siblings (after book Part III).
+.. typst-diagram:: diagrams/charts/sequential-work.typ
+   :caption: Parallel search against sequential work. Above, Hashcash: independent nonce trials, so :math:`M` cores finish about :math:`M` times sooner. Below, the Cohen-Pietrzak tree at depth 3: the dashed left-sibling edges make leaf 3.5 wait for the subtrees to its left, and an opening of leaf 3.5 sends its label and the three slate siblings (after book Part III).
+   :alt: Above, four cores each try a disjoint share of the nonces, and core 3 finds one at nonce 18, after which every core stops. Below, a binary tree of depth three. The path of leaf 3.5 is green, the siblings 1.0, 2.3 and 3.4 sent in its opening are slate, and dashed gold arrows run from 1.0 and 3.4 into leaf 3.5.
 
 The parameters are chosen so that the numbers stay small. Work bits map to depth by :math:`n = b - 3`, clamped to :math:`[4, 24]`. A proof has :math:`32(1 + t(n+1))` bytes, which at depth 13 with 16 openings is :math:`32(1 + 16 \times 14) = 7200` bytes. The prover keeps only the top levels of the tree and recomputes the subtree it must open, so its whole workspace, the proof included, stays under 100 KB; a browser tab and the native tests use the same prover [#posw]_. Blocki, Lee and Zhou (ITC 2021) proved the construction sound against quantum provers in the quantum random-oracle model.
 
