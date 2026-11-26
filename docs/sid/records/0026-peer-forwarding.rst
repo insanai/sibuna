@@ -84,9 +84,9 @@ Forwarding runs only in the regional regime of SID 0015, where the measured roun
 TCP and HTTP connections
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. graphviz:: ../diagrams/peer-forwarding.dot
+.. typst-diagram:: ../diagrams/peer-forwarding.typ
    :caption: Forwarding a stream to its owner.
-   :alt: Node B checks the local connection and sends its 76-byte header to node A. The owner verifies the header and admission limits and returns a 17-byte status. An accepted stream then relays in both directions.
+   :alt: A sequence diagram with the client, node B that receives the connection, and node A that owns the client. The client connects to node B, which checks its drain, the rate and a flow slot and computes the owner. Node B connects to the forwarding port of node A and sends the 76-byte header. Node A checks the roster, the tag, the epoch, the frontend, its drain, a slot and the rate, and answers with the 17-byte status 1, accepted. Status 2 declines, and node B serves the client itself; status 3 denies, and node B closes. After status 1 node B relays the bytes both ways without reading them, and node A serves the connection with the client address of the header.
 
 The receiving node applies its own checks first: it refuses when it drains, when the client exceeds the connection rate here, or when it has no flow slot. It then computes the owner. When the owner is itself, or no peer is eligible, the connection goes on as before. Otherwise the node connects to the forwarding port of the owner and writes one header. The connection leaves from the IP address of the node's mesh address, whatever the routing table would select, so the owner finds the source in its roster. On Linux the node binds the socket to that address before it connects. On other platforms the source is the address that the routing table selects, and forwarding works where that is the mesh address. The node reads nothing from the client yet, so the connection can still be served here.
 

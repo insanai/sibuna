@@ -338,9 +338,9 @@ The payload of ``decide`` and ``sample`` is the wire form of the view. The agent
 
 *Breaker.* Each thread keeps a breaker for each agent.
 
-.. graphviz:: ../diagrams/breaker.dot
+.. typst-diagram:: ../diagrams/breaker.typ
    :caption: The circuit breaker of one thread for one agent.
-   :alt: Closed counts failures and opens at the threshold. Open refuses until its time ends, then lets one probe through. The probe closes or reopens the breaker.
+   :alt: Three states. The breaker starts closed and counts n failures in a row: a success sets n to 0, and a failure with n + 1 below the limit counts it. A failure with n + 1 equal to the limit opens the breaker until t, which is now plus the open time. While open, a call before t is refused with unavailable. A call at t or later goes out alone, in the half-open state. Its success closes the breaker, and its failure opens it again until a new t.
 
 A call that the breaker refuses fails with ``unavailable`` and costs no system call. With :math:`w` threads, a dead agent costs each thread ``failures`` calls of one deadline each, and then one probe per thread for each ``open`` interval. A call that fails with ``overload`` is not a fault of the agent and does not count.
 
@@ -351,7 +351,9 @@ Parking a connection
 
 At the connection stage the calling thread is the edge worker, which accepts for every frontend, or a thread of the HTTP/3 runtime. Neither may wait for an agent. So a connection whose chain names an agent is *parked*, and judges decide it.
 
-.. graphviz:: ../diagrams/parking.dot
+.. typst-diagram:: ../diagrams/parking.typ
+   :caption: A parked connection and the judges.
+   :alt: The edge worker or an HTTP/3 task holds the socket of a parked connection and reads nothing. It puts a case, an owned copy of the view, into a bounded queue of hook_judges.queue cases. The judges, hook_judges.threads of them, take it and make the blocking calls to the agent, with a deadline and a breaker. They return the verdict and wake the worker. When the queue is full, the worker sheds: it runs the chain itself, and every agent fails with overload.
 
 The root object ``hook_judges`` has the two numbers of this section, ``threads`` and ``queue``. The *judges* are a small set of threads, ``hook_judges.threads`` of them (4 unless the file says otherwise, 1 to 64), for each of the two callers. A judge owns its own instances of the hooks, as every thread does: its Wasm memories, its agent connections and its breakers. It takes a *case*, an owned copy of the view, runs the whole chain of the frontend on it with the blocking calls of this section, and gives the verdict back. The edge worker receives it through its wake socket. An HTTP/3 task receives it through a one-shot channel.
 
