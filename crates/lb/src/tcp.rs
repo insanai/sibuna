@@ -149,7 +149,7 @@ impl From<Ticket> for Hold {
 }
 
 pub(crate) struct Stream {
-    _permit: crate::FlowPermit,
+    permit: crate::FlowPermit,
     pub client: TcpStream,
     pub origin: TcpStream,
     hold: Hold,
@@ -163,6 +163,10 @@ pub(crate) struct Stream {
 
 impl Drop for Stream {
     fn drop(&mut self) {
+        // Bytes both ways prove the client for pressure mode (SID 0034).
+        if self.up.moved > 0 && self.down.moved > 0 {
+            self.permit.prove();
+        }
         if let Some(line) = &mut self.line {
             line.bytes_in += self.up.moved;
             line.bytes_out = self.down.moved;
@@ -184,7 +188,7 @@ impl Stream {
         origin.set_nonblocking(true)?;
         let stalled = (!pending.is_empty()).then(Instant::now);
         Ok(Self {
-            _permit: permit,
+            permit,
             client,
             origin,
             hold: hold.into(),

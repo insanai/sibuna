@@ -6,7 +6,9 @@ mod affinity;
 pub use affinity::{Affinity, AffinityCounters, AffinityKey, AffinityStore, AffinityTable, Kept};
 mod cluster;
 pub use cluster::ClusterState;
+mod accept;
 mod acme;
+mod admit;
 mod quota;
 pub use acme::{
     AcmeChallenge, AcmeIssuer, AcmeOptions, Authority, AutoName, AutomaticHttps, CertificateKey,
@@ -15,6 +17,8 @@ pub use acme::{
 };
 mod budget;
 pub use budget::{FlowBudget, FlowPermit};
+mod defense;
+pub use defense::Defense;
 mod config;
 mod health;
 mod hints;
@@ -27,9 +31,11 @@ pub use http::{
 };
 mod websocket;
 pub use websocket::{TunnelPermit, TunnelRefusal, WebSocketRule};
+mod guard;
 mod hello;
 mod inspect;
 mod ja4;
+mod known;
 mod listen;
 pub use listen::ListenFault;
 mod maglev;
@@ -50,6 +56,7 @@ mod runtime;
 pub use runtime::{RuntimeError, ServerState, ServerStatus};
 mod sticky;
 mod tcp;
+mod total;
 mod traffic;
 pub use observe::{AccessLogOptions, Forwarded, FrontendInfo, LogOutput, ObserveOptions};
 pub use route::{FieldEdit, Redirect, RoutePolicy};
@@ -68,7 +75,7 @@ mod stats;
 pub use stats::{
     ActiveRequest, FrontendStats, Histogram, Refusal, ServerInfo, ServerStats, Stats,
 };
-pub use stats::{FrontendView, Latency, ServerView, StatsView};
+pub use stats::{FrontendView, Latency, ServerView, StatsView, TopSource};
 
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::io;
@@ -84,14 +91,15 @@ use sibuna_reactor::{Poller, READ, Waker, handle};
 use tcp::{Connect, Connectors, Relays, Stream, transient};
 
 enum Socket {
-    Tcp(TcpListener),
+    /// Shared with the accept threads, which accept on it (SID 0034).
+    Tcp(std::sync::Arc<TcpListener>),
     Udp(UdpSocket),
 }
 
 impl Socket {
     fn handle(&self) -> sibuna_reactor::Handle {
         match self {
-            Self::Tcp(socket) => handle(socket),
+            Self::Tcp(socket) => handle(&**socket),
             Self::Udp(socket) => handle(socket),
         }
     }
@@ -109,6 +117,9 @@ struct Listener {
     // TCP sockets with independent reuse-port queues are retired before flows drain.
     socket: Option<Socket>,
     route: Frontend,
+    /// A TCP listener that the accept threads watch (SID 0034). It is false while the
+    /// listener is held for a handoff and after it was given up.
+    accepting: bool,
 }
 
 type Bind = (Protocol, SocketAddr);
@@ -176,7 +187,12 @@ struct Pending {
 
 struct DatagramFlow {
     line: Option<flowlog::FlowGuard>,
-    _permit: FlowPermit,
+    permit: FlowPermit,
+    /// The server answered the client once (SID 0034).
+    answered: bool,
+    /// The client sent again after an answer, or QUIC validated it: the mapping is
+    /// confirmed for the packet budget of the frontend (SID 0034).
+    confirmed: bool,
     first_request: Option<Instant>,
     origin: UdpSocket,
     ticket: Ticket,
@@ -240,6 +256,14 @@ pub struct Edge {
     peering: Option<Box<forward::Peering>>,
     /// Where a handoff to or from another process stands (SID 0029).
     handoff: handoff::State,
+    /// The threads that accept and refuse TCP connections (SID 0034).
+    acceptors: accept::Acceptors,
+    /// The ban table and the automatic bans, shared with the HTTP firewall (SID 0034).
+    defense: std::sync::Arc<Defense>,
+    /// Switches of pressure mode that the daemon has not been told of yet.
+    pressure_changes: Vec<bool>,
+    /// The packet budget of each UDP frontend with `total_pps`, by listener (SID 0034).
+    totals: HashMap<usize, total::Total>,
 }
 
 /// Gives `cluster` the roster of the mesh and publishes the HTTP routes of `config`
@@ -288,7 +312,7 @@ fn open_listener(protocol: Protocol, address: SocketAddr, shared: bool) -> io::R
             }
             .map_err(named)?;
             socket.set_nonblocking(true)?;
-            Ok(Socket::Tcp(socket))
+            Ok(Socket::Tcp(std::sync::Arc::new(socket)))
         }
         Protocol::Udp => {
             let socket = if shared {
@@ -301,6 +325,69 @@ fn open_listener(protocol: Protocol, address: SocketAddr, shared: bool) -> io::R
             Ok(Socket::Udp(socket))
         }
     }
+}
+
+/// The flow log of an edge, which the accept threads share.
+type Shared = std::sync::Arc<flowlog::FlowLog>;
+
+/// Starts `count` accept threads that admit with `parts` and wake the worker by `wake`.
+fn start_acceptors(
+    count: usize,
+    parts: (FlowBudget, std::sync::Arc<Defense>, std::sync::Arc<Stats>, Shared),
+    wake: &sibuna_reactor::Wake,
+) -> io::Result<accept::Acceptors> {
+    let (budget, defense, stats, flow_log) = parts;
+    let edge = wake.clone();
+    accept::Acceptors::start(count, accept::Parts { budget, defense, stats, flow_log, edge })
+}
+
+/// The listeners of a start, and what binding them found.
+struct Bound {
+    binds: Vec<Bind>,
+    listeners: Vec<Listener>,
+    listen_faults: Vec<ListenFault>,
+    /// The listeners on sockets lent for a handoff, which wait to be armed (SID 0029).
+    held: Vec<usize>,
+}
+
+/// Binds every listener of `routes`, or takes its socket from `inherited`. A UDP
+/// listener is watched by `poll`; a TCP listener by the accept threads, once the edge
+/// publishes it (SID 0034). A lent socket is held, watched by nobody.
+fn bind_listeners(
+    routes: BTreeMap<Bind, Frontend>,
+    inherited: &mut Inherited,
+    reuse_port: bool,
+    poll: &mut Poller<Ready>,
+) -> io::Result<Bound> {
+    let mut bound = Bound {
+        binds: Vec::new(),
+        listeners: Vec::new(),
+        listen_faults: Vec::new(),
+        held: Vec::new(),
+    };
+    for (bind, route) in routes {
+        let (socket, held) = inherited.take_or(bind, reuse_port)?;
+        let tcp = matches!(socket, Socket::Tcp(_));
+        if let Socket::Tcp(listener) = &socket {
+            let none = listen::ListenOptions::default();
+            route.listen.apply(&none, listener, &route.info.name, &mut bound.listen_faults);
+        }
+        let id = bound.listeners.len();
+        if held {
+            bound.held.push(id);
+        } else if !tcp {
+            poll.set(socket.handle(), READ, Ready::Listener(id))?;
+        }
+        bound.binds.push(bind);
+        let accepting = tcp && !held;
+        bound.listeners.push(Listener {
+            socket: Some(socket),
+            route,
+            paused_until: None,
+            accepting,
+        });
+    }
+    Ok(bound)
 }
 
 impl Edge {
@@ -427,27 +514,19 @@ impl Edge {
         stats.adopt(&mut config);
         let http = publish_routes(&mut config, &cluster);
         let budget = FlowBudget::new(&config);
-        let (mut binds, mut listeners) = (Vec::new(), Vec::new());
-        let mut listen_faults = Vec::new();
         let (mut poll, waker, wake) = watched_poller()?;
         handoff.wake = Some(wake.clone());
-        for (bind, route) in config.listeners {
-            let (socket, held) = inherited.take_or(bind, config.reuse_port)?;
-            if let Socket::Tcp(listener) = &socket {
-                let none = listen::ListenOptions::default();
-                route.listen.apply(&none, listener, &route.info.name, &mut listen_faults);
-            }
-            if held {
-                handoff.held.push(listeners.len());
-            } else {
-                poll.set(socket.handle(), READ, Ready::Listener(listeners.len()))?;
-            }
-            binds.push(bind);
-            listeners.push(Listener { socket: Some(socket), route, paused_until: None });
-        }
+        let listeners = std::mem::take(&mut config.listeners);
+        let bound = bind_listeners(listeners, &mut inherited, config.reuse_port, &mut poll)?;
+        let Bound { binds, listeners, listen_faults, held } = bound;
+        handoff.held = held;
         let (pools, loads) = build_pools(config.pools, &cluster);
         let (flow_log, flow_ends) = flowlog::FlowLog::new(stats.clone());
-        Ok(Self {
+        let defense = std::sync::Arc::new(Defense::new(sibuna_store::ban_table::DEFAULT_CAPACITY));
+        let parts = (budget.clone(), defense.clone(), stats.clone(), flow_log.clone());
+        let acceptors = start_acceptors(config.accept_threads, parts, &wake)?;
+        let totals = total::totals(&listeners, &HashMap::new());
+        let edge = Self {
             cluster,
             http,
             stats,
@@ -487,7 +566,13 @@ impl Edge {
             listen_faults,
             peering: None,
             handoff,
-        })
+            acceptors,
+            defense,
+            pressure_changes: Vec::new(),
+            totals,
+        };
+        edge.publish_accepting();
+        Ok(edge)
     }
 
     /// Applies a new measurement to future admissions. Existing flows keep their origin.
@@ -521,6 +606,9 @@ impl Edge {
         }
         if self.relays.count() != config.workers {
             return Err(invalid("changing global.workers requires a restart"));
+        }
+        if self.acceptors.count() != config.accept_threads.max(1) {
+            return Err(invalid("changing global.accept_threads requires a restart"));
         }
         if self.sticky_entries != config.sticky_entries
             && let Some(store) = self.cluster.store_in_use()
@@ -556,6 +644,8 @@ impl Edge {
             }
             listener.route = route;
         }
+        self.totals = total::totals(&self.listeners, &self.totals);
+        self.publish_accepting();
         // A partially inspected handshake has no upstream yet. Drop it at a policy
         // boundary so old ACLs can never select a pool from the new revision.
         self.drops = self.drops.saturating_add(self.inspecting.len() as u64);
@@ -573,14 +663,16 @@ impl Edge {
         // sockets (mappings still need them), and any sockets available for handoff.
         if self.retire_tcp_on_drain {
             for listener in &mut self.listeners {
-                if let Some(socket) = listener.socket.take_if(|s| matches!(s, Socket::Tcp(_))) {
-                    self.poll.remove(socket.handle());
+                if listener.socket.take_if(|s| matches!(s, Socket::Tcp(_))).is_some() {
                     listener.paused_until = None;
+                    listener.accepting = false;
                 }
             }
         }
         self.draining = true;
         self.budget.drain();
+        self.acceptors.drain();
+        self.settle_accepting();
     }
 
     /// Counts established flows and reserved TCP connects.
@@ -590,19 +682,36 @@ impl Edge {
 
     /// Counts discarded datagrams and refused admissions.
     pub fn dropped(&self) -> u64 {
-        self.drops
+        self.drops.saturating_add(self.acceptors.drops())
+    }
+
+    /// The ban table and the automatic bans of the node, which the HTTP firewall shares
+    /// (SID 0034).
+    pub fn defense(&self) -> std::sync::Arc<Defense> {
+        self.defense.clone()
+    }
+
+    /// The switches of pressure mode since the last call: true when it switched on
+    /// (SID 0034). The daemon logs them.
+    pub fn pressure_changes(&mut self) -> impl Iterator<Item = bool> + '_ {
+        self.pressure_changes.drain(..)
     }
 
     /// Processes one readiness batch, waiting for at most 25 ms. Individual flow
     /// errors release that flow. Only a failure of the poller is reported to the caller.
     pub fn step(&mut self) -> io::Result<()> {
         let now = Instant::now();
+        self.take_arrivals();
         self.finish_connects(now);
         self.finish_rulings(now);
         if now.saturating_duration_since(self.swept) >= SWEEP {
             self.swept = now;
             self.sweep(now);
-            self.stats.set_flows(self.budget.active(), self.drops);
+            if let Some(on) = self.budget.update_pressure() {
+                self.stats.set_pressure(on);
+                self.pressure_changes.push(on);
+            }
+            self.stats.set_flows(self.budget.active(), self.dropped());
         }
         self.events.clear();
         self.poll.wait(25, &mut self.events)?;
@@ -625,6 +734,7 @@ impl Edge {
             }
         }
         if self.events.iter().any(|event| matches!(event, Ready::Wake)) {
+            self.take_arrivals();
             self.finish_connects(Instant::now());
             self.finish_rulings(Instant::now());
         }
@@ -683,9 +793,8 @@ impl Edge {
         for _ in 0..64 {
             let result = match &self.listeners[id].socket {
                 None => return,
-                Some(Socket::Tcp(socket)) => {
-                    socket.accept().map(|(client, peer)| self.accept(id, client, peer))
-                }
+                // The accept threads accept on TCP listeners (SID 0034).
+                Some(Socket::Tcp(_)) => return,
                 Some(Socket::Udp(socket)) => socket
                     .recv_from(&mut self.buffer)
                     .map(|(size, peer)| self.forward((id, peer), size, None)),
@@ -715,157 +824,9 @@ impl Edge {
         )
     }
 
-    fn accept(&mut self, listener: usize, client: TcpStream, peer: SocketAddr) -> bool {
-        if self.draining {
-            return self.refuse(listener, peer, Refusal::Draining);
-        }
-        let info = &self.listeners[listener].route.info;
-        let trusted = info.trusts(peer.ip());
-        if info.proxy_protocol {
-            return self.await_header(listener, client, peer, trusted);
-        }
-        // A trusted proxy carries the connections of many clients, so the connection
-        // rate is not counted against it (SID 0020).
-        if !trusted && !self.allowed(listener, peer) {
-            return self.refuse(listener, peer, Refusal::RateLimit);
-        }
-        let Some(permit) = self.budget.reserve() else {
-            return self.refuse(listener, peer, Refusal::FlowLimit);
-        };
-        // A client that another node owns goes to that node (SID 0026).
-        if let Some(owner) = self.owner_of_stream(peer) {
-            return self.begin_handoff(listener, client, peer, permit, owner);
-        }
-        self.admit(listener, client, peer, permit, None)
-    }
-
-    /// Counts a refused connection of `peer`, and logs it when the rate of such lines
-    /// allows one more.
-    fn refuse(&self, listener: usize, peer: SocketAddr, reason: Refusal) -> bool {
-        self.stats.refuse(reason);
-        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
-        let now = now.map_or(0, |since| since.as_secs());
-        if self.flow_log.is_on() && self.stats.may_log_refusal(now) {
-            let mut line = self.begin_line(listener, peer);
-            flowlog::mark(&mut line, reason.end());
-        }
-        false
-    }
-
-    /// Starts the log line of a flow of `peer` on a listener, when flows are logged.
-    fn begin_line(&self, listener: usize, peer: SocketAddr) -> Option<flowlog::FlowGuard> {
-        let route = &self.listeners[listener].route;
-        let protocol = if self.binds[listener].0 == Protocol::Udp { "udp" } else { "tcp" };
-        self.flow_log.begin(protocol, peer, &route.info.name, &route.pool)
-    }
-
-    /// Holds a connection of a PROXY frontend until its header arrives. A peer that the
-    /// frontend does not trust may not send one, so its connection closes.
-    fn await_header(
-        &mut self,
-        listener: usize,
-        client: TcpStream,
-        peer: SocketAddr,
-        trusted: bool,
-    ) -> bool {
-        let room = trusted && self.awaiting.len() < MAX_AWAITING;
-        let permit = if room { self.budget.reserve() } else { None };
-        self.next_id = self.next_id.wrapping_add(1);
-        let id = self.next_id;
-        let registered = permit.is_some()
-            && client.set_nonblocking(true).is_ok()
-            && self.poll.set(handle(&client), READ, Ready::Proxy(id)).is_ok();
-        let Some(permit) = permit.filter(|_| registered) else {
-            self.stats.count_proxy(false);
-            return false;
-        };
-        let deadline = Instant::now() + PROXY_PATIENCE;
-        let bind = self.binds[listener];
-        self.awaiting.insert(id, Awaiting { bind, client, peer, permit, deadline });
-        true
-    }
-
-    /// Looks at a readable connection of a PROXY frontend. With a whole header the
-    /// connection goes on under the client address that the header names.
-    fn read_header(&mut self, id: u64) -> bool {
-        let Some(flow) = self.awaiting.get(&id) else { return true };
-        let look = proxy_header::take_header(&flow.client);
-        if look == proxy_header::Look::Wait {
-            return true;
-        }
-        let Some(flow) = self.awaiting.remove(&id) else { return true };
-        self.poll.remove(handle(&flow.client));
-        // A reload may have removed the listener meanwhile.
-        let listener = self.binds.iter().position(|bind| *bind == flow.bind);
-        let (proxy_header::Look::Header(source), Some(listener)) = (look, listener) else {
-            self.stats.count_proxy(false);
-            return false;
-        };
-        self.stats.count_proxy(true);
-        let client = source.unwrap_or(flow.peer);
-        let trusted = self.listeners[listener].route.info.trusts(client.ip());
-        if !trusted && !self.allowed(listener, client) {
-            return self.refuse(listener, client, Refusal::RateLimit);
-        }
-        self.admit(listener, flow.client, client, flow.permit, source)
-    }
-
-    /// Starts the flow of an admitted connection. `peer` is its client: the socket peer,
-    /// or the source that a PROXY header `named`.
-    fn admit(
-        &mut self,
-        listener: usize,
-        client: TcpStream,
-        peer: SocketAddr,
-        permit: FlowPermit,
-        named: Option<SocketAddr>,
-    ) -> bool {
-        self.admit_to(listener, client, peer, None, permit, named)
-    }
-
-    /// As [`Edge::admit`]. `reached` is the address that the client reached on the node
-    /// that forwarded the connection (SID 0026). It replaces the local address of the
-    /// socket, which is then the forwarding port.
-    fn admit_to(
-        &mut self,
-        listener: usize,
-        client: TcpStream,
-        peer: SocketAddr,
-        reached: Option<SocketAddr>,
-        permit: FlowPermit,
-        named: Option<SocketAddr>,
-    ) -> bool {
-        // An inspected connection is judged once its ClientHello is known.
-        let route = &self.listeners[listener].route;
-        let (proto, bind) = self.binds[listener];
-        let bind = reached.unwrap_or(bind);
-        if proto == Protocol::Http || route.inspect.is_none() {
-            let flow = gate::Flow {
-                protocol: sibuna_plugin::Protocol::Tcp,
-                secure: route.tls.is_some(),
-                client: peer,
-                local: bind,
-                frontend: &route.info.name,
-                server_name: b"",
-                ja4: b"",
-            };
-            match gate::rule(&mut self.gate, &flow) {
-                gate::Ruling::Admit => {}
-                gate::Ruling::Deny => return self.refuse(listener, peer, Refusal::Hook),
-                gate::Ruling::Parked(ticket) => {
-                    let parked =
-                        gate::Parked::Stream { listener, client, peer, reached, permit, named };
-                    self.park(ticket, parked);
-                    return true;
-                }
-            }
-        }
-        self.start_flow(listener, client, peer, reached, permit, named)
-    }
-
     /// Starts the flow of a connection that the connection hooks admitted, or the
     /// inspection of one that they judge later.
-    fn start_flow(
+    pub(crate) fn start_flow(
         &mut self,
         listener: usize,
         client: TcpStream,
@@ -1042,7 +1003,7 @@ impl Edge {
         }
     }
 
-    fn allowed(&self, listener: usize, peer: SocketAddr) -> bool {
+    pub(crate) fn allowed(&self, listener: usize, peer: SocketAddr) -> bool {
         let Some(rate) = self.listeners[listener].route.rate else { return true };
         self.budget.allowed(listener, peer, rate)
     }
@@ -1061,14 +1022,18 @@ impl Edge {
             self.stats.refuse(Refusal::UdpFlowLimit);
             return false;
         }
-        let permit = match self.budget.reserve() {
-            Some(permit) => Some(permit),
-            None if self.evict_unanswered() => self.budget.reserve(),
-            None => None,
+        let claim = budget::Claim::new(self.listeners[key.0].route.guard.caps, key.1.ip(), false);
+        let permit = match self.budget.take(claim) {
+            Err(Refusal::FlowLimit) if self.evict_unanswered() => self.budget.take(claim),
+            taken => taken,
         };
-        let Some(permit) = permit else {
-            self.stats.refuse(Refusal::UdpFlowLimit);
-            return false;
+        let permit = match permit {
+            Ok(permit) => permit,
+            Err(Refusal::FlowLimit) => {
+                self.stats.refuse(Refusal::UdpFlowLimit);
+                return false;
+            }
+            Err(reason) => return self.refuse(key.0, key.1, reason),
         };
         let flow = gate::Flow {
             protocol: sibuna_plugin::Protocol::Udp,
@@ -1115,7 +1080,9 @@ impl Edge {
             key,
             DatagramFlow {
                 line,
-                _permit: permit,
+                permit,
+                answered: false,
+                confirmed: false,
                 origin,
                 ticket,
                 first_request: Some(now),
@@ -1139,7 +1106,17 @@ impl Edge {
             return false;
         }
         let now = Instant::now();
+        let confirmed = self.udp.get(&key).is_some_and(|flow| flow.confirmed);
+        if let Some(total) = self.totals.get_mut(&key.0)
+            && !total.pass(confirmed, now)
+        {
+            self.stats.refuse(Refusal::UdpTotalLimit);
+            return false;
+        }
         if !self.udp.contains_key(&key) {
+            if self.defense.is_banned(key.1.ip(), defense::unix_now()) {
+                return self.refuse(key.0, key.1, Refusal::Banned);
+            }
             // While the judges decide about a client, its mapping does not exist.
             if self.gate.as_ref().is_some_and(|gate| gate.holds(key)) {
                 return false;
@@ -1174,6 +1151,7 @@ impl Edge {
         let Some(flow) = self.udp.get_mut(&key) else { return false };
         flow.via = via;
         flow.validation.see_request(&self.buffer[..size]);
+        flow.confirmed |= flow.answered || flow.validation.is_done();
         match flow.origin.send(&self.buffer[..size]) {
             Ok(n) if n == size => {
                 flow.last = now;
@@ -1225,6 +1203,10 @@ impl Edge {
             {
                 if let Some(sent) = flow.first_request.take() {
                     flow.ticket.observe(sent, Instant::now());
+                }
+                if !flow.answered {
+                    flow.answered = true;
+                    flow.permit.prove();
                 }
                 let reply = &self.buffer[..n];
                 let left = match flow.via {

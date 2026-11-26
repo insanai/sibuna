@@ -10,7 +10,9 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
 
+mod top;
 mod view;
+pub use top::TopSource;
 pub use view::{FrontendView, Latency, ServerView, StatsView};
 
 /// The upper bounds of the latency buckets, in microseconds.
@@ -257,6 +259,16 @@ pub struct Stats {
     pub(crate) forward: Arc<crate::forward::Counters>,
     /// The wall-clock second of the last refusal line, and the lines of that second.
     refusal_lines: AtomicU64,
+    /// The addresses with the most refusals this minute (SID 0034).
+    top: Mutex<top::Sketch>,
+    /// 1 while pressure mode is on (SID 0034).
+    pressure: AtomicU64,
+    /// How often pressure mode switched on or off.
+    pressure_switches: AtomicU64,
+    /// Refusals that counted as a strike against their address.
+    strikes: AtomicU64,
+    /// Addresses banned for their strikes.
+    auto_bans: AtomicU64,
 }
 
 /// The most log lines for refused connections in one second, for the whole node. A
@@ -301,11 +313,21 @@ pub enum Refusal {
     /// A datagram that may not open a QUIC mapping: no padded long-header packet
     /// (SID 0032).
     UdpNotQuic,
+    /// The client address is banned (SID 0034).
+    Banned,
+    /// Pressure mode is on and no token was left for a new address (SID 0034).
+    Pressure,
+    /// The frontend holds its `max_flows` flows (SID 0034).
+    FrontendLimit,
+    /// The client address holds `max_flows_per_ip` flows of the frontend (SID 0034).
+    ClientFlowLimit,
+    /// A datagram above `udp_defense.total_pps` of the frontend (SID 0034).
+    UdpTotalLimit,
 }
 
 impl Refusal {
     /// Every reason, in the order of the series.
-    pub const ALL: [Refusal; 16] = [
+    pub const ALL: [Refusal; 21] = [
         Refusal::RateLimit,
         Refusal::FlowLimit,
         Refusal::Draining,
@@ -322,6 +344,11 @@ impl Refusal {
         Refusal::Hook,
         Refusal::InspectDenied,
         Refusal::UdpNotQuic,
+        Refusal::Banned,
+        Refusal::Pressure,
+        Refusal::FrontendLimit,
+        Refusal::ClientFlowLimit,
+        Refusal::UdpTotalLimit,
     ];
 
     /// The value of the `reason` label.
@@ -343,6 +370,11 @@ impl Refusal {
             Refusal::Hook => "hook",
             Refusal::InspectDenied => "inspect_denied",
             Refusal::UdpNotQuic => "udp_not_quic",
+            Refusal::Banned => "banned",
+            Refusal::Pressure => "pressure",
+            Refusal::FrontendLimit => "frontend_limit",
+            Refusal::ClientFlowLimit => "client_flow_limit",
+            Refusal::UdpTotalLimit => "udp_total_limit",
         }
     }
 
@@ -365,7 +397,18 @@ impl Refusal {
             Refusal::Hook => "refused_hook",
             Refusal::InspectDenied => "inspect_denied",
             Refusal::UdpNotQuic => "refused_udp_not_quic",
+            Refusal::Banned => "refused_banned",
+            Refusal::Pressure => "refused_pressure",
+            Refusal::FrontendLimit => "refused_frontend_limit",
+            Refusal::ClientFlowLimit => "refused_client_flow_limit",
+            Refusal::UdpTotalLimit => "refused_udp_total_limit",
         }
+    }
+
+    /// True when a refusal for this reason is a strike against its address: the
+    /// address completed a TCP handshake, so it is real, and broke its own limit.
+    pub fn is_strike(self) -> bool {
+        matches!(self, Refusal::RateLimit | Refusal::ClientFlowLimit)
     }
 }
 
@@ -422,6 +465,45 @@ impl Stats {
     /// Counts one refusal by its reason.
     pub fn refuse(&self, reason: Refusal) {
         self.refused[reason as usize].fetch_add(1, Ordering::Relaxed);
+    }
+
+    /// Counts one refusal of the client at `address` by its reason, and counts the
+    /// address in the sketch of the minute of the Unix second `now`. Under contention
+    /// the sketch skips the refusal: the heavy sources stay heavy in a sample.
+    pub fn refuse_from(&self, reason: Refusal, address: std::net::IpAddr, now: u64) {
+        self.refuse(reason);
+        let address =
+            std::net::IpAddr::V6(std::net::Ipv6Addr::from(sibuna_cidr::client_key(address, 64)));
+        let address = address.to_canonical();
+        if let Ok(mut top) = self.top.try_lock() {
+            top.add(address, reason, now);
+        }
+    }
+
+    /// The addresses with the most refusals in the minute of the Unix second `now`.
+    pub fn top_sources(&self, now: u64) -> Vec<TopSource> {
+        self.top.lock().unwrap_or_else(PoisonError::into_inner).top(now)
+    }
+
+    /// Publishes the pressure mode of the node. A change counts as a switch.
+    pub fn set_pressure(&self, on: bool) {
+        let previous = self.pressure.swap(u64::from(on), Ordering::Relaxed);
+        if previous != u64::from(on) {
+            self.pressure_switches.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    /// True while pressure mode is on.
+    pub fn is_pressed(&self) -> bool {
+        self.pressure.load(Ordering::Relaxed) == 1
+    }
+
+    /// Counts a strike, and with `banned` the automatic ban it caused.
+    pub fn count_strike(&self, banned: bool) {
+        self.strikes.fetch_add(1, Ordering::Relaxed);
+        if banned {
+            self.auto_bans.fetch_add(1, Ordering::Relaxed);
+        }
     }
 
     /// The number of refusals for `reason`.
@@ -491,6 +573,10 @@ impl Stats {
             ("sibuna_edge_proxy_protocol_accepted_total", "counter", &self.proxy_accepted),
             ("sibuna_edge_proxy_protocol_rejected_total", "counter", &self.proxy_rejected),
             ("sibuna_edge_flow_log_dropped_total", "counter", &self.flow_log_dropped),
+            ("sibuna_edge_pressure", "gauge", &self.pressure),
+            ("sibuna_edge_pressure_switches_total", "counter", &self.pressure_switches),
+            ("sibuna_edge_strikes_total", "counter", &self.strikes),
+            ("sibuna_edge_auto_bans_total", "counter", &self.auto_bans),
         ];
         for (name, kind, value) in gauges {
             writeln!(out, "# TYPE {name} {kind}\n{name} {}", value.load(Ordering::Relaxed))?;

@@ -260,11 +260,17 @@ fn a_lent_tcp_listener_is_one_queue_for_both_edges() {
     assert!(accept(&mut [&mut new]).is_none());
     new.arm_streams().unwrap();
     scene.old.release_listeners();
-    // The connection that waited in the listener was not lost: the replacement
-    // takes it, and the old edge takes nothing any more.
+    // The connection that waited in the listener was not lost. The accept threads of
+    // the old edge may have taken it before the release (SID 0034); then the old edge
+    // serves it, as it serves every connection it accepted.
     let mut served = accept(&mut [&mut scene.old, &mut new]).expect("the waiting connection");
-    assert_eq!(scene.old.active(), 0);
-    assert_eq!(new.active(), 1);
+    let old_before = scene.old.active();
+    assert_eq!(old_before + new.active(), 1);
+    // After the release the old edge takes nothing any more.
+    let _later = TcpStream::connect(scene.tcp_vip).unwrap();
+    let _second = accept(&mut [&mut scene.old, &mut new]).expect("a connection after the release");
+    assert_eq!(scene.old.active(), old_before);
+    assert_eq!(new.active(), 2 - old_before);
     waiting.write_all(b"hello").unwrap();
     served.set_nonblocking(false).unwrap();
     served.set_read_timeout(Some(WAIT)).unwrap();
@@ -273,6 +279,7 @@ fn a_lent_tcp_listener_is_one_queue_for_both_edges() {
     let mut filled = 0;
     while filled < 5 && Instant::now() < deadline {
         new.step().unwrap();
+        scene.old.step().unwrap();
         served.set_read_timeout(Some(Duration::from_millis(10))).unwrap();
         if let Ok(count) = served.read(&mut bytes[filled..]) {
             filled += count;

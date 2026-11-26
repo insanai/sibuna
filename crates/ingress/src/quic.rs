@@ -80,13 +80,15 @@ pub(super) async fn serve(
         let shared = shared.clone();
         let drain = drain.clone();
         tokio::spawn(async move {
-            let _held = (slot, place);
+            let held = (slot, place);
             let Ok(mut connecting) = incoming.accept() else { return };
             if !judged(&mut connecting, vip, &shared).await {
                 // Dropping the handshake closes the connection.
                 return;
             }
             if let Ok(Ok(conn)) = timeout(DEADLINE, connecting).await {
+                // A handshake finished after Retry proves the client (SID 0034).
+                held.0.prove();
                 let _ = connection(conn, vip, shared, drain).await;
             }
         });

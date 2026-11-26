@@ -58,7 +58,7 @@ impl Inherited {
                 socket.set_nonblocking(true)?;
                 let protocol =
                     if listener.kind == Kind::Tcp { Protocol::Tcp } else { Protocol::Http };
-                (protocol, Socket::Tcp(socket))
+                (protocol, Socket::Tcp(std::sync::Arc::new(socket)))
             }
             Kind::Udp => {
                 let socket = UdpSocket::from(socket);
@@ -243,7 +243,9 @@ impl Edge {
                 self.poll.remove(socket.handle());
             }
             listener.paused_until = None;
+            listener.accepting = false;
         }
+        self.settle_accepting();
         self.handoff.frozen = None;
         self.unanswered.clear();
         let mut ended = 0;
@@ -318,7 +320,10 @@ impl Edge {
             key,
             DatagramFlow {
                 line,
-                _permit: permit,
+                permit,
+                // A mapping that waits for no answer was answered in the old process.
+                answered: flow.waiting.is_none(),
+                confirmed: flow.validated,
                 first_request,
                 origin: socket,
                 ticket,
@@ -368,10 +373,17 @@ impl Edge {
     fn arm(&mut self, wanted: impl Fn(&Socket) -> bool) -> io::Result<()> {
         let held = std::mem::take(&mut self.handoff.held);
         let mut result = Ok(());
+        let mut streams = false;
         for id in held {
             let Some(socket) = &self.listeners[id].socket else { continue };
             if !wanted(socket) || result.is_err() {
                 self.handoff.held.push(id);
+                continue;
+            }
+            // The accept threads take the TCP listeners (SID 0034).
+            if matches!(socket, Socket::Tcp(_)) {
+                self.listeners[id].accepting = true;
+                streams = true;
                 continue;
             }
             let fd = socket.handle();
@@ -379,6 +391,9 @@ impl Edge {
                 self.handoff.held.push(id);
                 result = Err(error);
             }
+        }
+        if streams {
+            self.publish_accepting();
         }
         result
     }

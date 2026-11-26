@@ -37,6 +37,10 @@ pub struct Config {
     /// The `console` section of SID 0031.
     pub(crate) console: Option<crate::ConsoleOptions>,
     pub(crate) listeners: BTreeMap<(Protocol, SocketAddr), Frontend>,
+    /// Pressure mode (`global.pressure`, SID 0034), or `None` when it is off.
+    pub(crate) pressure: Option<crate::budget::PressureOptions>,
+    /// The threads that accept and refuse connections (`global.accept_threads`).
+    pub(crate) accept_threads: usize,
     pub(crate) pools: BTreeMap<String, Backend>,
     /// The plugins and where each frontend attaches them (SID 0030).
     pub(crate) plugins: sibuna_plugin::Settings,
@@ -69,6 +73,8 @@ pub(crate) struct Frontend {
     pub quic: bool,
     /// The name, the counters and the trusted proxies of the frontend (SID 0020).
     pub info: std::sync::Arc<crate::FrontendInfo>,
+    /// The caps, the refusal and the automatic bans of the frontend (SID 0034).
+    pub guard: crate::guard::Guard,
 }
 
 pub(crate) struct Backend {
@@ -280,6 +286,8 @@ impl Config {
             upgrade_socket,
             acme,
             sticky_entries,
+            pressure,
+            accept_threads,
         } = global(&mut root)?;
         let mesh = field(root.take_object("mesh"))?.map(crate::MeshConfig::parse).transpose()?;
         let http = field(root.take_object("http"))?.map(crate::HttpOptions::parse).transpose()?;
@@ -311,6 +319,8 @@ impl Config {
             pools: BTreeMap::new(),
             listeners: BTreeMap::new(),
             plugins: sibuna_plugin::Settings::default(),
+            pressure,
+            accept_threads,
         };
         config.add_topology(&mut root, adaptive)?;
         field(root.finish())?;
@@ -321,17 +331,7 @@ impl Config {
         if explicit_http && config.http().is_none() {
             return Err(invalid("http settings require an HTTP frontend"));
         }
-        for (addr, tls) in config.tls() {
-            if tls.http3
-                && (config
-                    .listeners
-                    .keys()
-                    .any(|(p, a)| *p == Protocol::Udp && overlaps(*a, addr))
-                    || config.mesh.as_ref().is_some_and(|m| overlaps(m.listen, addr)))
-            {
-                return Err(invalid(format!("HTTP/3 bind {addr} overlaps a UDP listener")));
-            }
-        }
+        config.check_http3()?;
         config.check_servers()?;
         config.check_automatic_https()?;
         Ok(config)
@@ -346,6 +346,19 @@ impl Config {
         }
         for (name, value) in named(root, "frontends")? {
             self.add_frontend(name, value)?;
+        }
+        Ok(())
+    }
+
+    /// Refuses an HTTP/3 listener that overlaps a UDP listener or the mesh.
+    fn check_http3(&self) -> Result<()> {
+        for (addr, tls) in self.tls() {
+            if tls.http3
+                && (self.listeners.keys().any(|(p, a)| *p == Protocol::Udp && overlaps(*a, addr))
+                    || self.mesh.as_ref().is_some_and(|m| overlaps(m.listen, addr)))
+            {
+                return Err(invalid(format!("HTTP/3 bind {addr} overlaps a UDP listener")));
+            }
         }
         Ok(())
     }
@@ -390,7 +403,8 @@ impl Config {
         if self.pools.get(&pool).is_none_or(|b| b.protocol != proto) {
             return Err(invalid(format!("{path}: no matching {proto:?} backend named {pool}")));
         }
-        let rate = frontend_rate(&mut r, proto)?;
+        let (rate, total_pps) = frontend_rate(&mut r, proto)?;
+        let guard = crate::guard::Guard::parse(&mut r, name, proto, self.limit, total_pps)?;
         let timeout_field = field(r.take_str("session_timeout"))?;
         if proto == Protocol::Http && timeout_field.is_some() {
             return Err(invalid("HTTP deadlines belong to the HTTP firewall"));
@@ -434,6 +448,7 @@ impl Config {
                 quic,
                 rate,
                 info: info.clone(),
+                guard,
             };
             if self.listeners.keys().any(|&(p, bound)| {
                 (p == Protocol::Udp) == (proto == Protocol::Udp) && overlaps(bound, addr)
@@ -463,6 +478,8 @@ struct Global {
     upgrade_socket: Option<String>,
     acme: Option<crate::AcmeOptions>,
     sticky_entries: usize,
+    pressure: Option<crate::budget::PressureOptions>,
+    accept_threads: usize,
 }
 
 /// Reads `global`: the flow table size, the optional UDP share, the relay threads, the
@@ -479,8 +496,10 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
     let mut upgrade_socket = None;
     let mut acme = None;
     let mut sticky_entries = crate::AffinityTable::DEFAULT_SLOTS;
+    let mut defense = (Some(crate::budget::PressureOptions::default()), default_accept_threads());
     if let Some(mut global) = field(root.take_object("global"))? {
         sticky_entries = sticky_slots(&mut global)?;
+        defense = defense_globals(&mut global)?;
         acme = field(global.take_object("acme"))?.map(crate::AcmeOptions::parse).transpose()?;
         if let Some(text) = field(global.take_str("shutdown_timeout"))? {
             shutdown_timeout = duration(text)
@@ -510,14 +529,7 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
                     .ok_or_else(|| invalid("global.watch must be a duration from 1s to 1h"))?,
             ),
         };
-        workers = match global.take("workers") {
-            None => workers,
-            Some(value) if value.as_str() == Some("auto") => workers,
-            Some(value) => match value.as_number().and_then(|n| n.as_u64().ok()) {
-                Some(n) if (1..=MAX_WORKERS as u64).contains(&n) => n as usize,
-                _ => return Err(invalid("global.workers must be auto or in 1..=64")),
-            },
-        };
+        workers = relay_workers(&mut global, workers)?;
         udp_limit = match field(global.take_u64("max_udp_flows"))? {
             None => None,
             Some(n) if n > 0 && n <= limit as u64 => Some(n as usize),
@@ -537,7 +549,70 @@ fn global(root: &mut ObjectReader<'_, '_>) -> Result<Global> {
         upgrade_socket,
         acme,
         sticky_entries,
+        pressure: defense.0,
+        accept_threads: defense.1,
     })
+}
+
+/// Reads `global.workers`: `"auto"`, which is `auto`, or a number from 1 to 64.
+fn relay_workers(global: &mut ObjectReader<'_, '_>, auto: usize) -> Result<usize> {
+    match global.take("workers") {
+        None => Ok(auto),
+        Some(value) if value.as_str() == Some("auto") => Ok(auto),
+        Some(value) => match value.as_number().and_then(|n| n.as_u64().ok()) {
+            Some(n) if (1..=MAX_WORKERS as u64).contains(&n) => Ok(n as usize),
+            _ => Err(invalid("global.workers must be auto or in 1..=64")),
+        },
+    }
+}
+
+/// The accept threads of `"auto"`: one per available CPU, at most four.
+fn default_accept_threads() -> usize {
+    std::thread::available_parallelism().map_or(1, |n| n.get().min(4))
+}
+
+/// Reads `global.pressure` and `global.accept_threads` (SID 0034). Pressure is on with
+/// its defaults unless the file says `"off"`.
+fn defense_globals(
+    global: &mut ObjectReader<'_, '_>,
+) -> Result<(Option<crate::budget::PressureOptions>, usize)> {
+    let pressure = match global.take("pressure") {
+        None => Some(crate::budget::PressureOptions::default()),
+        Some(value) if value.as_str() == Some("off") => None,
+        Some(value) => Some(pressure(value, &global.field_path("pressure"))?),
+    };
+    let threads = match global.take("accept_threads") {
+        None => default_accept_threads(),
+        Some(value) if value.as_str() == Some("auto") => default_accept_threads(),
+        Some(value) => match value.as_number().and_then(|n| n.as_u64().ok()) {
+            Some(n) if (1..=MAX_WORKERS as u64).contains(&n) => n as usize,
+            _ => {
+                return Err(invalid(
+                    "global.accept_threads must be auto or in 1..=64. Hint: auto takes one \
+                     thread per CPU, at most four.",
+                ));
+            }
+        },
+    };
+    Ok((pressure, threads))
+}
+
+/// Reads the object of `global.pressure`: `on`, `off` and `new_per_second`.
+fn pressure(value: &Value<'_>, path: &str) -> Result<crate::budget::PressureOptions> {
+    let mut r = field(ObjectReader::with_path(value, path.to_owned()))?;
+    let defaults = crate::budget::PressureOptions::default();
+    let on = number(&mut r, "on", usize::from(defaults.on), 100)? as u8;
+    let off = number(&mut r, "off", usize::from(defaults.off), 100)? as u8;
+    let rate = number(&mut r, "new_per_second", defaults.new_per_second as usize, 1_000_000)?;
+    field(r.finish())?;
+    if off >= on {
+        return Err(invalid(format!(
+            "{path}: off ({off}) must be below on ({on}), or pressure would switch on and off \
+             at one load. Hint: leave a gap, such as on 90 and off 75; write \"off\" to switch \
+             pressure mode off."
+        )));
+    }
+    Ok(crate::budget::PressureOptions { on, off, new_per_second: rate as u32 })
 }
 
 /// Reads `global.upgrade_socket` (SID 0029). The key needs a platform that passes
@@ -846,15 +921,16 @@ fn unbounded_fleet(path: &str) -> Error {
     ))
 }
 
+/// Reads the rate of a frontend, and `total_pps` of a UDP frontend (SID 0034).
 fn frontend_rate(
     r: &mut ObjectReader<'_, '_>,
     proto: Protocol,
-) -> Result<Option<sibuna_store::limiter::Limits>> {
+) -> Result<(Option<sibuna_store::limiter::Limits>, Option<u32>)> {
     let (key, count, window_ms) = match proto {
         Protocol::Tcp | Protocol::Http => ("rate_limit", "conn_per_10s", 10_000),
         Protocol::Udp => ("udp_defense", "threshold_pps", 1_000),
     };
-    let Some(mut options) = field(r.take_object(key))? else { return Ok(None) };
+    let Some(mut options) = field(r.take_object(key))? else { return Ok((None, None)) };
     if proto == Protocol::Udp && required(&mut options, "mode")? != "rate_limit" {
         return Err(invalid("udp_defense.mode must be rate_limit"));
     }
@@ -867,8 +943,16 @@ fn frontend_rate(
     {
         return Err(invalid("IPv6 admission budgets use a /64 prefix"));
     }
+    let total_pps = match proto {
+        Protocol::Udp => match number(&mut options, "total_pps", 0, 100_000_000)? {
+            0 => None,
+            total => Some(total as u32),
+        },
+        _ => None,
+    };
     field(options.finish())?;
     // The existing limiter accepts an arbitrary integral timebase. Use microseconds
     // here so rates above 1,000 packets/s retain their intended pacing.
-    Ok(Some(sibuna_store::limiter::Limits { rate: rate as u32, window_ms: window_ms * 1000 }))
+    let rate = sibuna_store::limiter::Limits { rate: rate as u32, window_ms: window_ms * 1000 };
+    Ok((Some(rate), total_pps))
 }

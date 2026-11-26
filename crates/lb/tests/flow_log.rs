@@ -63,6 +63,14 @@ fn start(proto: &str, vip: SocketAddr, front: &str, server: SocketAddr) -> Worke
     Worker { stop, stats, lines, handle: Some(handle) }
 }
 
+/// True when a connection to `vip` ends without a byte: reset, as frontends refuse by
+/// default (SID 0034), or closed.
+fn refused(vip: SocketAddr) -> bool {
+    let Ok(mut stream) = TcpStream::connect_timeout(&vip, WAIT) else { return true };
+    let _ = stream.set_read_timeout(Some(WAIT));
+    matches!(stream.read(&mut [0]), Ok(0) | Err(_))
+}
+
 fn connect(vip: SocketAddr) -> TcpStream {
     let stream = TcpStream::connect_timeout(&vip, WAIT).unwrap();
     stream.set_read_timeout(Some(WAIT)).unwrap();
@@ -125,8 +133,7 @@ fn refused_connections_are_all_counted_and_logged_at_a_bounded_rate() {
     let first = connect(vip);
     let started = Instant::now();
     for _ in 0..40 {
-        let mut refused = connect(vip);
-        assert_eq!(refused.read(&mut [0]).unwrap_or(0), 0);
+        assert!(refused(vip));
     }
     let seconds = started.elapsed().as_secs() + 2;
     drop(first);

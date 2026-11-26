@@ -65,6 +65,10 @@ pub struct StatsView {
     pub drops: u64,
     /// Refusals by reason, in the order of [`Refusal::ALL`].
     pub refused: Vec<(Refusal, u64)>,
+    /// The addresses with the most refusals in the current minute (SID 0034).
+    pub top_refused: Vec<super::TopSource>,
+    /// Whether pressure mode is on (SID 0034).
+    pub pressure: bool,
     /// Flow lines that found the queue of the access log full.
     pub flow_log_dropped: u64,
     /// The frontends, by name.
@@ -103,6 +107,12 @@ impl Classes {
     }
 }
 
+/// The Unix time in seconds, zero before 1970.
+fn unix_now() -> u64 {
+    let since = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+    since.map_or(0, |since| since.as_secs())
+}
+
 impl Stats {
     /// Reads every counter. The result owns its data and borrows nothing.
     pub fn view(&self) -> StatsView {
@@ -114,6 +124,8 @@ impl Stats {
             flows_limit: load(&self.flows_limit),
             drops: load(&self.drops),
             refused: Refusal::ALL.iter().map(|&r| (r, self.refusal_count(r))).collect(),
+            top_refused: self.top_sources(unix_now()),
+            pressure: self.is_pressed(),
             flow_log_dropped: self.flow_log_drop_count(),
             frontends: fronts
                 .iter()
