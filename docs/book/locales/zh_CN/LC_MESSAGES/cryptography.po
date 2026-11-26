@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 06:04+0000\n"
+"POT-Creation-Date: 2026-11-26 10:42+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -495,7 +495,7 @@ msgstr ""
 "Sibuna "
 "保留了低成本的哈希验证，以及一个基于哈希的顺序工作量选项。后者需要更多的证明字节和更仔细的参数分析。无论哪种选择，都需要在进入昂贵的验证之前拒绝格式错误的证明。"
 
-#: ../../cryptography.rst:138 ../../cryptography.rst:208
+#: ../../cryptography.rst:138 ../../cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
@@ -568,10 +568,28 @@ msgstr ""
 "作为选项（``--token-scheme ed25519``）。"
 
 #: ../../cryptography.rst:160
+msgid ""
+"The tokens and the challenge records were therefore safe against a "
+"quantum adversary before the transport that carries them was. Since SID "
+"0035, every TLS session that Sibuna ends or opens also offers the hybrid "
+"key exchange X25519MLKEM768. Its key comes from X25519 and from "
+"ML-KEM-768 (FIPS 203) together and stays secret as long as either holds, "
+"so a session recorded today cannot be read later with a quantum computer. "
+"Certificates still carry ECDSA or RSA signatures. No public authority "
+"issues post-quantum certificates and browsers do not accept them, and a "
+"signature matters only during its own handshake, so a recording does not "
+"expose it."
+msgstr ""
+"因此，令牌和挑战记录在承载它们的传输之前就已经能抵御量子对手。自 SID 0035 起，Sibuna 终止或发起的每个 TLS "
+"会话还会提供混合密钥交换 X25519MLKEM768。其密钥同时来自 X25519 和 ML-KEM-768（FIPS "
+"203），只要两者之一仍然安全就保持机密，所以今天录下的会话以后也无法用量子计算机读取。证书仍然使用 ECDSA 或 RSA "
+"签名。没有公共证书颁发机构签发后量子证书，浏览器也不接受它们；而且签名只在它自己的握手期间起作用，所以录下流量并不会暴露它。"
+
+#: ../../cryptography.rst:162
 msgid "The Key Schedule"
 msgstr "密钥派生方案"
 
-#: ../../cryptography.rst:163
+#: ../../cryptography.rst:165
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -581,11 +599,11 @@ msgstr ""
 "一个 32 字节的主种子（来自 ``--secret-file``、``SIBUNA_SECRET`` 或一个新生成的随机值）通过带密钥 "
 "BLAKE3 和域字符串派生出每个用途的密钥：令牌密钥、挑战密钥、Ed25519 密钥、指纹密钥，以及用于封装要求票据的要求密钥（第 IV 部分）。"
 
-#: ../../cryptography.rst:165
+#: ../../cryptography.rst:167
 msgid "Implementation: ``Keys::derive``"
 msgstr "实现：``Keys::derive``"
 
-#: ../../cryptography.rst:167
+#: ../../cryptography.rst:169
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -596,7 +614,7 @@ msgstr ""
 "``sibuna-challenge``）。``Keys`` 和 ``Seed`` 在被丢弃时将其字节清零，它们的 ``Debug`` "
 "输出也经过脱敏。"
 
-#: ../../cryptography.rst:169
+#: ../../cryptography.rst:171
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -626,7 +644,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:185
+#: ../../cryptography.rst:187
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -636,18 +654,18 @@ msgstr ""
 "在集群中，``Keys::bind_node`` 以挑战密钥为密钥，对 ``sibuna/challenge-node/v1`` 和节点 ID "
 "计算带密钥 BLAKE3，并用结果替换挑战密钥。这样，挑战必须回到签发它的节点，而会话令牌和要求票据在每个成员上都保持有效。"
 
-#: ../../cryptography.rst:187
+#: ../../cryptography.rst:189
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
 "agree on one seed."
 msgstr "域分离可以防止不同用途之间的意外复用；主种子一旦泄露，所有派生密钥都会随之泄露。集群只需要就一个种子达成一致。"
 
-#: ../../cryptography.rst:189
+#: ../../cryptography.rst:191
 msgid "Stateless Challenges"
 msgstr "无状态挑战"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
 "byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
@@ -664,7 +682,7 @@ msgstr ""
 "timestamp、expiry、rule_hash 和 fingerprint 各占八个字节，构成 40 字节载荷，其后是 16 字节的 "
 "BLAKE3 标签；共 56 字节，以 75 个 URL 安全的 base64 字符发送。"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/wire-formats.typ\": draw\n"
@@ -676,13 +694,13 @@ msgstr ""
 "#show: chart.with(lang: \"zh_CN\")\n"
 "#draw()\n"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "Wire formats of the challenge identifier and the session token. The "
 "numbers above each record are byte offsets."
 msgstr "挑战标识符和会话令牌的线路格式。每条记录上方的数字是字节偏移量。"
 
-#: ../../cryptography.rst:196
+#: ../../cryptography.rst:198
 msgid ""
 "A challenge identifier is a self-authenticating record: version, "
 "algorithm, difficulty, opening count, issue time, the client's keyed "
@@ -697,11 +715,11 @@ msgstr ""
 "nonce，以及要求该挑战的策略规则的哈希，后面跟着一个用挑战密钥计算的 16 "
 "字节标签。签发挑战不写入任何内容。验证时先解码记录，以常量时间检查标签，对照挑战 TTL 检查时效，对照提交方客户端检查指纹，最后才检查证明。"
 
-#: ../../cryptography.rst:198
+#: ../../cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "引理 4（状态只随付出的工作增长）"
 
-#: ../../cryptography.rst:200
+#: ../../cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -716,7 +734,7 @@ msgstr ""
 "之后离开。因此，若 :math:`r` 是该时间段内被接受的不同解答的速率上界，则 :math:`|S| \\le r \\cdot "
 "\\mathrm{TTL}`。免费获取挑战不会分配标签。实现还具有固定容量，饱和时可能拒绝有效的解答。这是一个状态上界，而不是对每个对手计算策略的下界。"
 
-#: ../../cryptography.rst:202
+#: ../../cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -726,11 +744,11 @@ msgstr ""
 "已用集合由 16 个分片组成，每个分片对 16 字节标签使用 Robin Hood 开放寻址（第 V 部分）。指纹是客户端地址和 "
 "User-Agent 的带密钥哈希；输入按长度分隔，使任何两个输入都不会因拼接而碰撞；并且带有密钥，使其他客户端的指纹无法离线计算。"
 
-#: ../../cryptography.rst:204
+#: ../../cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "练习 3.3"
 
-#: ../../cryptography.rst:206
+#: ../../cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -739,7 +757,7 @@ msgstr ""
 "令牌载荷包含工作等级、``timestamp``、``expiry``、``rule_hash`` 和 "
 "``fingerprint``。解释如果去掉每个字段，分别会失去什么防护，以及为什么标签必须覆盖全部五个字段。"
 
-#: ../../cryptography.rst:210
+#: ../../cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "
