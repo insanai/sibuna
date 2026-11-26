@@ -149,8 +149,10 @@ impl Edge {
             Err(reason) => {
                 let guard = self.listeners[listener].route.guard;
                 self.defense.record_strike(&self.stats, guard, reason, client.ip(), unix_now());
+                // Counted before the client can see the end, as on the accept threads.
+                let refused = self.refuse(listener, client, reason);
                 self.acceptors.proxy_tarpit.finish(stream, guard.refuse);
-                self.refuse(listener, client, reason)
+                refused
             }
         }
     }
