@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 {% block content %}
 <section class="hero hero-edge">
-  <div><h1>{{ _("Distributed load balancer and web application firewall") }}</h1>
-    <p class="lead">{{ _("Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.") }}</p>
+  <div><h1>{{ _("Distributed edge load balancer and web application firewall") }}</h1>
+    <p class="lead">{{ _("Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods.") }}</p>
     <div class="actions"><a class="button" href="{{ edition_url }}book/introduction.html">{{ _("What is Sibuna?") }}</a>
       <a class="button secondary" href="#use-cases">{{ _("Where we use Sibuna") }}</a>
       <a class="guide-button" href="{{ edition_url }}book/post-quantum-transport.html">{{ _("Post-quantum migration guide") }}</a></div>
@@ -50,6 +50,7 @@
     <article><h3><a href="{{ edition_url }}book/operations.html#automatic-https">{{ _("Public websites") }}</a></h3><p>{{ _("Serve browsers over HTTP/2 or HTTP/3, renew public certificates with Let's Encrypt and inspect requests before forwarding them to HTTP/1.1 replicas.") }}</p></article>
     <article><h3><a href="{{ edition_url }}book/operations.html#grpc">{{ _("Internal gRPC services") }}</a></h3><p>{{ _("Issue certificates for internal names with the local CA. Clients trust its root and call the service over TLS. An HTTP/2 backend carries gRPC messages and trailers.") }}</p></article>
     <article><h3><a href="{{ edition_url }}book/cluster.html">{{ _("A cluster of edge nodes") }}</a></h3><p>{{ _("Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools.") }}</p></article>
+    <article><h3><a href="{{ edition_url }}book/operations.html#edge-admission-under-attack">{{ _("DDoS protection at the edge") }}</a></h3><p>{{ _("We can cap concurrent flows per client IP and frontend, limit admission of new addresses under pressure and reserve UDP capacity for confirmed flows. Floods that saturate the uplink require upstream filtering.") }}</p></article>
   </div>
 </section>
 <section class="quantum" aria-labelledby="quantum-title">

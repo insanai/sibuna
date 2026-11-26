@@ -171,11 +171,11 @@ msgstr "上述联邦系统随后迁移数字签名。"
 msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
 msgstr "在网状集群中分发已验证的路由配置。各节点可以共享封禁和已学习的客户端亲和性，同时向各自的后端池转发流量。"
 
-msgid "Distributed load balancer and web application firewall"
-msgstr "分布式负载均衡器和 Web 应用防火墙"
+msgid "Distributed edge load balancer and web application firewall"
+msgstr "分布式边缘负载均衡器和 Web 应用防火墙"
 
-msgid "Distributed load balancer and web application firewall · Sibuna"
-msgstr "分布式负载均衡器和 Web 应用防火墙 · Sibuna"
+msgid "Distributed edge load balancer and web application firewall · Sibuna"
+msgstr "分布式边缘负载均衡器和 Web 应用防火墙 · Sibuna"
 
 msgid "Download."
 msgstr "下载。"
@@ -414,8 +414,8 @@ msgstr "Sibuna 由 Vikrant Rathore 编写，Ronak Rathore 和 Kanak Rathore 参�
 msgid "Sibuna returns a challenge to the client."
 msgstr "Sibuna 向客户端返回挑战。"
 
-msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
-msgstr "Sibuna 将 TCP、UDP 和 HTTP 流量转发到健康的服务器。我们可以运行单个边缘节点，也可以将多个节点组成网状集群，在各节点终止 TLS，并对指定的 HTTP 路由应用防火墙。"
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods."
+msgstr "Sibuna 可通过单个边缘节点或网状集群将 TCP、UDP 和 HTTP 流量分发到健康的服务器。它可以在边缘终止 TLS、检查指定的 HTTP 路由，并帮助后端抵御 DDoS 流量洪泛。"
 
 msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
 msgstr "Sibuna 终止 TLS，并提供 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket 服务。它按主机名和路径路由每个请求。证书来自 Let's Encrypt 或其他 ACME 证书颁发机构，本地证书颁发机构负责内部名称。"
@@ -569,3 +569,9 @@ msgstr "介绍 Sibuna 如何接纳和检查 HTTP 请求，并给出测试版防�
 
 msgid "Field notes on load balancing, web application firewalls and the connections they protect."
 msgstr "关于负载均衡、Web 应用防火墙及其所保护连接的实践笔记。"
+
+msgid "DDoS protection at the edge"
+msgstr "边缘 DDoS 防护"
+
+msgid "We can cap concurrent flows per client IP and frontend, limit admission of new addresses under pressure and reserve UDP capacity for confirmed flows. Floods that saturate the uplink require upstream filtering."
+msgstr "我们可以限制每个客户端 IP 和每个前端的并发流数，在负载过高时限制新地址的接入速率，并为已确认的流预留 UDP 处理容量。如果攻击流量占满上联链路，就需要在上游过滤。"

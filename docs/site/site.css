@@ -622,11 +622,12 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
   .milestones li:last-child::before {inset-block-end:calc(100% - 1.8rem)}
 }
 .deployments h2 {font-size:clamp(25px,3vw,38px);margin:0 0 22px}
-.deployment-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px}
+.deployment-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:26px}
 .deployment-grid article {border-top:2px solid var(--green);padding-block-start:14px}
 .deployment-grid h3 {margin:0;font-size:21px}
 .deployment-grid h3 a {color:var(--ink);text-decoration-thickness:1px}
 .deployment-grid p {margin:10px 0 0;color:#475a50}
+@media(max-width:64rem){.deployment-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:680px){.deployment-grid{grid-template-columns:1fr;gap:17px}}
 @media(prefers-reduced-motion:reduce){
   .edge-map .packet {animation:none;stroke-dashoffset:-44}

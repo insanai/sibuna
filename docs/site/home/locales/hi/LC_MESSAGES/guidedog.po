@@ -171,11 +171,11 @@ msgstr "इन्हीं संघीय प्रणालियों मे
 msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
 msgstr "हम जाँचा हुआ रूटिंग कॉन्फ़िगरेशन पूरे मेश में वितरित करते हैं। हर नोड अपने बैकएंड पूल को ट्रैफ़िक भेजता है और प्रतिबंध व सीखे हुए सर्वर आवंटन साझा कर सकता है।"
 
-msgid "Distributed load balancer and web application firewall"
-msgstr "वितरित लोड बैलेंसर और वेब एप्लिकेशन फ़ायरवॉल"
+msgid "Distributed edge load balancer and web application firewall"
+msgstr "वितरित एज लोड बैलेंसर और वेब एप्लिकेशन फ़ायरवॉल"
 
-msgid "Distributed load balancer and web application firewall · Sibuna"
-msgstr "वितरित लोड बैलेंसर और वेब एप्लिकेशन फ़ायरवॉल · Sibuna"
+msgid "Distributed edge load balancer and web application firewall · Sibuna"
+msgstr "वितरित एज लोड बैलेंसर और वेब एप्लिकेशन फ़ायरवॉल · Sibuna"
 
 msgid "Download."
 msgstr "डाउनलोड करें।"
@@ -414,8 +414,8 @@ msgstr "Sibuna को Vikrant Rathore ने Ronak Rathore और Kanak Rathore 
 msgid "Sibuna returns a challenge to the client."
 msgstr "Sibuna क्लाइंट को चैलेंज भेजता है।"
 
-msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
-msgstr "Sibuna TCP, UDP और HTTP ट्रैफ़िक को स्वस्थ सर्वरों तक पहुँचाता है। हम एक एज चला सकते हैं या कई एज को मेश में जोड़ सकते हैं। हर एज पर TLS समाप्त कर सकते हैं और चुने हुए HTTP रूट पर फ़ायरवॉल लगा सकते हैं।"
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods."
+msgstr "Sibuna एक एज नोड या नोड के मेश से TCP, UDP और HTTP ट्रैफ़िक को स्वस्थ सर्वरों तक पहुँचाता है। यह TLS कनेक्शन को एज पर समाप्त कर सकता है, चुने हुए HTTP रूट की जाँच कर सकता है और DDoS हमलों से बैकएंड की रक्षा में मदद करता है।"
 
 msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
 msgstr "Sibuna TLS टर्मिनेट करता है और HTTP/1.1, HTTP/2, HTTP/3 और WebSocket सर्व करता है। यह हर अनुरोध को होस्ट नाम और पाथ के आधार पर रूट करता है। सर्टिफ़िकेट Let's Encrypt या किसी दूसरी ACME अथॉरिटी से आते हैं, और आंतरिक नामों के लिए एक स्थानीय अथॉरिटी है।"
@@ -569,3 +569,9 @@ msgstr "Sibuna HTTP अनुरोधों को कैसे स्वीक
 
 msgid "Field notes on load balancing, web application firewalls and the connections they protect."
 msgstr "लोड बैलेंसिंग, वेब एप्लिकेशन फ़ायरवॉल और उनसे सुरक्षित होने वाले कनेक्शनों पर व्यावहारिक लेख।"
+
+msgid "DDoS protection at the edge"
+msgstr "एज पर DDoS से सुरक्षा"
+
+msgid "We can cap concurrent flows per client IP and frontend, limit admission of new addresses under pressure and reserve UDP capacity for confirmed flows. Floods that saturate the uplink require upstream filtering."
+msgstr "हम हर क्लाइंट IP और हर फ़्रंटएंड के लिए एक साथ चलने वाले फ़्लो की संख्या सीमित कर सकते हैं। दबाव बढ़ने पर हम नए पतों के प्रवेश की दर घटा सकते हैं और पुष्ट फ़्लो के लिए UDP क्षमता आरक्षित कर सकते हैं। यदि हमले से नेटवर्क लिंक की पूरी क्षमता भर जाए, तो ट्रैफ़िक को लिंक तक पहुँचने से पहले फ़िल्टर करना पड़ता है।"

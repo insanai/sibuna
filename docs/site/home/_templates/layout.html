@@ -6,8 +6,8 @@
 <!doctype html><html lang="{{ edition.code }}" dir="{{ edition.direction }}" data-detect-language="{{ 'true' if language == 'en' and not route else 'false' }}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-{% if not route %}<meta name="description" content="{{ _('Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.') }}">{% endif %}
-<title>{% if collection %}{{ _(collection.title) }} · Sibuna{% elif route %}{{ title|striptags }} · Sibuna{% else %}{{ _('Distributed load balancer and web application firewall · Sibuna') }}{% endif %}</title>
+{% if not route %}<meta name="description" content="{{ _('Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods.') }}">{% endif %}
+<title>{% if collection %}{{ _(collection.title) }} · Sibuna{% elif route %}{{ title|striptags }} · Sibuna{% else %}{{ _('Distributed edge load balancer and web application firewall · Sibuna') }}{% endif %}</title>
 {% for item in site_languages %}<link rel="alternate" hreflang="{{ item.code }}" href="{{ site_url }}{{ item.prefix }}{{ route }}">
 {% endfor %}<link rel="alternate" hreflang="x-default" href="{{ site_url }}{{ route }}">
 <link rel="icon" type="image/svg+xml" href="{{ site_base }}assets/favicon.svg">

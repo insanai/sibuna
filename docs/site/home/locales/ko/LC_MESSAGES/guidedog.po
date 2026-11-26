@@ -171,11 +171,11 @@ msgstr "같은 연방 시스템의 디지털 서명이 뒤이어 전환됩니다
 msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
 msgstr "검증한 라우팅 설정을 메시에 배포합니다. 각 노드는 자체 백엔드 풀로 트래픽을 전달하면서 차단 정보와 학습한 서버 할당을 공유할 수 있습니다."
 
-msgid "Distributed load balancer and web application firewall"
-msgstr "분산 로드 밸런서와 웹 애플리케이션 방화벽"
+msgid "Distributed edge load balancer and web application firewall"
+msgstr "분산형 에지 로드 밸런서와 웹 애플리케이션 방화벽"
 
-msgid "Distributed load balancer and web application firewall · Sibuna"
-msgstr "분산 로드 밸런서와 웹 애플리케이션 방화벽 · Sibuna"
+msgid "Distributed edge load balancer and web application firewall · Sibuna"
+msgstr "분산형 에지 로드 밸런서와 웹 애플리케이션 방화벽 · Sibuna"
 
 msgid "Download."
 msgstr "다운로드."
@@ -414,8 +414,8 @@ msgstr "Sibuna는 Vikrant Rathore가 작성했으며 Ronak Rathore와 Kanak Rath
 msgid "Sibuna returns a challenge to the client."
 msgstr "Sibuna가 클라이언트에 챌린지를 보냅니다."
 
-msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
-msgstr "Sibuna는 TCP, UDP, HTTP 트래픽을 정상 서버로 전달합니다. 에지 하나를 운영하거나 여러 에지를 메시로 연결하고, 각 에지에서 TLS를 종료하고 선택한 HTTP 경로에 방화벽을 적용할 수 있습니다."
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods."
+msgstr "Sibuna는 단일 에지 노드 또는 메시에서 TCP, UDP, HTTP 트래픽을 정상 서버로 분산합니다. 에지에서 TLS를 종료하고 지정한 HTTP 경로를 검사하며 DDoS 트래픽으로부터 백엔드를 보호할 수 있습니다."
 
 msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
 msgstr "Sibuna는 TLS를 종료하고 HTTP/1.1, HTTP/2, HTTP/3, WebSocket을 처리합니다. 각 요청을 호스트 이름과 경로에 따라 라우팅합니다. 인증서는 Let's Encrypt 또는 다른 ACME 인증 기관에서 받고, 내부 이름은 로컬 인증 기관이 맡습니다."
@@ -569,3 +569,9 @@ msgstr "Sibuna가 HTTP 요청을 받아들이고 검사하는 방식과 베타 �
 
 msgid "Field notes on load balancing, web application firewalls and the connections they protect."
 msgstr "부하 분산, 웹 애플리케이션 방화벽 및 이들이 보호하는 연결에 관한 현장 기록입니다."
+
+msgid "DDoS protection at the edge"
+msgstr "에지에서의 DDoS 방어"
+
+msgid "We can cap concurrent flows per client IP and frontend, limit admission of new addresses under pressure and reserve UDP capacity for confirmed flows. Floods that saturate the uplink require upstream filtering."
+msgstr "클라이언트 IP별로, 또 프런트엔드별로 동시 흐름 수를 제한할 수 있습니다. 부하가 높을 때는 새 주소의 접속을 제한하고 확인된 흐름에 UDP 처리 용량을 남겨 둘 수 있습니다. 회선을 포화시키는 공격은 상위 네트워크에서 트래픽을 걸러야 합니다."

@@ -171,11 +171,11 @@ msgstr "同じ連邦システムでデジタル署名が移行対象となりま
 msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
 msgstr "検証済みのルーティング設定をメッシュに配布します。各ノードは自身のバックエンドプールに通信を転送しながら、拒否情報や学習済みの振り分け先を共有できます。"
 
-msgid "Distributed load balancer and web application firewall"
-msgstr "分散ロードバランサーとWebアプリケーションファイアウォール"
+msgid "Distributed edge load balancer and web application firewall"
+msgstr "分散型エッジロードバランサーと Web アプリケーションファイアウォール"
 
-msgid "Distributed load balancer and web application firewall · Sibuna"
-msgstr "分散ロードバランサーとWebアプリケーションファイアウォール · Sibuna"
+msgid "Distributed edge load balancer and web application firewall · Sibuna"
+msgstr "分散型エッジロードバランサーと Web アプリケーションファイアウォール · Sibuna"
 
 msgid "Download."
 msgstr "ダウンロード。"
@@ -414,8 +414,8 @@ msgstr "Sibuna の作者は Vikrant Rathore です。Ronak Rathore と Kanak Rat
 msgid "Sibuna returns a challenge to the client."
 msgstr "Sibuna がクライアントにチャレンジを返します。"
 
-msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
-msgstr "SibunaはTCP、UDP、HTTPの通信を正常なサーバーに振り分けます。エッジを単独で運用することも、複数のエッジをメッシュで結ぶこともできます。各エッジでTLSを終端し、選んだHTTPルートにファイアウォールを適用できます。"
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods."
+msgstr "Sibuna は、単一のエッジノードでもメッシュ構成でも、TCP、UDP、HTTP のトラフィックを正常なサーバーに振り分けます。エッジで TLS を終端し、指定した HTTP ルートを検査して、DDoS による大量のトラフィックからバックエンドを保護できます。"
 
 msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
 msgstr "Sibuna は TLS を終端し、HTTP/1.1、HTTP/2、HTTP/3、WebSocket を処理します。各リクエストをホスト名とパスでルーティングします。証明書は Let's Encrypt または他の ACME 認証局から取得し、内部の名前にはローカルの認証局を使います。"
@@ -569,3 +569,9 @@ msgstr "Sibuna が HTTP リクエストを受け入れて検査する仕組み�
 
 msgid "Field notes on load balancing, web application firewalls and the connections they protect."
 msgstr "負荷分散、Web アプリケーションファイアウォール、そしてそれらが守る接続についての実践記事。"
+
+msgid "DDoS protection at the edge"
+msgstr "エッジでの DDoS 対策"
+
+msgid "We can cap concurrent flows per client IP and frontend, limit admission of new addresses under pressure and reserve UDP capacity for confirmed flows. Floods that saturate the uplink require upstream filtering."
+msgstr "クライアント IP ごと、フロントエンドごとに同時フロー数を制限できます。高負荷時には新しいアドレスの受け入れを制限し、確認済みのフロー用に UDP の処理枠を確保できます。回線を飽和させる規模の攻撃には、上流でのフィルタリングが必要です。"

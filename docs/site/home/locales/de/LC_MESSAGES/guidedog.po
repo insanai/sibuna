@@ -171,11 +171,11 @@ msgstr "Für dieselben Systeme der Bundesbehörden folgen die digitalen Signatur
 msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
 msgstr "Wir verteilen eine geprüfte Routingkonfiguration im Mesh. Die Knoten können Sperren und gelernte Serverzuordnungen austauschen, während jeder Knoten Verkehr an seine Backend-Pools weiterleitet."
 
-msgid "Distributed load balancer and web application firewall"
-msgstr "Verteilter Lastverteiler und Web Application Firewall"
+msgid "Distributed edge load balancer and web application firewall"
+msgstr "Verteilter Edge-Lastverteiler und Web Application Firewall"
 
-msgid "Distributed load balancer and web application firewall · Sibuna"
-msgstr "Verteilter Lastverteiler und Web Application Firewall · Sibuna"
+msgid "Distributed edge load balancer and web application firewall · Sibuna"
+msgstr "Verteilter Edge-Lastverteiler und Web Application Firewall · Sibuna"
 
 msgid "Download."
 msgstr "Herunterladen."
@@ -414,8 +414,8 @@ msgstr "Sibuna wird von Vikrant Rathore geschrieben, mit Unterstützung von Rona
 msgid "Sibuna returns a challenge to the client."
 msgstr "Sibuna sendet dem Client eine Challenge."
 
-msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
-msgstr "Sibuna leitet TCP, UDP und HTTP an gesunde Server weiter. Wir können einen Edge betreiben oder mehrere zu einem Mesh verbinden, an jedem Edge TLS terminieren und die Firewall auf ausgewählte HTTP-Routen anwenden."
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods."
+msgstr "Sibuna leitet TCP, UDP und HTTP von einem einzelnen Edge-Knoten oder einem Mesh an gesunde Server weiter. Es kann TLS terminieren, ausgewählte HTTP-Routen prüfen und Backends vor DDoS-Fluten schützen."
 
 msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
 msgstr "Sibuna terminiert TLS und bedient HTTP/1.1, HTTP/2, HTTP/3 und WebSocket. Es routet jede Anfrage nach Hostname und Pfad. Zertifikate kommen von Let's Encrypt oder einer anderen ACME-Zertifizierungsstelle, und eine lokale Zertifizierungsstelle deckt interne Namen ab."
@@ -569,3 +569,9 @@ msgstr "Wie Sibuna HTTP-Anfragen zulässt und prüft, mit Messungen zu Latenz, D
 
 msgid "Field notes on load balancing, web application firewalls and the connections they protect."
 msgstr "Praxisberichte über Lastverteilung, Web Application Firewalls und die Verbindungen, die sie schützen."
+
+msgid "DDoS protection at the edge"
+msgstr "DDoS-Schutz am Netzrand"
+
+msgid "We can cap concurrent flows per client IP and frontend, limit admission of new addresses under pressure and reserve UDP capacity for confirmed flows. Floods that saturate the uplink require upstream filtering."
+msgstr "Wir können gleichzeitige Datenflüsse pro Client-IP und Frontend begrenzen, bei hoher Auslastung weniger neue Adressen zulassen und UDP-Kapazität für bestätigte Datenflüsse reservieren. Bei Angriffen, die den Netzanschluss auslasten, muss der Verkehr bereits im vorgelagerten Netz gefiltert werden."
