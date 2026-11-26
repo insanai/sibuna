@@ -21,8 +21,10 @@ One algorithm, three different jobs
 
 **Deciding what may boot.** On supported ESP32 revisions, Espressif's Secure Boot v2 can use RSA-PSS with a 3072-bit key to verify the bootloader and application. A forged signature would undermine that decision. The manufacturer's update path and the device's hardware trust anchor determine how this risk can be addressed. See `Espressif Secure Boot v2`_ and `NIST IR 8259r1`_.
 
-.. image:: art/boot-chip.webp
+.. figure:: art/boot-chip.webp
    :alt: Pencil detail of a microcontroller and the traces on its circuit board.
+
+   AMD documents RSA-4096 in the hardware root of trust of the Zynq UltraScale+ MPSoC. For each device family we record the chip revision and the boot mode actually enabled. See `AMD UG1085`_.
 
 Move the exposed connection first
 ---------------------------------
@@ -37,12 +39,12 @@ Consider a customer opening the device's website. We put Sibuna at its public HT
      graph [rankdir=LR, bgcolor="transparent", pad="0.18", nodesep="0.2", ranksep="0.32"];
      node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=13, color="#426858", fillcolor="#edf4ec", fontcolor="#18392c"];
      edge [fontname="Helvetica", fontsize=10, color="#386d55", arrowsize=0.7];
-     browser [label="1 · HTTPS"];
+     browser [label="Customer browser"];
      subgraph cluster_edge {
        label="Sibuna"; fontname="Helvetica"; color="#a1b5a8"; style=rounded;
-       tls [label="2 · TLS"]; waf [label="3 · WAF"];
+       tls [label="TLS"]; waf [label="HTTP firewall"];
      }
-     device [label="4 · HTTPS"];
+     device [label="Device website"];
      browser -> tls [label="X25519MLKEM768"]; tls -> waf; waf -> device [label="TLS"];
    }
 
@@ -67,3 +69,4 @@ The `migration guide <../book/post-quantum-transport.html>`_ gives the test poli
 .. _Espressif Secure Boot v2: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/security/secure-boot-v2.html
 .. _NIST IR 8259r1: https://doi.org/10.6028/NIST.IR.8259r1
 .. _RFC 10024: https://www.rfc-editor.org/rfc/rfc10024.html
+.. _AMD UG1085: https://docs.amd.com/r/en-US/ug1085-zynq-ultrascale-trm/Hardware-Root-Of-Trust-Secure-Boot-Details
