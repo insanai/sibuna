@@ -67,9 +67,9 @@ sibuna --config-file edge.jlv
 
 [使用 Jlavi 配置 Sibuna](https://insanai.github.io/sibuna/zh-hans/book/jlavi.html)
 
-- **转发：** TCP 和 UDP、按服务器名称路由的 TLS 透传、QUIC 透传以及 PROXY 协议。
+- **转发：** TCP 和 UDP、按服务器名称（精确或通配符）路由的 TLS 透传、QUIC 透传以及 PROXY 协议。
 - **受到攻击时：** 每个客户端地址和每个前端的流上限，在接受连接时检查并通过网格共享的封禁，自动封禁，以重置或 tarpit 方式拒绝，优先接纳已知客户端的压力模式，运行在多个核心上的接受线程，以及为已确认客户端保留份额的 UDP 数据包预算。
-- **HTTP：** 使用 HAProxy 风格的 PEM 证书包终止 TLS，并采用后量子密钥交换（X25519MLKEM768）；支持 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket；按主机名和路径路由到 HTTP/1.1、HTTP/2 或 HTTP/3 服务器。在 Linux 上，由事件驱动的 worker 处理连接，每个处理器一个 worker。
+- **HTTP：** 使用 HAProxy 风格的 PEM 证书包终止 TLS，并采用后量子密钥交换（X25519MLKEM768）；支持 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket；按主机名（精确或 `*.example.org` 这样的通配符）和路径路由到 HTTP/1.1、HTTP/2 或 HTTP/3 服务器。在 Linux 上，由事件驱动的 worker 处理连接，每个处理器一个 worker。
 - **证书：** 通过 ACME 自动获取并续期，支持备用证书颁发机构和外部账户绑定；通过 DNS 获取通配符证书，可使用钩子程序、RFC 2136 更新或 Cloudflare API；OCSP 装订；在守卫之后按需获取证书；为 `localhost`、内部名称和 IP 地址提供本地证书颁发机构，它有自己的吊销列表和 ACME 服务器。
 - **服务器：** 健康检查、慢启动、排空、权重、会话保持，以及每台服务器的流数量限制。
 - **运行中变更：** 成功重新加载后，已建立的 TCP 连接仍然有效。管理套接字可以排空、调整权重、添加和移除服务器（`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`）。在 Linux 上，新的可执行文件从旧的可执行文件接管监听套接字和 UDP 映射；QUIC 连接会终止。
