@@ -22,11 +22,12 @@
 
 // ---------------------------------------------------------------- wireframe primitives
 // A wireframe is a canvas in millimetres with y measured from the top edge.
-#let wire(width, height, draw) = cetz.canvas(length: 1mm, {
+// The pad keeps the outer frame and its stroke inside the image.
+#let wire(width, height, draw) = pad(4pt, cetz.canvas(length: 1mm, {
   import cetz.draw: *
   rect((0, 0), (width, height), stroke: 0.6pt + rule, fill: white, radius: 1.5)
   draw(height)
-})
+}))
 
 #let sparkline_draw(H, x, y, w, h, pts, stroke-color: blue) = {
   import cetz.draw: *

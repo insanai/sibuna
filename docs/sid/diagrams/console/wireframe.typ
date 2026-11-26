@@ -11,11 +11,12 @@
 #let rule = rgb("cbd5e1")
 #let ink = rgb("1e293b")
 
-#let wire(width, height, draw) = cetz.canvas(length: 1mm, {
+// The pad keeps the outer frame and its stroke inside the image.
+#let wire(width, height, draw) = pad(4pt, cetz.canvas(length: 1mm, {
   import cetz.draw: *
   rect((0, 0), (width, height), stroke: 0.7pt + ink, fill: white)
   draw(height)
-})
+}))
 
 #let panel(H, x, y, w, h, label, bg: none, size: 6.5pt, weight: "regular") = {
   import cetz.draw: *
