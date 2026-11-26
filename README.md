@@ -1,5 +1,5 @@
 <h1 align="center">sibuna</h1>
-<p align="center">Distributed load balancer and web application firewall</p>
+<p align="center">Distributed edge load balancer and web application firewall</p>
 <p align="center">
   <a href="#features">Features</a> ·
   <a href="#load-balancing">Load balancing</a> ·
@@ -18,7 +18,7 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.
+Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods.
 
 ## Where we use Sibuna
 
@@ -41,6 +41,7 @@ Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or conne
 - **Browser challenges:** proof of sequential work (default) or Hashcash, followed by a signed session.
 - **Access policies:** allow, challenge, weigh or deny requests by address, path, headers and User-Agent.
 - **Load balancing:** TCP, UDP and HTTP in front of several servers, with TLS termination, automatic certificates and a cluster mode. See [Load balancing](#load-balancing).
+- **[DDoS protection at the edge](https://insanai.github.io/sibuna/book/operations.html#edge-admission-under-attack)** We can cap concurrent flows per client IP and frontend, limit admission of new addresses under pressure and reserve UDP capacity for confirmed flows. Floods that saturate the uplink require upstream filtering.
 - **TLS fingerprints:** match the JA4 fingerprint that a trusted ingress forwards, exactly or by prefix.
 - **Application inspection:** built-in checks for SQL injection, XSS, path traversal and command injection.
 - **Local rate limits:** control bursts and sustained traffic, with optional limits per rule.

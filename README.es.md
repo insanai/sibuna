@@ -1,6 +1,6 @@
-<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
+<!-- English source SHA-256: 4c67703ca6d3304b7b577e9000320ec59884185b2ef46b6fcc2b14a811cf150f -->
 <h1 align="center">sibuna</h1>
-<p align="center">Balanceador de carga distribuido y cortafuegos de aplicaciones web</p>
+<p align="center">Balanceador de carga distribuido en el borde y cortafuegos de aplicaciones web</p>
 <p align="center">
   <a href="#features">Características</a> ·
   <a href="#load-balancing">Balanceo de carga</a> ·
@@ -19,7 +19,7 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-Sibuna dirige TCP, UDP y HTTP a servidores en buen estado. Podemos ejecutar un nodo de borde o conectar varios en una malla, terminar TLS en cada nodo y aplicar el cortafuegos a rutas HTTP concretas.
+Sibuna distribuye el tráfico TCP, UDP y HTTP entre servidores en buen estado desde un nodo de borde o una malla. Puede terminar TLS, inspeccionar rutas HTTP seleccionadas y ayudar a proteger los servidores de destino frente a ataques DDoS.
 
 ## Dónde usamos Sibuna
 
@@ -44,6 +44,7 @@ Sibuna dirige TCP, UDP y HTTP a servidores en buen estado. Podemos ejecutar un n
 - **Desafíos de navegador:** prueba de trabajo secuencial (por defecto) o Hashcash, seguidos de una sesión firmada.
 - **Políticas de acceso:** permitir, desafiar, ponderar o denegar peticiones por dirección, ruta, cabeceras y User-Agent.
 - **Balanceo de carga:** TCP, UDP y HTTP delante de varios servidores, con terminación TLS, certificados automáticos y un modo de clúster. Consulta [Balanceo de carga](#load-balancing).
+- **[Protección DDoS en el borde](https://insanai.github.io/sibuna/es/book/operations.html#edge-admission-under-attack)** Podemos limitar los flujos simultáneos por IP de cliente y por frontend, restringir la admisión de direcciones nuevas bajo presión y reservar capacidad UDP para flujos confirmados. Si el ataque satura el enlace, hace falta filtrar el tráfico antes de que llegue a nuestra red.
 - **Huellas TLS:** comparar la huella JA4 que reenvía un proxy de entrada de confianza, de forma exacta o por prefijo.
 - **Inspección de aplicaciones:** comprobaciones integradas de inyección SQL, XSS, recorrido de rutas e inyección de comandos.
 - **Límites de tasa locales:** controlar ráfagas y tráfico sostenido, con límites opcionales por regla.

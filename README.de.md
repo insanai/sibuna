@@ -1,6 +1,6 @@
-<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
+<!-- English source SHA-256: 4c67703ca6d3304b7b577e9000320ec59884185b2ef46b6fcc2b14a811cf150f -->
 <h1 align="center">sibuna</h1>
-<p align="center">Verteilter Lastverteiler und Web Application Firewall</p>
+<p align="center">Verteilter Edge-Lastverteiler und Web Application Firewall</p>
 <p align="center">
   <a href="#features">Funktionen</a> ·
   <a href="#load-balancing">Lastverteilung</a> ·
@@ -19,7 +19,7 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-Sibuna leitet TCP, UDP und HTTP an gesunde Server weiter. Wir können einen Edge betreiben oder mehrere zu einem Mesh verbinden, an jedem Edge TLS terminieren und die Firewall auf ausgewählte HTTP-Routen anwenden.
+Sibuna leitet TCP, UDP und HTTP von einem einzelnen Edge-Knoten oder einem Mesh an gesunde Server weiter. Es kann TLS terminieren, ausgewählte HTTP-Routen prüfen und Backends vor DDoS-Fluten schützen.
 
 ## Einsatzgebiete von Sibuna
 
@@ -44,6 +44,7 @@ Sibuna leitet TCP, UDP und HTTP an gesunde Server weiter. Wir können einen Edge
 - **Browser-Challenges:** Nachweis sequenzieller Arbeit (Standard) oder Hashcash, danach eine signierte Sitzung.
 - **Zugangsrichtlinien:** Anfragen nach Adresse, Pfad, Headern und User-Agent zulassen, mit einer Challenge belegen, gewichten oder ablehnen.
 - **Lastverteilung:** TCP, UDP und HTTP vor mehreren Servern, mit TLS-Terminierung, automatischen Zertifikaten und einem Cluster-Modus. Siehe [Lastverteilung](#load-balancing).
+- **[DDoS-Schutz am Netzrand](https://insanai.github.io/sibuna/de/book/operations.html#edge-admission-under-attack)** Wir können gleichzeitige Datenflüsse pro Client-IP und Frontend begrenzen, bei hoher Auslastung weniger neue Adressen zulassen und UDP-Kapazität für bestätigte Datenflüsse reservieren. Bei Angriffen, die den Netzanschluss auslasten, muss der Verkehr bereits im vorgelagerten Netz gefiltert werden.
 - **TLS-Fingerabdrücke:** den JA4-Fingerabdruck, den ein vertrauenswürdiger Eingangsproxy weiterleitet, exakt oder per Präfix abgleichen.
 - **Anwendungsprüfung:** eingebaute Prüfungen für SQL-Injection, XSS, Path Traversal und Command Injection.
 - **Lokale Ratenlimits:** Bursts und Dauerlast steuern, optional mit Limits je Regel.

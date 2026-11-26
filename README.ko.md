@@ -1,6 +1,6 @@
-<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
+<!-- English source SHA-256: 4c67703ca6d3304b7b577e9000320ec59884185b2ef46b6fcc2b14a811cf150f -->
 <h1 align="center">sibuna</h1>
-<p align="center">분산 로드 밸런서와 웹 애플리케이션 방화벽</p>
+<p align="center">분산형 에지 로드 밸런서와 웹 애플리케이션 방화벽</p>
 <p align="center">
   <a href="#features">기능</a> ·
   <a href="#load-balancing">로드 밸런싱</a> ·
@@ -19,7 +19,7 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-Sibuna는 TCP, UDP, HTTP 트래픽을 정상 서버로 전달합니다. 에지 하나를 운영하거나 여러 에지를 메시로 연결하고, 각 에지에서 TLS를 종료하고 선택한 HTTP 경로에 방화벽을 적용할 수 있습니다.
+Sibuna는 단일 에지 노드 또는 메시에서 TCP, UDP, HTTP 트래픽을 정상 서버로 분산합니다. 에지에서 TLS를 종료하고 지정한 HTTP 경로를 검사하며 DDoS 트래픽으로부터 백엔드를 보호할 수 있습니다.
 
 ## Sibuna 활용 사례
 
@@ -44,6 +44,7 @@ Sibuna는 TCP, UDP, HTTP 트래픽을 정상 서버로 전달합니다. 에지 �
 - **브라우저 챌린지:** 순차 작업 증명(기본값) 또는 Hashcash를 사용합니다. 완료하면 서명된 세션을 발급합니다.
 - **접근 정책:** 주소, 경로, 헤더, User-Agent에 따라 요청을 허용하거나, 챌린지를 제시하거나, 가중치를 매기거나, 거부합니다.
 - **로드 밸런싱:** 여러 서버 앞에서 TCP, UDP, HTTP를 처리하며 TLS 종료, 자동 인증서, 클러스터 모드를 지원합니다. [로드 밸런싱](#load-balancing)을 참고하세요.
+- **[에지에서의 DDoS 방어](https://insanai.github.io/sibuna/ko/book/operations.html#edge-admission-under-attack)** 클라이언트 IP별로, 또 프런트엔드별로 동시 흐름 수를 제한할 수 있습니다. 부하가 높을 때는 새 주소의 접속을 제한하고 확인된 흐름에 UDP 처리 용량을 남겨 둘 수 있습니다. 회선을 포화시키는 공격은 상위 네트워크에서 트래픽을 걸러야 합니다.
 - **TLS 지문:** 신뢰할 수 있는 인그레스가 전달한 JA4 지문을 정확히 일치하거나 접두사로 비교합니다.
 - **앱 검사:** SQL 인젝션, XSS, 경로 탐색, 명령 인젝션을 검사하는 기능이 내장되어 있습니다.
 - **로컬 속도 제한:** 순간적으로 몰리는 트래픽과 지속적인 트래픽을 제어합니다. 규칙별 제한도 설정할 수 있습니다.

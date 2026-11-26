@@ -1,6 +1,6 @@
-<!-- English source SHA-256: cc1aaa74c7ebf304bf574d29f14c1d1eb9196b30744f92f833e9d2712778bbb8 -->
+<!-- English source SHA-256: 4c67703ca6d3304b7b577e9000320ec59884185b2ef46b6fcc2b14a811cf150f -->
 <h1 align="center">sibuna</h1>
-<p align="center">分布式负载均衡器和 Web 应用防火墙</p>
+<p align="center">分布式边缘负载均衡器和 Web 应用防火墙</p>
 <p align="center">
   <a href="#features">功能</a> ·
   <a href="#load-balancing">负载均衡</a> ·
@@ -19,7 +19,7 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-Sibuna 将 TCP、UDP 和 HTTP 流量转发到健康的服务器。我们可以运行单个边缘节点，也可以将多个节点组成网状集群，在各节点终止 TLS，并对指定的 HTTP 路由应用防火墙。
+Sibuna 可通过单个边缘节点或网状集群将 TCP、UDP 和 HTTP 流量分发到健康的服务器。它可以在边缘终止 TLS、检查指定的 HTTP 路由，并帮助后端抵御 DDoS 流量洪泛。
 
 ## Sibuna 的应用场景
 
@@ -44,6 +44,7 @@ Sibuna 将 TCP、UDP 和 HTTP 流量转发到健康的服务器。我们可以�
 - **浏览器挑战：** 顺序工作量证明（默认）或 Hashcash，完成后获得签名会话。
 - **访问策略：** 根据地址、路径、请求头和 User-Agent 放行、挑战、加权评估或拒绝请求。
 - **负载均衡：** 在多台服务器前处理 TCP、UDP 和 HTTP，支持 TLS 终止、自动证书和集群模式。见[负载均衡](#load-balancing)。
+- **[边缘 DDoS 防护](https://insanai.github.io/sibuna/zh-hans/book/operations.html#edge-admission-under-attack)** 我们可以限制每个客户端 IP 和每个前端的并发流数，在负载过高时限制新地址的接入速率，并为已确认的流预留 UDP 处理容量。如果攻击流量占满上联链路，就需要在上游过滤。
 - **TLS 指纹：** 按受信任的入口代理转发的 JA4 指纹匹配请求，可精确匹配，也可按前缀匹配。
 - **应用层检查：** 内置 SQL 注入、XSS、路径遍历和命令注入检查。
 - **本地速率限制：** 控制突发和持续流量，也可为单条规则设置限额。
