@@ -1,9 +1,9 @@
 digraph edge_crates {
   graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.12, ranksep=0.42, pad=0.2, fontname="Helvetica", fontsize=9, fontcolor="#55665e"];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.9, height=0.32, margin="0.12,0.05"];
-  edge [color="#6a7c73", arrowsize=0.55, penwidth=0.9];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.7, height=0.32, margin="0.12,0.05"];
+  edge [color="#6a7c73", arrowsize=0.55, penwidth=0.7];
 
-  daemon [label=<cmd/sibuna<BR/><FONT POINT-SIZE="8" COLOR="#55665e">edge LB, WAF and console</FONT>>, color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c", penwidth=1.4];
+  daemon [label=<cmd/sibuna<BR/><FONT POINT-SIZE="8" COLOR="#55665e">edge LB, WAF and console</FONT>>, color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c", penwidth=1.1];
   console [label="sibuna-console"];
   net [label="sibuna-net"];
   jlv [label=<sibuna-jlv<BR/><FONT POINT-SIZE="8" COLOR="#55665e">off-path JLV/2<BR/>transform</FONT>>, color="#8f5512", fillcolor="#fbf4e4"];
@@ -32,11 +32,11 @@ digraph edge_crates {
   { rank=same; policy; conf; lb; kv; io; plugin; }
   { rank=same; core; cidr; crypto; http; store; }
 
-  daemon -> net [color="#176a4b", penwidth=1.2]; daemon -> cluster [color="#176a4b", penwidth=1.2];
-  daemon -> kv [color="#176a4b", penwidth=1.2]; daemon -> conf [color="#176a4b", penwidth=1.2];
-  daemon -> jlv [color="#176a4b", penwidth=1.2]; daemon -> plugin [color="#176a4b", penwidth=1.2];
-  daemon -> policy [color="#176a4b", penwidth=1.2]; daemon -> storage [color="#176a4b", penwidth=1.2];
-  daemon -> console [color="#176a4b", penwidth=1.2];
+  daemon -> net [color="#176a4b", penwidth=1.1]; daemon -> cluster [color="#176a4b", penwidth=1.1];
+  daemon -> kv [color="#176a4b", penwidth=1.1]; daemon -> conf [color="#176a4b", penwidth=1.1];
+  daemon -> jlv [color="#176a4b", penwidth=1.1]; daemon -> plugin [color="#176a4b", penwidth=1.1];
+  daemon -> policy [color="#176a4b", penwidth=1.1]; daemon -> storage [color="#176a4b", penwidth=1.1];
+  daemon -> console [color="#176a4b", penwidth=1.1];
   console -> storage; console -> cluster; console -> jlv;
   storage -> conf; storage -> policy; storage -> core;
   cluster -> lb; cluster -> kv; cluster -> crypto; cluster -> core;

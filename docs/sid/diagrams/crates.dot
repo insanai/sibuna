@@ -1,9 +1,9 @@
 digraph crates {
   graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.16, ranksep=0.42, pad=0.2, fontname="Helvetica", fontsize=9, fontcolor="#55665e"];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.9, height=0.32, width=0.6, margin="0.12,0.05"];
-  edge [color="#6a7c73", arrowsize=0.55, penwidth=0.9];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.7, height=0.32, width=0.6, margin="0.12,0.05"];
+  edge [color="#6a7c73", arrowsize=0.55, penwidth=0.7];
 
-  sibuna [color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c", penwidth=1.4];
+  sibuna [color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c", penwidth=1.1];
   "sibuna-pow-wasm" [color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c"];
   storage [color="#8f5512", fillcolor="#fbf4e4", shape=cylinder, style=filled];
   policy; challenge; net; core;
@@ -15,8 +15,8 @@ digraph crates {
   { rank=same; policy; challenge; net; }
   { rank=same; encoding; crypto; inflate; html; }
 
-  sibuna -> policy [color="#176a4b", penwidth=1.2]; sibuna -> challenge [color="#176a4b", penwidth=1.2];
-  sibuna -> net [color="#176a4b", penwidth=1.2]; sibuna -> storage [color="#176a4b", penwidth=1.2];
+  sibuna -> policy [color="#176a4b", penwidth=1.1]; sibuna -> challenge [color="#176a4b", penwidth=1.1];
+  sibuna -> net [color="#176a4b", penwidth=1.1]; sibuna -> storage [color="#176a4b", penwidth=1.1];
   storage -> policy; storage -> core;
   policy -> patterns; policy -> cidr; policy -> json; policy -> core;
   challenge -> crypto; challenge -> pow; challenge -> store; challenge -> encoding;
