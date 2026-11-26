@@ -330,7 +330,10 @@
   let has-notes = steps.any(s => s.at("note", default: none) != none)
   let left = -spacing / 2
   let right = (actors.len() - 1) * spacing + spacing / 2
-  let note-x = (actors.len() - 1) * spacing + spacing * 0.3
+  // A note keeps clear of a frame and of an action on the last lifeline.
+  let last = actors.last().key
+  let crowded = steps.any(s => s.kind == "begin" or (s.kind == "act" and s.at == last))
+  let note-x = if crowded { right + 1 } else { (actors.len() - 1) * spacing + spacing * 0.3 }
   let edge-right = if has-notes { note-x + note-width } else { right }
   let n = 0
   let number(k, accent) = if numbered {
@@ -431,13 +434,15 @@
 //
 // A strip shows the fields of a message from left to right, each with its size. The
 // offset of a field stands above its left edge. The widths are proportional to `weight`,
-// not to the size, so that a field of one byte is still readable.
+// not to the size, so that a field of one byte is still readable. A strip may have a
+// title at its left and a quiet note at its right, such as "sizes in bytes"; both are
+// strings of the figure, so that a translation can change them.
 
-// A field. `size` is a string such as "4" or "32 × k"; `kind` picks the tone.
+// A field. `size` is a string such as "4" or "32 × k", or none; `kind` picks the tone.
 #let field(name, size, offset: none, weight: 1, kind: "step") = (name: name, size: size,
   offset: offset, weight: weight, kind: kind)
 
-#let strip(fields, width: 150mm, unit: "bytes", title: none) = {
+#let strip(fields, width: 150mm, title: none, note: none) = {
   let cells = fields.map(f => {
     let (fill, edge-color) = tones.at(f.kind)
     table.cell(fill: fill, align(center + horizon, {
@@ -457,9 +462,11 @@
     ..cells,
   )
   block(width: width, {
-    if title != none {
-      text(size: 8.5pt, weight: "semibold", fill: quiet, rich(title))
-      v(-2pt)
+    if title != none or note != none {
+      grid(columns: (1fr, auto),
+        if title != none { text(size: 8.5pt, weight: "semibold", fill: quiet, rich(title)) },
+        if note != none { small(note) })
+      v(-1pt)
     }
     body
   })
