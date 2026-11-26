@@ -341,7 +341,7 @@
     h(0.35em)
   }
   let note-box(body) = box(fill: gold-soft, stroke: 0.6pt + gold-deep, radius: 2pt,
-    inset: (x: 4pt, y: 2.6pt), width: note-width * 1mm, text(size: 7.8pt,
+    inset: (x: 4pt, y: 3.6pt), width: note-width * 1mm, text(size: 7.8pt,
     fill: gold-deep.darken(20%), rich(body)))
   // First pass: the content and the height of every row.
   let rows = ()
@@ -423,7 +423,7 @@
         rect((left + 1, top), (right - 1, y + 0.5), radius: 1.2, stroke: (paint: rule,
           thickness: 0.6pt))
         content((left + 1.8, top - 0.3), anchor: "north-west", box(fill: white,
-          stroke: 0.6pt + rule, radius: 1pt, inset: (x: 3pt, y: 2pt),
+          stroke: 0.6pt + rule, radius: 1pt, inset: (x: 3pt, y: 3pt),
           text(size: 7.4pt, weight: "semibold", fill: quiet, rich(label))))
       }
     }
