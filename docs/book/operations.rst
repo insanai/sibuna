@@ -975,7 +975,7 @@ A reload may add and remove ``auto`` names, and turn ``on_demand`` of a frontend
 HTTP routing by name and path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An HTTP frontend selects a backend for each request, also for later requests on one keep-alive connection and for each stream of an HTTP/2 or HTTP/3 connection. The first matching route wins. A route gives a ``host``, a ``path_prefix``, or both. We compare host names without case or port and match a prefix of the normalized path that ends at a segment boundary: ``/public`` covers ``/public`` and ``/public/x``, and not ``/public-admin``. A prefix that ends in ``/`` is matched as written. Requests that match no route use ``default_backend``.
+An HTTP frontend selects a backend for each request, also for later requests on one keep-alive connection and for each stream of an HTTP/2 or HTTP/3 connection. The first matching route wins. A route gives a ``host`` or a list of ``hosts``, a ``path_prefix``, or both. We compare host names without case or port and match a prefix of the normalized path that ends at a segment boundary: ``/public`` covers ``/public`` and ``/public/x``, and not ``/public-admin``. A prefix that ends in ``/`` is matched as written. Requests that match no route use ``default_backend``.
 
 .. code-block:: json
 
@@ -1001,6 +1001,24 @@ An HTTP frontend selects a backend for each request, also for later requests on 
        "site": {"mode": "http", "servers": [{"name": "s1", "addr": "10.20.0.11:3000"}]}
      }
    }
+
+A host may be a wildcard. ``*.example.org`` matches every name under ``example.org`` at any depth, such as ``shop.example.org`` and ``eu.shop.example.org``, and neither ``example.org`` itself nor ``badexample.org``. ``hosts`` lists up to 16 names and wildcards for one route, in place of ``host``:
+
+.. code-block:: text
+
+   routes: [
+     { host: "admin.example.org", backend: "admin" },
+     { hosts: ["*.example.org", "example.org"], backend: "app" },
+     { host: "*.customers.example.net", path_prefix: "/api/", backend: "api" },
+   ]
+
+A wildcard route carries its backend, its firewall setting and its policy to every name it matches, also to names that nobody put in DNS, since a client may send any ``Host``. A wildcard route with ``"firewall": false`` turns the firewall off for all of them. The first match still wins, so an exact route belongs above the wildcard that covers it. Sibuna refuses a file in which a wildcard hides a later route, or one name of a later route, and names the earlier route. It also refuses a wildcard below an earlier route without ``host`` whose prefix covers its own, since that route takes every request the wildcard would:
+
+.. code-block:: text
+
+   frontends.web.routes[2] can never match: frontends.web.routes[1] (host "*.example.org") comes first and matches every request it would. Hint: move frontends.web.routes[2] above frontends.web.routes[1], or remove it.
+
+A wildcard is one leading ``*.`` label before a host name. ``api.*.example.org``, ``*`` alone and a wildcard that ends in a number are refused with a hint, and there are no regular expressions. An internationalised name is written in its ASCII form (``xn--``). A wildcard certificate covers one label: ``*.example.org`` serves ``shop.example.org`` and not ``eu.shop.example.org``, which needs its own certificate or ``*.shop.example.org``.
 
 Sibuna keeps the client's ``Host`` field and sets ``X-Forwarded-For``, ``X-Forwarded-Proto`` and ``X-Real-IP`` from the connection it terminated. It also sets ``X-Forwarded-Host`` to the ``Host`` of the request and ``X-Forwarded-Port`` to the port of the listener. A client cannot supply these fields. An application that reads ``X-Forwarded-For`` must list the Sibuna node as a trusted proxy.
 
@@ -1453,7 +1471,7 @@ A tunnel stays on the server that accepted it. An application that keeps its liv
 TCP inspection and PROXY v2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with exact ``sni`` or ``alpn`` matches or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. By default the worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds, and ``inspect_fallback`` can forward them instead (see the next section). A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type.
+A frontend may set ``"tcp_inspect": "tls_client_hello"``, define ``acls`` with an ``sni`` name, exact or a wildcard such as ``*.example.org`` as in HTTP routes, an ``alpn`` match or a ``ja4_prefix`` pattern such as ``t13d*``, and list ordered ``deny`` or ``use_backend`` rules. A rule whose server name an earlier wildcard rule already matches can never decide, and the file is refused. By default the worker closes malformed or incomplete handshakes after a bounded inspection of up to 32 KiB and a default deadline of two seconds, and ``inspect_fallback`` can forward them instead (see the next section). A complete hello with no matching rule uses the default pool. Enable ``"proxy_v2": {"enabled": true}`` on a TCP pool only when its servers accept a PROXY v2 address header before the stream. We can add ``"tlv_sni": true`` or ``"tlv_ja4": true`` inside ``proxy_v2`` to forward inspected metadata. SNI uses the AUTHORITY type (0x02). Sibuna uses the custom type 0xe0 for the 36 ASCII bytes of JA4. The origin must agree on this type. The header names the client and the address it reached. Two IPv4 addresses are written as IPv4, also when the listener is dual-stack and the socket sees them as IPv4-mapped IPv6. Addresses of different families are written as IPv6, with the IPv4 address mapped. The health probes of such a pool begin with a version 2 header with the ``LOCAL`` command, which the protocol requires a server to accept, and fail when the server closes the connection at once. Each such probe waits up to 100 milliseconds for that refusal. The probes of all pools take turns on four threads, so a node with hundreds of such servers checks each one less often than its ``interval``. We check the pool's health once after we enable ``proxy_v2``.
 
 .. _edge-admission-at-the-socket-edge:
 
@@ -1819,6 +1837,11 @@ A ``tcp`` frontend reads the PROXY header in the same way. The client it names t
    frontends { db { proto: "tcp", binds: ["0.0.0.0:5432"],
                     trusted_proxies: ["10.0.0.0/24"], proxy_protocol: true,
                     default_backend: "db" } }
+
+**Load balancers in front.** An AWS Network Load Balancer sends a version 2 header when its target group enables ``proxy_protocol_v2.enabled``. Google Cloud's TCP and SSL proxy load balancers send version 1 with ``proxyHeader: PROXY_V1``, and Private Service Connect sends version 2. Sibuna reads both versions and skips the extensions. A frontend with ``proxy_protocol: true`` closes a connection without a header, and that includes the health checks of the load balancer. A TCP health check passes anyway, because it only opens the connection. An HTTP health check needs one of two arrangements:
+
+- We point it at the separate listener ``observability.listen`` and its ``/ready`` route. That listener reads no PROXY header, and readiness answers 503 from the start of a shutdown. This works with every load balancer, and it is the way for AWS, which does not document whether its health checks carry the header.
+- We let it send a header to the frontend itself. A Google Cloud HTTP health check does this with ``proxyHeader: PROXY_V1``. The networks of the checkers then belong in ``trusted_proxies``, for the header, and in ``internal_allow``, for ``/__sibuna/ready``.
 
 **The descriptor limit.** At startup Sibuna compares the limit on open files with what the topology can use: two per flow, two per HTTP connection, the server connections kept for reuse, and 512. The event-driven workers together keep at most ``http.max_connections`` connections for reuse, and with a TLS frontend the protocol runtime keeps at most 256 for each HTTP server. It raises the soft limit as far as the hard limit allows. When that is not enough it prints a warning with the numbers and a hint, and starts anyway:
 
@@ -2679,10 +2702,18 @@ Coming from HAProxy
      - ``"tls": {"crt": ..., "http3": true}``
    * - ``use_backend api if { hdr(host) -i api.example.org }``
      - ``"routes": [{"host": "api.example.org", "backend": "api"}]``
+   * - ``use_backend app if { hdr_end(host) -i .example.org }``
+     - ``{"host": "*.example.org", "backend": "app"}``
+   * - ``use_backend app if { hdr(host) -i a.example.org b.example.org }``
+     - ``{"hosts": ["a.example.org", "b.example.org"], "backend": "app"}``
+   * - ``hdr_reg(host)``, ``req.ssl_sni -m reg``
+     - No regular expressions. A wildcard or a ``hosts`` list covers most uses.
    * - ``use_backend api if { path_beg /v1/ }``
      - ``{"path_prefix": "/v1/", "backend": "api"}``
    * - ``mode tcp`` with ``req.ssl_sni``
      - ``"proto": "tcp", "tcp_inspect": "tls_client_hello"`` with ``acls`` and ``rules``
+   * - ``req.ssl_sni -m end .example.org``
+     - ``"acls": {"app": {"sni": "*.example.org"}}``
    * - ``balance leastconn``, ``weight``, ``maxconn``, ``backup``
      - ``least_connections`` (default), ``weight``, ``max_flows``, ``backup``
    * - ``balance roundrobin``
@@ -2715,8 +2746,8 @@ Coming from HAProxy
      - ``"health_check": {"kind": "http", "path": "/health", "interval": "2s", "rise": 2, "fall": 3}``
    * - ``server s1 10.0.0.1:8443 ssl verify required ca-file ca.pem sni str(api.internal) alpn h2``
      - ``"http_version": "2", "tls": {"ca_file": "ca.pem", "sni": "api.internal"}``
-   * - ``server s1 ... send-proxy-v2``
-     - ``"proxy_v2": {"enabled": true}`` on a TCP pool
+   * - ``server s1 ... send-proxy-v2 check``
+     - ``"proxy_v2": {"enabled": true}`` on a TCP pool. Its health probes send a ``LOCAL`` header.
    * - ``option forwardfor``
      - Always on for HTTP frontends
    * - ``timeout client``, ``timeout tunnel``
