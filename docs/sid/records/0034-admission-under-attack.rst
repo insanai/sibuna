@@ -131,7 +131,7 @@ The packet worker and the HTTP firewall share one ban table. An edge without an 
 ``refuse`` on a TCP or HTTP frontend says how a refused connection ends:
 
 - ``"reset"`` (the default). The socket gets ``SO_LINGER`` with a zero time and is closed. The kernel sends a reset and keeps no ``TIME_WAIT`` state for it.
-- ``"close"``. An orderly close, as before this record.
+- ``"close"``. An orderly close, as before this record. A client that already sent bytes still sees a reset: the kernel resets a socket closed with unread data.
 - ``"tarpit"``. The connection is held without reading for 10 seconds and then reset. A slow scanner waits instead of moving on. At most 1,024 connections are held per accept thread. When the tarpit is full, the oldest one is reset at once.
 
 An HTTP frontend that refuses at accept writes nothing in any mode. The HTTP firewall still answers 503 for its own limits, as before.
@@ -240,7 +240,7 @@ Acceptance criteria and implementation status
      - Met. ``under_pressure_a_known_address_passes_and_new_ones_wait_for_a_token``: half the table switches pressure on, one new address takes the token of the second, the next is refused as ``pressure``, a known address passes, and pressure switches off when the load falls. ``constant_load_settles``, ``hysteresis``, ``known_pass``, ``new_bounded`` in the Lean model. ``known::tests`` check the expiry across the wrap of the minute counter.
    * - 6
      - Accept and refusal scale over the accept threads.
-     - See *Measurement*.
+     - Partly met. Refusal runs on every accept thread, and a drain and a handoff wait until no thread watches a listener they give up (``a_lent_tcp_listener_is_one_queue_for_both_edges``). The cost per refusal is close to HAProxy's. The scaling itself is not shown (gap 4, *Measurement*).
    * - 7
      - Confirmed UDP mappings keep their reserve under a flood.
      - Met. ``total::tests::a_flood_of_others_leaves_half_the_burst_to_confirmed_mappings``. ``flood_keeps_reserve`` and ``confirmed_keep_share`` in the Lean model.
@@ -248,12 +248,63 @@ Acceptance criteria and implementation status
      - The counters, the top sources and the pressure signal are visible.
      - Met. ``top::tests`` find a heavy source among 1,000 light ones within its error bound. The integration tests read ``top_sources`` and the metrics. The console protocol carries ``pressure`` and ``top_refused`` (``a_view_survives_the_wire``), and the edge page shows them.
 
+Measurement
+-----------
+
+We ran a release build on one of three LAN hosts (16 cores each, LXC containers, Debian 13, Linux 7.0). The two others generated load with a small client written for the test. HAProxy 3.0.11 ran on the same host with equal settings. Every server was a local echo program.
+
+.. list-table:: A flood of connections refused by ``rate_limit.conn_per_10s: 1``, 1,024 client threads, 15 s
+   :header-rows: 1
+   :widths: 34 22 22 22
+
+   * - Proxy
+     - Connections a second
+     - CPU per refused connection
+     - Served
+   * - Sibuna, 1 accept thread
+     - 17,050
+     - 22 us
+     - 4
+   * - Sibuna, 4 accept threads
+     - 17,100
+     - 43 us
+     - 4
+   * - HAProxy, 1 thread
+     - 17,290
+     - 19 us
+     - 2
+   * - HAProxy, 4 threads
+     - 17,240
+     - 50 us
+     - 2
+
+Both proxies met the same ceiling of about 17,000 connections a second, which is the limit of the generators and the network of the containers, not of either proxy: one accept thread was busy 38 percent of the time. The cost of a refusal is close to HAProxy's. More threads cost more CPU per refusal at this rate, because each wakes for fewer connections. The scaling of accept threads beyond one core is therefore not shown by this run (gap 4).
+
+.. list-table:: One address holds 9,000 connections against a table of 8,192; a second address connects 19 times a second
+   :header-rows: 1
+   :widths: 40 30 30
+
+   * - Frontend
+     - Connections of the holder
+     - Connections of the other address
+   * - No caps
+     - 8,192 held
+     - 0 of 97 served
+   * - ``max_flows_per_ip: 500``
+     - 500 held
+     - 95 of 95 served, p99 3.8 ms
+
+Under pressure (``max_flows`` 4,000, ``on`` 90, ``new_per_second`` 20), an address that had never finished a flow opened 3,800 connections: 3,632 passed before pressure switched on and 168 were refused after. A known address was served 93 times of 93 meanwhile. A third address that opened and finished 52,703 connections in 5 seconds passed all of them, because its first finished flow proved it. The daemon logged ``EDGE016`` when pressure switched on and when it switched off.
+
 Known gaps
 ----------
 
 #. Caps are per node. A mesh does not share counts.
 #. Generic UDP confirmation is weak, as stated above.
 #. Floods larger than the link are out of reach.
+#. The scaling of accept threads over cores is not measured: the generators of the test reached 17,000 connections a second, which one accept thread serves at 38 percent of a core.
+#. An address that finishes flows quickly becomes known, so pressure does not slow a client that completes every exchange. The connection rate and the caps bound such a client.
+#. A QUIC connection refused by a cap or by pressure is not counted under its reason, only refused.
 
 Open questions
 --------------
@@ -263,7 +314,8 @@ Open questions
 Review history
 --------------
 
-- 2026-11-26. Initial draft, written before the code, with the Lean model ``docs/sid/assets/admission-under-attack.lean``.
+- 2026-11-26. Review after the code and the measurement. The accept threads accepted a connection on a listener just given up to a replacement process; a release and a drain now wait until every thread watches the new table (``publish_and_settle``). A refused connection that had sent bytes is reset by the kernel even with ``refuse: "close"``; the text and the test say so. The check order puts the caps before pressure, so a refused connection spends no token. ``EDGE014`` was taken by the console; the code is ``EDGE016``. An HTTP client is proved only by a server's answer below 400, so a challenge page proves nobody. The PROXY header path now replaces the permit of the header wait with one under the client's own caps.
+- 2026-11-26. Initial draft, written before the code, with the Lean model ``docs/sid/assets/admission-under-attack.lean``. The review of the draft found two faults: automatic bans on UDP would let a spoofer ban the owner of an address, so the file refuses them; and a PROXY frontend must run the ban check on the address in the header, not on the proxy.
 
 References
 ----------
