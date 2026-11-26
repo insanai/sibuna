@@ -1,6 +1,6 @@
 digraph crates {
-  graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.16, ranksep=0.42, pad=0.1, fontname="Noto Sans", fontsize=9, fontcolor="#55665e"];
-  node [shape=box, style="rounded,filled", fontname="Noto Sans", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.9, height=0.32, width=0.6, margin="0.17,0.05"];
+  graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.16, ranksep=0.42, pad=0.2, fontname="Helvetica", fontsize=9, fontcolor="#55665e"];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.9, height=0.32, width=0.6, margin="0.12,0.05"];
   edge [color="#6a7c73", arrowsize=0.55, penwidth=0.9];
 
   sibuna [label="sibuna (daemon)", color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c", penwidth=1.4];
