@@ -137,6 +137,10 @@ fn authority(out: &mut Html<'_>, revision: Option<u64>) -> fmt::Result {
 fn refusals(node: &Node, out: &mut Html<'_>) -> fmt::Result {
     out.write_str("<section class=\"sb-panel\" aria-labelledby=\"edge-refused-heading\">")?;
     out.write_str("<h2 id=\"edge-refused-heading\">Refused, by cause</h2>")?;
+    // Pressure mode admits known clients first while the flow table is nearly full.
+    out.write_str("<p>Pressure mode: <strong>")?;
+    out.write_str(if node.pressure { "on" } else { "off" })?;
+    out.write_str("</strong></p>")?;
     out.write_str(TABLE)?;
     out.write_str("<thead><tr><th scope=\"col\">Cause</th><th scope=\"col\">Count</th></tr>")?;
     out.write_str("</thead><tbody>")?;
@@ -148,7 +152,27 @@ fn refusals(node: &Node, out: &mut Html<'_>) -> fmt::Result {
         out.write_str("</td></tr>")?;
     }
     out.write_str(END_TABLE)?;
+    sources(node, out)?;
     out.write_str("</section>")
+}
+
+/// The addresses with the most refusals in the current minute (SID 0034).
+fn sources(node: &Node, out: &mut Html<'_>) -> fmt::Result {
+    out.write_str("<h3>Most refused addresses this minute</h3>")?;
+    if node.top_refused.is_empty() {
+        return out.write_str("<p>None this minute.</p>");
+    }
+    head(out, &["Address", "Refusals", "Last cause"])?;
+    for source in &node.top_refused {
+        out.write_str("<tr><td><code>")?;
+        out.escaped(&source.address)?;
+        out.write_str("</code></td>")?;
+        cell(out, |out| format::count(out, source.count))?;
+        out.write_str("<td><code>")?;
+        out.escaped(&source.reason)?;
+        out.write_str("</code></td></tr>")?;
+    }
+    out.write_str(END_TABLE)
 }
 
 fn head(out: &mut Html<'_>, columns: &[&str]) -> fmt::Result {

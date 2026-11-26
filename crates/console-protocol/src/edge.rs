@@ -58,6 +58,20 @@ pub struct Refused {
     pub count: u64,
 }
 
+/// An address with many refusals in the current minute (SID 0034).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Source {
+    /// The client address, IPv6 cut to its /64.
+    pub address: String,
+    /// The refusals counted for it: at least its true count.
+    pub count: u64,
+    /// The reason of its last refusal, as the metrics label it.
+    pub reason: String,
+}
+
+/// The most sources of one node.
+pub const MAX_SOURCES: usize = 16;
+
 /// The summary of one node. A peer answers a fleet query with it.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Node {
@@ -94,6 +108,10 @@ pub struct Node {
     pub regime: String,
     /// The refusals by reason.
     pub refused: Vec<Refused>,
+    /// Whether pressure mode is on (SID 0034).
+    pub pressure: bool,
+    /// The addresses with the most refusals in the current minute, most first.
+    pub top_refused: Vec<Source>,
 }
 
 /// One frontend.
@@ -247,6 +265,29 @@ impl Decode for Refused {
     }
 }
 
+impl Encode for Source {
+    fn encode<W: Write>(&self, json: &mut Writer<W>) -> fmt::Result {
+        json.begin_object()?;
+        field(json, "address", &self.address)?;
+        counter_field(json, "count", self.count)?;
+        field(json, "reason", &self.reason)?;
+        json.end_object()
+    }
+}
+
+impl Decode for Source {
+    fn decode(value: &Value<'_>, path: Path<'_>) -> Result<Source, DecodeError> {
+        let mut fields = Fields::new(value, path)?;
+        let source = Source {
+            address: fields.required("address")?,
+            count: fields.required("count")?,
+            reason: fields.required("reason")?,
+        };
+        fields.finish()?;
+        Ok(source)
+    }
+}
+
 impl Encode for Node {
     fn encode<W: Write>(&self, json: &mut Writer<W>) -> fmt::Result {
         json.begin_object()?;
@@ -266,6 +307,8 @@ impl Encode for Node {
         optional_counter_field(json, "authority_revision", self.authority_revision)?;
         field(json, "regime", &self.regime)?;
         field(json, "refused", &self.refused)?;
+        field(json, "pressure", &self.pressure)?;
+        field(json, "top_refused", &self.top_refused)?;
         json.end_object()
     }
 }
@@ -291,6 +334,10 @@ impl Decode for Node {
             regime: fields.or_default("regime")?,
             refused: fields.or_with("refused", Vec::new(), |value, path| {
                 decode_list(value, path, MAX_REASONS)
+            })?,
+            pressure: fields.or_default("pressure")?,
+            top_refused: fields.or_with("top_refused", Vec::new(), |value, path| {
+                decode_list(value, path, MAX_SOURCES)
             })?,
         };
         fields.finish()?;
@@ -564,6 +611,12 @@ mod tests {
             state: NodeState::Full,
             file_digest: Some("3fa9c1d2e4b50c77".into()),
             refused: vec![Refused { reason: "flow_limit".into(), count: 3 }],
+            pressure: true,
+            top_refused: vec![Source {
+                address: "192.0.2.7".into(),
+                count: 41,
+                reason: "client_flow_limit".into(),
+            }],
             ..Node::default()
         };
         View {
