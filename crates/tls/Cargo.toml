@@ -1,6 +1,6 @@
 [package]
 name = "sibuna-tls"
-description = "Blocking outbound TLS for the Sibuna console through rustls (SID 0012)"
+description = "The rustls provider of Sibuna with post-quantum key exchange, and blocking outbound TLS (SID 0012, SID 0035)"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -14,6 +14,9 @@ authors.workspace = true
 testing = []
 
 [dependencies]
+ml-kem = { workspace = true }
+ring = { workspace = true }
+sibuna-crypto = { workspace = true }
 rustls = { workspace = true }
 rustls-native-certs = { workspace = true }
 

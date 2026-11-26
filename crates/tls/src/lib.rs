@@ -1,9 +1,15 @@
-//! Blocking outbound TLS for the Sibuna console, through rustls (SID 0012).
+//! The rustls provider of Sibuna, with post-quantum key exchange (SID 0035), and blocking
+//! outbound TLS for the console (SID 0012).
+//!
+//! [`provider`] is the one rustls provider of the binary: ring's cipher suites and
+//! signatures, with the hybrid key exchange X25519MLKEM768 offered first (module [`kx`]).
+//! Every TLS configuration, the listeners' and HTTP/3's included, is built from it.
 //!
 //! The console connects out to other consoles (management peer WebSockets), to webhook
 //! receivers, to GeoIP publishers, and the `sibuna console` command talks to a remote
-//! console. All of these go through this crate, which is the only one that depends on
-//! `rustls`, `ring` and `rustls-native-certs`. The data plane never uses it.
+//! console. All of these go through this crate. Of the data plane, only the TLS
+//! configurations of `sibuna-ingress` use it, for [`provider`] and the trust anchors of
+//! pools.
 //!
 //! ```text
 //!   Trust ---load---> Connector (Arc<ClientConfig>, built once)
@@ -11,7 +17,8 @@
 //!   TcpStream ---connect(tcp, server_name, deadline)---> TlsStream: Read + Write
 //! ```
 //!
-//! The policy is fixed: TLS 1.3 and 1.2 with the `ring` provider's default cipher suites;
+//! The policy is fixed: TLS 1.3 and 1.2 with [`provider`] (ring's cipher suites, and
+//! X25519MLKEM768 before the classical groups);
 //! certificates checked against the system roots or the operator's CA file; host-name
 //! verification always on, with no way to turn it off; plain HTTP only to a literal
 //! loopback address ([`is_plaintext_allowed`]), decided before connecting; and a deadline
@@ -47,6 +54,7 @@
 
 mod connector;
 mod error;
+pub mod kx;
 mod plaintext;
 mod stream;
 mod trust;
@@ -59,6 +67,7 @@ use std::time::Instant;
 
 pub use connector::Connector;
 pub use error::{CaFileProblem, CertificateProblem, TlsError};
+pub use kx::provider;
 pub use plaintext::{connect_plain, is_plaintext_allowed};
 pub use stream::TlsStream;
 pub use trust::{MAX_CA_FILE_BYTES, Trust};
