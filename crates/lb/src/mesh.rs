@@ -746,7 +746,15 @@ pub struct Mesh {
 impl Mesh {
     /// Starts the pinned roster with a dedicated group key and a fresh random boot nonce.
     pub fn start(spec: &MeshConfig, secret: &[u8; 32], boot: [u8; 16]) -> io::Result<Self> {
-        let socket = UdpSocket::bind(spec.listen)?;
+        Self::start_on(spec, secret, boot, UdpSocket::bind(spec.listen)?)
+    }
+
+    fn start_on(
+        spec: &MeshConfig,
+        secret: &[u8; 32],
+        boot: [u8; 16],
+        socket: UdpSocket,
+    ) -> io::Result<Self> {
         socket.set_read_timeout(Some(Duration::from_millis(50)))?;
         socket.set_write_timeout(Some(Duration::from_millis(10)))?;
         let key = blake3::derive_key("sibuna/edge-mesh/probe/v1", secret);
@@ -944,20 +952,28 @@ mod tests {
         }
         assert_eq!(mesh.regime(), Regime::Standalone);
     }
-    /// Three free loopback UDP addresses, held until the meshes bind them.
-    fn roster() -> Vec<SocketAddr> {
-        let sockets: Vec<UdpSocket> =
-            (0..3).map(|_| UdpSocket::bind("127.0.0.1:0").expect("fixture")).collect();
-        sockets.iter().map(|socket| socket.local_addr().expect("bind")).collect()
+    /// Keep each port bound until the test ends, including while its node is offline.
+    fn roster() -> Vec<UdpSocket> {
+        (0..3).map(|_| UdpSocket::bind("127.0.0.1:0").expect("fixture")).collect()
     }
 
     type Heard = Arc<std::sync::Mutex<Vec<(Vec<u8>, u64)>>>;
 
     /// Starts the node at `index` of `roster` and records the bans it learns.
-    fn node(roster: &[SocketAddr], index: usize, boot: u8) -> (Mesh, BanFeed, Heard) {
-        let peers = roster.iter().copied().filter(|peer| *peer != roster[index]).collect();
+    fn node(roster: &[UdpSocket], index: usize, boot: u8) -> (Mesh, BanFeed, Heard) {
+        let socket = roster[index].try_clone().expect("fixture");
+        let listen = socket.local_addr().expect("bind");
+        let peers = roster
+            .iter()
+            .map(|s| s.local_addr().expect("bind"))
+            .filter(|p| *p != listen)
+            .collect();
+        // Discard packets delivered while the node was offline, as a fresh bind would.
+        socket.set_nonblocking(true).expect("fixture");
+        while socket.recv(&mut [0; 1]).is_ok() {}
+        socket.set_nonblocking(false).expect("fixture");
         let spec = MeshConfig {
-            listen: roster[index],
+            listen,
             peers,
             key_file: String::new(),
             replicate_bans: true,
@@ -967,7 +983,7 @@ mod tests {
             replicate_shares: true,
             forward: None,
         };
-        let mesh = Mesh::start(&spec, &[7; 32], [boot; 16]).expect("start");
+        let mesh = Mesh::start_on(&spec, &[7; 32], [boot; 16], socket).expect("start");
         let heard = Heard::default();
         let record = Arc::clone(&heard);
         let feed = mesh
@@ -1134,13 +1150,13 @@ mod tests {
         let forged = bans::encode(&[9; 32], &header, &mut vec![(Box::from(&b"b"[..]), until)]);
         // A stranger with the right key is not a peer.
         let stranger = UdpSocket::bind("127.0.0.1:0").expect("fixture");
-        stranger.send_to(&good, roster[0]).expect("send");
+        stranger.send_to(&good, roster[0].local_addr().expect("bind")).expect("send");
         // A peer address with a wrong key is not authentic.
-        let peer = UdpSocket::bind(roster[1]).expect("peer address");
-        peer.send_to(&forged, roster[0]).expect("send");
+        let peer = roster[1].try_clone().expect("peer address");
+        peer.send_to(&forged, roster[0].local_addr().expect("bind")).expect("send");
         std::thread::sleep(Duration::from_millis(300));
         assert!(heard.lock().expect("lock").is_empty());
-        peer.send_to(&good, roster[0]).expect("send");
+        peer.send_to(&good, roster[0].local_addr().expect("bind")).expect("send");
         assert_eq!(wait_for(&heard, 1), [(b"a".to_vec(), until)]);
     }
 }
