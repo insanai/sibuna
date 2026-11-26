@@ -42,6 +42,7 @@
 //! ```
 
 mod bound;
+mod linger;
 mod listen;
 mod poll;
 mod rlimit;
@@ -52,10 +53,11 @@ use std::io::{self, Read, Write};
 use std::net::TcpStream;
 
 pub use bound::{CAN_CONNECT_FROM, start_connect_from};
+pub use linger::{CAN_RESET, reset};
 pub use listen::{CAN_DEFER_ACCEPT, CAN_SET_BACKLOG, defer_accept, set_backlog, set_defer_accept};
 pub use poll::{
-    CAN_SHARE_ADDRESS, CAN_START_CONNECT, Handle, Poller, READ, WRITE, Wake, Waker, bind_shared,
-    handle, listen_shared, start_connect,
+    CAN_SHARE_ADDRESS, CAN_START_CONNECT, Handle, Poller, READ, READ_EXCLUSIVE, WRITE, Wake,
+    Waker, bind_shared, handle, listen_shared, start_connect,
 };
 pub use rlimit::{DescriptorLimit, descriptor_limit, set_descriptor_limit};
 pub use slab::Slab;

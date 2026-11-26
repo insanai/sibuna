@@ -49,6 +49,15 @@ pub const READ: i16 = 0x0100;
 #[cfg(windows)]
 pub const WRITE: i16 = 0x0010;
 
+/// The bit of [`READ_EXCLUSIVE`] that asks for an exclusive wake-up. No platform uses it
+/// as a poll flag, so each backend removes it before the kernel sees the events.
+const EXCLUSIVE: i16 = 0x4000;
+/// Interest in readable data of a socket that several pollers watch, such as a listener
+/// that several accept threads share. On Linux one ready connection wakes one of the
+/// pollers (`EPOLLEXCLUSIVE`); elsewhere it wakes all of them and the losers find
+/// nothing. Register it once and remove it; do not change its events.
+pub const READ_EXCLUSIVE: i16 = READ | EXCLUSIVE;
+
 /// The registered sockets of one worker and the key reported for each.
 pub struct Poller<K> {
     entries: HashMap<Handle, (i16, K)>,
@@ -109,6 +118,7 @@ mod backend {
     const CTL_ADD: i32 = 1;
     const CTL_DEL: i32 = 2;
     const CTL_MOD: i32 = 3;
+    const EPOLLEXCLUSIVE: u32 = 1 << 28;
     const BATCH: usize = 256;
 
     // The kernel packs this structure on x86-64 and aligns it naturally elsewhere.
@@ -146,7 +156,11 @@ mod backend {
 
         fn control(&self, op: i32, handle: Handle, events: i16) -> io::Result<()> {
             // poll's POLLIN and POLLOUT have the same values as EPOLLIN and EPOLLOUT.
-            let mut event = Event { events: events as u16 as u32, data: handle as u64 };
+            let mut bits = (events & !super::EXCLUSIVE) as u16 as u32;
+            if events & super::EXCLUSIVE != 0 {
+                bits |= EPOLLEXCLUSIVE;
+            }
+            let mut event = Event { events: bits, data: handle as u64 };
             // SAFETY: event is a valid, initialized structure for the duration of the call.
             if unsafe { epoll_ctl(self.epoll.as_raw_fd(), op, handle, &mut event) } == 0 {
                 Ok(())
@@ -256,7 +270,7 @@ mod backend {
                 self.sockets.clear();
                 self.sockets.extend(entries.map(|(handle, events)| PollFd {
                     handle,
-                    events,
+                    events: events & !super::EXCLUSIVE,
                     returned: 0,
                 }));
                 self.dirty = false;
