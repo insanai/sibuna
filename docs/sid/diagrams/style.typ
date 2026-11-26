@@ -36,7 +36,10 @@
 //   with lifelines. A lifecycle: a state machine. A path with decisions: a flow, top
 //   down or left to right. Who depends on whom: layers, highest at the top. Bytes on
 //   the wire: a field strip. Graphviz only where automatic layout of a real graph is the
-//   point, such as the dependency graph of the crates.
+//   point, such as the dependency graph of the crates. A Graphviz graph takes the same
+//   colours and names the font Helvetica: Graphviz measures labels with its own metrics,
+//   and with Noto Sans its boxes come out too small for their labels.
+// - A figure keeps a margin of 6 pt inside its image, and nothing is drawn past it.
 // - Light colours only. On a dark page guidedog sets the drawing on a light plate, so
 //   one set of colours serves both themes and the PDF.
 //
