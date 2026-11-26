@@ -274,7 +274,7 @@ The vocabulary follows HAProxy. A *frontend* binds one or more numeric socket ad
 
 The semantic firewall inspects HTTP requests. It never runs on a TCP or UDP frontend, because those streams are opaque to Sibuna.
 
-.. graphviz:: diagrams/edge-paths.dot
+.. typst-diagram:: diagrams/edge-paths.typ
    :caption: The path of a flow through the edge. Only HTTP requests meet the firewall, and a route can skip it.
    :alt: TCP streams go from the worker to relay threads and TCP servers. UDP datagrams go from the worker to UDP servers. HTTP connections pass optional TLS termination, then the firewall or a bypass, then route selection, and reach HTTP/1.1 servers directly or HTTP/2, HTTP/3 and TLS servers through an adapter.
 
@@ -2860,7 +2860,7 @@ Deployment Topologies
 Reverse Proxy
 ~~~~~~~~~~~~~
 
-.. graphviz:: diagrams/shield-routing.dot
+.. typst-diagram:: diagrams/shield-routing.typ
    :caption: Request routing on the Shield surface
    :alt: A request passes local bans and the rate limit, then inspection and policy. A DENY goes to Deny. An ALLOW goes to the origin or an auth success. A CHALLENGE checks the session MAC: a valid session goes to the origin, a missing or invalid one leads to a new puzzle.
 
@@ -3085,7 +3085,7 @@ Persistent Storage and Clustering
 
    Enable SQLite or PostgreSQL storage, add a dynamic policy and a ban with SQL, query incident forensics, understand campaign clustering, and run several nodes on one PostgreSQL database.
 
-.. graphviz:: diagrams/storage-architecture.dot
+.. typst-diagram:: diagrams/storage-architecture.typ
    :caption: The storage architecture: workers never block on the database
    :alt: Request threads push incidents into an MPSC ring of 512 slots. The storage thread pops them, writes batches through sqlx to the SQLite file or the PostgreSQL database holding policies, ip_reputation, security_incidents and the full-text index. When the policy revision changes it rebuilds the engine and publishes it as an Arc, which the request threads read. Other cluster nodes share the PostgreSQL database and hear NOTIFY sibuna_policy.
 

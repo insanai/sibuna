@@ -69,7 +69,7 @@ The firewall of the earlier Parts serves each connection on a thread. Beside HAP
 The Path of a Connection
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. graphviz:: diagrams/edge-path.dot
+.. typst-diagram:: diagrams/edge-path.typ
    :caption: The path of a connection through a node. Each box is owned by one thread or one group of threads; the dashed edges are the shared, read-mostly state.
    :alt: A client reaches the kernel listener, then the edge worker, which applies the connection rate, the flow budget and the connection hooks. A TCP flow passes the ClientHello inspection, reserves a server and is relayed by a relay thread. A UDP flow passes the QUIC screen and becomes a mapping. An HTTP connection goes to an HTTP worker; a TLS client that offers h2 goes to the protocol runtime. Both run bans and limits, traffic policy, the gate or shield, request hooks, and the choice of a server from the routing snapshot, then exchange with the server.
 
@@ -238,7 +238,7 @@ Health, Slow Start, Draining and Failover
 
 A server can be out of rotation for five reasons, and each has its own way back. Active probes and passive health judge the server; a failed connect judges one attempt; a drain is the operator's word; slow start governs the return.
 
-.. graphviz:: diagrams/server-states.dot
+.. typst-diagram:: diagrams/server-states.typ
    :caption: The life of a server in a pool. Only "In service" and "Ramping" take new flows; slow start applies when it is configured.
    :alt: In service leads to Down after fall failed probes, to Ejected after consecutive request failures, to Marked after a failed connect, and to Drained by an operator. Down returns after rise passed probes, Ejected after the ejection time, Marked after two seconds, Drained when readmitted. Each return leads to Ramping, which leads to In service after the ramp.
 
