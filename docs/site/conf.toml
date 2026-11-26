@@ -1,0 +1,63 @@
+# The existing Sibuna theme is rendered once per language by Guidedog SSG.
+project = "Sibuna website"
+release = "1.0.0-rc.6"
+exclude_patterns = ["**"]
+
+[site]
+base_url = "https://insanai.github.io/sibuna"
+
+[[site.mounts]]
+name = "home"
+source = "home"
+output = ""
+exclude = ["search.html", "genindex.html", "_static/**", "_sources/**", "gd-dependencies.json", "objects.inv", "searchindex.js"]
+editions = [
+  {language = "en", output = ""},
+  {language = "zh_CN", output = "zh-hans"},
+  {language = "ko", output = "ko"},
+  {language = "ja", output = "ja"},
+  {language = "es", output = "es"},
+  {language = "de", output = "de"},
+  {language = "hi", output = "hi"},
+  {language = "ar", output = "ar"},
+]
+
+[[site.assets]]
+source = "site.css"
+output = "assets"
+
+[[site.assets]]
+source = "favicon.svg"
+output = "assets"
+
+[[site.assets]]
+source = "post-quantum-route.svg"
+output = "assets"
+
+[[site.assets]]
+source = "admission-demo.css"
+output = "assets"
+
+[[site.assets]]
+source = "admission-model.js"
+output = "assets"
+
+[[site.assets]]
+source = "admission-animation.js"
+output = "assets"
+
+[[site.assets]]
+source = "admission-scene.bundle.js"
+output = "assets"
+
+[[site.assets]]
+source = "three-LICENSE.txt"
+output = "assets"
+
+[[site.assets]]
+source = "language.css"
+output = "assets"
+
+[[site.assets]]
+source = "site-language.js"
+output = "assets"

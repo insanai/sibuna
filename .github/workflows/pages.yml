@@ -38,7 +38,7 @@ jobs:
           fc-list : family | grep -E 'Noto (Serif|Sans) CJK SC|Noto Sans Mono CJK SC|Noto Serif Devanagari|Noto Naskh Arabic'
       - name: Show tool versions
         run: guidedog --version && python3 --version
-      - name: Build the book and whitepaper in eight languages, the SIDs and landing pages
+      - name: Build the themed landing pages with Guidedog SSG and assemble the translated books and SIDs
         run: python3 docs/site/build.py --out site
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: github.event_name == 'pull_request'

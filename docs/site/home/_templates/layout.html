@@ -1,0 +1,36 @@
+{%- set ns = namespace(edition=site_languages[0]) %}
+{%- for item in site_languages %}{% if item.gettext == language %}{% set ns.edition = item %}{% endif %}{% endfor %}
+{%- set edition = ns.edition %}
+{%- set route = "" if pagename == "index" else pagename ~ ".html" %}
+{%- set edition_url = site_base ~ edition.prefix %}
+<!doctype html><html lang="{{ edition.code }}" dir="{{ edition.direction }}" data-detect-language="{{ 'true' if language == 'en' and not route else 'false' }}"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+{% if not route %}<meta name="description" content="{{ _('Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.') }}">{% endif %}
+<title>{% if route %}{{ title|striptags }} · Sibuna{% else %}{{ _('Distributed load balancer and web application firewall · Sibuna') }}{% endif %}</title>
+{% for item in site_languages %}<link rel="alternate" hreflang="{{ item.code }}" href="{{ site_url }}{{ item.prefix }}{{ route }}">
+{% endfor %}<link rel="alternate" hreflang="x-default" href="{{ site_url }}{{ route }}">
+<link rel="icon" type="image/svg+xml" href="{{ site_base }}assets/favicon.svg">
+<link rel="stylesheet" href="{{ site_base }}assets/site.css">
+<link rel="stylesheet" href="{{ site_base }}assets/admission-demo.css">
+<link rel="stylesheet" href="{{ site_base }}assets/language.css">
+<script type="module" src="{{ site_base }}assets/site-language.js"></script>
+{% if not route %}<script type="module" src="{{ site_base }}assets/admission-animation.js"></script>{% endif %}
+</head><body>
+<a class="skip" href="#main">{{ _('Skip to content') }}</a>
+<header class="nav"><a class="brand" href="{{ edition_url }}" translate="no"><i aria-hidden="true">s.</i>sibuna</a>
+<nav aria-label="{{ _('Main') }}">
+<a href="{{ edition_url }}articles/">{{ _('Articles') }}</a>
+<a href="{{ edition_url }}book/">{{ _('Book') }}</a>
+<a href="{{ edition_url }}book/operations.html">{{ _('Operations') }}</a>
+<a href="{{ edition_url }}whitepaper/">{{ _('Whitepaper') }}</a>
+<a href="{{ site_base }}sid/">{{ _('SIDs') }}</a>
+<a href="https://github.com/insanai/sibuna">{{ _('GitHub') }}</a>
+<details class="language-menu" translate="no"><summary><span class="language-sr">{{ _('Language:') }} </span><span lang="{{ edition.code }}">{{ edition.label }}</span></summary>
+<div>{% for item in site_languages %}<a href="{{ site_base }}{{ item.prefix }}{{ route }}?lang={{ item.code }}" lang="{{ item.code }}" data-language-choice="{{ item.code }}" data-same-page="true"{% if item.code == edition.code %} aria-current="true"{% endif %}>{{ item.label }}</a>{% endfor %}</div></details>
+</nav></header>
+<main class="home" id="main">{% block content %}{{ body }}{% endblock %}</main>
+<footer class="footer"><span>{{ _('Sibuna is written by Vikrant Rathore with assistance from Ronak Rathore and Kanak Rathore.') }}<br>{{ _('Companies seeking other licensing terms can contact Vikrant Rathore.') }}</span>
+<span><a href="https://github.com/insanai/sibuna/blob/main/LICENSE">{{ _('LGPL 3.0 or later') }}</a> · v{{ release }}<br>
+{{ _('Third-party libraries retain their respective licenses.') }}</span></footer>
+</body></html>

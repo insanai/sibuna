@@ -103,3 +103,15 @@ numbers traceable to a file under `benchmarks/results/`.
 
 Small, related commits with a short imperative summary, optionally prefixed with the
 component (`policy: do not treat parameters named like commands as injection`), ASCII only.
+
+### Publishing articles
+
+We keep magazine articles in `docs/site/home/articles/`.
+From that directory we can run `guidedog ssg new name.rst --title "Article title"` to start a draft and `guidedog ssg publish name.rst` when it is ready.
+The magazine lists published articles by date.
+We put the opening paragraph and cover image before `.. more::` so Guidedog can reuse them in the listing.
+The article catalogs live under `docs/site/home/locales/<language>/LC_MESSAGES/articles/`.
+
+From the repository root, `guidedog ssg build docs/site` renders the custom theme in all eight languages.
+The complete GitHub Pages build is `python3 docs/site/build.py --out target/site`.
+It copies the SSG output alongside the book, whitepaper and SIDs and checks the published paths.

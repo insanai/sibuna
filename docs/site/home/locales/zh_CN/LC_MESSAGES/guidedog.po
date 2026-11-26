@@ -1,0 +1,562 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: zh_CN\n"
+
+msgid "01 / Forward"
+msgstr "01 / 转发"
+
+msgid "02 / Terminate and route"
+msgstr "02 / 终止并路由"
+
+msgid "03 / Stay up"
+msgstr "03 / 保持运行"
+
+msgid "04 / Scale out"
+msgstr "04 / 横向扩展"
+
+msgid "05 / Protect"
+msgstr "05 / 防护"
+
+msgid "06 / Extend and observe"
+msgstr "06 / 扩展与观测"
+
+msgid "2026, Vikrant Rathore and Sibuna contributors"
+msgstr "2026，Vikrant Rathore 与 Sibuna 贡献者"
+
+msgid "A browser challenge adds a cost to automated access, and a signed session lets an admitted visitor return. Rules allow, challenge or deny. The shield checks requests for SQL injection, XSS, path traversal and command injection."
+msgstr "浏览器挑战为自动化访问增加成本，签名会话让已准入的访问者可以再次访问。规则可以放行、发起挑战或拒绝。Shield 检查请求中的 SQL 注入、XSS、路径遍历和命令注入。"
+
+msgid "A checked reload applies new routes to new work. Established TCP streams keep their backend. Linux also supports listener handoff during a binary upgrade."
+msgstr "重新加载验证过的配置后，新流量使用新路由。已建立的 TCP 流保留原后端。Linux 还支持在升级可执行文件时移交监听套接字。"
+
+msgid "A cluster of edge nodes"
+msgstr "边缘节点集群"
+
+msgid "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it."
+msgstr "兼容的浏览器可以与 Sibuna 协商抗量子密钥。Sibuna 单独连接 Web 服务器，因此旧设备可以在升级期间继续提供服务。"
+
+msgid "A configured rule refuses this request, even with a valid session."
+msgstr "即使会话有效，配置的规则仍会拒绝这个请求。"
+
+msgid "A deny rule matches"
+msgstr "命中拒绝规则"
+
+msgid "A request arrives"
+msgstr "请求到达"
+
+msgid "A session does not bypass applicable inspection, deny rules or rate limits."
+msgstr "会话不会绕过适用的检查、拒绝规则或速率限制。"
+
+msgid "Access decisions"
+msgstr "访问决策"
+
+msgid "Admit, challenge or refuse. A session avoids another puzzle here; applicable rules and rate limits still apply."
+msgstr "准入、发起挑战或拒绝。持有会话时这里无需再次解题；适用的规则和速率限制仍然生效。"
+
+msgid "Admitted"
+msgstr "已准入"
+
+msgid "Admitted traffic"
+msgstr "已准入的流量"
+
+msgid "All downloads"
+msgstr "全部下载"
+
+msgid "Architecture whitepaper"
+msgstr "架构白皮书"
+
+msgid "Ask bots to do the work."
+msgstr "让自动化客户端承担计算成本。"
+
+msgid "Beside HAProxy"
+msgstr "与 HAProxy 并排"
+
+msgid "Blocked by a rule"
+msgstr "被规则拒绝"
+
+msgid "Book"
+msgstr "技术手册"
+
+msgid "Book PDF"
+msgstr "手册 PDF"
+
+msgid "Both proxies ran on eight processors with 256 connections over loopback, each case for eight seconds, with no failed request. Sibuna is level or ahead in three cases. HAProxy is faster for HTTP/2, and we say why in the book."
+msgstr "两个代理都在八个处理器上运行，通过回环接口建立 256 个连接，每个场景运行八秒，没有失败的请求。Sibuna 在三个场景中持平或领先。HAProxy 在 HTTP/2 上更快，我们在技术手册中说明了原因。"
+
+msgid "Bring post-quantum TLS to an existing website"
+msgstr "为现有网站部署抗量子 TLS"
+
+msgid "Browser"
+msgstr "浏览器"
+
+msgid "Build and operate"
+msgstr "构建与运维"
+
+msgid "CLI and protocol reference"
+msgstr "CLI 与协议参考"
+
+msgid "CLIENT WORK"
+msgstr "客户端计算"
+
+msgid "Case"
+msgstr "场景"
+
+msgid "Challenge / proof"
+msgstr "挑战 / 证明"
+
+msgid "Challenge, then client work, then proof verification"
+msgstr "先发出挑战，再由客户端计算，最后验证证明"
+
+msgid "Change it while it runs."
+msgstr "运行中即可变更。"
+
+msgid "Check access again"
+msgstr "重新检查访问权限"
+
+msgid "Check the proof. Issue a session."
+msgstr "验证证明，签发会话。"
+
+msgid "Checking the proof is designed to take less computation than creating it."
+msgstr "验证证明所需的计算量，按设计应小于生成证明所需的计算量。"
+
+msgid "Choose a request journey"
+msgstr "选择一条请求路径"
+
+msgid "Classical TLS in this example"
+msgstr "此例使用传统 TLS"
+
+msgid "Client"
+msgstr "客户端"
+
+msgid "Clients"
+msgstr "客户端"
+
+msgid "Companies seeking other licensing terms can contact Vikrant Rathore."
+msgstr "需要其他许可条款的企业可以联系 Vikrant Rathore。"
+
+msgid "Configuring Sibuna with Jlavi"
+msgstr "使用 Jlavi 配置 Sibuna"
+
+msgid "Connections and datagrams."
+msgstr "连接与数据报。"
+
+msgid "Console contract"
+msgstr "控制台设计约定（英文）"
+
+msgid "Deadlines at a glance"
+msgstr "迁移期限一览"
+
+msgid "Decisions with context"
+msgstr "带上下文的决策"
+
+msgid "Deployment examples and migration timelines"
+msgstr "部署示例与迁移时间表"
+
+msgid "Deployment guide"
+msgstr "部署指南"
+
+msgid "Design discussions"
+msgstr "设计讨论（英文）"
+
+msgid "Designated critical infrastructure completes migration."
+msgstr "指定的关键信息基础设施完成迁移。"
+
+msgid "Designated critical infrastructure owners submit plans by 31 March."
+msgstr "指定的关键信息基础设施所有者须在 3 月 31 日前提交计划。"
+
+msgid "Digital signatures follow for the same federal systems."
+msgstr "上述联邦系统随后迁移数字签名。"
+
+msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
+msgstr "在网状集群中分发已验证的路由配置。各节点可以共享封禁和已学习的客户端亲和性，同时向各自的后端池转发流量。"
+
+msgid "Distributed load balancer and web application firewall"
+msgstr "分布式负载均衡器和 Web 应用防火墙"
+
+msgid "Distributed load balancer and web application firewall · Sibuna"
+msgstr "分布式负载均衡器和 Web 应用防火墙 · Sibuna"
+
+msgid "Download."
+msgstr "下载。"
+
+msgid "Each Sibuna Discussion states a design, its alternatives, what is built and what is not."
+msgstr "每份 Sibuna 讨论记录都说明一项设计、它的备选方案、已实现的部分和未实现的部分。这些设计讨论只有英文原文。"
+
+msgid "Edge nodes"
+msgstr "边缘节点"
+
+msgid "European Union"
+msgstr "欧洲联盟"
+
+msgid "Federal high-value assets and high-impact systems move to post-quantum key establishment."
+msgstr "联邦高价值资产和高影响系统改用后量子密钥建立机制。"
+
+msgid "Find your way through the system"
+msgstr "系统导览"
+
+msgid "First visit"
+msgstr "首次访问"
+
+msgid "Follow a request"
+msgstr "跟随一个请求"
+
+msgid "From proofs to protection"
+msgstr "从证明到防护"
+
+msgid "From source · load balancer"
+msgstr "从源码 · 负载均衡器"
+
+msgid "From the socket to the server."
+msgstr "从套接字到服务器。"
+
+msgid "GitHub"
+msgstr "GitHub"
+
+msgid "HTTP/1.1 over TLS"
+msgstr "基于 TLS 的 HTTP/1.1"
+
+msgid "HTTPS ingress"
+msgstr "HTTPS 入口代理"
+
+msgid "HTTPS without a second proxy."
+msgstr "无需第二个代理的 HTTPS。"
+
+msgid "Home"
+msgstr "首页"
+
+msgid "Hooks run at the connection and at the request: compiled in, as WebAssembly with a budget, or in a separate process. Metrics, access logs and a console show servers, flows and the reason for each refusal."
+msgstr "钩子在连接阶段和请求阶段运行：可以编译进程序，可以作为带预算的 WebAssembly，也可以放在独立进程中。指标、访问日志和控制台展示服务器、流以及每次拒绝的原因。"
+
+msgid "How to try it"
+msgstr "如何试用"
+
+msgid "Hybrid TLS 1.3"
+msgstr "混合 TLS 1.3"
+
+msgid "Installation, the edge configuration, certificates, clustering, the admin socket, policies, storage and the console."
+msgstr "安装、边缘配置、证书、集群、管理套接字、策略、存储与控制台。"
+
+msgid "Internal gRPC services"
+msgstr "内部 gRPC 服务"
+
+msgid "Issue certificates for internal names with the local CA. Clients trust its root and call the service over TLS. An HTTP/2 backend carries gRPC messages and trailers."
+msgstr "使用本地 CA 为内部名称签发证书。客户端信任其根证书，通过 TLS 调用服务。HTTP/2 后端传输 gRPC 消息和尾部字段。"
+
+msgid "Know the boundary"
+msgstr "了解边界"
+
+msgid "LGPL 3.0 or later"
+msgstr "LGPL 3.0 或更高版本"
+
+msgid "Language:"
+msgstr "语言："
+
+msgid "Learn it. Use it. Question it."
+msgstr "学习它，使用它，质疑它。"
+
+msgid "Legacy device"
+msgstr "旧设备"
+
+msgid "Load balancer design"
+msgstr "负载均衡器设计（英文）"
+
+msgid "Main"
+msgstr "主导航"
+
+msgid "Measured, with the losses"
+msgstr "实测结果，包括落后之处"
+
+msgid "Member States begin the transition."
+msgstr "成员国启动迁移。"
+
+msgid "Method and all measurements"
+msgstr "方法与全部测量结果"
+
+msgid "Next step"
+msgstr "下一步"
+
+msgid "Nodes of a mesh share the sticky table and the limits of a server, and forward a client to the node that owns it. A PostgreSQL database can publish one configuration to every node and roll it back."
+msgstr "网格中的节点共享会话保持表和服务器的限制，并把客户端转发给拥有它的节点。PostgreSQL 数据库可以把同一份配置发布到每个节点，也可以回滚。"
+
+msgid "November 2026"
+msgstr "2026 年 11 月"
+
+msgid "One process on the path"
+msgstr "路径上只有一个进程"
+
+msgid "Open source · LGPL 3.0 · {version}"
+msgstr "开源 · LGPL 3.0 · {version}"
+
+msgid "Operations"
+msgstr "运维指南"
+
+msgid "Or build."
+msgstr "或自行构建。"
+
+msgid "Origin connection"
+msgstr "源站连接"
+
+msgid "Origins"
+msgstr "源站"
+
+msgid "Other exposed organisations are encouraged to complete migration."
+msgstr "鼓励其他面临风险的组织完成迁移。"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "Pause"
+msgstr "暂停"
+
+msgid "Pause traffic animation"
+msgstr "暂停流量动画"
+
+msgid "Paused illustration"
+msgstr "演示已暂停"
+
+msgid "Play"
+msgstr "播放"
+
+msgid "Playing illustration"
+msgstr "正在播放演示"
+
+msgid "Post-quantum migration guide"
+msgstr "后量子迁移指南"
+
+msgid "Protected request path"
+msgstr "受保护的请求路径"
+
+msgid "Public TLS"
+msgstr "公网 TLS"
+
+msgid "Public connection"
+msgstr "公网连接"
+
+msgid "Public websites"
+msgstr "公共网站"
+
+msgid "RC6 includes the load balancer, firewall and console in one executable."
+msgstr "RC6 将负载均衡器、防火墙和控制台集成在一个可执行文件中。"
+
+msgid "RC6 on Linux x86-64"
+msgstr "Linux x86-64 上的 RC6"
+
+msgid "Ratio"
+msgstr "比值"
+
+msgid "Reduced motion · step through"
+msgstr "减少动态效果 · 逐步查看"
+
+msgid "Refused"
+msgstr "已拒绝"
+
+msgid "Release status"
+msgstr "发布状态"
+
+msgid "Releases hold binaries for Linux, macOS and Windows, Debian, RPM and Arch packages, CLI packages for FreeBSD 15.1 and OpenBSD 7.9 x86-64, a Helm chart and a container image. Verify the checksums before installation."
+msgstr "发行版包含 Linux、macOS 和 Windows 二进制文件，Debian、RPM 和 Arch 软件包，FreeBSD 15.1 和 OpenBSD 7.9 x86-64 的 CLI 软件包，以及 Helm chart 和容器镜像。安装前请验证校验和。"
+
+msgid "Requests in a second. More is better."
+msgstr "每秒请求数。越高越好。"
+
+msgid "Requests pass from a client through an HTTPS ingress to Sibuna. Sibuna may admit, challenge or refuse them. A client creates a proof; Sibuna verifies it and issues a session. Requests with sessions still pass applicable checks."
+msgstr "请求从客户端经过 HTTPS 入口代理到达 Sibuna。Sibuna 可以准入、发起挑战或拒绝请求。客户端生成证明，Sibuna 验证后签发会话。携带会话的请求仍需通过适用的检查。"
+
+msgid "Return with a session"
+msgstr "携带会话再次访问"
+
+msgid "Roadmap target for high-risk uses."
+msgstr "路线图要求优先完成高风险用途的迁移。"
+
+msgid "Roadmap target for medium-risk uses and as many low-risk uses as feasible."
+msgstr "路线图的目标覆盖中风险用途，并尽可能涵盖低风险用途。"
+
+msgid "SIDs"
+msgstr "SID（英文）"
+
+msgid "STEP"
+msgstr "步骤"
+
+msgid "Scripted illustration, not live traffic or measured timing. Proof time varies by device and settings. This shows the reverse-proxy path; with forward-auth, your ingress forwards admitted requests."
+msgstr "这是按脚本播放的演示，不是实时流量，也不是实测耗时。生成证明的时间因设备和设置而异。图中展示的是反向代理模式；在 forward-auth 模式下，由你的入口代理转发已准入的请求。"
+
+msgid "See and shape the decisions."
+msgstr "查看并定制决策。"
+
+msgid "Sequential work happens in the browser. Later steps depend on earlier results."
+msgstr "顺序计算在浏览器中进行。后续步骤依赖前面步骤的结果。"
+
+msgid "Serve browsers over HTTP/2 or HTTP/3, renew public certificates with Let's Encrypt and inspect requests before forwarding them to HTTP/1.1 replicas."
+msgstr "通过 HTTP/2 或 HTTP/3 接受浏览器连接，用 Let's Encrypt 续订公有证书，并在向 HTTP/1.1 副本转发前检查请求。"
+
+msgid "Several nodes, one behaviour."
+msgstr "多个节点，一致的行为。"
+
+msgid "Sibuna"
+msgstr "Sibuna"
+
+msgid "Sibuna Whitepaper"
+msgstr "Sibuna 白皮书"
+
+msgid "Sibuna checks requests before they reach your application"
+msgstr "Sibuna 在请求到达应用之前进行检查"
+
+msgid "Sibuna checks the session and applicable rules. A new puzzle is not needed here."
+msgstr "Sibuna 检查会话和适用的规则。这里不需要再次解题。"
+
+msgid "Sibuna does not forward this refused request to the application."
+msgstr "Sibuna 不会把这个已拒绝的请求转发给应用。"
+
+msgid "Sibuna is written by Vikrant Rathore with assistance from Ronak Rathore and Kanak Rathore."
+msgstr "Sibuna 由 Vikrant Rathore 编写，Ronak Rathore 和 Kanak Rathore 参与协助。"
+
+msgid "Sibuna returns a challenge to the client."
+msgstr "Sibuna 向客户端返回挑战。"
+
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
+msgstr "Sibuna 将 TCP、UDP 和 HTTP 流量转发到健康的服务器。我们可以运行单个边缘节点，也可以将多个节点组成网状集群，在各节点终止 TLS，并对指定的 HTTP 路由应用防火墙。"
+
+msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
+msgstr "Sibuna 终止 TLS，并提供 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket 服务。它按主机名和路径路由每个请求。证书来自 Let's Encrypt 或其他 ACME 证书颁发机构，本地证书颁发机构负责内部名称。"
+
+msgid "Singapore"
+msgstr "新加坡"
+
+msgid "Skip to content"
+msgstr "跳到正文"
+
+msgid "Static illustration"
+msgstr "静态示意图"
+
+msgid "Static view · 3D is unavailable"
+msgstr "静态视图 · 无法使用 3D"
+
+msgid "TCP forwarding"
+msgstr "TCP 转发"
+
+msgid "TCP streams and UDP mappings go to a pool of servers. A TLS connection can pass through undecrypted, routed by its server name. QUIC can pass through too. The PROXY protocol carries the address of the client."
+msgstr "TCP 流和 UDP 映射发往服务器池。TLS 连接可以不解密直接透传，按其服务器名称路由。QUIC 也可以透传。PROXY 协议携带客户端的地址。"
+
+msgid "The admitted request is forwarded to the application."
+msgstr "已准入的请求会被转发给应用。"
+
+msgid "The book"
+msgstr "技术手册"
+
+msgid "The browser retries the request with its session."
+msgstr "浏览器携带会话重试请求。"
+
+msgid "The browser sends a request through your HTTPS ingress."
+msgstr "浏览器通过你的 HTTPS 入口代理发送请求。"
+
+msgid "The built-in inspector checks the first 8 KiB of supported bodies. WebSocket messages are relayed without inspection. Sibuna does not provide volumetric network mitigation. A challenge adds work. It does not establish that a visitor is human."
+msgstr "内置检查器检查受支持请求体的前 8 KiB。WebSocket 消息只中继，不检查。Sibuna 不提供针对大流量网络攻击的缓解。挑战增加的是计算工作量。它并不能证明访问者是人。"
+
+msgid "The checks still apply"
+msgstr "检查仍然生效"
+
+msgid "The client creates a proof"
+msgstr "客户端生成证明"
+
+msgid "The client sends another request with its signed session."
+msgstr "客户端携带签名会话发送另一个请求。"
+
+msgid "The client submits its proof to Sibuna."
+msgstr "客户端把证明提交给 Sibuna。"
+
+msgid "The console is opt-in. Its strict performance isolation target has not formally passed. Published measurements identify the code revision and uncertainty."
+msgstr "控制台需要显式启用。其严格的性能隔离目标尚未正式通过验收。已发布的测量结果注明代码版本和不确定性。"
+
+msgid "The proof returns"
+msgstr "证明返回"
+
+msgid "The protocol, the request pipeline, the algorithms and every measurement with its method. Also available as a PDF."
+msgstr "协议、请求处理流水线、算法，以及每项测量及其方法。也提供 PDF 版本。"
+
+msgid "The request reaches your app"
+msgstr "请求到达应用"
+
+msgid "The request stops here"
+msgstr "请求到此终止"
+
+msgid "The upper route inspects a browser request and sends it to a web replica. The lower route carries a gRPC call over HTTP/2. The dotted link shows the two nodes exchanging mesh state."
+msgstr "上方路由检查浏览器请求并将其发往网站副本。下方路由通过 HTTP/2 传输 gRPC 调用。虚线表示两个节点交换集群状态。"
+
+msgid "Third-party libraries retain their respective licenses."
+msgstr "第三方库保留各自的许可条款。"
+
+msgid "This admitted request is forwarded to the application."
+msgstr "这个已准入的请求会被转发给应用。"
+
+msgid "This request also reaches Sibuna through your ingress."
+msgstr "这个请求同样经过你的入口代理到达 Sibuna。"
+
+msgid "This route asks for work"
+msgstr "这个路由要求客户端计算"
+
+msgid "Try again with a session"
+msgstr "携带会话重试"
+
+msgid "Try it"
+msgstr "试用"
+
+msgid "Two edge nodes serving a website and an internal service"
+msgstr "为网站和内部服务转发流量的两个边缘节点"
+
+msgid "United States"
+msgstr "美国"
+
+msgid "Vikrant Rathore, with assistance from Ronak Rathore and Kanak Rathore"
+msgstr "Vikrant Rathore 著，Ronak Rathore 与 Kanak Rathore 协助"
+
+msgid "We state the limits beside the features. Linux requires kernel 5.10 or later, macOS 12 or later, and Windows 10 or Server 2016 or later. The event-driven workers and the replacement of the executable without lost connections exist on Linux only."
+msgstr "我们把限制写在功能旁边。Linux 需要 5.10 或更高版本的内核，macOS 需要 12 或更高版本，Windows 需要 Windows 10 或 Server 2016 及更高版本。事件驱动的 worker 以及不丢失连接的可执行文件替换只在 Linux 上提供。"
+
+msgid "We tested the cluster on three hosts. Qualification under production traffic remains open. Replacing the executable ends QUIC connections."
+msgstr "我们在三台主机上测试了集群。生产流量下的验证仍待进行。替换可执行文件会终止 QUIC 连接。"
+
+msgid "What is Sibuna?"
+msgstr "Sibuna 是什么？"
+
+msgid "What it does not do."
+msgstr "它不做的事。"
+
+msgid "Where each part stands."
+msgstr "各部分的现状。"
+
+msgid "Where we use Sibuna"
+msgstr "Sibuna 的应用场景"
+
+msgid "Whitepaper"
+msgstr "白皮书"
+
+msgid "Whitepaper PDF"
+msgstr "白皮书 PDF"
+
+msgid "With a session"
+msgstr "已有会话"
+
+msgid "Work before access."
+msgstr "先计算，再访问。"
+
+msgid "Yet, or at all."
+msgstr "尚未做到，或根本不做。"
+
+msgid "Your app"
+msgstr "你的应用"
+
+msgid "Your browser"
+msgstr "你的浏览器"
+
+msgid "Your website"
+msgstr "你的网站"
+
+msgid "on one host."
+msgstr "同一台主机。"
+
+msgid "· CHECK THE PROOF AT SIBUNA"
+msgstr "· 在 SIBUNA 验证证明"
+
+msgid "Articles"
+msgstr "文章"

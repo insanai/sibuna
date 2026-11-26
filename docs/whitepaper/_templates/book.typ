@@ -12,7 +12,7 @@
 // entry, is English. The paper's other words come from elsewhere: its title from the
 // title of index.rst in the language's catalog (docs/site/build.py passes it as
 // -D project), and the date and the copyright from the language's phrase map in
-// docs/site/i18n (-D today and -D copyright).
+// docs/site/home/locales (-D today and -D copyright).
 //
 //   subtitle       the line under SIBUNA
 //   tagline        the small line under the subtitle

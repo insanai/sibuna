@@ -1,0 +1,63 @@
+project = "Sibuna"
+templates_path = ["_templates"]
+locale_dirs = ["locales"]
+source_suffix = [".rst"]
+include_roots = ["../../book"]
+gettext_compact = false
+gettext_additional_targets = ["image"]
+exclude_patterns = ["_build", "locales/**"]
+html_use_index = false
+html_copy_source = false
+
+[html_context]
+site_base = "/sibuna/"
+site_url = "https://insanai.github.io/sibuna/"
+site_languages = [
+  {code = "en", prefix = "", gettext = "en", direction = "ltr", label = "English"},
+  {code = "zh-Hans", prefix = "zh-hans/", gettext = "zh_CN", direction = "ltr", label = "简体中文"},
+  {code = "ko", prefix = "ko/", gettext = "ko", direction = "ltr", label = "한국어"},
+  {code = "ja", prefix = "ja/", gettext = "ja", direction = "ltr", label = "日本語"},
+  {code = "es", prefix = "es/", gettext = "es", direction = "ltr", label = "Español"},
+  {code = "de", prefix = "de/", gettext = "de", direction = "ltr", label = "Deutsch"},
+  {code = "hi", prefix = "hi/", gettext = "hi", direction = "ltr", label = "हिन्दी"},
+  {code = "ar", prefix = "ar/", gettext = "ar", direction = "rtl", label = "العربية"},
+]
+# Keys the admission animation looks up when a frame changes.
+demo_phrases = [
+  "A configured rule refuses this request, even with a valid session.",
+  "A deny rule matches",
+  "A request arrives",
+  "A session does not bypass applicable inspection, deny rules or rate limits.",
+  "Blocked by a rule",
+  "Check access again",
+  "Check the proof. Issue a session.",
+  "Checking the proof is designed to take less computation than creating it.",
+  "First visit",
+  "Pause",
+  "Paused illustration",
+  "Play",
+  "Playing illustration",
+  "Reduced motion · step through",
+  "Return with a session",
+  "Sequential work happens in the browser. Later steps depend on earlier results.",
+  "Sibuna checks the session and applicable rules. A new puzzle is not needed here.",
+  "Sibuna does not forward this refused request to the application.",
+  "Sibuna returns a challenge to the client.",
+  "Static view · 3D is unavailable",
+  "The admitted request is forwarded to the application.",
+  "The browser retries the request with its session.",
+  "The browser sends a request through your HTTPS ingress.",
+  "The checks still apply",
+  "The client creates a proof",
+  "The client sends another request with its signed session.",
+  "The client submits its proof to Sibuna.",
+  "The proof returns",
+  "The request reaches your app",
+  "The request stops here",
+  "This admitted request is forwarded to the application.",
+  "This request also reaches Sibuna through your ingress.",
+  "This route asks for work",
+  "Try again with a session",
+  "With a session",
+  "Your website",
+]

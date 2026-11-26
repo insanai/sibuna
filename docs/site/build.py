@@ -5,7 +5,8 @@
 
 The site has these parts, served under /sibuna/:
 
-    /sibuna/              the landing page (docs/site/index.html and the admission demo)
+    /sibuna/              the landing page (Guidedog SSG with the Sibuna theme and admission demo)
+    /sibuna/articles/     the magazine and its dated articles, rendered by the same SSG theme
     /sibuna/book/         The Sibuna Book, `guidedog build html` of docs/book
     /sibuna/whitepaper/   the whitepaper, `guidedog build html` of docs/whitepaper
     /sibuna/sid/          the Sibuna Discussions, `guidedog dsc build` of docs/sid
@@ -20,8 +21,8 @@ map instead (see Bundle.shown). The SIDs exist only in English.
 
 Guidedog writes each project into its own _build folder; this script copies the results,
 adds the site's links and the language menu to the header of every documentation page,
-wraps the landing page in the site's shell, translates it, and checks every local link and
-anchor. It needs guidedog on PATH and nothing else beyond the Python standard library; the
+and checks every local link and anchor. It copies the output of guidedog ssg build docs/site
+into the Pages artifact. The build needs guidedog on PATH and Python 3.11 or later. The
 PDF books and whitepapers in Chinese, Japanese, Korean, Hindi and Arabic need the Noto
 fonts (Debian packages fonts-noto-cjk and fonts-noto-core). --no-build reuses the _build
 folders. The default output is target/site.
@@ -39,7 +40,7 @@ import shutil
 import subprocess
 import tomllib
 
-from languages import ENGLISH, LANGUAGES, TRANSLATIONS
+from languages import ENGLISH, TRANSLATIONS
 import languages
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -47,16 +48,6 @@ SOURCE = ROOT / "docs/site"
 BASE = "/sibuna/"
 SITE_URL = "https://insanai.github.io/sibuna/"
 REPO = "https://github.com/insanai/sibuna"
-# The workspace version; the landing page must name it (a release bump updates index.html).
-VERSION = re.search(r'^version = "([^"]+)"', (ROOT / "Cargo.toml").read_text(), re.M)[1]
-DESCRIPTION = (
-    "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or "
-    "connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
-)
-# Files the landing page loads, copied to /sibuna/assets/.
-ASSETS = ("site.css", "favicon.svg", "post-quantum-route.svg", "admission-demo.css", "admission-model.js",
-          "admission-animation.js", "admission-scene.bundle.js", "three-LICENSE.txt",
-          "language.css", "site-language.js")
 
 
 @dataclass(frozen=True)
@@ -69,8 +60,7 @@ class Bundle:
     # The conf.toml settings whose text readers see (on the PDF cover or title page, in
     # the HTML footer or title) but which no source file holds, so no catalog translates
     # them. A translated build overrides each with -D, taking the translation of its
-    # English value from the language's phrase map (docs/site/i18n/<code>.json); the
-    # build reports a missing one, which stays English. A setting that holds only a
+    # English value from the language's Guidedog theme catalog. A setting that holds only a
     # name, such as the whitepaper's author, is not listed.
     shown: tuple[str, ...]
 
@@ -81,14 +71,11 @@ BUNDLES = (
     Bundle("whitepaper", "docs/whitepaper", "sibuna-whitepaper-en.pdf",
            "sibuna-whitepaper.pdf", ("copyright", "html_title", "today")),
 )
-NAVIGATION = (("Home", ""), ("Book", "book/"), ("Operations", "book/operations.html"),
+NAVIGATION = (("Home", ""), ("Articles", "articles/"), ("Book", "book/"), ("Operations", "book/operations.html"),
               ("Whitepaper", "whitepaper/"), ("SIDs", "sid/"))
 # The sections that exist in every language: the landing page and the bundles. The SIDs
 # exist only in English, and every edition links to them.
-TRANSLATED = ("",) + tuple(f"{bundle.folder}/" for bundle in BUNDLES)
-TITLE = "Distributed load balancer and web application firewall"
-# The phrases the landing page's scripts and the documentation headers show.
-SCRIPT_PHRASES = languages.model_phrases() | set(languages.EXTRA_PHRASES)
+TRANSLATED = ("", "articles/") + tuple(f"{bundle.folder}/" for bundle in BUNDLES)
 
 
 def run(args, cwd):
@@ -113,45 +100,12 @@ def settings(bundle):
     return tomllib.loads((ROOT / bundle.project / "conf.toml").read_text())
 
 
-def catalog_messages(path):
-    """The translations of a gettext catalog, from msgid to msgstr.
-
-    Fuzzy and empty translations are left out; a string may continue over several
-    quoted lines, as msgmerge wraps long ones. A missing catalog has none.
-    """
-    messages = {}
-    if not path.is_file():
-        return messages
-    for entry in path.read_text().split("\n\n"):
-        if re.search(r"^#,.*\bfuzzy\b", entry, re.M):
-            continue
-        fields = {}
-        field = None
-        for line in entry.splitlines():
-            keyword = re.match(r'(msgid|msgstr) (".*")$', line)
-            if keyword:
-                field = keyword[1]
-                fields[field] = json.loads(keyword[2])
-            elif line.startswith('"') and field:
-                fields[field] += json.loads(line)
-            else:
-                field = None
-        if fields.get("msgid") and fields.get("msgstr"):
-            messages[fields["msgid"]] = fields["msgstr"]
-    return messages
-
-
 def translated_title(bundle, language):
     """A bundle's title in a language: the translation of its English title (the title of
     index.rst, and project in conf.toml) in the bundle's catalog, else the English."""
     english = settings(bundle)["project"]
     catalog = ROOT / bundle.project / "locales" / language.gettext / "LC_MESSAGES/index.po"
-    return catalog_messages(catalog).get(english, english)
-
-
-def shown_phrases():
-    """The English text of every setting that the phrase maps translate (Bundle.shown)."""
-    return {settings(bundle)[name] for bundle in BUNDLES for name in bundle.shown}
+    return languages.catalog_messages(catalog).get(english, english)
 
 
 def build_translated(bundle, language):
@@ -323,92 +277,11 @@ def copy_translated(site, bundle, language):
     decorate_bundle(site, bundle.folder, f"{language.prefix}pdf/{bundle.published}", language)
 
 
-def shell(language, title, body):
-    """The landing page's document in English: header, the body, and the footer.
-
-    The links and the language menu already point into the language's edition; the
-    caller translates the text.
-    """
-    nav = "".join(f'<a href="{section_url(target, language)}">{label}</a>\n'
-                  for label, target in NAVIGATION[1:])
-    menu = languages.language_menu(BASE, "", language, True)
-    detect = str(language is ENGLISH).lower()
-    return f'''<!doctype html><html lang="{language.code}" dir="{language.direction}"
- data-detect-language="{detect}"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="{DESCRIPTION}">
-<title>{escape(title)} · Sibuna</title>
-{languages.alternates(SITE_URL, "")}
-<link rel="icon" type="image/svg+xml" href="{BASE}assets/favicon.svg">
-<link rel="stylesheet" href="{BASE}assets/site.css">
-<link rel="stylesheet" href="{BASE}assets/admission-demo.css">
-<link rel="stylesheet" href="{BASE}assets/language.css">
-<script type="module" src="{BASE}assets/site-language.js"></script>
-<script type="module" src="{BASE}assets/admission-animation.js"></script></head><body>
-<a class="skip" href="#main">Skip to content</a>
-<header class="nav"><a class="brand" href="{BASE}{language.prefix}" translate="no"><i
-aria-hidden="true">s.</i>sibuna</a>
-<nav aria-label="Main">{nav}<a href="{REPO}">GitHub</a>
-{menu}</nav></header>
-<main id="main" class="home">{body}</main>
-<footer class="footer"><span>Sibuna is written by Vikrant Rathore with assistance from Ronak
-Rathore and Kanak Rathore.<br>Companies seeking other licensing terms can contact Vikrant
-Rathore.</span>
-<span><a href="{REPO}/blob/main/LICENSE">LGPL 3.0 or later</a> · v{VERSION}<br>
-Third-party libraries retain their respective licenses.</span></footer>
-</body></html>
-'''
-
-
-def home_body(language, words):
-    """The landing page's body with the demo, its links pointing into the edition.
-
-    The demo's script reads its texts in the page's language from a JSON element.
-    """
-    body = (SOURCE / "index.html").read_text()
-    assert body.count("<!-- admission-demo -->") == 1, "index.html needs one demo marker"
-    assert f"v{VERSION}" in body, f"index.html does not name the version v{VERSION}"
-    demo = (SOURCE / "admission-demo.html").read_text()
-    assert demo.count("</section>") == 1, "admission-demo.html is one section"
-    messages = languages.demo_messages(words, SCRIPT_PHRASES)
-    demo = demo.replace("</section>", '<script type="application/json" data-demo-language>'
-                        f"{messages}</script></section>")
-    body = body.replace("<!-- admission-demo -->", demo)
-    if language is not ENGLISH:
-        for bundle in BUNDLES:
-            body = body.replace(f'href="{BASE}{bundle.folder}/',
-                                f'href="{BASE}{language.prefix}{bundle.folder}/')
-            body = body.replace(f'href="{BASE}pdf/{bundle.published}"',
-                                f'href="{BASE}{language.prefix}pdf/{bundle.published}"')
-    return body
-
-
-def build_home(site):
-    """The landing page in every language, and the assets they share."""
-    english = shell(ENGLISH, TITLE, home_body(ENGLISH, {}))
-    documents = shown_phrases()
-    phrases = languages.catalog(english) | documents
-    for language in LANGUAGES:
-        words = languages.load_words(language)
-        page = shell(language, TITLE, home_body(language, words))
-        if language is not ENGLISH:
-            page, missing = languages.translate(page, words)
-            missing |= (SCRIPT_PHRASES | documents) - set(words)
-            report_phrases(language, missing, set(words) - phrases)
-        (site / language.prefix).mkdir(exist_ok=True)
-        (site / language.prefix / "index.html").write_text(page)
-    (site / "assets").mkdir()
-    for name in ASSETS:
-        shutil.copyfile(SOURCE / name, site / "assets" / name)
-
-
-def report_phrases(language, missing, unused):
-    """Say which phrases of a language stay English, and which are no longer used: those
-    of the landing page, the documentation headers and the bundles' shown settings."""
-    for phrase in sorted(missing):
-        print(f"site-i18n: {language.code}: untranslated: {phrase}")
-    for phrase in sorted(unused):
-        print(f"site-i18n: {language.code}: unused: {phrase}")
+def copy_ssg_site(site):
+    """Publish the custom theme, dated articles and artwork exactly as Guidedog rendered them."""
+    built = SOURCE / "_build/site"
+    run(["guidedog", "ssg", "build", "."], SOURCE)
+    shutil.copytree(built, site, dirs_exist_ok=True)
 
 
 class Links(HTMLParser):
@@ -468,6 +341,9 @@ def main():
                         help="reuse the guidedog _build folders")
     options = parser.parse_args()
     site = options.out.resolve()
+    site_release = tomllib.loads((SOURCE / "conf.toml").read_text())["release"]
+    crate_release = tomllib.loads((ROOT / "Cargo.toml").read_text())["workspace"]["package"]["version"]
+    assert site_release == crate_release, "site/conf.toml release must match Cargo.toml"
     check_animation_assets()
     if not options.no_build:
         build_documents()
@@ -475,7 +351,7 @@ def main():
         shutil.rmtree(site)
     site.mkdir(parents=True)
     copy_bundles(site)
-    build_home(site)
+    copy_ssg_site(site)
     (site / ".nojekyll").touch()
     validate(site)
     print(f"site: {site}")

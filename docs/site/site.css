@@ -633,3 +633,37 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
   .edge-map input,.edge-map label {display:none}
   .edge-map {padding-bottom:12px}
 }
+
+.editorial {max-width:52rem;margin:clamp(2rem,5vw,4rem) auto 5rem}
+.editorial h1 {font-size:clamp(2.15rem,5vw,3.7rem);max-width:22ch}
+.editorial h2 {margin-block:2.5rem .8rem;font-size:clamp(1.5rem,3vw,2rem)}
+.editorial p {max-width:72ch}
+.editorial figure {margin:2rem 0;padding:clamp(.75rem,2vw,1.6rem);border:1px solid var(--line);border-radius:10px}
+.editorial figure img {display:block;margin:auto;max-width:100%;height:auto}
+.editorial figcaption {margin-top:.65rem;font-size:.95rem;color:var(--muted)}
+.editorial pre {padding:1rem;overflow-x:auto;border-radius:6px;color:#e6f1e9;background:var(--code);line-height:1.5}
+.article-meta {display:flex;gap:1.2rem;align-items:baseline;font-size:.95rem}
+.editorial img {display:block;max-width:100%;height:auto;margin:1.5rem auto}
+.editorial h1,.editorial h2,.magazine h1,.magazine .postlist li > p:first-child a {font-family:Georgia,"Times New Roman",serif;font-weight:500}
+.editorial .headerlink,.magazine .headerlink {font:.65em system-ui;opacity:0;margin-inline-start:.35em;text-decoration:none}
+.editorial :is(h1,h2,h3):hover .headerlink,.magazine h1:hover .headerlink,.home .headerlink:focus {opacity:1}
+.magazine {margin:clamp(2.5rem,5vw,5rem) 0}
+.magazine h1 {font-size:clamp(3.1rem,8vw,7.1rem);line-height:1.02;letter-spacing:-.045em;margin:0}
+.magazine h1 + p {margin:.8rem 0 1.8rem;color:var(--muted);max-width:64ch}
+.magazine .postlist ul {list-style:none;padding:0;margin:0}
+.magazine .postlist li {
+  display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);column-gap:clamp(1.5rem,5vw,5rem);
+  align-content:start;padding:clamp(1.2rem,3vw,2.5rem) 0;border-top:2px solid var(--green)
+}
+.magazine .postlist li > p {grid-column:1;margin:.6rem 0;align-self:start}
+.magazine .postlist li > p:first-child {align-self:end;font:500 .85rem ui-monospace,monospace;color:var(--green)}
+.magazine .postlist li > p:first-child a {display:block;margin:.8rem 0 .25rem;font-size:clamp(2rem,3.8vw,3.6rem);line-height:1.08;letter-spacing:-.035em;text-decoration:none;color:var(--ink)}
+.magazine .postlist li > p:first-child a:hover {text-decoration:underline;text-decoration-thickness:1px}
+.magazine .postlist li > img {grid-column:2;grid-row:1/span 2;align-self:center;width:100%;border-radius:6px}
+.magazine .postlist li:not(:has(> img)) {grid-template-columns:minmax(0,72ch)}
+@media(max-width:700px) {
+  .nav nav {flex-wrap:wrap}
+  .magazine .postlist li {display:flex;flex-direction:column}
+  .magazine .postlist li > img {order:-1;margin-bottom:.9rem}
+  .magazine .postlist li > p:first-child {align-self:start}
+}

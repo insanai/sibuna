@@ -1,0 +1,562 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: ar\n"
+
+msgid "01 / Forward"
+msgstr "01 / التمرير"
+
+msgid "02 / Terminate and route"
+msgstr "02 / الإنهاء والتوجيه"
+
+msgid "03 / Stay up"
+msgstr "03 / البقاء في الخدمة"
+
+msgid "04 / Scale out"
+msgstr "04 / التوسع الأفقي"
+
+msgid "05 / Protect"
+msgstr "05 / الحماية"
+
+msgid "06 / Extend and observe"
+msgstr "06 / التوسعة والرصد"
+
+msgid "2026, Vikrant Rathore and Sibuna contributors"
+msgstr "2026، Vikrant Rathore والمساهمون في Sibuna"
+
+msgid "A browser challenge adds a cost to automated access, and a signed session lets an admitted visitor return. Rules allow, challenge or deny. The shield checks requests for SQL injection, XSS, path traversal and command injection."
+msgstr "يضيف تحدي المتصفح كلفة إلى الوصول الآلي، وتتيح الجلسة الموقّعة للزائر المقبول أن يعود. والقواعد تسمح أو تتحدى أو ترفض. ويفحص Shield الطلبات بحثًا عن حقن SQL وXSS واجتياز المسارات وحقن الأوامر."
+
+msgid "A checked reload applies new routes to new work. Established TCP streams keep their backend. Linux also supports listener handoff during a binary upgrade."
+msgstr "عند إعادة تحميل إعدادات متحقق منها تُطبَّق المسارات الجديدة على الحركة الجديدة. وتحتفظ تدفقات TCP القائمة بخوادمها الخلفية. يدعم Linux أيضًا تسليم مقابس الاستماع عند ترقية الملف التنفيذي."
+
+msgid "A cluster of edge nodes"
+msgstr "عنقود من العقد الطرفية"
+
+msgid "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it."
+msgstr "يمكن لمتصفح متوافق الاتفاق مع Sibuna على مفتاح مقاوم للهجمات الكمومية. يفتح Sibuna اتصالا مستقلا بخادم الويب، فيبقى الجهاز القديم في الخدمة أثناء ترقيته."
+
+msgid "A configured rule refuses this request, even with a valid session."
+msgstr "ترفض قاعدة مضبوطة هذا الطلب، حتى مع جلسة صالحة."
+
+msgid "A deny rule matches"
+msgstr "تنطبق قاعدة رفض"
+
+msgid "A request arrives"
+msgstr "يصل طلب"
+
+msgid "A session does not bypass applicable inspection, deny rules or rate limits."
+msgstr "لا تتخطى الجلسة الفحص المطبّق، ولا قواعد الرفض، ولا حدود المعدل."
+
+msgid "Access decisions"
+msgstr "قرارات الوصول"
+
+msgid "Admit, challenge or refuse. A session avoids another puzzle here; applicable rules and rate limits still apply."
+msgstr "القبول أو التحدي أو الرفض. تُغني الجلسة هنا عن لغز آخر، لكن القواعد وحدود المعدل المطبّقة تبقى سارية."
+
+msgid "Admitted"
+msgstr "مقبول"
+
+msgid "Admitted traffic"
+msgstr "حركة المرور المقبولة"
+
+msgid "All downloads"
+msgstr "جميع التنزيلات"
+
+msgid "Architecture whitepaper"
+msgstr "الورقة التقنية عن البنية"
+
+msgid "Ask bots to do the work."
+msgstr "اجعل الروبوتات تؤدي العمل."
+
+msgid "Beside HAProxy"
+msgstr "إلى جانب HAProxy"
+
+msgid "Blocked by a rule"
+msgstr "مرفوض بقاعدة"
+
+msgid "Book"
+msgstr "الكتاب"
+
+msgid "Book PDF"
+msgstr "الكتاب بصيغة PDF"
+
+msgid "Both proxies ran on eight processors with 256 connections over loopback, each case for eight seconds, with no failed request. Sibuna is level or ahead in three cases. HAProxy is faster for HTTP/2, and we say why in the book."
+msgstr "شُغّل الوكيلان على ثمانية معالجات مع 256 اتصالًا عبر واجهة الاسترجاع المحلية، كل حالة لثماني ثوانٍ، ولم يفشل أي طلب. Sibuna مساوٍ أو متقدم في ثلاث حالات. وHAProxy أسرع في HTTP/2، ونذكر السبب في الكتاب."
+
+msgid "Bring post-quantum TLS to an existing website"
+msgstr "إضافة TLS المقاوم للحوسبة الكمومية إلى موقع قائم"
+
+msgid "Browser"
+msgstr "المتصفح"
+
+msgid "Build and operate"
+msgstr "البناء والتشغيل"
+
+msgid "CLI and protocol reference"
+msgstr "مرجع سطر الأوامر والبروتوكول"
+
+msgid "CLIENT WORK"
+msgstr "عمل العميل"
+
+msgid "Case"
+msgstr "الحالة"
+
+msgid "Challenge / proof"
+msgstr "تحدٍّ / إثبات"
+
+msgid "Challenge, then client work, then proof verification"
+msgstr "تحدٍّ، ثم عمل العميل، ثم التحقق من الإثبات"
+
+msgid "Change it while it runs."
+msgstr "غيّره وهو يعمل."
+
+msgid "Check access again"
+msgstr "إعادة فحص الوصول"
+
+msgid "Check the proof. Issue a session."
+msgstr "التحقق من الإثبات، ثم إصدار جلسة."
+
+msgid "Checking the proof is designed to take less computation than creating it."
+msgstr "صُمّم التحقق من الإثبات ليحتاج إلى حساب أقل مما يحتاجه إنشاؤه."
+
+msgid "Choose a request journey"
+msgstr "اختر مسار طلب"
+
+msgid "Classical TLS in this example"
+msgstr "TLS تقليدي في هذا المثال"
+
+msgid "Client"
+msgstr "العميل"
+
+msgid "Clients"
+msgstr "العملاء"
+
+msgid "Companies seeking other licensing terms can contact Vikrant Rathore."
+msgstr "يمكن للشركات التي تحتاج إلى شروط ترخيص أخرى التواصل مع Vikrant Rathore."
+
+msgid "Configuring Sibuna with Jlavi"
+msgstr "إعداد Sibuna بلغة Jlavi"
+
+msgid "Connections and datagrams."
+msgstr "الاتصالات ورزم البيانات."
+
+msgid "Console contract"
+msgstr "مواصفات وحدة التحكم (بالإنجليزية)"
+
+msgid "Deadlines at a glance"
+msgstr "المواعيد في لمحة"
+
+msgid "Decisions with context"
+msgstr "قرارات التصميم وسياقها"
+
+msgid "Deployment examples and migration timelines"
+msgstr "أمثلة النشر والمواعيد المستهدفة للانتقال"
+
+msgid "Deployment guide"
+msgstr "دليل النشر"
+
+msgid "Design discussions"
+msgstr "نقاشات التصميم (بالإنجليزية)"
+
+msgid "Designated critical infrastructure completes migration."
+msgstr "تستكمل البنى التحتية الحيوية المحددة عملية الانتقال."
+
+msgid "Designated critical infrastructure owners submit plans by 31 March."
+msgstr "يقدّم مالكو البنى التحتية الحيوية المحددة خططهم بحلول 31 مارس."
+
+msgid "Digital signatures follow for the same federal systems."
+msgstr "يلي ذلك انتقال التوقيعات الرقمية في الأنظمة الفدرالية نفسها."
+
+msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
+msgstr "نوزع إعدادات التوجيه بعد التحقق منها على الشبكة. يمكن للعقد تبادل قرارات الحظر وارتباطات العملاء بالخوادم، بينما تمرر كل عقدة الحركة إلى مجموعات خوادمها الخلفية."
+
+msgid "Distributed load balancer and web application firewall"
+msgstr "موازن حمل موزع وجدار حماية لتطبيقات الويب"
+
+msgid "Distributed load balancer and web application firewall · Sibuna"
+msgstr "موازن حمل موزع وجدار حماية لتطبيقات الويب · Sibuna"
+
+msgid "Download."
+msgstr "نزّل."
+
+msgid "Each Sibuna Discussion states a design, its alternatives, what is built and what is not."
+msgstr "يعرض كل سجل من سجلات Sibuna Discussion تصميمًا وبدائله وما بُني منه وما لم يُبنَ. والسجلات متاحة بالإنجليزية."
+
+msgid "Edge nodes"
+msgstr "العقد الطرفية"
+
+msgid "European Union"
+msgstr "الاتحاد الأوروبي"
+
+msgid "Federal high-value assets and high-impact systems move to post-quantum key establishment."
+msgstr "تنتقل الأصول الفدرالية عالية القيمة والأنظمة عالية التأثير إلى إنشاء المفاتيح بآليات مقاومة للحوسبة الكمومية."
+
+msgid "Find your way through the system"
+msgstr "تعرّف إلى أجزاء النظام"
+
+msgid "First visit"
+msgstr "الزيارة الأولى"
+
+msgid "Follow a request"
+msgstr "تتبّع طلبًا"
+
+msgid "From proofs to protection"
+msgstr "من البراهين إلى الحماية"
+
+msgid "From source · load balancer"
+msgstr "من المصدر · موازن الحمل"
+
+msgid "From the socket to the server."
+msgstr "من المقبس إلى الخادم."
+
+msgid "GitHub"
+msgstr "GitHub"
+
+msgid "HTTP/1.1 over TLS"
+msgstr "HTTP/1.1 عبر TLS"
+
+msgid "HTTPS ingress"
+msgstr "وكيل دخول HTTPS"
+
+msgid "HTTPS without a second proxy."
+msgstr "HTTPS دون وكيل ثانٍ."
+
+msgid "Home"
+msgstr "الرئيسية"
+
+msgid "Hooks run at the connection and at the request: compiled in, as WebAssembly with a budget, or in a separate process. Metrics, access logs and a console show servers, flows and the reason for each refusal."
+msgstr "تعمل الخطافات عند الاتصال وعند الطلب: مصرَّفة داخل البرنامج، أو بصيغة WebAssembly بميزانية محددة، أو في عملية منفصلة. وتعرض المقاييس وسجلات الوصول ووحدة التحكم الخوادم والتدفقات وسبب كل رفض."
+
+msgid "How to try it"
+msgstr "كيف تجرّبه"
+
+msgid "Hybrid TLS 1.3"
+msgstr "TLS 1.3 هجين"
+
+msgid "Installation, the edge configuration, certificates, clustering, the admin socket, policies, storage and the console."
+msgstr "التثبيت، وإعدادات الحافة، والشهادات، والعنقدة، ومقبس الإدارة، والسياسات، والتخزين، ووحدة التحكم."
+
+msgid "Internal gRPC services"
+msgstr "خدمات gRPC الداخلية"
+
+msgid "Issue certificates for internal names with the local CA. Clients trust its root and call the service over TLS. An HTTP/2 backend carries gRPC messages and trailers."
+msgstr "نصدر شهادات للأسماء الداخلية من سلطة التصديق المحلية. تثق التطبيقات العميلة بشهادتها الجذرية وتستدعي الخدمة عبر TLS. وتنقل الخدمة الخلفية عبر HTTP/2 رسائل gRPC وترويساتها الختامية."
+
+msgid "Know the boundary"
+msgstr "اعرف الحدود"
+
+msgid "LGPL 3.0 or later"
+msgstr "LGPL 3.0 أو أحدث"
+
+msgid "Language:"
+msgstr "اللغة:"
+
+msgid "Learn it. Use it. Question it."
+msgstr "تعلّمه. استخدمه. ناقشه."
+
+msgid "Legacy device"
+msgstr "جهاز قديم"
+
+msgid "Load balancer design"
+msgstr "تصميم موازن الحمل (بالإنجليزية)"
+
+msgid "Main"
+msgstr "التنقل الرئيسي"
+
+msgid "Measured, with the losses"
+msgstr "قياسات، مع الخسائر"
+
+msgid "Member States begin the transition."
+msgstr "تبدأ الدول الأعضاء الانتقال."
+
+msgid "Method and all measurements"
+msgstr "المنهج وجميع القياسات"
+
+msgid "Next step"
+msgstr "الخطوة التالية"
+
+msgid "Nodes of a mesh share the sticky table and the limits of a server, and forward a client to the node that owns it. A PostgreSQL database can publish one configuration to every node and roll it back."
+msgstr "تتشارك عقد الشبكة المتداخلة جدول تثبيت الجلسات وحدود الخادم، وتمرر العميل إلى العقدة التي تملكه. ويمكن لقاعدة بيانات PostgreSQL أن تنشر إعدادات واحدة على كل عقدة وأن تتراجع عنها."
+
+msgid "November 2026"
+msgstr "نوفمبر 2026"
+
+msgid "One process on the path"
+msgstr "عملية واحدة على المسار"
+
+msgid "Open source · LGPL 3.0 · {version}"
+msgstr "مفتوح المصدر · LGPL 3.0 · {version}"
+
+msgid "Operations"
+msgstr "التشغيل"
+
+msgid "Or build."
+msgstr "أو ابنِ."
+
+msgid "Origin connection"
+msgstr "الاتصال بالخادم الأصلي"
+
+msgid "Origins"
+msgstr "خوادم الأصل"
+
+msgid "Other exposed organisations are encouraged to complete migration."
+msgstr "تُشجَّع المنظمات الأخرى المعرّضة للمخاطر على استكمال الانتقال."
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "Pause"
+msgstr "إيقاف مؤقت"
+
+msgid "Pause traffic animation"
+msgstr "إيقاف حركة المرور التوضيحية مؤقتًا"
+
+msgid "Paused illustration"
+msgstr "الرسم التوضيحي متوقف مؤقتًا"
+
+msgid "Play"
+msgstr "تشغيل"
+
+msgid "Playing illustration"
+msgstr "الرسم التوضيحي قيد التشغيل"
+
+msgid "Post-quantum migration guide"
+msgstr "دليل الانتقال إلى التشفير المقاوم للحوسبة الكمومية"
+
+msgid "Protected request path"
+msgstr "مسار الطلب المحمي"
+
+msgid "Public TLS"
+msgstr "TLS العام"
+
+msgid "Public connection"
+msgstr "الاتصال العام"
+
+msgid "Public websites"
+msgstr "المواقع العامة"
+
+msgid "RC6 includes the load balancer, firewall and console in one executable."
+msgstr "يجمع RC6 موازن الحمل وجدار الحماية ووحدة التحكم في ملف تنفيذي واحد."
+
+msgid "RC6 on Linux x86-64"
+msgstr "RC6 على Linux x86-64"
+
+msgid "Ratio"
+msgstr "النسبة"
+
+msgid "Reduced motion · step through"
+msgstr "حركة مخففة · التنقل خطوة خطوة"
+
+msgid "Refused"
+msgstr "مرفوض"
+
+msgid "Release status"
+msgstr "حالة الإصدار"
+
+msgid "Releases hold binaries for Linux, macOS and Windows, Debian, RPM and Arch packages, CLI packages for FreeBSD 15.1 and OpenBSD 7.9 x86-64, a Helm chart and a container image. Verify the checksums before installation."
+msgstr "تتضمن الإصدارات الملفات التنفيذية لأنظمة Linux وmacOS وWindows، وحزم Debian وRPM وArch، وحزم سطر الأوامر لنظامي FreeBSD 15.1 وOpenBSD 7.9 على x86-64، ومخطط Helm وصورة حاوية. تحقّق من المجاميع الاختبارية قبل التثبيت."
+
+msgid "Requests in a second. More is better."
+msgstr "الطلبات في الثانية. الأكثر أفضل."
+
+msgid "Requests pass from a client through an HTTPS ingress to Sibuna. Sibuna may admit, challenge or refuse them. A client creates a proof; Sibuna verifies it and issues a session. Requests with sessions still pass applicable checks."
+msgstr "تمر الطلبات من العميل عبر وكيل دخول HTTPS إلى Sibuna، فيقبلها Sibuna أو يتحداها أو يرفضها. ينشئ العميل إثباتًا، فيتحقق منه Sibuna ويصدر جلسة. وتظل الطلبات التي تحمل جلسة خاضعة للفحوص المطبّقة."
+
+msgid "Return with a session"
+msgstr "العودة بجلسة"
+
+msgid "Roadmap target for high-risk uses."
+msgstr "الموعد المستهدف في خارطة الطريق للاستخدامات عالية المخاطر."
+
+msgid "Roadmap target for medium-risk uses and as many low-risk uses as feasible."
+msgstr "تستهدف خارطة الطريق الاستخدامات متوسطة المخاطر وأكبر عدد ممكن من الاستخدامات منخفضة المخاطر."
+
+msgid "SIDs"
+msgstr "سجلات SID (بالإنجليزية)"
+
+msgid "STEP"
+msgstr "الخطوة"
+
+msgid "Scripted illustration, not live traffic or measured timing. Proof time varies by device and settings. This shows the reverse-proxy path; with forward-auth, your ingress forwards admitted requests."
+msgstr "رسم توضيحي بسيناريو معدّ مسبقًا، لا حركة مرور حية ولا توقيت مقيس. ويختلف زمن إنشاء الإثبات باختلاف الجهاز والإعدادات. يعرض الرسم مسار الوكيل العكسي؛ أما في وضع forward-auth فيمرر وكيل الدخول لديك الطلبات المقبولة."
+
+msgid "See and shape the decisions."
+msgstr "راجع القرارات وشكّلها."
+
+msgid "Sequential work happens in the browser. Later steps depend on earlier results."
+msgstr "يجري العمل المتسلسل في المتصفح، وتعتمد كل خطوة لاحقة على نتائج ما سبقها."
+
+msgid "Serve browsers over HTTP/2 or HTTP/3, renew public certificates with Let's Encrypt and inspect requests before forwarding them to HTTP/1.1 replicas."
+msgstr "نخدم المتصفحات عبر HTTP/2 أو HTTP/3، ونجدد الشهادات العامة من خلال Let's Encrypt، ونفحص الطلبات قبل تمريرها إلى نُسخ الخدمة عبر HTTP/1.1."
+
+msgid "Several nodes, one behaviour."
+msgstr "عقد عدة، وسلوك واحد."
+
+msgid "Sibuna"
+msgstr "Sibuna"
+
+msgid "Sibuna Whitepaper"
+msgstr "الورقة التقنية لـ Sibuna"
+
+msgid "Sibuna checks requests before they reach your application"
+msgstr "يفحص Sibuna الطلبات قبل أن تصل إلى تطبيقك"
+
+msgid "Sibuna checks the session and applicable rules. A new puzzle is not needed here."
+msgstr "يفحص Sibuna الجلسة والقواعد المطبّقة، ولا حاجة هنا إلى لغز جديد."
+
+msgid "Sibuna does not forward this refused request to the application."
+msgstr "لا يمرر Sibuna هذا الطلب المرفوض إلى التطبيق."
+
+msgid "Sibuna is written by Vikrant Rathore with assistance from Ronak Rathore and Kanak Rathore."
+msgstr "كتب Vikrant Rathore برنامج Sibuna بمساعدة Ronak Rathore وKanak Rathore."
+
+msgid "Sibuna returns a challenge to the client."
+msgstr "يعيد Sibuna تحديًا إلى العميل."
+
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
+msgstr "يوجّه Sibuna حركة TCP وUDP وHTTP إلى خوادم سليمة. يمكننا تشغيل عقدة طرفية واحدة أو ربط عدة عقد في شبكة مترابطة، وإنهاء TLS عند كل عقدة وتطبيق جدار الحماية على مسارات HTTP محددة."
+
+msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
+msgstr "ينهي Sibuna اتصالات TLS ويخدم HTTP/1.1 وHTTP/2 وHTTP/3 وWebSocket. ويوجّه كل طلب بحسب اسم المضيف والمسار. وتأتي الشهادات من Let's Encrypt أو من سلطة ACME أخرى، وتغطي سلطة محلية الأسماء الداخلية."
+
+msgid "Singapore"
+msgstr "سنغافورة"
+
+msgid "Skip to content"
+msgstr "الانتقال إلى المحتوى"
+
+msgid "Static illustration"
+msgstr "رسم توضيحي ثابت"
+
+msgid "Static view · 3D is unavailable"
+msgstr "عرض ثابت · العرض ثلاثي الأبعاد غير متاح"
+
+msgid "TCP forwarding"
+msgstr "تمرير TCP"
+
+msgid "TCP streams and UDP mappings go to a pool of servers. A TLS connection can pass through undecrypted, routed by its server name. QUIC can pass through too. The PROXY protocol carries the address of the client."
+msgstr "تذهب تدفقات TCP وتعيينات UDP إلى مجمّع خوادم. ويمكن لاتصال TLS أن يمر دون فك تشفيره، موجَّهًا بحسب اسم خادمه. ويمكن أن يمر QUIC أيضًا. ويحمل بروتوكول PROXY عنوان العميل."
+
+msgid "The admitted request is forwarded to the application."
+msgstr "يُمرَّر الطلب المقبول إلى التطبيق."
+
+msgid "The book"
+msgstr "الكتاب"
+
+msgid "The browser retries the request with its session."
+msgstr "يعيد المتصفح إرسال الطلب مع جلسته."
+
+msgid "The browser sends a request through your HTTPS ingress."
+msgstr "يرسل المتصفح طلبًا عبر وكيل دخول HTTPS لديك."
+
+msgid "The built-in inspector checks the first 8 KiB of supported bodies. WebSocket messages are relayed without inspection. Sibuna does not provide volumetric network mitigation. A challenge adds work. It does not establish that a visitor is human."
+msgstr "يفحص الفاحص المدمج أول 8 KiB من أجسام الطلبات المدعومة. وتُمرَّر رسائل WebSocket دون فحص. ولا يوفر Sibuna حماية من هجمات الشبكة الحجمية. يضيف التحدي عملًا. وهو لا يثبت أن الزائر إنسان."
+
+msgid "The checks still apply"
+msgstr "تظل الفحوص سارية"
+
+msgid "The client creates a proof"
+msgstr "ينشئ العميل إثباتًا"
+
+msgid "The client sends another request with its signed session."
+msgstr "يرسل العميل طلبًا آخر مع جلسته الموقّعة."
+
+msgid "The client submits its proof to Sibuna."
+msgstr "يقدّم العميل إثباته إلى Sibuna."
+
+msgid "The console is opt-in. Its strict performance isolation target has not formally passed. Published measurements identify the code revision and uncertainty."
+msgstr "وحدة التحكم لا تعمل إلا إذا فُعّلت صراحةً. ولم يُستوفَ بعدُ رسميًا هدفها الصارم لعزل الأداء. وتذكر القياسات المنشورة مراجعة الشيفرة ومقدار عدم اليقين."
+
+msgid "The proof returns"
+msgstr "يعود الإثبات"
+
+msgid "The protocol, the request pipeline, the algorithms and every measurement with its method. Also available as a PDF."
+msgstr "البروتوكول، ومسار معالجة الطلبات، والخوارزميات، وكل قياس مع منهجه. ومتاح أيضًا بصيغة PDF."
+
+msgid "The request reaches your app"
+msgstr "يصل الطلب إلى تطبيقك"
+
+msgid "The request stops here"
+msgstr "يتوقف الطلب هنا"
+
+msgid "The upper route inspects a browser request and sends it to a web replica. The lower route carries a gRPC call over HTTP/2. The dotted link shows the two nodes exchanging mesh state."
+msgstr "يفحص المسار العلوي طلب المتصفح ويمرره إلى نسخة من الموقع. ينقل المسار السفلي استدعاء gRPC عبر HTTP/2. ويمثل الخط المنقط تبادل حالة الشبكة بين العقدتين."
+
+msgid "Third-party libraries retain their respective licenses."
+msgstr "تحتفظ مكتبات الأطراف الثالثة بتراخيصها الخاصة."
+
+msgid "This admitted request is forwarded to the application."
+msgstr "يُمرَّر هذا الطلب المقبول إلى التطبيق."
+
+msgid "This request also reaches Sibuna through your ingress."
+msgstr "يصل هذا الطلب أيضًا إلى Sibuna عبر وكيل الدخول لديك."
+
+msgid "This route asks for work"
+msgstr "يطلب هذا المسار عملًا"
+
+msgid "Try again with a session"
+msgstr "إعادة المحاولة بجلسة"
+
+msgid "Try it"
+msgstr "جرّبه"
+
+msgid "Two edge nodes serving a website and an internal service"
+msgstr "عقدتان طرفيتان تخدمان موقعًا وخدمة داخلية"
+
+msgid "United States"
+msgstr "الولايات المتحدة"
+
+msgid "Vikrant Rathore, with assistance from Ronak Rathore and Kanak Rathore"
+msgstr "Vikrant Rathore، بمساعدة Ronak Rathore وKanak Rathore"
+
+msgid "We state the limits beside the features. Linux requires kernel 5.10 or later, macOS 12 or later, and Windows 10 or Server 2016 or later. The event-driven workers and the replacement of the executable without lost connections exist on Linux only."
+msgstr "نذكر الحدود إلى جانب الميزات. يتطلب Linux نواة 5.10 أو أحدث، ويتطلب macOS الإصدار 12 أو أحدث، ويتطلب Windows نظام Windows 10 أو Server 2016 أو أحدث. والعمال المدفوعون بالأحداث واستبدال الملف التنفيذي دون فقدان اتصالات موجودان في Linux فقط."
+
+msgid "We tested the cluster on three hosts. Qualification under production traffic remains open. Replacing the executable ends QUIC connections."
+msgstr "اختبرنا العنقود على ثلاثة مضيفين. وما زال التحقق تحت حمل الإنتاج مطلوبا. يؤدي استبدال الملف التنفيذي إلى إنهاء اتصالات QUIC."
+
+msgid "What is Sibuna?"
+msgstr "ما هو Sibuna؟"
+
+msgid "What it does not do."
+msgstr "ما لا يفعله."
+
+msgid "Where each part stands."
+msgstr "أين يقف كل جزء."
+
+msgid "Where we use Sibuna"
+msgstr "أين نستخدم Sibuna"
+
+msgid "Whitepaper"
+msgstr "الورقة التقنية"
+
+msgid "Whitepaper PDF"
+msgstr "الورقة التقنية بصيغة PDF"
+
+msgid "With a session"
+msgstr "مع جلسة"
+
+msgid "Work before access."
+msgstr "العمل قبل الوصول."
+
+msgid "Yet, or at all."
+msgstr "حتى الآن، أو إطلاقًا."
+
+msgid "Your app"
+msgstr "تطبيقك"
+
+msgid "Your browser"
+msgstr "متصفحك"
+
+msgid "Your website"
+msgstr "موقعك"
+
+msgid "on one host."
+msgstr "على مضيف واحد."
+
+msgid "· CHECK THE PROOF AT SIBUNA"
+msgstr "· التحقق من الإثبات في Sibuna"
+
+msgid "Articles"
+msgstr "مقالات"

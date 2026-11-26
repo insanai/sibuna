@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+{% block content %}
+<section class="hero hero-edge">
+  <div><h1>{{ _("Distributed load balancer and web application firewall") }}</h1>
+    <p class="lead">{{ _("Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.") }}</p>
+    <div class="actions"><a class="button" href="{{ edition_url }}book/introduction.html">{{ _("What is Sibuna?") }}</a>
+      <a class="button secondary" href="#use-cases">{{ _("Where we use Sibuna") }}</a>
+      <a class="guide-button" href="{{ edition_url }}book/post-quantum-transport.html">{{ _("Post-quantum migration guide") }}</a></div>
+    <p class="meta">{{ _("Open source · LGPL 3.0 · {version}")|replace("{version}", "v" ~ release) }}</p></div>
+  <figure class="edge-map">
+    <input type="checkbox" id="pause-traffic"><label for="pause-traffic">{{ _("Pause traffic animation") }}</label>
+    <svg viewBox="0 0 560 292" role="img" aria-labelledby="mesh-title" aria-describedby="mesh-desc">
+      <title id="mesh-title">{{ _("Two edge nodes serving a website and an internal service") }}</title>
+      <desc id="mesh-desc">{{ _("The upper route inspects a browser request and sends it to a web replica. The lower route carries a gRPC call over HTTP/2. The dotted link shows the two nodes exchanging mesh state.") }}</desc>
+      <g fill="none" stroke="#5f897a" stroke-width="2">
+        <path d="M68 100 H214 M350 100 H425 Q439 100 452 82 L482 63 M425 100 Q439 100 452 117 L482 135"/>
+        <path d="M68 225 H214 M350 225 H482"/>
+        <path d="M282 131 V193" stroke-dasharray="3 5"/>
+      </g>
+      <g fill="none" stroke-linecap="round" stroke-width="4" aria-hidden="true">
+        <path class="packet web-packet" pathLength="100" d="M68 100 H425 Q439 100 452 82 L482 63"/>
+        <path class="packet replica-packet" pathLength="100" d="M68 100 H425 Q439 100 452 117 L482 135"/>
+        <path class="packet rpc-packet" pathLength="100" d="M68 225 H482"/>
+        <path class="packet peer-packet" pathLength="100" d="M282 131 V193"/>
+      </g>
+      <g fill="#203e34" stroke="#84a993" stroke-width="1.5">
+        <rect x="215" y="70" width="134" height="60" rx="8"/>
+        <rect x="215" y="194" width="134" height="60" rx="8"/>
+        <rect x="31" y="85" width="38" height="28" rx="4"/><path d="M39 120 H61 M50 113 V120"/>
+        <rect x="31" y="210" width="38" height="28" rx="4"/>
+        <path d="M39 219 l5 5 -5 5 M49 229 h10" fill="none"/>
+        <rect x="483" y="50" width="40" height="26" rx="4"/>
+        <rect x="483" y="122" width="40" height="26" rx="4"/>
+        <rect x="483" y="212" width="40" height="26" rx="4"/>
+        <path d="M491 63 h17 M491 135 h17 M491 225 h17"/>
+      </g>
+      <g text-anchor="middle" class="map-labels">
+        <text x="52" y="30">{{ _("Clients") }}</text><text x="282" y="30">{{ _("Edge nodes") }}</text><text x="485" y="30">{{ _("Origins") }}</text>
+        <g translate="no"><text x="141" y="88">HTTP/3</text><text x="141" y="213">gRPC</text>
+        <text x="282" y="94">Sibuna A</text><text x="282" y="117">TLS + WAF</text>
+        <text x="282" y="219">Sibuna B</text><text x="282" y="241">TLS</text>
+        <text x="403" y="88">HTTP/1.1</text><text x="406" y="213">HTTP/2</text></g>
+      </g>
+    </svg>
+  </figure>
+</section>
+<section class="deployments" id="use-cases" aria-labelledby="use-title">
+  <h2 id="use-title">{{ _("Where we use Sibuna") }}</h2>
+  <div class="deployment-grid">
+    <article><h3><a href="{{ edition_url }}book/operations.html#automatic-https">{{ _("Public websites") }}</a></h3><p>{{ _("Serve browsers over HTTP/2 or HTTP/3, renew public certificates with Let's Encrypt and inspect requests before forwarding them to HTTP/1.1 replicas.") }}</p></article>
+    <article><h3><a href="{{ edition_url }}book/operations.html#grpc">{{ _("Internal gRPC services") }}</a></h3><p>{{ _("Issue certificates for internal names with the local CA. Clients trust its root and call the service over TLS. An HTTP/2 backend carries gRPC messages and trailers.") }}</p></article>
+    <article><h3><a href="{{ edition_url }}book/cluster.html">{{ _("A cluster of edge nodes") }}</a></h3><p>{{ _("Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools.") }}</p></article>
+  </div>
+</section>
+<section class="quantum" aria-labelledby="quantum-title">
+  <div class="quantum-copy">
+    <h2 id="quantum-title">{{ _("Bring post-quantum TLS to an existing website") }}</h2>
+    <p>{{ _("A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.") }}</p>
+    <a href="{{ edition_url }}book/post-quantum-transport.html">{{ _("Deployment examples and migration timelines") }}</a>
+  </div>
+  <figure class="quantum-route">
+    <div class="quantum-nodes">
+      <span dir="auto">{{ _("Browser") }}</span>
+      <strong translate="no">Sibuna</strong>
+      <span dir="auto">{{ _("Legacy device") }}</span>
+    </div>
+    <img src="/sibuna/assets/post-quantum-route.svg" alt="" loading="lazy" width="600" height="126">
+    <figcaption>
+      <div class="quantum-public"><b dir="auto">{{ _("Public connection") }}</b><span dir="auto">{{ _("Hybrid TLS 1.3") }}</span></div>
+      <div class="quantum-origin"><b dir="auto">{{ _("Origin connection") }}</b><span dir="auto">{{ _("Classical TLS in this example") }}</span></div>
+    </figcaption>
+  </figure>
+  <div class="quantum-dates">
+    <h3>{{ _("Deadlines at a glance") }}</h3>
+    <ol class="milestones">
+      <li><time datetime="2026">2026</time><p><b>{{ _("European Union") }}</b><span>{{ _("Member States begin the transition.") }}</span></p></li>
+      <li><time datetime="2027">2027</time><p><b>{{ _("Singapore") }}</b><span>{{ _("Designated critical infrastructure owners submit plans by 31 March.") }}</span></p></li>
+      <li><time datetime="2030">2030</time><p><b>{{ _("United States") }}</b><span>{{ _("Federal high-value assets and high-impact systems move to post-quantum key establishment.") }}</span></p>
+        <p><b>{{ _("European Union") }}</b><span>{{ _("Roadmap target for high-risk uses.") }}</span></p></li>
+      <li><time datetime="2031">2031</time><p><b>{{ _("United States") }}</b><span>{{ _("Digital signatures follow for the same federal systems.") }}</span></p>
+        <p><b>{{ _("Singapore") }}</b><span>{{ _("Designated critical infrastructure completes migration.") }}</span></p></li>
+      <li><time datetime="2035">2035</time><p><b>{{ _("European Union") }}</b><span>{{ _("Roadmap target for medium-risk uses and as many low-risk uses as feasible.") }}</span></p>
+        <p><b>{{ _("Singapore") }}</b><span>{{ _("Other exposed organisations are encouraged to complete migration.") }}</span></p></li>
+    </ol>
+  </div>
+</section>
+<section class="status" aria-label="{{ _("Release status") }}">
+  <p><strong>{{ _("Where each part stands.") }}</strong> {{ _("RC6 includes the load balancer, firewall and console in one executable.") }}</p>
+  <a href="#start">{{ _("How to try it") }}</a>
+</section>
+<section class="section path" aria-labelledby="path-title">
+  <p class="eyebrow">{{ _("One process on the path") }}</p>
+  <h2 id="path-title">{{ _("From the socket to the server.") }}</h2>
+  <div class="features">
+    <article><span class="label">{{ _("01 / Forward") }}</span><h3>{{ _("Connections and datagrams.") }}</h3>
+    <p>{{ _("TCP streams and UDP mappings go to a pool of servers. A TLS connection can pass through undecrypted, routed by its server name. QUIC can pass through too. The PROXY protocol carries the address of the client.") }}</p></article>
+    <article><span class="label">{{ _("02 / Terminate and route") }}</span><h3>{{ _("HTTPS without a second proxy.") }}</h3>
+    <p>{{ _("Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names.") }}</p></article>
+    <article><span class="label">{{ _("03 / Stay up") }}</span><h3>{{ _("Change it while it runs.") }}</h3>
+    <p>{{ _("A checked reload applies new routes to new work. Established TCP streams keep their backend. Linux also supports listener handoff during a binary upgrade.") }}</p></article>
+    <article><span class="label">{{ _("04 / Scale out") }}</span><h3>{{ _("Several nodes, one behaviour.") }}</h3>
+    <p>{{ _("Nodes of a mesh share the sticky table and the limits of a server, and forward a client to the node that owns it. A PostgreSQL database can publish one configuration to every node and roll it back.") }}</p></article>
+    <article><span class="label">{{ _("05 / Protect") }}</span><h3>{{ _("Ask bots to do the work.") }}</h3>
+    <p>{{ _("A browser challenge adds a cost to automated access, and a signed session lets an admitted visitor return. Rules allow, challenge or deny. The shield checks requests for SQL injection, XSS, path traversal and command injection.") }}</p></article>
+    <article><span class="label">{{ _("06 / Extend and observe") }}</span><h3>{{ _("See and shape the decisions.") }}</h3>
+    <p>{{ _("Hooks run at the connection and at the request: compiled in, as WebAssembly with a budget, or in a separate process. Metrics, access logs and a console show servers, flows and the reason for each refusal.") }}</p></article>
+  </div>
+</section>
+<section class="section measure" id="measurements" aria-labelledby="measure-title">
+  <div><p class="eyebrow">{{ _("Measured, with the losses") }}</p>
+    <h2 id="measure-title">{{ _("Beside HAProxy") }}<br>{{ _("on one host.") }}</h2>
+    <p>{{ _("Both proxies ran on eight processors with 256 connections over loopback, each case for eight seconds, with no failed request. Sibuna is level or ahead in three cases. HAProxy is faster for HTTP/2, and we say why in the book.") }}</p>
+    <a href="{{ edition_url }}book/benchmarks.html">{{ _("Method and all measurements") }}</a></div>
+  <div class="table-wrap"><table>
+    <caption>{{ _("Requests in a second. More is better.") }}</caption>
+    <thead><tr><th scope="col">{{ _("Case") }}</th><th scope="col" translate="no">Sibuna</th>
+      <th scope="col" translate="no">HAProxy 3.0</th><th scope="col">{{ _("Ratio") }}</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">{{ _("TCP forwarding") }}</th><td>240,967</td><td>230,934</td>
+        <td><span class="bar" style="--share:100%"></span>1.04</td></tr>
+      <tr><th scope="row" translate="no">HTTP/1.1</th><td>224,375</td><td>219,798</td>
+        <td><span class="bar" style="--share:100%"></span>1.02</td></tr>
+      <tr><th scope="row">{{ _("HTTP/1.1 over TLS") }}</th><td>178,261</td><td>162,520</td>
+        <td><span class="bar" style="--share:100%"></span>1.10</td></tr>
+      <tr class="behind"><th scope="row" translate="no">HTTP/2</th><td>103,789</td><td>150,384</td>
+        <td><span class="bar" style="--share:66%"></span>0.69</td></tr>
+    </tbody></table></div>
+</section>
+{% include "admission-demo.html" %}
+<section class="section start" id="start">
+  <div><p class="eyebrow">{{ _("Try it") }}</p><h2>{{ _("Download.") }}<br>{{ _("Or build.") }}</h2>
+  <p>{{ _("Releases hold binaries for Linux, macOS and Windows, Debian, RPM and Arch packages, CLI packages for FreeBSD 15.1 and OpenBSD 7.9 x86-64, a Helm chart and a container image. Verify the checksums before installation.") }}</p>
+  <a href="{{ edition_url }}book/jlavi.html">{{ _("Configuring Sibuna with Jlavi") }}</a> · <a href="https://github.com/insanai/sibuna/releases">{{ _("All downloads") }}</a></div>
+  <div class="panes">
+  <div class="code"><div class="code-label">{{ _("RC6 on Linux x86-64") }}</div><pre><code>curl -fLO https://github.com/insanai/sibuna/releases/download/v{{ release }}/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v{{ release }}/SHA256SUMS
+sha256sum --ignore-missing -c SHA256SUMS
+tar -xzf sibuna-linux-amd64.tar.gz
+./sibuna --help</code></pre></div>
+  <div class="code"><div class="code-label">{{ _("From source · load balancer") }}</div><pre><code>rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unknown
+cargo +1.100.0 build --release -p sibuna
+./target/release/sibuna lb --bind :8080 --server 10.0.0.1:80 \
+  --server 10.0.0.2:80 --print-config &gt; edge.jlv
+./target/release/sibuna check -f edge.jlv
+./target/release/sibuna --config-file edge.jlv</code></pre></div>
+  </div>
+</section>
+<section class="section"><p class="eyebrow">{{ _("Find your way through the system") }}</p>
+  <h2>{{ _("Learn it. Use it. Question it.") }}</h2><div class="cards">
+  <a class="card" href="{{ edition_url }}book/operations.html"><span class="label">{{ _("Operations") }}</span>
+  <h3>{{ _("Build and operate") }}</h3><p>{{ _("Installation, the edge configuration, certificates, clustering, the admin socket, policies, storage and the console.") }}</p></a>
+  <a class="card" href="{{ edition_url }}book/"><span class="label">{{ _("The book") }}</span>
+  <h3>{{ _("From proofs to protection") }}</h3><p>{{ _("The protocol, the request pipeline, the algorithms and every measurement with its method. Also available as a PDF.") }}</p></a>
+  <a class="card" href="/sibuna/sid/"><span class="label">{{ _("Design discussions") }}</span>
+  <h3>{{ _("Decisions with context") }}</h3><p>{{ _("Each Sibuna Discussion states a design, its alternatives, what is built and what is not.") }}</p></a></div>
+</section>
+<section class="section start"><div><p class="eyebrow">{{ _("Know the boundary") }}</p>
+  <h2>{{ _("What it does not do.") }}<br>{{ _("Yet, or at all.") }}</h2>
+  <p>{{ _("We state the limits beside the features. Linux requires kernel 5.10 or later, macOS 12 or later, and Windows 10 or Server 2016 or later. The event-driven workers and the replacement of the executable without lost connections exist on Linux only.") }}</p>
+  <a href="{{ edition_url }}book/reference.html">{{ _("CLI and protocol reference") }}</a></div>
+  <div class="limits"><p>{{ _("We tested the cluster on three hosts. Qualification under production traffic remains open. Replacing the executable ends QUIC connections.") }}</p>
+  <p>{{ _("The built-in inspector checks the first 8 KiB of supported bodies. WebSocket messages are relayed without inspection. Sibuna does not provide volumetric network mitigation. A challenge adds work. It does not establish that a visitor is human.") }}</p>
+  <p>{{ _("The console is opt-in. Its strict performance isolation target has not formally passed. Published measurements identify the code revision and uncertainty.") }}</p>
+  <p><a href="/sibuna/sid/records/0015-distributed-edge-load-balancer.html">{{ _("Load balancer design") }}</a>
+  · <a href="/sibuna/sid/records/0007-console-management-interface.html">{{ _("Console contract") }}</a>
+  · <a href="{{ edition_url }}whitepaper/">{{ _("Architecture whitepaper") }}</a>
+  · <a href="{{ edition_url }}pdf/sibuna-book.pdf">{{ _("Book PDF") }}</a>
+  · <a href="{{ edition_url }}pdf/sibuna-whitepaper.pdf">{{ _("Whitepaper PDF") }}</a></p></div>
+</section>
+{% endblock %}

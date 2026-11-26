@@ -1,0 +1,10 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: zh_CN\n"
+
+msgid "Articles"
+msgstr "文章"
+
+msgid "Field notes on load balancing, web application firewalls and the connections they protect."
+msgstr "关于负载均衡、Web 应用防火墙及其所保护连接的实践笔记。"

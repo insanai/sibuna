@@ -14,7 +14,7 @@
 // code. A language missing here, or a word missing from its entry, is English. The
 // book's other words come from elsewhere: its title from the title of index.rst in the
 // language's catalog (docs/site/build.py passes it as -D project), the credit line and
-// the copyright from the language's phrase map in docs/site/i18n (-D author and
+// the copyright from the language's phrase map in docs/site/home/locales (-D author and
 // -D copyright), and "Version" from guidedog's interface catalog.
 //
 //   kicker    the small capitals above SIBUNA

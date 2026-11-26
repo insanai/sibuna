@@ -1,0 +1,562 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: hi\n"
+
+msgid "01 / Forward"
+msgstr "01 / फ़ॉरवर्ड करें"
+
+msgid "02 / Terminate and route"
+msgstr "02 / टर्मिनेट और रूट करें"
+
+msgid "03 / Stay up"
+msgstr "03 / चालू रहें"
+
+msgid "04 / Scale out"
+msgstr "04 / स्केल आउट करें"
+
+msgid "05 / Protect"
+msgstr "05 / सुरक्षा करें"
+
+msgid "06 / Extend and observe"
+msgstr "06 / विस्तार करें और निगरानी रखें"
+
+msgid "2026, Vikrant Rathore and Sibuna contributors"
+msgstr "2026, Vikrant Rathore और Sibuna के योगदानकर्ता"
+
+msgid "A browser challenge adds a cost to automated access, and a signed session lets an admitted visitor return. Rules allow, challenge or deny. The shield checks requests for SQL injection, XSS, path traversal and command injection."
+msgstr "ब्राउज़र चैलेंज स्वचालित पहुँच की लागत बढ़ाता है, और हस्ताक्षरित सत्र के साथ स्वीकृत आगंतुक लौट सकता है। नियम अनुमति देते हैं, चैलेंज करते हैं या अस्वीकार करते हैं। Shield अनुरोधों में SQL injection, XSS, path traversal और command injection की जाँच करता है।"
+
+msgid "A checked reload applies new routes to new work. Established TCP streams keep their backend. Linux also supports listener handoff during a binary upgrade."
+msgstr "जाँचा हुआ कॉन्फ़िगरेशन रीलोड करने पर नए रूट नए ट्रैफ़िक पर लागू होते हैं। स्थापित TCP स्ट्रीम का बैकएंड वही रहता है। Linux में बाइनरी अपडेट करते समय लिसनर भी सौंपे जा सकते हैं।"
+
+msgid "A cluster of edge nodes"
+msgstr "एज नोड का क्लस्टर"
+
+msgid "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it."
+msgstr "संगत ब्राउज़र Sibuna के साथ क्वांटम हमलों का सामना करने वाली कुंजी तय कर सकता है। Sibuna वेब सर्वर से अलग कनेक्शन खोलता है, इसलिए पुराने उपकरण को चालू रखते हुए हम उसे उन्नत कर सकते हैं।"
+
+msgid "A configured rule refuses this request, even with a valid session."
+msgstr "वैध सत्र होने पर भी कॉन्फ़िगर किया गया नियम इस अनुरोध को अस्वीकार करता है।"
+
+msgid "A deny rule matches"
+msgstr "अस्वीकार करने वाला नियम मेल खाता है"
+
+msgid "A request arrives"
+msgstr "अनुरोध आता है"
+
+msgid "A session does not bypass applicable inspection, deny rules or rate limits."
+msgstr "सत्र होने से लागू निरीक्षण, अस्वीकार करने वाले नियम या रेट लिमिट बायपास नहीं होते।"
+
+msgid "Access decisions"
+msgstr "पहुँच के निर्णय"
+
+msgid "Admit, challenge or refuse. A session avoids another puzzle here; applicable rules and rate limits still apply."
+msgstr "प्रवेश दें, चैलेंज करें या अस्वीकार करें। सत्र होने पर यहाँ फिर से पहेली हल नहीं करनी पड़ती; लागू नियम और रेट लिमिट फिर भी लागू रहते हैं।"
+
+msgid "Admitted"
+msgstr "प्रवेश मिला"
+
+msgid "Admitted traffic"
+msgstr "स्वीकृत ट्रैफ़िक"
+
+msgid "All downloads"
+msgstr "सभी डाउनलोड"
+
+msgid "Architecture whitepaper"
+msgstr "आर्किटेक्चर व्हाइटपेपर"
+
+msgid "Ask bots to do the work."
+msgstr "बॉट से कार्य करवाएँ।"
+
+msgid "Beside HAProxy"
+msgstr "HAProxy के साथ"
+
+msgid "Blocked by a rule"
+msgstr "नियम के कारण रोका गया"
+
+msgid "Book"
+msgstr "पुस्तक"
+
+msgid "Book PDF"
+msgstr "पुस्तक का PDF"
+
+msgid "Both proxies ran on eight processors with 256 connections over loopback, each case for eight seconds, with no failed request. Sibuna is level or ahead in three cases. HAProxy is faster for HTTP/2, and we say why in the book."
+msgstr "दोनों प्रॉक्सी आठ प्रोसेसर पर, लूपबैक पर 256 कनेक्शन के साथ चले, हर मामला आठ सेकंड तक, और कोई अनुरोध विफल नहीं हुआ। तीन मामलों में Sibuna बराबर या आगे है। HTTP/2 में HAProxy तेज़ है, और इसका कारण हम पुस्तक में बताते हैं।"
+
+msgid "Bring post-quantum TLS to an existing website"
+msgstr "मौजूदा वेबसाइट पर क्वांटम-सुरक्षित TLS अपनाएँ"
+
+msgid "Browser"
+msgstr "ब्राउज़र"
+
+msgid "Build and operate"
+msgstr "बिल्ड और संचालन"
+
+msgid "CLI and protocol reference"
+msgstr "CLI और प्रोटोकॉल संदर्भ"
+
+msgid "CLIENT WORK"
+msgstr "क्लाइंट पर कार्य"
+
+msgid "Case"
+msgstr "मामला"
+
+msgid "Challenge / proof"
+msgstr "चैलेंज / प्रमाण"
+
+msgid "Challenge, then client work, then proof verification"
+msgstr "चैलेंज, फिर क्लाइंट पर कार्य, फिर प्रमाण का सत्यापन"
+
+msgid "Change it while it runs."
+msgstr "चलते हुए बदलें।"
+
+msgid "Check access again"
+msgstr "पहुँच की दोबारा जाँच"
+
+msgid "Check the proof. Issue a session."
+msgstr "प्रमाण जाँचें। सत्र जारी करें।"
+
+msgid "Checking the proof is designed to take less computation than creating it."
+msgstr "प्रमाण की जाँच में उसे बनाने से कम गणना लगे, यही डिज़ाइन का उद्देश्य है।"
+
+msgid "Choose a request journey"
+msgstr "अनुरोध का प्रवाह चुनें"
+
+msgid "Classical TLS in this example"
+msgstr "इस उदाहरण में पारंपरिक TLS"
+
+msgid "Client"
+msgstr "क्लाइंट"
+
+msgid "Clients"
+msgstr "क्लाइंट"
+
+msgid "Companies seeking other licensing terms can contact Vikrant Rathore."
+msgstr "अलग लाइसेंस शर्तें चाहने वाली कंपनियाँ Vikrant Rathore से संपर्क कर सकती हैं।"
+
+msgid "Configuring Sibuna with Jlavi"
+msgstr "Jlavi से Sibuna का कॉन्फ़िगरेशन"
+
+msgid "Connections and datagrams."
+msgstr "कनेक्शन और डेटाग्राम।"
+
+msgid "Console contract"
+msgstr "कंसोल का अनुबंध (अंग्रेज़ी में)"
+
+msgid "Deadlines at a glance"
+msgstr "समयसीमा एक नज़र में"
+
+msgid "Decisions with context"
+msgstr "निर्णयों की पृष्ठभूमि"
+
+msgid "Deployment examples and migration timelines"
+msgstr "परिनियोजन के उदाहरण और समयसीमा"
+
+msgid "Deployment guide"
+msgstr "डिप्लॉयमेंट गाइड"
+
+msgid "Design discussions"
+msgstr "डिज़ाइन चर्चाएँ (अंग्रेज़ी में)"
+
+msgid "Designated critical infrastructure completes migration."
+msgstr "निर्दिष्ट महत्वपूर्ण बुनियादी ढाँचे का माइग्रेशन पूरा होता है।"
+
+msgid "Designated critical infrastructure owners submit plans by 31 March."
+msgstr "निर्दिष्ट महत्वपूर्ण बुनियादी ढाँचे के स्वामी 31 मार्च तक अपनी योजनाएँ प्रस्तुत करते हैं।"
+
+msgid "Digital signatures follow for the same federal systems."
+msgstr "इन्हीं संघीय प्रणालियों में अगला चरण डिजिटल हस्ताक्षरों का है।"
+
+msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
+msgstr "हम जाँचा हुआ रूटिंग कॉन्फ़िगरेशन पूरे मेश में वितरित करते हैं। हर नोड अपने बैकएंड पूल को ट्रैफ़िक भेजता है और प्रतिबंध व सीखे हुए सर्वर आवंटन साझा कर सकता है।"
+
+msgid "Distributed load balancer and web application firewall"
+msgstr "वितरित लोड बैलेंसर और वेब एप्लिकेशन फ़ायरवॉल"
+
+msgid "Distributed load balancer and web application firewall · Sibuna"
+msgstr "वितरित लोड बैलेंसर और वेब एप्लिकेशन फ़ायरवॉल · Sibuna"
+
+msgid "Download."
+msgstr "डाउनलोड करें।"
+
+msgid "Each Sibuna Discussion states a design, its alternatives, what is built and what is not."
+msgstr "हर Sibuna Discussion एक डिज़ाइन, उसके विकल्प, क्या बना है और क्या नहीं बना, यह बताता है। डिज़ाइन दस्तावेज़ अंग्रेज़ी में हैं।"
+
+msgid "Edge nodes"
+msgstr "एज नोड"
+
+msgid "European Union"
+msgstr "यूरोपीय संघ"
+
+msgid "Federal high-value assets and high-impact systems move to post-quantum key establishment."
+msgstr "संघीय उच्च-मूल्य वाली संपत्तियाँ और उच्च-प्रभाव वाली प्रणालियाँ पोस्ट-क्वांटम कुंजी स्थापना अपनाती हैं।"
+
+msgid "Find your way through the system"
+msgstr "सिस्टम में अपना रास्ता खोजें"
+
+msgid "First visit"
+msgstr "पहली बार आना"
+
+msgid "Follow a request"
+msgstr "एक अनुरोध के साथ चलें"
+
+msgid "From proofs to protection"
+msgstr "प्रमाण से सुरक्षा तक"
+
+msgid "From source · load balancer"
+msgstr "सोर्स से · लोड बैलेंसर"
+
+msgid "From the socket to the server."
+msgstr "सॉकेट से सर्वर तक।"
+
+msgid "GitHub"
+msgstr "GitHub"
+
+msgid "HTTP/1.1 over TLS"
+msgstr "TLS पर HTTP/1.1"
+
+msgid "HTTPS ingress"
+msgstr "HTTPS इनग्रेस"
+
+msgid "HTTPS without a second proxy."
+msgstr "दूसरे प्रॉक्सी के बिना HTTPS।"
+
+msgid "Home"
+msgstr "होम"
+
+msgid "Hooks run at the connection and at the request: compiled in, as WebAssembly with a budget, or in a separate process. Metrics, access logs and a console show servers, flows and the reason for each refusal."
+msgstr "हुक कनेक्शन पर और अनुरोध पर चलते हैं: साथ में कंपाइल होकर, बजट वाले WebAssembly के रूप में, या अलग प्रोसेस में। मेट्रिक्स, एक्सेस लॉग और कंसोल सर्वर, फ़्लो और हर अस्वीकृति का कारण दिखाते हैं।"
+
+msgid "How to try it"
+msgstr "इसे कैसे आज़माएँ"
+
+msgid "Hybrid TLS 1.3"
+msgstr "हाइब्रिड TLS 1.3"
+
+msgid "Installation, the edge configuration, certificates, clustering, the admin socket, policies, storage and the console."
+msgstr "इंस्टॉलेशन, एज कॉन्फ़िगरेशन, सर्टिफ़िकेट, क्लस्टरिंग, एडमिन सॉकेट, नीतियाँ, स्टोरेज और कंसोल।"
+
+msgid "Internal gRPC services"
+msgstr "आंतरिक gRPC सेवाएँ"
+
+msgid "Issue certificates for internal names with the local CA. Clients trust its root and call the service over TLS. An HTTP/2 backend carries gRPC messages and trailers."
+msgstr "हम स्थानीय CA से आंतरिक नामों के प्रमाणपत्र जारी करते हैं। क्लाइंट उसके रूट पर भरोसा करते हैं और TLS पर सेवा को कॉल करते हैं। HTTP/2 बैकएंड gRPC संदेश और ट्रेलर पहुँचाता है।"
+
+msgid "Know the boundary"
+msgstr "सीमाएँ समझें"
+
+msgid "LGPL 3.0 or later"
+msgstr "LGPL 3.0 या बाद का संस्करण"
+
+msgid "Language:"
+msgstr "भाषा:"
+
+msgid "Learn it. Use it. Question it."
+msgstr "सीखें। उपयोग करें। परखें।"
+
+msgid "Legacy device"
+msgstr "पुराना उपकरण"
+
+msgid "Load balancer design"
+msgstr "लोड बैलेंसर का डिज़ाइन (अंग्रेज़ी में)"
+
+msgid "Main"
+msgstr "मुख्य नेविगेशन"
+
+msgid "Measured, with the losses"
+msgstr "मापन, जहाँ पीछे रहे वह भी"
+
+msgid "Member States begin the transition."
+msgstr "सदस्य देश माइग्रेशन शुरू करते हैं।"
+
+msgid "Method and all measurements"
+msgstr "विधि और सभी मापन"
+
+msgid "Next step"
+msgstr "अगला चरण"
+
+msgid "Nodes of a mesh share the sticky table and the limits of a server, and forward a client to the node that owns it. A PostgreSQL database can publish one configuration to every node and roll it back."
+msgstr "मेश के नोड स्टिकी टेबल और सर्वर की लिमिट साझा करते हैं, और क्लाइंट को उस नोड पर फ़ॉरवर्ड करते हैं जो उसका मालिक है। PostgreSQL डेटाबेस एक ही कॉन्फ़िगरेशन हर नोड पर प्रकाशित कर सकता है और उसे रोल बैक कर सकता है।"
+
+msgid "November 2026"
+msgstr "नवंबर 2026"
+
+msgid "One process on the path"
+msgstr "पाथ पर एक ही प्रोसेस"
+
+msgid "Open source · LGPL 3.0 · {version}"
+msgstr "ओपन सोर्स · LGPL 3.0 · {version}"
+
+msgid "Operations"
+msgstr "संचालन"
+
+msgid "Or build."
+msgstr "या बिल्ड करें।"
+
+msgid "Origin connection"
+msgstr "मूल सर्वर से कनेक्शन"
+
+msgid "Origins"
+msgstr "मूल सर्वर"
+
+msgid "Other exposed organisations are encouraged to complete migration."
+msgstr "जोखिम का सामना करने वाले अन्य संगठनों को भी माइग्रेशन पूरा करने के लिए प्रोत्साहित किया गया है।"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "Pause"
+msgstr "रोकें"
+
+msgid "Pause traffic animation"
+msgstr "ट्रैफ़िक एनीमेशन रोकें"
+
+msgid "Paused illustration"
+msgstr "चित्रण रुका हुआ है"
+
+msgid "Play"
+msgstr "चलाएँ"
+
+msgid "Playing illustration"
+msgstr "चित्रण चल रहा है"
+
+msgid "Post-quantum migration guide"
+msgstr "पोस्ट-क्वांटम माइग्रेशन मार्गदर्शिका"
+
+msgid "Protected request path"
+msgstr "संरक्षित अनुरोध पाथ"
+
+msgid "Public TLS"
+msgstr "सार्वजनिक TLS"
+
+msgid "Public connection"
+msgstr "सार्वजनिक कनेक्शन"
+
+msgid "Public websites"
+msgstr "सार्वजनिक वेबसाइट"
+
+msgid "RC6 includes the load balancer, firewall and console in one executable."
+msgstr "RC6 में लोड बैलेंसर, फ़ायरवॉल और कंसोल एक ही निष्पादन योग्य फ़ाइल में हैं।"
+
+msgid "RC6 on Linux x86-64"
+msgstr "Linux x86-64 पर RC6"
+
+msgid "Ratio"
+msgstr "अनुपात"
+
+msgid "Reduced motion · step through"
+msgstr "कम गतिशीलता · चरण-दर-चरण देखें"
+
+msgid "Refused"
+msgstr "अस्वीकृत"
+
+msgid "Release status"
+msgstr "रिलीज़ की स्थिति"
+
+msgid "Releases hold binaries for Linux, macOS and Windows, Debian, RPM and Arch packages, CLI packages for FreeBSD 15.1 and OpenBSD 7.9 x86-64, a Helm chart and a container image. Verify the checksums before installation."
+msgstr "रिलीज़ में Linux, macOS और Windows की बाइनरी, Debian, RPM और Arch पैकेज, FreeBSD 15.1 और OpenBSD 7.9 x86-64 के CLI पैकेज, एक Helm chart और एक कंटेनर इमेज हैं। इंस्टॉलेशन से पहले checksum सत्यापित करें।"
+
+msgid "Requests in a second. More is better."
+msgstr "प्रति सेकंड अनुरोध। अधिक बेहतर है।"
+
+msgid "Requests pass from a client through an HTTPS ingress to Sibuna. Sibuna may admit, challenge or refuse them. A client creates a proof; Sibuna verifies it and issues a session. Requests with sessions still pass applicable checks."
+msgstr "अनुरोध क्लाइंट से HTTPS इनग्रेस के ज़रिए Sibuna तक आते हैं। Sibuna उन्हें प्रवेश दे सकता है, चैलेंज कर सकता है या अस्वीकार कर सकता है। क्लाइंट एक प्रमाण बनाता है; Sibuna उसका सत्यापन करके सत्र जारी करता है। सत्र वाले अनुरोधों पर भी लागू जाँचें होती हैं।"
+
+msgid "Return with a session"
+msgstr "सत्र के साथ लौटें"
+
+msgid "Roadmap target for high-risk uses."
+msgstr "उच्च जोखिम वाले उपयोगों के लिए रोडमैप का लक्ष्य।"
+
+msgid "Roadmap target for medium-risk uses and as many low-risk uses as feasible."
+msgstr "रोडमैप का लक्ष्य मध्यम जोखिम वाले उपयोगों और कम जोखिम वाले अधिक से अधिक उपयोगों का माइग्रेशन है।"
+
+msgid "SIDs"
+msgstr "SID (अंग्रेज़ी में)"
+
+msgid "STEP"
+msgstr "चरण"
+
+msgid "Scripted illustration, not live traffic or measured timing. Proof time varies by device and settings. This shows the reverse-proxy path; with forward-auth, your ingress forwards admitted requests."
+msgstr "यह पहले से तय चित्रण है, लाइव ट्रैफ़िक या मापा गया समय नहीं। प्रमाण बनाने का समय डिवाइस और सेटिंग्स पर निर्भर करता है। यहाँ रिवर्स-प्रॉक्सी पाथ दिखाया गया है; forward-auth में स्वीकृत अनुरोधों को आपका इनग्रेस आगे भेजता है।"
+
+msgid "See and shape the decisions."
+msgstr "निर्णयों को देखें और ढालें।"
+
+msgid "Sequential work happens in the browser. Later steps depend on earlier results."
+msgstr "अनुक्रमिक कार्य ब्राउज़र में होता है। बाद के चरण पहले के परिणामों पर निर्भर करते हैं।"
+
+msgid "Serve browsers over HTTP/2 or HTTP/3, renew public certificates with Let's Encrypt and inspect requests before forwarding them to HTTP/1.1 replicas."
+msgstr "हम ब्राउज़र को HTTP/2 या HTTP/3 पर सेवा देते हैं, Let's Encrypt से सार्वजनिक प्रमाणपत्र नवीनीकृत करते हैं और अनुरोधों को HTTP/1.1 प्रतिकृतियों तक भेजने से पहले जाँचते हैं।"
+
+msgid "Several nodes, one behaviour."
+msgstr "कई नोड, एक व्यवहार।"
+
+msgid "Sibuna"
+msgstr "Sibuna"
+
+msgid "Sibuna Whitepaper"
+msgstr "Sibuna व्हाइटपेपर"
+
+msgid "Sibuna checks requests before they reach your application"
+msgstr "Sibuna अनुरोधों को आपके एप्लिकेशन तक पहुँचने से पहले जाँचता है"
+
+msgid "Sibuna checks the session and applicable rules. A new puzzle is not needed here."
+msgstr "Sibuna सत्र और लागू नियमों की जाँच करता है। यहाँ नई पहेली की ज़रूरत नहीं है।"
+
+msgid "Sibuna does not forward this refused request to the application."
+msgstr "Sibuna इस अस्वीकृत अनुरोध को एप्लिकेशन तक नहीं भेजता।"
+
+msgid "Sibuna is written by Vikrant Rathore with assistance from Ronak Rathore and Kanak Rathore."
+msgstr "Sibuna को Vikrant Rathore ने Ronak Rathore और Kanak Rathore के सहयोग से लिखा है।"
+
+msgid "Sibuna returns a challenge to the client."
+msgstr "Sibuna क्लाइंट को चैलेंज भेजता है।"
+
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
+msgstr "Sibuna TCP, UDP और HTTP ट्रैफ़िक को स्वस्थ सर्वरों तक पहुँचाता है। हम एक एज चला सकते हैं या कई एज को मेश में जोड़ सकते हैं। हर एज पर TLS समाप्त कर सकते हैं और चुने हुए HTTP रूट पर फ़ायरवॉल लगा सकते हैं।"
+
+msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
+msgstr "Sibuna TLS टर्मिनेट करता है और HTTP/1.1, HTTP/2, HTTP/3 और WebSocket सर्व करता है। यह हर अनुरोध को होस्ट नाम और पाथ के आधार पर रूट करता है। सर्टिफ़िकेट Let's Encrypt या किसी दूसरी ACME अथॉरिटी से आते हैं, और आंतरिक नामों के लिए एक स्थानीय अथॉरिटी है।"
+
+msgid "Singapore"
+msgstr "सिंगापुर"
+
+msgid "Skip to content"
+msgstr "मुख्य सामग्री पर जाएँ"
+
+msgid "Static illustration"
+msgstr "स्थिर चित्रण"
+
+msgid "Static view · 3D is unavailable"
+msgstr "स्थिर दृश्य · 3D उपलब्ध नहीं है"
+
+msgid "TCP forwarding"
+msgstr "TCP फ़ॉरवर्डिंग"
+
+msgid "TCP streams and UDP mappings go to a pool of servers. A TLS connection can pass through undecrypted, routed by its server name. QUIC can pass through too. The PROXY protocol carries the address of the client."
+msgstr "TCP स्ट्रीम और UDP मैपिंग सर्वर के पूल तक जाते हैं। TLS कनेक्शन बिना डिक्रिप्ट हुए पास हो सकता है, और अपने सर्वर नाम के आधार पर रूट होता है। QUIC भी पास हो सकता है। PROXY प्रोटोकॉल क्लाइंट का पता साथ ले जाता है।"
+
+msgid "The admitted request is forwarded to the application."
+msgstr "स्वीकृत अनुरोध एप्लिकेशन तक भेजा जाता है।"
+
+msgid "The book"
+msgstr "पुस्तक"
+
+msgid "The browser retries the request with its session."
+msgstr "ब्राउज़र अपने सत्र के साथ अनुरोध दोबारा भेजता है।"
+
+msgid "The browser sends a request through your HTTPS ingress."
+msgstr "ब्राउज़र आपके HTTPS इनग्रेस के ज़रिए अनुरोध भेजता है।"
+
+msgid "The built-in inspector checks the first 8 KiB of supported bodies. WebSocket messages are relayed without inspection. Sibuna does not provide volumetric network mitigation. A challenge adds work. It does not establish that a visitor is human."
+msgstr "बिल्ट-इन निरीक्षक समर्थित बॉडी के पहले 8 KiB की जाँच करता है। WebSocket संदेश बिना निरीक्षण के रिले किए जाते हैं। Sibuna वॉल्यूमेट्रिक नेटवर्क हमलों से सुरक्षा नहीं देता। चैलेंज कार्य जोड़ता है। इससे यह स्थापित नहीं होता कि आगंतुक मनुष्य है।"
+
+msgid "The checks still apply"
+msgstr "जाँचें अब भी लागू हैं"
+
+msgid "The client creates a proof"
+msgstr "क्लाइंट प्रमाण बनाता है"
+
+msgid "The client sends another request with its signed session."
+msgstr "क्लाइंट अपने हस्ताक्षरित सत्र के साथ एक और अनुरोध भेजता है।"
+
+msgid "The client submits its proof to Sibuna."
+msgstr "क्लाइंट अपना प्रमाण Sibuna को भेजता है।"
+
+msgid "The console is opt-in. Its strict performance isolation target has not formally passed. Published measurements identify the code revision and uncertainty."
+msgstr "कंसोल वैकल्पिक (opt-in) है। प्रदर्शन-पृथक्करण का उसका सख़्त लक्ष्य अभी औपचारिक रूप से पूरा नहीं हुआ है। प्रकाशित मापन कोड revision और अनिश्चितता बताते हैं।"
+
+msgid "The proof returns"
+msgstr "प्रमाण वापस आता है"
+
+msgid "The protocol, the request pipeline, the algorithms and every measurement with its method. Also available as a PDF."
+msgstr "प्रोटोकॉल, अनुरोध पाइपलाइन, एल्गोरिदम और हर मापन उसकी विधि के साथ। PDF के रूप में भी उपलब्ध।"
+
+msgid "The request reaches your app"
+msgstr "अनुरोध आपके ऐप तक पहुँचता है"
+
+msgid "The request stops here"
+msgstr "अनुरोध यहीं रुक जाता है"
+
+msgid "The upper route inspects a browser request and sends it to a web replica. The lower route carries a gRPC call over HTTP/2. The dotted link shows the two nodes exchanging mesh state."
+msgstr "ऊपरी रूट ब्राउज़र का अनुरोध जाँचकर वेब प्रतिकृति को भेजता है। निचला रूट HTTP/2 पर gRPC कॉल पहुँचाता है। बिंदीदार रेखा दोनों नोड के बीच मेश स्थिति का आदान-प्रदान दिखाती है।"
+
+msgid "Third-party libraries retain their respective licenses."
+msgstr "तृतीय-पक्ष लाइब्रेरी अपने लाइसेंस बनाए रखती हैं।"
+
+msgid "This admitted request is forwarded to the application."
+msgstr "यह स्वीकृत अनुरोध एप्लिकेशन तक भेजा जाता है।"
+
+msgid "This request also reaches Sibuna through your ingress."
+msgstr "यह अनुरोध भी आपके इनग्रेस के ज़रिए Sibuna तक पहुँचता है।"
+
+msgid "This route asks for work"
+msgstr "यह रूट कार्य माँगता है"
+
+msgid "Try again with a session"
+msgstr "सत्र के साथ दोबारा प्रयास"
+
+msgid "Try it"
+msgstr "आज़माएँ"
+
+msgid "Two edge nodes serving a website and an internal service"
+msgstr "वेबसाइट और आंतरिक सेवा के लिए दो एज नोड"
+
+msgid "United States"
+msgstr "संयुक्त राज्य अमेरिका"
+
+msgid "Vikrant Rathore, with assistance from Ronak Rathore and Kanak Rathore"
+msgstr "Vikrant Rathore, Ronak Rathore और Kanak Rathore के सहयोग से"
+
+msgid "We state the limits beside the features. Linux requires kernel 5.10 or later, macOS 12 or later, and Windows 10 or Server 2016 or later. The event-driven workers and the replacement of the executable without lost connections exist on Linux only."
+msgstr "हम सुविधाओं के साथ सीमाएँ भी बताते हैं। Linux के लिए कर्नेल 5.10 या बाद का, macOS के लिए 12 या बाद का, और Windows के लिए Windows 10 या Server 2016 या बाद का संस्करण आवश्यक है। इवेंट-ड्रिवन वर्कर और बिना कनेक्शन खोए एक्ज़ीक्यूटेबल बदलना केवल Linux पर उपलब्ध हैं।"
+
+msgid "We tested the cluster on three hosts. Qualification under production traffic remains open. Replacing the executable ends QUIC connections."
+msgstr "हमने क्लस्टर को तीन होस्ट पर परखा। उत्पादन ट्रैफ़िक पर सत्यापन अभी बाकी है। निष्पादन योग्य फ़ाइल बदलने पर QUIC कनेक्शन समाप्त हो जाते हैं।"
+
+msgid "What is Sibuna?"
+msgstr "Sibuna क्या है?"
+
+msgid "What it does not do."
+msgstr "जो यह नहीं करता।"
+
+msgid "Where each part stands."
+msgstr "हर भाग की स्थिति।"
+
+msgid "Where we use Sibuna"
+msgstr "Sibuna के उपयोग"
+
+msgid "Whitepaper"
+msgstr "व्हाइटपेपर"
+
+msgid "Whitepaper PDF"
+msgstr "व्हाइटपेपर का PDF"
+
+msgid "With a session"
+msgstr "सत्र के साथ"
+
+msgid "Work before access."
+msgstr "पहले कार्य, फिर पहुँच।"
+
+msgid "Yet, or at all."
+msgstr "अभी नहीं, या बिल्कुल नहीं।"
+
+msgid "Your app"
+msgstr "आपका ऐप"
+
+msgid "Your browser"
+msgstr "आपका ब्राउज़र"
+
+msgid "Your website"
+msgstr "आपकी वेबसाइट"
+
+msgid "on one host."
+msgstr "एक ही होस्ट पर।"
+
+msgid "· CHECK THE PROOF AT SIBUNA"
+msgstr "· SIBUNA पर प्रमाण की जाँच"
+
+msgid "Articles"
+msgstr "लेख"

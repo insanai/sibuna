@@ -1,0 +1,10 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: hi\n"
+
+msgid "Articles"
+msgstr "लेख"
+
+msgid "Field notes on load balancing, web application firewalls and the connections they protect."
+msgstr "लोड बैलेंसिंग, वेब एप्लिकेशन फ़ायरवॉल और उनसे सुरक्षित होने वाले कनेक्शनों पर व्यावहारिक लेख।"

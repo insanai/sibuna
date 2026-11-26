@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block content %}
+<article class="editorial">
+  <div class="article-meta"><a href="{{ edition_url }}articles/">{{ _('Articles') }}</a>
+    <time datetime="{{ page.meta.date }}">{{ page.meta.date }}</time></div>
+  {{ body }}
+</article>
+{% endblock %}

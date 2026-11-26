@@ -1,0 +1,562 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: ja\n"
+
+msgid "01 / Forward"
+msgstr "01 / 転送"
+
+msgid "02 / Terminate and route"
+msgstr "02 / 終端とルーティング"
+
+msgid "03 / Stay up"
+msgstr "03 / 稼働を続ける"
+
+msgid "04 / Scale out"
+msgstr "04 / スケールアウト"
+
+msgid "05 / Protect"
+msgstr "05 / 保護"
+
+msgid "06 / Extend and observe"
+msgstr "06 / 拡張と観測"
+
+msgid "2026, Vikrant Rathore and Sibuna contributors"
+msgstr "2026, Vikrant Rathore および Sibuna のコントリビューター"
+
+msgid "A browser challenge adds a cost to automated access, and a signed session lets an admitted visitor return. Rules allow, challenge or deny. The shield checks requests for SQL injection, XSS, path traversal and command injection."
+msgstr "ブラウザーのチャレンジは自動化されたアクセスにコストを加え、署名付きセッションがあれば許可された訪問者は再び訪問できます。ルールは許可、チャレンジ、拒否のいずれかを決めます。Shield はリクエストに含まれる SQL インジェクション、XSS、パストラバーサル、コマンドインジェクションを検査します。"
+
+msgid "A checked reload applies new routes to new work. Established TCP streams keep their backend. Linux also supports listener handoff during a binary upgrade."
+msgstr "検証済みの設定を再読み込みすると、新しい通信に新しいルートが適用されます。確立済みのTCP接続は同じバックエンドを使い続けます。Linuxでは実行ファイルの更新時にリスナーを引き継げます。"
+
+msgid "A cluster of edge nodes"
+msgstr "エッジノードのクラスタ"
+
+msgid "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it."
+msgstr "対応するブラウザーは Sibuna と耐量子方式で鍵を共有できます。Sibuna はウェブサーバーに別の接続を開くため、古い機器を稼働させたまま移行を進められます。"
+
+msgid "A configured rule refuses this request, even with a valid session."
+msgstr "有効なセッションがあっても、設定されたルールがこのリクエストを拒否します。"
+
+msgid "A deny rule matches"
+msgstr "拒否ルールに一致"
+
+msgid "A request arrives"
+msgstr "リクエストが到着"
+
+msgid "A session does not bypass applicable inspection, deny rules or rate limits."
+msgstr "セッションがあっても、適用対象の検査、拒否ルール、レート制限は省略されません。"
+
+msgid "Access decisions"
+msgstr "アクセスの判断"
+
+msgid "Admit, challenge or refuse. A session avoids another puzzle here; applicable rules and rate limits still apply."
+msgstr "許可、チャレンジ、拒否のいずれかを判断します。セッションがあれば、ここで再びパズルを解く必要はありません。適用対象のルールとレート制限は引き続き有効です。"
+
+msgid "Admitted"
+msgstr "許可"
+
+msgid "Admitted traffic"
+msgstr "許可されたトラフィック"
+
+msgid "All downloads"
+msgstr "すべてのダウンロード"
+
+msgid "Architecture whitepaper"
+msgstr "アーキテクチャのホワイトペーパー"
+
+msgid "Ask bots to do the work."
+msgstr "計算はボットに求める。"
+
+msgid "Beside HAProxy"
+msgstr "HAProxy と並べて"
+
+msgid "Blocked by a rule"
+msgstr "ルールによる拒否"
+
+msgid "Book"
+msgstr "技術ガイド"
+
+msgid "Book PDF"
+msgstr "技術ガイド PDF"
+
+msgid "Both proxies ran on eight processors with 256 connections over loopback, each case for eight seconds, with no failed request. Sibuna is level or ahead in three cases. HAProxy is faster for HTTP/2, and we say why in the book."
+msgstr "どちらのプロキシも 8 個のプロセッサー上で、ループバック経由の 256 接続を使い、各ケースを 8 秒間実行しました。失敗したリクエストはありません。Sibuna は 3 つのケースで同等か上回ります。HTTP/2 では HAProxy のほうが速く、その理由は技術ガイドで説明しています。"
+
+msgid "Bring post-quantum TLS to an existing website"
+msgstr "既存のウェブサイトに耐量子 TLS を導入する"
+
+msgid "Browser"
+msgstr "ブラウザー"
+
+msgid "Build and operate"
+msgstr "ビルドと運用"
+
+msgid "CLI and protocol reference"
+msgstr "CLI とプロトコルのリファレンス"
+
+msgid "CLIENT WORK"
+msgstr "クライアント側の計算"
+
+msgid "Case"
+msgstr "ケース"
+
+msgid "Challenge / proof"
+msgstr "チャレンジ / 証明"
+
+msgid "Challenge, then client work, then proof verification"
+msgstr "チャレンジ、クライアント側の計算、そして証明の検証"
+
+msgid "Change it while it runs."
+msgstr "動かしたまま変更する。"
+
+msgid "Check access again"
+msgstr "アクセスを再確認"
+
+msgid "Check the proof. Issue a session."
+msgstr "証明を検証し、セッションを発行。"
+
+msgid "Checking the proof is designed to take less computation than creating it."
+msgstr "証明は、生成するより少ない計算で検証できるように設計されています。"
+
+msgid "Choose a request journey"
+msgstr "リクエストの流れを選択"
+
+msgid "Classical TLS in this example"
+msgstr "この例では従来の TLS"
+
+msgid "Client"
+msgstr "クライアント"
+
+msgid "Clients"
+msgstr "クライアント"
+
+msgid "Companies seeking other licensing terms can contact Vikrant Rathore."
+msgstr "別のライセンス条件を希望する企業は、Vikrant Rathore にお問い合わせください。"
+
+msgid "Configuring Sibuna with Jlavi"
+msgstr "JlaviでSibunaを設定する"
+
+msgid "Connections and datagrams."
+msgstr "接続とデータグラム。"
+
+msgid "Console contract"
+msgstr "コンソールの設計仕様（英語）"
+
+msgid "Deadlines at a glance"
+msgstr "移行期限の一覧"
+
+msgid "Decisions with context"
+msgstr "設計判断の背景を読む"
+
+msgid "Deployment examples and migration timelines"
+msgstr "導入例と移行の期限"
+
+msgid "Deployment guide"
+msgstr "デプロイガイド"
+
+msgid "Design discussions"
+msgstr "設計議論（英語）"
+
+msgid "Designated critical infrastructure completes migration."
+msgstr "指定重要インフラが移行を完了します。"
+
+msgid "Designated critical infrastructure owners submit plans by 31 March."
+msgstr "指定重要インフラの所有者は3月31日までに計画を提出します。"
+
+msgid "Digital signatures follow for the same federal systems."
+msgstr "同じ連邦システムでデジタル署名が移行対象となります。"
+
+msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
+msgstr "検証済みのルーティング設定をメッシュに配布します。各ノードは自身のバックエンドプールに通信を転送しながら、拒否情報や学習済みの振り分け先を共有できます。"
+
+msgid "Distributed load balancer and web application firewall"
+msgstr "分散ロードバランサーとWebアプリケーションファイアウォール"
+
+msgid "Distributed load balancer and web application firewall · Sibuna"
+msgstr "分散ロードバランサーとWebアプリケーションファイアウォール · Sibuna"
+
+msgid "Download."
+msgstr "ダウンロード。"
+
+msgid "Each Sibuna Discussion states a design, its alternatives, what is built and what is not."
+msgstr "各 Sibuna Discussion は、設計とその代替案、実装済みのものと未実装のものを述べています。設計記録は英語で提供します。"
+
+msgid "Edge nodes"
+msgstr "エッジノード"
+
+msgid "European Union"
+msgstr "欧州連合"
+
+msgid "Federal high-value assets and high-impact systems move to post-quantum key establishment."
+msgstr "連邦政府の高価値資産と影響度の高いシステムが耐量子鍵確立に移行します。"
+
+msgid "Find your way through the system"
+msgstr "システムの各部分を知る"
+
+msgid "First visit"
+msgstr "初めての訪問"
+
+msgid "Follow a request"
+msgstr "リクエストの流れを追う"
+
+msgid "From proofs to protection"
+msgstr "証明から保護まで"
+
+msgid "From source · load balancer"
+msgstr "ソースから · ロードバランサー"
+
+msgid "From the socket to the server."
+msgstr "ソケットからサーバーまで。"
+
+msgid "GitHub"
+msgstr "GitHub"
+
+msgid "HTTP/1.1 over TLS"
+msgstr "TLS 上の HTTP/1.1"
+
+msgid "HTTPS ingress"
+msgstr "HTTPS イングレス"
+
+msgid "HTTPS without a second proxy."
+msgstr "2 つ目のプロキシなしで HTTPS。"
+
+msgid "Home"
+msgstr "ホーム"
+
+msgid "Hooks run at the connection and at the request: compiled in, as WebAssembly with a budget, or in a separate process. Metrics, access logs and a console show servers, flows and the reason for each refusal."
+msgstr "フックは接続時とリクエスト時に実行されます。組み込みでコンパイルするか、予算付きの WebAssembly として動かすか、別プロセスで動かします。メトリクス、アクセスログ、コンソールは、サーバー、フロー、それぞれの拒否の理由を表示します。"
+
+msgid "How to try it"
+msgstr "試す方法"
+
+msgid "Hybrid TLS 1.3"
+msgstr "ハイブリッド TLS 1.3"
+
+msgid "Installation, the edge configuration, certificates, clustering, the admin socket, policies, storage and the console."
+msgstr "インストール、エッジの設定、証明書、クラスタリング、管理ソケット、ポリシー、ストレージ、コンソールを扱います。"
+
+msgid "Internal gRPC services"
+msgstr "内部gRPCサービス"
+
+msgid "Issue certificates for internal names with the local CA. Clients trust its root and call the service over TLS. An HTTP/2 backend carries gRPC messages and trailers."
+msgstr "ローカルCAで内部名の証明書を発行します。クライアントはそのルート証明書を信頼し、TLS経由でサービスを呼び出します。HTTP/2バックエンドがgRPCメッセージとトレーラーを運びます。"
+
+msgid "Know the boundary"
+msgstr "境界を知る"
+
+msgid "LGPL 3.0 or later"
+msgstr "LGPL 3.0 以降"
+
+msgid "Language:"
+msgstr "言語："
+
+msgid "Learn it. Use it. Question it."
+msgstr "学ぶ。使う。確かめる。"
+
+msgid "Legacy device"
+msgstr "従来の機器"
+
+msgid "Load balancer design"
+msgstr "ロードバランサーの設計（英語）"
+
+msgid "Main"
+msgstr "メインナビゲーション"
+
+msgid "Measured, with the losses"
+msgstr "測定結果、負けた点も含めて"
+
+msgid "Member States begin the transition."
+msgstr "加盟国が移行を開始します。"
+
+msgid "Method and all measurements"
+msgstr "方法とすべての測定結果"
+
+msgid "Next step"
+msgstr "次のステップ"
+
+msgid "Nodes of a mesh share the sticky table and the limits of a server, and forward a client to the node that owns it. A PostgreSQL database can publish one configuration to every node and roll it back."
+msgstr "メッシュのノードはスティッキーテーブルとサーバーの制限を共有し、クライアントをそれを所有するノードへ転送します。PostgreSQL データベースは 1 つの設定をすべてのノードに配布し、ロールバックすることもできます。"
+
+msgid "November 2026"
+msgstr "2026年11月"
+
+msgid "One process on the path"
+msgstr "経路上のプロセスは 1 つ"
+
+msgid "Open source · LGPL 3.0 · {version}"
+msgstr "オープンソース · LGPL 3.0 · {version}"
+
+msgid "Operations"
+msgstr "運用ガイド"
+
+msgid "Or build."
+msgstr "またはビルド。"
+
+msgid "Origin connection"
+msgstr "オリジンへの接続"
+
+msgid "Origins"
+msgstr "オリジン"
+
+msgid "Other exposed organisations are encouraged to complete migration."
+msgstr "リスクにさらされる他の組織にも移行の完了が推奨されます。"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "Pause"
+msgstr "一時停止"
+
+msgid "Pause traffic animation"
+msgstr "通信のアニメーションを停止"
+
+msgid "Paused illustration"
+msgstr "デモは一時停止中"
+
+msgid "Play"
+msgstr "再生"
+
+msgid "Playing illustration"
+msgstr "デモを再生中"
+
+msgid "Post-quantum migration guide"
+msgstr "耐量子暗号への移行ガイド"
+
+msgid "Protected request path"
+msgstr "保護されたリクエストの経路"
+
+msgid "Public TLS"
+msgstr "公開 TLS"
+
+msgid "Public connection"
+msgstr "公開側の接続"
+
+msgid "Public websites"
+msgstr "公開ウェブサイト"
+
+msgid "RC6 includes the load balancer, firewall and console in one executable."
+msgstr "RC6 はロードバランサー、ファイアウォール、コンソールを一つの実行ファイルで提供します。"
+
+msgid "RC6 on Linux x86-64"
+msgstr "Linux x86-64 での RC6"
+
+msgid "Ratio"
+msgstr "比率"
+
+msgid "Reduced motion · step through"
+msgstr "動きを抑える設定 · ステップごとに表示"
+
+msgid "Refused"
+msgstr "拒否"
+
+msgid "Release status"
+msgstr "リリースの状況"
+
+msgid "Releases hold binaries for Linux, macOS and Windows, Debian, RPM and Arch packages, CLI packages for FreeBSD 15.1 and OpenBSD 7.9 x86-64, a Helm chart and a container image. Verify the checksums before installation."
+msgstr "リリースには、Linux、macOS、Windows のバイナリ、Debian・RPM・Arch のパッケージ、FreeBSD 15.1 と OpenBSD 7.9 x86-64 の CLI パッケージ、Helm chart、コンテナーイメージが含まれます。インストールの前にチェックサムを検証してください。"
+
+msgid "Requests in a second. More is better."
+msgstr "1 秒あたりのリクエスト数。多いほど良い値です。"
+
+msgid "Requests pass from a client through an HTTPS ingress to Sibuna. Sibuna may admit, challenge or refuse them. A client creates a proof; Sibuna verifies it and issues a session. Requests with sessions still pass applicable checks."
+msgstr "リクエストはクライアントから HTTPS イングレスを経由して Sibuna に届きます。Sibuna はそれを許可するか、チャレンジするか、拒否します。クライアントが証明を生成し、Sibuna がそれを検証してセッションを発行します。セッション付きのリクエストも、適用対象の検査を通ります。"
+
+msgid "Return with a session"
+msgstr "セッションで再訪問"
+
+msgid "Roadmap target for high-risk uses."
+msgstr "高リスク用途に対するロードマップの移行目標です。"
+
+msgid "Roadmap target for medium-risk uses and as many low-risk uses as feasible."
+msgstr "中リスク用途と、実現可能な限り多くの低リスク用途が移行目標です。"
+
+msgid "SIDs"
+msgstr "SID（英語）"
+
+msgid "STEP"
+msgstr "ステップ"
+
+msgid "Scripted illustration, not live traffic or measured timing. Proof time varies by device and settings. This shows the reverse-proxy path; with forward-auth, your ingress forwards admitted requests."
+msgstr "台本どおりに動くデモです。実際のトラフィックや測定した所要時間ではありません。証明にかかる時間は端末と設定によって変わります。図はリバースプロキシの場合の経路です。forward-auth では、許可されたリクエストをイングレスが転送します。"
+
+msgid "See and shape the decisions."
+msgstr "判断を確かめ、形づくる。"
+
+msgid "Sequential work happens in the browser. Later steps depend on earlier results."
+msgstr "逐次的な計算はブラウザーの中で行います。後のステップは、前のステップの結果に依存します。"
+
+msgid "Serve browsers over HTTP/2 or HTTP/3, renew public certificates with Let's Encrypt and inspect requests before forwarding them to HTTP/1.1 replicas."
+msgstr "ブラウザーからの接続をHTTP/2またはHTTP/3で受け、Let's Encryptで公開証明書を更新します。リクエストを検査してからHTTP/1.1のレプリカに転送します。"
+
+msgid "Several nodes, one behaviour."
+msgstr "複数のノード、ひとつの動作。"
+
+msgid "Sibuna"
+msgstr "Sibuna"
+
+msgid "Sibuna Whitepaper"
+msgstr "Sibuna ホワイトペーパー"
+
+msgid "Sibuna checks requests before they reach your application"
+msgstr "Sibuna はアプリケーションに届く前にリクエストを検査します"
+
+msgid "Sibuna checks the session and applicable rules. A new puzzle is not needed here."
+msgstr "Sibuna がセッションと適用対象のルールを確認します。ここでは新しいパズルは不要です。"
+
+msgid "Sibuna does not forward this refused request to the application."
+msgstr "Sibuna は、この拒否されたリクエストをアプリケーションに転送しません。"
+
+msgid "Sibuna is written by Vikrant Rathore with assistance from Ronak Rathore and Kanak Rathore."
+msgstr "Sibuna の作者は Vikrant Rathore です。Ronak Rathore と Kanak Rathore が協力しています。"
+
+msgid "Sibuna returns a challenge to the client."
+msgstr "Sibuna がクライアントにチャレンジを返します。"
+
+msgid "Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
+msgstr "SibunaはTCP、UDP、HTTPの通信を正常なサーバーに振り分けます。エッジを単独で運用することも、複数のエッジをメッシュで結ぶこともできます。各エッジでTLSを終端し、選んだHTTPルートにファイアウォールを適用できます。"
+
+msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
+msgstr "Sibuna は TLS を終端し、HTTP/1.1、HTTP/2、HTTP/3、WebSocket を処理します。各リクエストをホスト名とパスでルーティングします。証明書は Let's Encrypt または他の ACME 認証局から取得し、内部の名前にはローカルの認証局を使います。"
+
+msgid "Singapore"
+msgstr "シンガポール"
+
+msgid "Skip to content"
+msgstr "本文へ移動"
+
+msgid "Static illustration"
+msgstr "静止画の説明図"
+
+msgid "Static view · 3D is unavailable"
+msgstr "静止画表示 · 3D を利用できません"
+
+msgid "TCP forwarding"
+msgstr "TCP 転送"
+
+msgid "TCP streams and UDP mappings go to a pool of servers. A TLS connection can pass through undecrypted, routed by its server name. QUIC can pass through too. The PROXY protocol carries the address of the client."
+msgstr "TCP ストリームと UDP マッピングはサーバープールへ送られます。TLS 接続は復号せずに、サーバー名でルーティングして通過させることができます。QUIC も通過させることができます。PROXY プロトコルがクライアントのアドレスを伝えます。"
+
+msgid "The admitted request is forwarded to the application."
+msgstr "許可されたリクエストをアプリケーションに転送します。"
+
+msgid "The book"
+msgstr "技術ガイド"
+
+msgid "The browser retries the request with its session."
+msgstr "ブラウザーがセッション付きでリクエストを再送します。"
+
+msgid "The browser sends a request through your HTTPS ingress."
+msgstr "ブラウザーが HTTPS イングレスを通してリクエストを送信します。"
+
+msgid "The built-in inspector checks the first 8 KiB of supported bodies. WebSocket messages are relayed without inspection. Sibuna does not provide volumetric network mitigation. A challenge adds work. It does not establish that a visitor is human."
+msgstr "内蔵の検査器は、対応するボディーの先頭 8 KiB を検査します。WebSocket のメッセージは検査せずに中継します。Sibuna は大規模なネットワーク攻撃の緩和を提供しません。チャレンジは計算コストを加えます。訪問者が人間であることを証明するものではありません。"
+
+msgid "The checks still apply"
+msgstr "検査は引き続き適用"
+
+msgid "The client creates a proof"
+msgstr "クライアントが証明を生成"
+
+msgid "The client sends another request with its signed session."
+msgstr "クライアントが署名付きセッションで別のリクエストを送ります。"
+
+msgid "The client submits its proof to Sibuna."
+msgstr "クライアントが Sibuna に証明を送信します。"
+
+msgid "The console is opt-in. Its strict performance isolation target has not formally passed. Published measurements identify the code revision and uncertainty."
+msgstr "コンソールは明示的に有効にして使います。厳格な性能分離の目標は、まだ正式な判定に合格していません。公開した測定結果には、コードのリビジョンと不確かさを記載しています。"
+
+msgid "The proof returns"
+msgstr "証明が戻る"
+
+msgid "The protocol, the request pipeline, the algorithms and every measurement with its method. Also available as a PDF."
+msgstr "プロトコル、リクエスト処理、アルゴリズム、そしてすべての測定結果とその方法を説明します。PDF 版もあります。"
+
+msgid "The request reaches your app"
+msgstr "リクエストがアプリへ到着"
+
+msgid "The request stops here"
+msgstr "ここでリクエストを止める"
+
+msgid "The upper route inspects a browser request and sends it to a web replica. The lower route carries a gRPC call over HTTP/2. The dotted link shows the two nodes exchanging mesh state."
+msgstr "上段ではブラウザーのリクエストを検査してウェブのレプリカに転送します。下段ではHTTP/2でgRPC呼び出しを運びます。点線はノード間でのメッシュ状態の交換を示します。"
+
+msgid "Third-party libraries retain their respective licenses."
+msgstr "外部ライブラリには、それぞれのライセンスが適用されます。"
+
+msgid "This admitted request is forwarded to the application."
+msgstr "この許可されたリクエストをアプリケーションに転送します。"
+
+msgid "This request also reaches Sibuna through your ingress."
+msgstr "このリクエストもイングレスを通って Sibuna に届きます。"
+
+msgid "This route asks for work"
+msgstr "このルートでは計算が必要"
+
+msgid "Try again with a session"
+msgstr "セッション付きで再試行"
+
+msgid "Try it"
+msgstr "試す"
+
+msgid "Two edge nodes serving a website and an internal service"
+msgstr "ウェブサイトと内部サービスを扱う2つのエッジノード"
+
+msgid "United States"
+msgstr "米国"
+
+msgid "Vikrant Rathore, with assistance from Ronak Rathore and Kanak Rathore"
+msgstr "Vikrant Rathore（協力：Ronak Rathore、Kanak Rathore）"
+
+msgid "We state the limits beside the features. Linux requires kernel 5.10 or later, macOS 12 or later, and Windows 10 or Server 2016 or later. The event-driven workers and the replacement of the executable without lost connections exist on Linux only."
+msgstr "機能と並べて制約を明記します。Linux はカーネル 5.10 以降、macOS は 12 以降、Windows は Windows 10 または Server 2016 以降が必要です。イベント駆動のワーカーと、接続を失わない実行ファイルの置き換えは Linux にのみあります。"
+
+msgid "We tested the cluster on three hosts. Qualification under production traffic remains open. Replacing the executable ends QUIC connections."
+msgstr "クラスタは3台のホストで試験しました。本番トラフィックでの検証は今後の課題です。実行ファイルを入れ替えると QUIC 接続は終了します。"
+
+msgid "What is Sibuna?"
+msgstr "Sibuna とは何か"
+
+msgid "What it does not do."
+msgstr "しないこと。"
+
+msgid "Where each part stands."
+msgstr "各部分の現状。"
+
+msgid "Where we use Sibuna"
+msgstr "Sibunaの利用例"
+
+msgid "Whitepaper"
+msgstr "ホワイトペーパー"
+
+msgid "Whitepaper PDF"
+msgstr "ホワイトペーパー PDF"
+
+msgid "With a session"
+msgstr "セッションあり"
+
+msgid "Work before access."
+msgstr "計算してからアクセス。"
+
+msgid "Yet, or at all."
+msgstr "まだ、あるいはまったく。"
+
+msgid "Your app"
+msgstr "アプリケーション"
+
+msgid "Your browser"
+msgstr "ブラウザー"
+
+msgid "Your website"
+msgstr "ウェブサイト"
+
+msgid "on one host."
+msgstr "1 台のホストで。"
+
+msgid "· CHECK THE PROOF AT SIBUNA"
+msgstr "· SIBUNA で証明を検証"
+
+msgid "Articles"
+msgstr "記事"
