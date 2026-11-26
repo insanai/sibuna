@@ -162,14 +162,21 @@ async fn quic(
     vip: SocketAddr,
     certified: bool,
 ) -> Result<(quinn::Endpoint, quinn::Connection), ()> {
+    quic_with(vip, certified, rustls::crypto::ring::default_provider()).await
+}
+
+/// As [`quic`], with the client's crypto provider.
+async fn quic_with(
+    vip: SocketAddr,
+    certified: bool,
+    provider: rustls::crypto::CryptoProvider,
+) -> Result<(quinn::Endpoint, quinn::Connection), ()> {
     let mut trust = rustls::RootCertStore::empty();
     trust.add(CertificateDer::from_pem_file(data("tls", "ca.pem")).unwrap()).unwrap();
-    let builder = rustls::ClientConfig::builder_with_provider(Arc::new(
-        rustls::crypto::ring::default_provider(),
-    ))
-    .with_safe_default_protocol_versions()
-    .unwrap()
-    .with_root_certificates(trust);
+    let builder = rustls::ClientConfig::builder_with_provider(Arc::new(provider))
+        .with_safe_default_protocol_versions()
+        .unwrap()
+        .with_root_certificates(trust);
     let mut config = if certified {
         let file = data("ingress", "client.pem");
         let chain = vec![CertificateDer::from_pem_file(file).unwrap()];
@@ -268,6 +275,25 @@ fn an_http3_request_is_logged_with_its_protocol_server_and_bytes() {
     let total: f64 = field(line, "duration_ms").parse().unwrap();
     let first: f64 = field(line, "ttfb_ms").parse().unwrap();
     assert!(first > 0.0 && first <= total, "{line}");
+}
+
+#[test]
+fn a_client_that_offers_only_the_post_quantum_group_is_served_over_quic() {
+    let daemon = start(origin(), &Extra::default());
+    let vip = daemon.vip;
+    // The client has no classical group, so the handshake succeeds only with the hybrid
+    // one. Its ClientHello does not fit one packet of 1,200 bytes (SID 0035).
+    let only = rustls::crypto::CryptoProvider {
+        kx_groups: vec![sibuna_tls::kx::X25519MLKEM768],
+        ..rustls::crypto::ring::default_provider()
+    };
+    let status = within(&runtime(), async {
+        let (_endpoint, connection) = quic_with(vip, false, only).await.unwrap();
+        let mut sender = http3(connection).await;
+        let url = format!("https://localhost:{}/pq", vip.port());
+        fetch(&mut sender, Request::get(url).body(()).unwrap()).await.0
+    });
+    assert_eq!(status, 200);
 }
 
 /// The values of the certificate field in a head, whatever the spelling of its name.

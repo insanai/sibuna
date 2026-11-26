@@ -89,6 +89,9 @@ workspace = true
 sibuna-acme = { workspace = true, features = ["test-server"] }
 # The tests of the database authority start a PostgreSQL server of their own (SID 0028).
 sibuna-authority = { workspace = true, features = ["testing", "sqlite"] }
+# The tests of post-quantum key exchange connect with a client that offers only the hybrid
+# group (SID 0035).
+sibuna-tls = { workspace = true }
 bytes.workspace = true
 futures-util.workspace = true
 http-body-util.workspace = true

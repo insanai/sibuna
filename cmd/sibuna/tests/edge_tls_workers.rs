@@ -29,10 +29,18 @@ fn config(
     offers: &[&[u8]],
     versions: &[&'static rustls::SupportedProtocolVersion],
 ) -> ClientConfig {
+    config_with(rustls::crypto::ring::default_provider(), offers, versions)
+}
+
+/// As [`config`], with the client's crypto provider.
+fn config_with(
+    provider: rustls::crypto::CryptoProvider,
+    offers: &[&[u8]],
+    versions: &[&'static rustls::SupportedProtocolVersion],
+) -> ClientConfig {
     let mut trust = rustls::RootCertStore::empty();
     trust.add(CertificateDer::from_pem_file(fixture("ca.pem")).unwrap()).unwrap();
-    let provider = Arc::new(rustls::crypto::ring::default_provider());
-    let builder = ClientConfig::builder_with_provider(provider);
+    let builder = ClientConfig::builder_with_provider(Arc::new(provider));
     let builder = builder.with_protocol_versions(versions).unwrap();
     let mut config = builder.with_root_certificates(trust).with_no_client_auth();
     config.alpn_protocols = offers.iter().map(|offer| offer.to_vec()).collect();
@@ -205,6 +213,28 @@ fn a_worker_ends_the_tls_of_an_http11_connection_itself() {
     assert_eq!(logged(&lines[0], "tls_version"), "1.3");
     assert!(logged(&lines[0], "tls_cipher").starts_with("TLS13_"), "{}", lines[0]);
     assert_eq!(logged(&lines[2], "tls_version"), "1.2");
+}
+
+#[test]
+fn the_workers_and_the_runtime_negotiate_the_post_quantum_group() {
+    let edge = start(origin(), true, "");
+    let only = rustls::crypto::CryptoProvider {
+        kx_groups: vec![sibuna_tls::kx::X25519MLKEM768],
+        ..rustls::crypto::ring::default_provider()
+    };
+    // A worker keeps an HTTP/1.1 client; the runtime takes one that offers HTTP/2. The
+    // clients have no classical group, so a handshake succeeds only with the hybrid one.
+    for offers in [&[b"http/1.1".as_slice()][..], &[b"h2".as_slice()][..]] {
+        let config = config_with(only.clone(), offers, rustls::ALL_VERSIONS);
+        let mut tls = socket(edge.vip);
+        let mut client = session(config);
+        while client.is_handshaking() {
+            client.complete_io(&mut tls).unwrap();
+        }
+        let group = client.negotiated_key_exchange_group().unwrap().name();
+        assert_eq!(group, rustls::NamedGroup::X25519MLKEM768);
+    }
+    assert_eq!(counter(&edge, "tls_passed"), 1);
 }
 
 /// Writes the ClientHello of `client` in three pieces with pauses, then finishes the
