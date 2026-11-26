@@ -193,8 +193,8 @@ impl FlowBudget {
     pub(crate) fn take(&self, claim: Claim) -> Result<FlowPermit, Refusal> {
         let Caps { frontend, max_flows, max_flows_per_ip } = claim.caps;
         let known = claim.client.is_some_and(|client| self.0.known.knows(client));
-        let now = self.micros();
         let mut state = self.state();
+        let now = self.micros();
         if state.active >= state.limit {
             return Err(Refusal::FlowLimit);
         }
@@ -233,8 +233,6 @@ impl FlowBudget {
         state.limit = config.limit;
         if state.pressure.options != config.pressure {
             state.pressure = Pressure { on: state.pressure.on, ..Pressure::new(config.pressure) };
-            state.pressure.on &= config.pressure.is_some();
-            self.0.pressed.store(state.pressure.on, std::sync::atomic::Ordering::Relaxed);
         }
     }
 
@@ -250,13 +248,15 @@ impl FlowBudget {
     /// table, off at `off` percent. Returns the new mode when it changed.
     pub(super) fn update_pressure(&self) -> Option<bool> {
         let mut state = self.state();
-        let options = state.pressure.options?;
+        let options = state.pressure.options;
         let load = (state.active * 100).checked_div(state.limit.max(1)).unwrap_or(0);
-        let next = if state.pressure.on {
-            load > usize::from(options.off)
-        } else {
-            load >= usize::from(options.on)
-        };
+        let next = options.is_some_and(|options| {
+            if state.pressure.on {
+                load > usize::from(options.off)
+            } else {
+                load >= usize::from(options.on)
+            }
+        });
         (next != state.pressure.on).then(|| {
             state.pressure.on = next;
             self.0.pressed.store(next, std::sync::atomic::Ordering::Relaxed);

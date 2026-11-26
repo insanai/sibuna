@@ -66,6 +66,21 @@ impl Defense {
         self.lift_feed.get()
     }
 
+    pub(crate) fn record_strike(
+        &self,
+        stats: &crate::Stats,
+        guard: crate::guard::Guard,
+        reason: crate::Refusal,
+        address: IpAddr,
+        now: u64,
+    ) {
+        if let Some(rule) = guard.auto_ban
+            && reason.is_strike()
+        {
+            stats.count_strike(self.strike(address, guard.caps.frontend, rule, now));
+        }
+    }
+
     fn hash(&self, address: IpAddr) -> ClientHash {
         self.hasher.hash(&sibuna_cidr::client_key_bytes(address, IPV6_PREFIX))
     }

@@ -62,11 +62,10 @@ impl Edge {
 
     /// Goes on with a connection that an accept thread admitted.
     fn arrive(&mut self, arrival: Arrival) -> bool {
-        let Arrival { listener, stream, peer, permit } = arrival;
-        let Some(permit) = permit else {
-            let trusted = self.listeners[listener].route.info.trusts(peer.ip());
-            return self.await_header(listener, stream, peer, trusted);
-        };
+        let Arrival { listener, stream, peer, permit, needs_header } = arrival;
+        if needs_header {
+            return self.await_header(listener, stream, peer, permit);
+        }
         // A client that another node owns goes to that node (SID 0026).
         if let Some(owner) = self.owner_of_stream(peer) {
             return self.begin_handoff(listener, stream, peer, permit, owner);
@@ -104,19 +103,19 @@ impl Edge {
         listener: usize,
         client: TcpStream,
         peer: SocketAddr,
-        trusted: bool,
+        permit: FlowPermit,
     ) -> bool {
-        let room = trusted && self.awaiting.len() < MAX_AWAITING;
-        let permit = if room { self.budget.reserve() } else { None };
+        let room = self.listeners[listener].route.info.trusts(peer.ip())
+            && self.awaiting.len() < MAX_AWAITING;
         self.next_id = self.next_id.wrapping_add(1);
         let id = self.next_id;
-        let registered = permit.is_some()
+        let registered = room
             && client.set_nonblocking(true).is_ok()
             && self.poll.set(handle(&client), READ, Ready::Proxy(id)).is_ok();
-        let Some(permit) = permit.filter(|_| registered) else {
+        if !registered {
             self.stats.count_proxy(false);
             return false;
-        };
+        }
         let deadline = Instant::now() + PROXY_PATIENCE;
         let bind = self.binds[listener];
         self.awaiting.insert(id, Awaiting { bind, client, peer, permit, deadline });
@@ -147,13 +146,22 @@ impl Edge {
         drop(permit);
         match self.screen(listener, client) {
             Ok(permit) => self.admit(listener, stream, client, permit, source),
-            Err(reason) => self.refuse(listener, client, reason),
+            Err(reason) => {
+                let guard = self.listeners[listener].route.guard;
+                self.defense.record_strike(&self.stats, guard, reason, client.ip(), unix_now());
+                self.acceptors.proxy_tarpit.finish(stream, guard.refuse);
+                self.refuse(listener, client, reason)
+            }
         }
     }
 
     /// Runs the checks of SID 0034 that follow a PROXY header for `client`: bans, the
     /// rate, the caps and pressure.
-    fn screen(&self, listener: usize, client: SocketAddr) -> Result<FlowPermit, Refusal> {
+    pub(crate) fn screen(
+        &self,
+        listener: usize,
+        client: SocketAddr,
+    ) -> Result<FlowPermit, Refusal> {
         let route = &self.listeners[listener].route;
         let trusted = route.info.trusts(client.ip());
         let screened = self.binds[listener].0 == Protocol::Tcp || self.budget.is_pressed();

@@ -155,6 +155,25 @@ fn the_connection_rate_counts_the_named_client_and_not_the_proxy() {
 }
 
 #[test]
+fn automatic_bans_count_the_named_client_independently_of_the_proxy() {
+    let (server, address) = origin();
+    let front = format!(
+        r#"{PROXIED}"rate_limit":{{"conn_per_10s":1}},
+        "auto_ban":{{"strikes":1,"window":"1m","ban":"1m"}},"#
+    );
+    let worker = start(&front, "", &[address]);
+    let header = v1("203.0.113.7", 4000);
+    let _first = send(worker.vip, &header);
+    assert!(accepted(&server, WAIT).is_some());
+    for _ in 0..3 {
+        assert!(is_closed(send(worker.vip, &header)));
+    }
+    assert_eq!(worker.stats.refusal_count(Refusal::Banned), 1);
+    let _other = send(worker.vip, &v1("203.0.113.8", 4000));
+    assert!(accepted(&server, WAIT).is_some());
+}
+
+#[test]
 fn source_stickiness_follows_the_named_client() {
     let (first, first_address) = origin();
     let (second, second_address) = origin();

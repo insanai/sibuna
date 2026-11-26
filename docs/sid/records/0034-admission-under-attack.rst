@@ -99,7 +99,7 @@ An accept thread runs these checks on each accepted connection, in order. The fi
 #. The node, the frontend and the address hold their caps: ``flow_limit``, ``frontend_limit``, ``client_flow_limit``.
 #. Pressure is on, the address is not known, and the bucket of new addresses is empty: ``pressure``. The caps come first, so a connection that a cap refuses spends no token.
 
-An admitted connection goes to the packet worker, which runs the connection hooks, the inspection and the choice of a server as before. A trusted proxy (``trusted_proxies`` of the frontend) is exempt from checks 2, 4, 5 and the address cap, because it carries many clients.
+An admitted connection goes to the packet worker, which runs the connection hooks, the inspection and the choice of a server as before. A trusted proxy (``trusted_proxies`` of the frontend) is exempt from the address ban, address rate, address cap and new-address bucket, because it carries many clients. The node and frontend caps still apply to admitted flows.
 
 A refusal with ``rate_limit`` or ``client_flow_limit`` is a strike against the address. Both need a completed TCP handshake, so the address is real.
 
@@ -115,7 +115,7 @@ The caps are local to a node. A client that spreads its flows over the nodes of 
 2. Bans and automatic bans
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The packet worker and the HTTP firewall share one ban table. An edge without an HTTP frontend has one too. A client is known in it by the same key as in the firewall: its address in IPv4-mapped form, IPv6 cut to ``http.ipv6_prefix`` (64 when there is no HTTP section). The mesh replicates every ban as before (SID 0022), now also on an edge without an HTTP frontend.
+The packet worker and the HTTP firewall share one ban table. An edge without an HTTP frontend has one too. A client is known in it by the same key as in the firewall: its address in IPv4-mapped form, IPv6 cut to /64 by the edge and its HTTP firewall. The mesh replicates every ban as before (SID 0022), now also on an edge without an HTTP frontend.
 
 ``auto_ban`` on a TCP or HTTP frontend bans an address automatically:
 
@@ -151,7 +151,7 @@ The packet worker checks the load at every sweep, every 100 ms, and switches the
 - A known address passes as before.
 - An HTTP frontend refuses a banned address at accept.
 
-An address becomes known when one of its flows proves it: a TCP stream that carried bytes in both directions, a UDP mapping that got a reply, an HTTP/3 connection whose handshake finished after Retry, or an HTTP exchange that a server answered with a status below 400. A page of Sibuna's own, such as a challenge or a ban page, proves nobody. The table of known addresses has 65,536 slots of 8 bytes. A slot holds 47 bits of the keyed hash of the address, a presence bit and the minute it was last proved. An address stays known for 24 hours after its last proof. Two addresses that share a slot replace each other. An attacker cannot make an address known without completing flows from it, and those count against its caps.
+An address becomes known when one of its flows proves it: a TCP stream that carried bytes in both directions, a UDP mapping that got a reply, an HTTP/3 connection whose handshake finished after Retry, or an HTTP exchange that a server answered with a status below 400. A page of Sibuna's own, such as a challenge or a ban page, proves nobody. The table of known addresses has 65,536 slots of 8 bytes. A slot holds 47 bits of the keyed hash of the address combined with the high bits of the proof time, a presence bit and the minute it was last proved. An address stays known for 24 hours after its last proof. Two addresses that share a slot replace each other. An attacker cannot make an address known without completing flows from it, and those count against its caps.
 
 5. Accept threads
 ~~~~~~~~~~~~~~~~~
@@ -169,7 +169,7 @@ The packet worker owns the listeners. It publishes the table of TCP and HTTP lis
 
    udp_defense: { mode: "rate_limit", threshold_pps: 1000, total_pps: 200000 }
 
-``total_pps`` is the most datagrams a second that the frontend passes from clients, from 1 to 100,000,000. The budget is a token bucket of ``total_pps`` tokens a second with a burst of the same size. A datagram of a confirmed mapping takes a token when there is one. Any other datagram, including one that would open a mapping, takes a token only while more than half the burst is left. A flood from random addresses therefore never takes the last half, and the confirmed mappings keep it.
+``total_pps`` is the most datagrams a second that the frontend passes from clients, from 1 to 100,000,000. The budget is a token bucket of ``total_pps`` tokens a second with a burst of the same size. A datagram of a confirmed mapping takes a token when there is one. Any other datagram, including one that would open a mapping, takes a token only if it leaves at least half the burst, rounded down to whole datagrams. A flood from random addresses therefore never takes the last half, and the confirmed mappings keep it.
 
 A mapping is confirmed when its client address is validated (QUIC, SID 0032), or when the server answered and the client then sent again. The second rule is weak: a sender that spoofs an address and guesses that the server answered can send a second datagram without seeing the reply. It is the strongest rule that works for any UDP protocol. A protocol with its own validation, such as QUIC, should use it.
 

@@ -209,6 +209,16 @@ impl Config {
         &self.observe
     }
 
+    /// The number of extra sockets this topology can hold while refusing by tarpit.
+    pub fn tarpit_capacity(&self) -> usize {
+        if self.listeners.values().any(|front| front.guard.refuse == crate::guard::Refuse::Tarpit)
+        {
+            self.accept_threads * crate::accept::TARPIT_SLOTS
+        } else {
+            0
+        }
+    }
+
     /// The size of the flow table (`global.max_flows`).
     pub fn max_flows(&self) -> usize {
         self.limit

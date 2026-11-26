@@ -303,7 +303,8 @@ impl Edge {
         else {
             return false;
         };
-        let Some(permit) = self.budget.reserve() else { return false };
+        let claim = crate::budget::Claim::new(route.guard.caps, flow.client.ip(), false);
+        let Ok(permit) = self.budget.take(claim) else { return false };
         route.info.stats.flow();
         let mut line = self.begin_line(id, flow.client);
         if let Some(line) = &mut line {

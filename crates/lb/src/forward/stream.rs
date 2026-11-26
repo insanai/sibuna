@@ -396,15 +396,17 @@ impl Edge {
         if info.proxy_protocol {
             return Err(wire::DECLINED);
         }
-        if !info.trusts(header.client.ip()) && !self.allowed(listener, header.client) {
-            self.refuse(listener, header.client, Refusal::RateLimit);
-            return Err(wire::DENIED);
-        }
-        match self.budget.reserve() {
-            Some(permit) => Ok((listener, permit)),
-            None => {
-                self.stats.refuse(Refusal::FlowLimit);
-                Err(wire::DECLINED)
+        match self.screen(listener, header.client) {
+            Ok(permit) => Ok((listener, permit)),
+            Err(reason) => {
+                self.refuse(listener, header.client, reason);
+                // A full owner may fall back to the receiving node, which already admitted
+                // this client. A client denial must hold at either node.
+                if matches!(reason, Refusal::FlowLimit | Refusal::FrontendLimit) {
+                    Err(wire::DECLINED)
+                } else {
+                    Err(wire::DENIED)
+                }
             }
         }
     }

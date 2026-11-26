@@ -626,6 +626,7 @@ impl Edge {
         self.stats.adopt(&mut config);
         let drained = self.drained_servers();
         self.budget.configure(&config);
+        self.update_pressure();
         self.udp_limit = config.udp_limit;
         self.sticky_entries = config.sticky_entries;
         self.cluster.set_slots(config.sticky_entries);
@@ -697,6 +698,13 @@ impl Edge {
         self.pressure_changes.drain(..)
     }
 
+    fn update_pressure(&mut self) {
+        if let Some(on) = self.budget.update_pressure() {
+            self.stats.set_pressure(on);
+            self.pressure_changes.push(on);
+        }
+    }
+
     /// Processes one readiness batch, waiting for at most 25 ms. Individual flow
     /// errors release that flow. Only a failure of the poller is reported to the caller.
     pub fn step(&mut self) -> io::Result<()> {
@@ -707,10 +715,7 @@ impl Edge {
         if now.saturating_duration_since(self.swept) >= SWEEP {
             self.swept = now;
             self.sweep(now);
-            if let Some(on) = self.budget.update_pressure() {
-                self.stats.set_pressure(on);
-                self.pressure_changes.push(on);
-            }
+            self.update_pressure();
             self.stats.set_flows(self.budget.active(), self.dropped());
         }
         self.events.clear();
@@ -1102,7 +1107,7 @@ impl Edge {
     /// the client sent to this node: only that one may be forwarded.
     fn forward(&mut self, key: Client, size: usize, via: Option<forward::Via>) -> bool {
         if !self.allowed(key.0, key.1) {
-            self.stats.refuse(Refusal::UdpRateLimit);
+            self.stats.refuse_from(Refusal::UdpRateLimit, key.1.ip(), defense::unix_now());
             return false;
         }
         let now = Instant::now();
@@ -1110,7 +1115,7 @@ impl Edge {
         if let Some(total) = self.totals.get_mut(&key.0)
             && !total.pass(confirmed, now)
         {
-            self.stats.refuse(Refusal::UdpTotalLimit);
+            self.stats.refuse_from(Refusal::UdpTotalLimit, key.1.ip(), defense::unix_now());
             return false;
         }
         if !self.udp.contains_key(&key) {

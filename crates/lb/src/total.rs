@@ -11,14 +11,14 @@ use std::time::Instant;
 
 use crate::Listener;
 
-/// One token, in micro-tokens.
-const TOKEN: u64 = 1_000_000;
+/// One token, in nano-tokens.
+const TOKEN: u64 = 1_000_000_000;
 
 /// The bucket of one UDP listener.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Total {
     rate: u64,
-    /// Micro-tokens left.
+    /// Nano-tokens left.
     tokens: u64,
     refilled: Instant,
 }
@@ -33,10 +33,11 @@ impl Total {
     /// take the last token; any other leaves at least half the burst.
     pub fn pass(&mut self, confirmed: bool, now: Instant) -> bool {
         let burst = self.rate * TOKEN;
-        let elapsed = now.saturating_duration_since(self.refilled).as_micros() as u64;
+        let elapsed = u64::try_from(now.saturating_duration_since(self.refilled).as_nanos())
+            .unwrap_or(u64::MAX);
         self.refilled = now;
         self.tokens = self.tokens.saturating_add(elapsed.saturating_mul(self.rate)).min(burst);
-        let floor = if confirmed { 0 } else { burst / 2 };
+        let floor = if confirmed { 0 } else { (self.rate / 2) * TOKEN };
         if self.tokens < floor + TOKEN {
             return false;
         }
@@ -66,6 +67,27 @@ mod tests {
     use std::time::Duration;
 
     use super::*;
+
+    #[test]
+    fn frequent_polls_preserve_fractional_refills() {
+        let start = Instant::now();
+        let mut total = Total::new(1_000_000, start);
+        total.tokens = 0;
+        assert!(!total.pass(true, start + Duration::from_nanos(500)));
+        assert!(total.pass(true, start + Duration::from_nanos(1000)));
+    }
+
+    #[test]
+    fn odd_budgets_reserve_whole_datagrams_and_allow_new_clients() {
+        let now = Instant::now();
+        for rate in [1, 3, 5] {
+            let mut total = Total::new(rate, now);
+            let new = (0..rate).filter(|_| total.pass(false, now)).count();
+            assert_eq!(new, rate.div_ceil(2) as usize);
+            let confirmed = (0..rate).filter(|_| total.pass(true, now)).count();
+            assert_eq!(confirmed, (rate / 2) as usize);
+        }
+    }
 
     #[test]
     fn a_flood_of_others_leaves_half_the_burst_to_confirmed_mappings() {

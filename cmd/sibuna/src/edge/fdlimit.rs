@@ -27,6 +27,8 @@ pub(super) struct Demand {
     /// The most idle server connections kept for reuse beside the reserve: those of
     /// the event-driven workers and of the protocol runtime.
     pub idle: u64,
+    /// Refused connections held until the tarpit timeout.
+    pub tarpit: u64,
 }
 
 /// Idle connections the protocol runtime keeps for one server address
@@ -57,12 +59,17 @@ impl Demand {
             max_flows: config.max_flows() as u64,
             http_connections: config.http().map(|http| u64::from(http.max_connections)),
             idle: idle_bound(config),
+            tarpit: config.tarpit_capacity() as u64,
         }
     }
 
     /// The descriptors the topology can use at once.
     pub fn need(&self) -> u64 {
-        2 * self.max_flows + 2 * self.http_connections.unwrap_or(0) + self.idle + RESERVE
+        2 * self.max_flows
+            + 2 * self.http_connections.unwrap_or(0)
+            + self.idle
+            + self.tarpit
+            + RESERVE
     }
 }
 
@@ -126,6 +133,10 @@ pub(super) fn warning(path: &str, demand: Demand, available: u64) -> String {
         text,
         "This topology can use {need} file descriptors, but the process may open {available}.\n"
     );
+    let held = if demand.tarpit == 0 { String::new() } else { format!(" + {}", demand.tarpit) };
+    if demand.tarpit > 0 {
+        let _ = writeln!(text, "Tarpit sockets = {}", demand.tarpit);
+    }
     let (flows, idle) = (demand.max_flows, demand.idle);
     match demand.http_connections {
         Some(http) => {
@@ -133,13 +144,13 @@ pub(super) fn warning(path: &str, demand: Demand, available: u64) -> String {
                 text,
                 "global.max_flows = {flows}, http.max_connections = {http}, \
                  idle server connections = {idle}\n\
-                 need = 2 * {flows} + 2 * {http} + {idle} + {RESERVE} = {need}\n"
+                 need = 2 * {flows} + 2 * {http} + {idle} + {RESERVE}{held} = {need}\n"
             );
         }
         None => {
             let _ = writeln!(
                 text,
-                "global.max_flows = {flows}\nneed = 2 * {flows} + {RESERVE} = {need}\n"
+                "global.max_flows = {flows}\nneed = 2 * {flows} + {RESERVE}{held} = {need}\n"
             );
         }
     }
@@ -156,13 +167,17 @@ pub(super) fn warning(path: &str, demand: Demand, available: u64) -> String {
 mod tests {
     use super::*;
 
-    const DEMAND: Demand = Demand { max_flows: 8192, http_connections: Some(1024), idle: 1024 };
-    const TCP: Demand = Demand { max_flows: 100, http_connections: None, idle: 0 };
+    const DEMAND: Demand =
+        Demand { max_flows: 8192, http_connections: Some(1024), idle: 1024, tarpit: 0 };
+    const TCP: Demand = Demand { max_flows: 100, http_connections: None, idle: 0, tarpit: 0 };
 
     #[test]
     fn the_need_counts_two_descriptors_per_flow_and_a_reserve() {
         assert_eq!(DEMAND.need(), 19_968);
         assert_eq!(TCP.need(), 712);
+        let with_tarpit = Demand { tarpit: 2048, ..TCP };
+        assert_eq!(with_tarpit.need(), 2760);
+        assert!(warning("edge.jlv", with_tarpit, 1024).contains("Tarpit sockets = 2048"));
     }
 
     #[test]

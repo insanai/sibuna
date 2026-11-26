@@ -54,7 +54,7 @@ impl Known {
     /// [`sibuna_cidr::client_key`]).
     pub fn prove(&self, key: u128) {
         let (slot, hash) = self.slot(key);
-        slot.store((hash & TAG) | PRESENT | (self.minute() & MINUTE), Ordering::Relaxed);
+        slot.store(Self::stamp(hash, self.minute()), Ordering::Relaxed);
     }
 
     /// True when the address of `key` proved a flow in the last [`KEEP_MINUTES`].
@@ -63,9 +63,16 @@ impl Known {
         self.holds(slot.load(Ordering::Relaxed), hash, self.minute())
     }
 
+    // Fold the high bits of the proof time into the tag. The low clock bits alone
+    // repeat every 45 days and would make an untouched, expired slot look recent.
+    fn stamp(hash: u64, minute: u64) -> u64 {
+        let era = (minute & !MINUTE) << 1;
+        ((hash ^ era) & TAG) | PRESENT | (minute & MINUTE)
+    }
+
     fn holds(&self, word: u64, hash: u64, now: u64) -> bool {
         let age = (now & MINUTE).wrapping_sub(word & MINUTE) & MINUTE;
-        word & PRESENT != 0 && word & TAG == hash & TAG && age <= KEEP_MINUTES
+        age <= KEEP_MINUTES && now.checked_sub(age).is_some_and(|at| word == Self::stamp(hash, at))
     }
 }
 
@@ -89,7 +96,8 @@ mod tests {
         let known = Known::default();
         let hash = 0xdead_beef_0000_0000;
         for start in [0u64, 65_000, 65_535] {
-            let word = (hash & TAG) | PRESENT | (start & MINUTE);
+            let word = Known::stamp(hash, start);
+            assert!(!known.holds(word, hash, start + MINUTE + 1));
             assert!(known.holds(word, hash, start));
             assert!(known.holds(word, hash, start + KEEP_MINUTES));
             assert!(!known.holds(word, hash, start + KEEP_MINUTES + 1));

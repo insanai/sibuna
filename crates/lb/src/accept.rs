@@ -32,7 +32,7 @@ use crate::{Defense, FlowBudget, FlowPermit, FrontendInfo, Refusal, Stats, flowl
 /// other listeners also make progress.
 const BATCH: usize = 64;
 /// The most connections one thread holds in its tarpit.
-const TARPIT_SLOTS: usize = 1024;
+pub(crate) const TARPIT_SLOTS: usize = 1024;
 /// How long a listener that ran out of descriptors rests on one thread.
 const PAUSE: Duration = Duration::from_millis(50);
 /// The key of the waker in the poller of a thread.
@@ -69,9 +69,9 @@ pub(crate) struct Arrival {
     pub listener: usize,
     pub stream: TcpStream,
     pub peer: SocketAddr,
-    /// The permit of the connection, or `None` for a connection of a PROXY frontend:
-    /// the worker admits it once it has read the header.
-    pub permit: Option<FlowPermit>,
+    pub permit: FlowPermit,
+    /// The permit covers the header wait on a trusted PROXY connection.
+    pub needs_header: bool,
 }
 
 /// What the threads share with the packet worker.
@@ -94,6 +94,8 @@ pub(crate) struct Shared {
 pub(crate) struct Acceptors {
     shared: Arc<Shared>,
     threads: Vec<Handle>,
+    /// Post-header refusals use the first accept thread's tarpit.
+    pub proxy_tarpit: Arc<Tarpit>,
     /// The admitted connections.
     pub arrivals: mpsc::Receiver<Arrival>,
 }
@@ -133,19 +135,27 @@ impl Acceptors {
             edge,
         });
         let (sender, arrivals) = mpsc::channel();
-        let mut threads = Vec::with_capacity(count);
+        let mut group = Self {
+            shared,
+            threads: Vec::with_capacity(count),
+            arrivals,
+            proxy_tarpit: Arc::default(),
+        };
         for index in 0..count.max(1) {
             let (waker, wake) = Waker::new()?;
             let mut poll = Poller::new()?;
             poll.set(handle(waker.socket()), READ, WAKE)?;
             let seen = Arc::new(AtomicU64::new(0));
-            let mut thread = Thread::new(Arc::clone(&shared), sender.clone(), waker, poll);
+            let mut thread = Thread::new(Arc::clone(&group.shared), sender.clone(), waker, poll);
+            if index == 0 {
+                thread.tarpit = group.proxy_tarpit.clone();
+            }
             thread.seen = Arc::clone(&seen);
             let name = format!("edge-accept-{index}");
             let joined = std::thread::Builder::new().name(name).spawn(move || thread.run())?;
-            threads.push(Handle { wake, seen, thread: Some(joined) });
+            group.threads.push(Handle { wake, seen, thread: Some(joined) });
         }
-        Ok(Self { shared, threads, arrivals })
+        Ok(group)
     }
 
     /// Makes the threads watch the listeners of `table` from their next wake-up.
@@ -217,7 +227,7 @@ struct Thread {
     /// Listeners that ran out of descriptors, by index in `table`, and when they resume.
     paused: Vec<(usize, Instant)>,
     /// Refused connections held without reading, oldest first.
-    tarpit: VecDeque<(Instant, TcpStream)>,
+    tarpit: Arc<Tarpit>,
     events: Vec<usize>,
 }
 
@@ -237,7 +247,7 @@ impl Thread {
             generation: 0,
             seen: Arc::default(),
             paused: Vec::new(),
-            tarpit: VecDeque::new(),
+            tarpit: Arc::default(),
             events: Vec::new(),
         }
     }
@@ -257,11 +267,7 @@ impl Thread {
             }
             let now = Instant::now();
             self.resume(now);
-            while self.tarpit.front().is_some_and(|(until, _)| *until <= now) {
-                if let Some((_, stream)) = self.tarpit.pop_front() {
-                    sibuna_reactor::reset(stream);
-                }
-            }
+            self.tarpit.expire(now);
         }
     }
 
@@ -332,7 +338,21 @@ impl Thread {
             return self.refuse(rules, stream, peer, Refusal::Banned);
         }
         if rules.info.proxy_protocol {
-            return self.send(Arrival { listener: rules.listener, stream, peer, permit: None });
+            if !trusted {
+                shared.stats.count_proxy(false);
+                shared.drops.fetch_add(1, Ordering::Relaxed);
+                return;
+            }
+            let Some(permit) = shared.budget.reserve() else {
+                return self.refuse(rules, stream, peer, Refusal::FlowLimit);
+            };
+            return self.send(Arrival {
+                listener: rules.listener,
+                stream,
+                peer,
+                permit,
+                needs_header: true,
+            });
         }
         if let Some(rate) = rules.rate
             && !trusted
@@ -343,7 +363,7 @@ impl Thread {
         match shared.budget.take(Claim::new(rules.guard.caps, peer.ip(), trusted)) {
             Ok(permit) => {
                 let listener = rules.listener;
-                self.send(Arrival { listener, stream, peer, permit: Some(permit) });
+                self.send(Arrival { listener, stream, peer, permit, needs_header: false });
             }
             Err(reason) => self.refuse(rules, stream, peer, reason),
         }
@@ -366,22 +386,37 @@ impl Thread {
             let mut line = shared.flow_log.begin(protocol, peer, &rules.info.name, &rules.pool);
             flowlog::mark(&mut line, reason.end());
         }
-        if let Some(rule) = rules.guard.auto_ban
-            && reason.is_strike()
-        {
-            let banned = shared.defense.strike(peer.ip(), rules.guard.caps.frontend, rule, now);
-            shared.stats.count_strike(banned);
+        shared.defense.record_strike(&shared.stats, rules.guard, reason, peer.ip(), now);
+        self.tarpit.finish(stream, rules.guard.refuse);
+    }
+}
+
+/// Refused connections waiting on one accept thread, oldest first.
+#[derive(Default)]
+pub(crate) struct Tarpit(Mutex<VecDeque<(Instant, TcpStream)>>);
+
+impl Tarpit {
+    fn expire(&self, now: Instant) {
+        let mut held = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        while held.front().is_some_and(|(until, _)| *until <= now) {
+            if let Some((_, stream)) = held.pop_front() {
+                sibuna_reactor::reset(stream);
+            }
         }
-        match rules.guard.refuse {
+    }
+
+    pub fn finish(&self, stream: TcpStream, mode: Refuse) {
+        match mode {
             Refuse::Reset => sibuna_reactor::reset(stream),
             Refuse::Close => drop(stream),
             Refuse::Tarpit => {
-                if self.tarpit.len() >= TARPIT_SLOTS
-                    && let Some((_, oldest)) = self.tarpit.pop_front()
+                let mut held = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+                if held.len() >= TARPIT_SLOTS
+                    && let Some((_, oldest)) = held.pop_front()
                 {
                     sibuna_reactor::reset(oldest);
                 }
-                self.tarpit.push_back((Instant::now() + TARPIT, stream));
+                held.push_back((Instant::now() + TARPIT, stream));
             }
         }
     }

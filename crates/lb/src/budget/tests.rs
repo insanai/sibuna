@@ -46,3 +46,19 @@ fn ten_million_live_reservations() {
         assert!(pool.reserve(start, vip, vip, Regime::Standalone).is_some());
     }
 }
+
+#[test]
+fn disabling_active_pressure_publishes_the_off_transition() {
+    let document = br#"{"global":{"max_flows":1},"backends":{"app":{"mode":"tcp",
+        "servers":["127.0.0.1:9000"]}},"frontends":{"web":{"proto":"tcp",
+        "binds":["127.0.0.1:8080"],"default_backend":"app"}}}"#;
+    let mut config = Config::parse(document).unwrap();
+    let budget = FlowBudget::new(&config);
+    let _live = budget.reserve().unwrap();
+    assert_eq!(budget.update_pressure(), Some(true));
+    config.pressure = None;
+    budget.configure(&config);
+    assert_eq!(budget.update_pressure(), Some(false));
+    assert!(!budget.is_pressed());
+    assert_eq!(budget.update_pressure(), None);
+}
