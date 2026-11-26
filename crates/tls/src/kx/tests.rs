@@ -146,3 +146,15 @@ fn cost_of_an_exchange_on_each_side() {
         eprintln!("{name:?}: client {client:?}, server {server:?}");
     }
 }
+
+#[test]
+fn an_unrepresentable_layout_has_no_matching_share() {
+    let layout = HybridLayout {
+        classical_share_len: usize::MAX,
+        post_quantum_client_share_len: 1,
+        post_quantum_server_share_len: 1,
+        post_quantum_first: true,
+    };
+    assert!(layout.split_client_share(&[]).is_none());
+    assert!(layout.split_server_share(&[]).is_none());
+}

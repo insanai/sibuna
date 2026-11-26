@@ -3,7 +3,8 @@
 //!
 //! [`provider`] is the one rustls provider of the binary: ring's cipher suites and
 //! signatures, with the hybrid key exchange X25519MLKEM768 offered first (module [`kx`]).
-//! Every TLS configuration, the listeners' and HTTP/3's included, is built from it.
+//! Sibuna uses this provider for its listeners and outbound HTTP, including HTTP/3.
+//! SQLx builds the optional database TLS connection with its own provider.
 //!
 //! The console connects out to other consoles (management peer WebSockets), to webhook
 //! receivers, to GeoIP publishers, and the `sibuna console` command talks to a remote

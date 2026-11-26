@@ -7,7 +7,7 @@
 :sid-created: 2026-11-26
 :sid-updated: 2026-11-26
 :sid-discussion: No external discussion URL assigned
-:sid-summary: Every TLS connection that Sibuna ends or opens offers and accepts the hybrid key exchange X25519MLKEM768, which combines X25519 with ML-KEM-768 (FIPS 203). A recording of the traffic today then stays secret against a quantum computer of tomorrow. We add the group beside the ring provider of rustls 0.23, in the shape of the hybrid combinator of rustls 0.24, with ML-KEM from a pure Rust crate.
+:sid-summary: Sibuna offers the hybrid key exchange X25519MLKEM768, which combines X25519 with ML-KEM-768 (FIPS 203), on its TLS listeners and outbound HTTP connections. A recording of the traffic today then stays secret against a quantum computer of tomorrow. We add the group beside the ring provider of rustls 0.23, in the shape of the hybrid combinator of rustls 0.24, with ML-KEM from a pure Rust crate.
 :sid-labels: ["architecture","tls","security","cryptography"]
 
 Post-Quantum Key Exchange
@@ -16,11 +16,11 @@ Post-Quantum Key Exchange
 Abstract
 --------
 
-The key of a TLS 1.3 session comes from an elliptic-curve Diffie-Hellman exchange. Shor's algorithm computes discrete logarithms on a quantum computer, so an adversary who records a session today can read it once such a computer exists. This is called "harvest now, decrypt later". Signatures do not have this problem: a forged signature is useful only at the time of the handshake.
+In a classical TLS 1.3 handshake with ephemeral elliptic-curve keys, the shared secret comes from a Diffie-Hellman exchange. Shor's algorithm computes discrete logarithms on a quantum computer, so an adversary who records a session today can read it once such a computer exists. This is called "harvest now, decrypt later". Signatures do not have this problem: a forged signature is useful only at the time of the handshake.
 
-The defence is a key exchange that a quantum computer cannot break. ML-KEM, standardised by NIST as FIPS 203, is such a key encapsulation mechanism. The IETF draft ``draft-ietf-tls-ecdhe-mlkem`` defines the group X25519MLKEM768 (code point ``0x11EC``), which runs ML-KEM-768 and X25519 together and feeds both secrets to the key schedule. The session stays secret as long as either of the two holds. Current releases of Chrome, Edge, Firefox and Safari, OpenSSL 3.5 and Go 1.24 offer this group by default.
+ML-KEM is designed to resist attacks by a quantum computer. NIST specifies the mechanism in FIPS 203. RFC 10024 defines the group X25519MLKEM768 (code point ``0x11EC``), which runs ML-KEM-768 and X25519 together and feeds both secrets to the key schedule. The session stays secret as long as either of the two holds. Current releases of Chrome, Edge, Firefox and Safari, OpenSSL 3.5 and Go 1.24 offer this group by default.
 
-We make Sibuna offer and accept X25519MLKEM768 on every TLS connection it ends (HTTPS and HTTP/3 listeners, TLS on the workers) and every one it opens (servers behind ``tls`` pools, the console's outbound connections). Clients and servers without the group keep using X25519 or the NIST curves, with no extra round trip.
+We make Sibuna offer and accept X25519MLKEM768 on every TLS connection it ends (HTTPS and HTTP/3 listeners, TLS on the workers) and on its outbound HTTP and origin connections (servers behind ``tls`` pools, the console's outbound connections). Peers can still negotiate X25519 or the NIST curves. A Sibuna client sends an X25519 share in its first flight, so a server that selects X25519 needs no retry.
 
 Motivation and scope
 --------------------
@@ -33,7 +33,7 @@ rustls, the TLS library of Sibuna, supports X25519MLKEM768 only with its aws-lc-
 - rustls 0.24 (in development, 0.24.0-dev.3) moves the providers into their own crates. ``rustls-aws-lc-rs`` has the hybrid groups; ``rustls-ring`` has X25519, P-256 and P-384 only. The core crate gains a public ``Hybrid`` combinator with a ``HybridLayout``, so that any provider can pair a classical group with a post-quantum one.
 - ``rustls-post-quantum`` was the experimental home of ML-KEM before rustls 0.23.22. It is now the aws-lc-rs provider plus three experimental ML-DSA signature algorithms.
 
-This record covers the key exchange of every TLS connection of the ``sibuna`` binary. It does not cover certificates and signatures (see Rationale), the TLS of PostgreSQL connections, which sqlx builds itself, or the inner protocol of the agent and WebAssembly hooks.
+This record covers the TLS configurations that Sibuna builds. It does not cover certificates and signatures (see Rationale), the TLS of PostgreSQL connections, which sqlx builds itself, or the inner protocol of the agent and WebAssembly hooks.
 
 Specification
 -------------
@@ -41,11 +41,11 @@ Specification
 Invariants
 ~~~~~~~~~~
 
-#. *Either secret suffices.* The secret that enters the TLS 1.3 key schedule is the ML-KEM shared secret followed by the X25519 shared secret, 64 bytes, as the draft specifies. Each half can be recovered from the whole, so an adversary who learns the whole has broken both components.
+#. *Either secret suffices.* The secret that enters the TLS 1.3 key schedule is the ML-KEM shared secret followed by the X25519 shared secret, 64 bytes, as RFC 10024 specifies. Each half can be recovered from the whole, so an adversary who learns the whole has broken both components.
 #. *No client is refused for it.* A peer that does not offer the hybrid group negotiates exactly the group it negotiated before. Adding the group never turns a successful handshake into a failure.
 #. *TLS 1.3 only.* The hybrid group is never selected for TLS 1.2, which has no way to carry a key encapsulation.
 #. *Strict lengths.* A client share has exactly 1,216 bytes (an ML-KEM-768 encapsulation key of 1,184 bytes, then an X25519 key of 32). A server share has exactly 1,120 bytes (a ciphertext of 1,088 bytes, then 32). Any other length, or an encapsulation key that fails the modulus check of FIPS 203, ends the handshake with ``illegal_parameter``.
-#. *One provider.* Every TLS configuration of the binary is built from one function, so no connection is left with the classical groups alone.
+#. *One provider.* Sibuna builds the TLS configurations it owns from one function. SQLx selects its own provider for PostgreSQL.
 
 The group
 ~~~~~~~~~
@@ -143,7 +143,7 @@ Acceptance criteria and implementation status
      - ``a_server_without_the_group_gets_x25519_with_no_retry``; ``a_client_without_the_group_negotiates_as_before``; ``the_classical_component_is_the_tail_of_the_share_and_completes_alone`` (unit).
    * - Wrong share lengths and invalid keys are refused; the group is not used for TLS 1.2
      - ``shares_of_the_wrong_length_are_refused``; ``an_encapsulation_key_that_fails_the_modulus_check_is_refused``; ``a_forged_ciphertext_gives_a_different_secret_not_an_error``; ``the_kem_groups_are_for_tls_1_3_only``; ``tls_1_2_never_uses_the_hybrid_group``.
-   * - Every TLS configuration uses ``provider()``
+   * - Every Sibuna-owned TLS configuration uses ``provider()``
      - No call of ``rustls::crypto::ring::default_provider()`` is left outside tests and ``provider()`` itself; ``the_provider_offers_the_hybrid_group_first_and_keeps_ring_otherwise``.
    * - The Lean model checks
      - ``docs/sid/assets/post-quantum-key-exchange.lean``: ``split_concat``, ``split_wrong_length``, ``secret_reveals_halves``, ``selected_is_mutual``, ``never_hybrid_on_tls12``, ``classical_client_unchanged``, ``adding_keeps_success``, ``hybrid_first_wins``, ``component_completes``, ``classical_server_picks_component``.
@@ -194,8 +194,8 @@ References
 ----------
 
 - NIST FIPS 203, *Module-Lattice-Based Key-Encapsulation Mechanism Standard*, August 2024.
-- K. Kwiatkowski, P. Kampanakis, B. Westerbaan and D. Stebila, *Post-quantum hybrid ECDHE-MLKEM Key Agreement for TLSv1.3*, ``draft-ietf-tls-ecdhe-mlkem``.
-- D. Stebila, S. Fluhrer and S. Gueron, *Hybrid key exchange in TLS 1.3*, ``draft-ietf-tls-hybrid-design``.
+- K. Kwiatkowski, P. Kampanakis, B. Westerbaan and D. Stebila, `Post-Quantum Traditional (PQ/T) Hybrid Key Agreement Mechanisms for TLS 1.3 <https://www.rfc-editor.org/rfc/rfc10024.html>`_`.
+- D. Stebila, S. Fluhrer and S. Gueron, `Hybrid Key Exchange in TLS 1.3 <https://www.rfc-editor.org/rfc/rfc9954.html>`_`.
 - rustls: ``rustls/src/crypto/aws_lc_rs/pq`` (0.23), ``rustls/src/crypto/kx`` and ``rustls-ring`` (0.24.0-dev.3), ``rustls-post-quantum``.
 - D. J. Bernstein et al., *KyberSlash: Exploiting secret-dependent division timings in Kyber implementations*, 2024.
 - SID 0006, mathematical foundations; SID 0012, console TLS; SID 0021, automatic HTTPS; SID 0024, TLS on the workers; SID 0032, staged admission.
