@@ -98,6 +98,7 @@ pub mod matchers;
 pub mod mime;
 pub mod normalizer;
 pub mod pages;
+pub mod reputation;
 pub mod request;
 pub mod rule;
 pub mod waf;
@@ -112,6 +113,7 @@ pub use engine::{
 pub use inspection::{Mode, Modes};
 pub use limits::Limits;
 pub use loader::{Diagnostic, Explanation, LoadError, explain};
+pub use reputation::{ReputationBuilder, ReputationError, ReputationSet};
 pub use request::RequestView;
 pub use rule::{Action, Algorithm, Header, HeaderMatcher, PolicyRule, pattern_matches};
 
