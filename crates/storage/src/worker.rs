@@ -1,6 +1,6 @@
 //! The storage thread's state and its tick: persist queued incidents (announcing each batch
-//! once it is confirmed committed), then rebuild the policy snapshot, with its page
-//! templates, when the revision changed or a ban expired.
+//! once it is confirmed committed), rebuild the policy snapshot, with its page templates,
+//! when the revision changed, then follow the reputation change log (SID 0033).
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -17,6 +17,7 @@ use crate::incidents::{
     BatchContext, INCIDENT_BATCH, INCIDENT_QUEUE, IncidentRecord, PreparedBatch,
     load_next_sequence, prepare, view, write_batch,
 };
+use crate::reputation::{MAX_CHANGES_PER_TICK, ReputationBatch, ReputationChange, follows};
 use crate::schema::{CORE, MigrationSet, migrate};
 use crate::storage::{Committed, Hooks};
 
@@ -88,8 +89,11 @@ pub(crate) struct Worker {
     pub(crate) prepared: Option<PreparedBatch>,
     /// The revision of the last published snapshot.
     pub(crate) applied_revision: Option<u64>,
-    /// When the earliest loaded ban expires.
-    pub(crate) reputation_expires: Option<u64>,
+    /// The stamp of the last reputation change handed to the daemon; `None` before the
+    /// first full load.
+    pub(crate) reputation_cursor: Option<u64>,
+    /// When this node last pruned the reputation change log.
+    pub(crate) last_prune: Option<u64>,
     pub(crate) campaigns: CampaignWindow,
     /// The wall clock in Unix seconds; tests replace it.
     pub(crate) clock: fn() -> u64,
@@ -115,7 +119,8 @@ impl Worker {
             pending: Vec::with_capacity(INCIDENT_BATCH),
             prepared: None,
             applied_revision: None,
-            reputation_expires: None,
+            reputation_cursor: None,
+            last_prune: None,
             campaigns: CampaignWindow::new(),
             clock: unix_now,
         }
@@ -142,7 +147,9 @@ impl Worker {
         self.load_next_sequence().await?;
         self.campaigns = CampaignWindow::new();
         self.campaigns.load(&self.db).await?;
-        self.rebuild().await
+        self.rebuild().await?;
+        self.reputation_cursor = None;
+        self.follow_reputation().await
     }
 
     pub(crate) async fn load_next_sequence(&mut self) -> Result<(), StorageError> {
@@ -162,9 +169,12 @@ impl Worker {
             self.report(&error);
         }
         let revision = self.db.policy_revision().await?;
-        let expired = self.reputation_expires.is_some_and(|at| (self.clock)() >= at);
-        if self.applied_revision != Some(revision) || expired {
+        if self.applied_revision != Some(revision) {
             self.rebuild().await?;
+        }
+        // A failure keeps the published reputation; the next tick tries again.
+        if let Err(error) = self.follow_reputation().await {
+            self.report(&error);
         }
         if let Some(on_tick) = self.hooks.on_tick.as_mut() {
             on_tick(self.db.clone()).await;
@@ -259,7 +269,7 @@ impl Worker {
     /// the old engine stays live.
     pub(crate) async fn rebuild(&mut self) -> Result<(), StorageError> {
         let revision = self.db.policy_revision().await?;
-        let mut snapshot = self.db.load_policy_snapshot(revision, (self.clock)()).await?;
+        let mut snapshot = self.db.load_policy_snapshot(revision).await?;
         if let Some(on_snapshot) = self.hooks.on_snapshot.as_mut() {
             let mut tx = self.db.begin().await?;
             snapshot.pages = on_snapshot(&mut tx).await?;
@@ -269,13 +279,55 @@ impl Worker {
         if self.db.policy_revision().await? != revision {
             return Err(StorageError::PolicyRevisionChanged);
         }
-        let expires = snapshot.next_expiry;
         if !(self.hooks.publish)(snapshot) {
             return Err(StorageError::PublishRejected);
         }
         self.applied_revision = Some(revision);
-        self.reputation_expires = expires;
         Ok(())
+    }
+
+    /// Hands the daemon the reputation changes after the cursor, or the whole table when
+    /// there is no cursor yet, the log has a gap (retention passed the cursor), or the table
+    /// was truncated. Prunes the log at most once a minute.
+    pub(crate) async fn follow_reputation(&mut self) -> Result<(), StorageError> {
+        let now = (self.clock)();
+        let Some(cursor) = self.reputation_cursor else {
+            return self.load_reputation(now).await;
+        };
+        let changes = self.db.reputation_changes(cursor, MAX_CHANGES_PER_TICK).await?;
+        if !follows(cursor, &changes) || changes.iter().any(ReputationChange::is_reset) {
+            return self.load_reputation(now).await;
+        }
+        (self.hooks.on_reputation)(&ReputationBatch { reset: None, changes: &changes, now });
+        if let Some(last) = changes.last() {
+            self.reputation_cursor = Some(last.seq);
+        }
+        if self.last_prune.is_none_or(|at| now >= at.saturating_add(60)) {
+            self.last_prune = Some(now);
+            if let Err(error) = self.db.prune_reputation_changes().await {
+                self.report(&error);
+            }
+        }
+        Ok(())
+    }
+
+    /// Loads the whole table without a long transaction: the counter first, then the rows,
+    /// then the changes after the counter (SID 0033, "Loading the whole table"). Starts
+    /// again when the changes do not follow the counter, at most three times.
+    async fn load_reputation(&mut self, now: u64) -> Result<(), StorageError> {
+        for _ in 0..3 {
+            let clock = self.db.reputation_clock().await?;
+            let rows = self.db.deciding_reputation(now).await?;
+            let changes = self.db.reputation_changes(clock, MAX_CHANGES_PER_TICK).await?;
+            if !follows(clock, &changes) || changes.iter().any(ReputationChange::is_reset) {
+                continue;
+            }
+            let batch = ReputationBatch { reset: Some(&rows), changes: &changes, now };
+            (self.hooks.on_reputation)(&batch);
+            self.reputation_cursor = Some(changes.last().map_or(clock, |change| change.seq));
+            return Ok(());
+        }
+        Err(StorageError::ReputationLogMoved)
     }
 
     /// Flushes every queued incident. Returns true when all of them were confirmed written;

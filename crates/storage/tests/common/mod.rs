@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use sibuna_core::Config;
-use sibuna_storage::{Database, Hooks, PolicySnapshot, Target};
+use sibuna_storage::{Database, Hooks, PolicySnapshot, ReputationMirror, Target};
 
 /// The environment variable naming a PostgreSQL database whose role may create databases.
 pub const POSTGRES_ENV: &str = "SIBUNA_TEST_DATABASE_URL";
@@ -142,16 +142,28 @@ pub fn postgres_config(url: &str, node: u32, poll_ms: u64) -> Config {
 
 /// Hooks whose publish hook keeps the latest snapshot in the returned slot.
 pub fn recording_hooks() -> (Hooks, Arc<Mutex<Option<PolicySnapshot>>>) {
+    let (hooks, latest, _) = recording_hooks_with_reputation();
+    (hooks, latest)
+}
+
+/// The last snapshot a node published, shared with the test.
+pub type Latest = Arc<Mutex<Option<PolicySnapshot>>>;
+
+/// As [`recording_hooks`], also keeping the reputation the node holds (SID 0033).
+pub fn recording_hooks_with_reputation() -> (Hooks, Latest, Arc<Mutex<ReputationMirror>>) {
     let latest = Arc::new(Mutex::new(None));
+    let reputation = Arc::new(Mutex::new(ReputationMirror::default()));
     let slot = Arc::clone(&latest);
+    let mirror = Arc::clone(&reputation);
     let hooks = Hooks {
         publish: Box::new(move |snapshot| {
             *slot.lock().unwrap() = Some(snapshot);
             true
         }),
+        on_reputation: Box::new(move |batch| mirror.lock().unwrap().apply(batch)),
         ..Hooks::default()
     };
-    (hooks, latest)
+    (hooks, latest, reputation)
 }
 
 /// Polls `condition` every millisecond until it holds or `timeout` passes; returns how long

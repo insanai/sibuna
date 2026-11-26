@@ -340,8 +340,8 @@ pub(crate) fn target_verdict<W: Write>(
         headers: fields.get(..count).unwrap_or_default(),
         body: b"",
     };
-    let engine: &Engine = ctx.cache.refresh(&ctx.server.slot);
-    Verdict::of(&engine.evaluate(&view))
+    let (engine, reputation): (&Engine, _) = ctx.cache.refresh_in(&ctx.server.slot);
+    Verdict::of(&engine.evaluate_in(&view, reputation))
 }
 
 fn apply_policy<W: Write>(ctx: &mut Ctx<'_, W>) -> io::Result<bool> {

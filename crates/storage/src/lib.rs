@@ -162,6 +162,7 @@ mod error;
 mod incidents;
 mod listen;
 pub mod policy;
+pub mod reputation;
 pub mod schema;
 pub mod search;
 mod storage;
@@ -186,11 +187,12 @@ pub use policy::{
     ChallengeAlgorithm, InspectionMode, InspectionRow, PageTemplate, PolicyAction, PolicyRow,
     PolicySnapshot, ReputationRow, RuleLimits,
 };
+pub use reputation::{ReputationBatch, ReputationChange, ReputationMirror, decides};
 pub use schema::{Migration, MigrationSet};
 pub use storage::{
     BorrowedFuture, Committed, CommittedHook, EmbedFn, ErrorFn, Hooks, IncidentHook, JOB_QUEUE,
-    JOBS_PER_TICK, LocalFuture, MAX_BACKOFF, MAX_NODE_ID, MIN_POLL, PublishFn, SHUTDOWN_TIMEOUT,
-    STARTUP_TIMEOUT, SnapshotHook, Storage, TickHook, Ticket,
+    JOBS_PER_TICK, LocalFuture, MAX_BACKOFF, MAX_NODE_ID, MIN_POLL, PublishFn, ReputationFn,
+    SHUTDOWN_TIMEOUT, STARTUP_TIMEOUT, SnapshotHook, Storage, TickHook, Ticket,
 };
 pub use tls::{POSTGRES_TLS, PostgresTls, Protection, SslMode};
 pub use url_file::{MAX_URL_FILE, read_database_url_file};

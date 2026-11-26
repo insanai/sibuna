@@ -140,10 +140,6 @@ pub struct PolicySnapshot {
     pub rules: Vec<PolicyRow>,
     /// The inspection override, when the operator stored one.
     pub inspection: Option<InspectionRow>,
-    /// Unexpired addresses with a decisive score (at most -50 or at least 50).
-    pub reputation: Vec<ReputationRow>,
-    /// The earliest `banned_until` among `reputation`; the storage thread rebuilds then.
-    pub next_expiry: Option<u64>,
     /// The operator's page templates, read by [`Hooks::on_snapshot`](crate::Hooks) in the
     /// same rebuild; empty without that hook. A kind without a template keeps the built-in
     /// page.
@@ -416,29 +412,19 @@ impl Database {
         Columns::new(row, "policy_revision").integer("revision")
     }
 
-    /// Loads the rules, the inspection override and the reputation entries unexpired at
-    /// `now` (Unix seconds), labelled with `revision`. It does not check that the revision
-    /// still holds; the storage thread does that after the load.
+    /// Loads the rules and the inspection override, labelled with `revision`. Reputation
+    /// is not part of a snapshot: it follows its own change log (SID 0033). It does not
+    /// check that the revision still holds; the storage thread does that after the load.
     ///
     /// Fails with [`StorageError::InvalidRow`] or [`StorageError::TooManyRows`] for stored
     /// data it cannot load, and with the driver's error.
     pub async fn load_policy_snapshot(
         &self,
         revision: u64,
-        now: u64,
     ) -> Result<PolicySnapshot, StorageError> {
         let rules = self.load_rules().await?;
         let inspection = self.load_inspection().await?;
-        let reputation = self.load_reputation(now).await?;
-        let next_expiry = reputation.iter().filter_map(|row| row.banned_until).min();
-        Ok(PolicySnapshot {
-            revision,
-            rules,
-            inspection,
-            reputation,
-            next_expiry,
-            pages: Vec::new(),
-        })
+        Ok(PolicySnapshot { revision, rules, inspection, pages: Vec::new() })
     }
 
     async fn load_rules(&self) -> Result<Vec<PolicyRow>, StorageError> {
@@ -455,7 +441,10 @@ impl Database {
         rows.into_iter().next().map(InspectionRow::decode).transpose()
     }
 
-    async fn load_reputation(&self, now: u64) -> Result<Vec<ReputationRow>, StorageError> {
+    pub(crate) async fn load_reputation(
+        &self,
+        now: u64,
+    ) -> Result<Vec<ReputationRow>, StorageError> {
         let limit = i64::try_from(MAX_REPUTATION_ROWS + 1).unwrap_or(i64::MAX);
         let rows = self.fetch_all(REPUTATION, &[sql_time(now).into(), limit.into()]).await?;
         if rows.len() > MAX_REPUTATION_ROWS {

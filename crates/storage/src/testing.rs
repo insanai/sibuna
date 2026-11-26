@@ -162,6 +162,8 @@ pub(crate) fn embed(payload: &[u8]) -> Embedding {
 pub(crate) struct Fixture {
     pub(crate) worker: Worker,
     pub(crate) snapshots: Arc<Mutex<Vec<PolicySnapshot>>>,
+    /// The reputation the worker handed over, applied as the daemon applies it.
+    pub(crate) reputation: Arc<Mutex<crate::ReputationMirror>>,
     pub(crate) metrics: Arc<Metrics>,
 }
 
@@ -188,8 +190,10 @@ impl Fixture {
         accept: impl Fn(&PolicySnapshot) -> bool + Send + 'static,
     ) -> Result<Fixture, crate::StorageError> {
         let snapshots = Arc::new(Mutex::new(Vec::new()));
+        let reputation = Arc::new(Mutex::new(crate::ReputationMirror::default()));
         let metrics = Arc::new(Metrics::default());
         let seen = Arc::clone(&snapshots);
+        let mirror = Arc::clone(&reputation);
         let hooks = Hooks {
             embed: Box::new(embed),
             publish: Box::new(move |snapshot| {
@@ -197,13 +201,14 @@ impl Fixture {
                 seen.lock().unwrap().push(snapshot);
                 accepted
             }),
+            on_reputation: Box::new(move |batch| mirror.lock().unwrap().apply(batch)),
             metrics: Arc::clone(&metrics),
             ..Hooks::default()
         };
         let shared = Arc::new(Shared::new(Arc::clone(&metrics)));
         let settings = Settings { node, ban_seconds: 3600 };
         let worker = Worker::open(target, settings, hooks, shared).await?;
-        Ok(Fixture { worker, snapshots, metrics })
+        Ok(Fixture { worker, snapshots, reputation, metrics })
     }
 
     /// Queues `incident` as a request thread would.
@@ -214,6 +219,11 @@ impl Fixture {
     /// Returns the last published snapshot.
     pub(crate) fn latest(&self) -> PolicySnapshot {
         self.snapshots.lock().unwrap().last().cloned().expect("a snapshot")
+    }
+
+    /// Returns the reputation rows the worker has handed over so far.
+    pub(crate) fn reputation(&self) -> crate::ReputationMirror {
+        self.reputation.lock().unwrap().clone()
     }
 
     /// Returns the number of snapshots published so far.

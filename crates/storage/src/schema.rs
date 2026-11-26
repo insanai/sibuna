@@ -115,9 +115,10 @@ pub async fn migrate(db: &Database, sets: &[MigrationSet], now: u64) -> Result<(
 /// later change.
 pub const CORE: MigrationSet = MigrationSet { component: "core", migrations: &CORE_MIGRATIONS };
 
-const CORE_MIGRATIONS: [Migration; 2] = [
+const CORE_MIGRATIONS: [Migration; 3] = [
     Migration { version: 1, sqlite: SQLITE_V1, postgres: POSTGRES_V1 },
     Migration { version: 2, sqlite: SQLITE_V2, postgres: POSTGRES_V2 },
+    Migration { version: 3, sqlite: SQLITE_V3, postgres: POSTGRES_V3 },
 ];
 
 /// Version 1 on SQLite. Every table is `STRICT`, so a value of the wrong storage class is
@@ -316,4 +317,121 @@ const POSTGRES_V2: &str = "
 ALTER TABLE policies ADD COLUMN ja4_pattern TEXT
     CHECK (octet_length(ja4_pattern) BETWEEN 1 AND 37);
 ALTER TABLE security_incidents ADD COLUMN ja4 TEXT CHECK (octet_length(ja4) = 36);
+";
+
+/// Version 3 on SQLite (SID 0033): reputation changes no longer raise the policy revision.
+/// Every insert, update of a deciding column, and delete of `ip_reputation` adds one to
+/// `reputation_clock` and records the row's whole new state in `reputation_changes` under
+/// the new value; a delete, or an update that renames the key, records a removal of the old
+/// key first. SQLite runs one writer at a time, so the stamps are in commit order.
+const SQLITE_V3: &str = "
+CREATE TABLE reputation_clock (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    seq INTEGER NOT NULL CHECK (seq >= 0)) STRICT;
+INSERT INTO reputation_clock (id, seq) VALUES (1, 0);
+CREATE TABLE reputation_changes (
+    seq INTEGER PRIMARY KEY CHECK (seq >= 1),
+    ip_or_cidr TEXT NOT NULL,
+    reputation_score INTEGER NOT NULL CHECK (reputation_score BETWEEN -100 AND 100),
+    banned_until INTEGER CHECK (banned_until >= 0),
+    removed INTEGER NOT NULL CHECK (removed IN (0, 1))) STRICT;
+
+DROP TRIGGER ip_reputation_revision_insert;
+DROP TRIGGER ip_reputation_revision_update;
+DROP TRIGGER ip_reputation_revision_delete;
+
+CREATE TRIGGER ip_reputation_change_insert AFTER INSERT ON ip_reputation BEGIN
+    UPDATE reputation_clock SET seq = seq + 1 WHERE id = 1;
+    INSERT INTO reputation_changes (seq, ip_or_cidr, reputation_score, banned_until, removed)
+        SELECT seq, NEW.ip_or_cidr, NEW.reputation_score, NEW.banned_until, 0
+        FROM reputation_clock WHERE id = 1;
+END;
+CREATE TRIGGER ip_reputation_change_update
+    AFTER UPDATE OF ip_or_cidr, reputation_score, banned_until ON ip_reputation BEGIN
+    UPDATE reputation_clock SET seq = seq + 1
+        WHERE id = 1 AND OLD.ip_or_cidr <> NEW.ip_or_cidr;
+    INSERT INTO reputation_changes (seq, ip_or_cidr, reputation_score, banned_until, removed)
+        SELECT seq, OLD.ip_or_cidr, OLD.reputation_score, OLD.banned_until, 1
+        FROM reputation_clock WHERE id = 1 AND OLD.ip_or_cidr <> NEW.ip_or_cidr;
+    UPDATE reputation_clock SET seq = seq + 1 WHERE id = 1;
+    INSERT INTO reputation_changes (seq, ip_or_cidr, reputation_score, banned_until, removed)
+        SELECT seq, NEW.ip_or_cidr, NEW.reputation_score, NEW.banned_until, 0
+        FROM reputation_clock WHERE id = 1;
+END;
+CREATE TRIGGER ip_reputation_change_delete AFTER DELETE ON ip_reputation BEGIN
+    UPDATE reputation_clock SET seq = seq + 1 WHERE id = 1;
+    INSERT INTO reputation_changes (seq, ip_or_cidr, reputation_score, banned_until, removed)
+        SELECT seq, OLD.ip_or_cidr, OLD.reputation_score, OLD.banned_until, 1
+        FROM reputation_clock WHERE id = 1;
+END;
+";
+
+/// Version 3 on PostgreSQL; see [`SQLITE_V3`]. A statement trigger locks the counter row
+/// before any row of `ip_reputation`, so every writer of reputation takes the counter
+/// first: writers are serialized, their stamps are in commit order (a reader never meets a
+/// gap that later fills), and two writers cannot deadlock on the table and the counter. An
+/// aborted transaction rolls its stamps back. `TRUNCATE` fires no row trigger, so it
+/// records one change with an empty key, which tells a node to load the whole table.
+const POSTGRES_V3: &str = "
+CREATE TABLE reputation_clock (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    seq BIGINT NOT NULL CHECK (seq >= 0));
+INSERT INTO reputation_clock (id, seq) VALUES (1, 0);
+CREATE TABLE reputation_changes (
+    seq BIGINT PRIMARY KEY CHECK (seq >= 1),
+    ip_or_cidr TEXT NOT NULL,
+    reputation_score INTEGER NOT NULL CHECK (reputation_score BETWEEN -100 AND 100),
+    banned_until BIGINT CHECK (banned_until >= 0),
+    removed SMALLINT NOT NULL CHECK (removed IN (0, 1)));
+
+DROP TRIGGER ip_reputation_revision ON ip_reputation;
+
+CREATE FUNCTION sibuna_reputation_lock() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    PERFORM 1 FROM reputation_clock WHERE id = 1 FOR UPDATE;
+    RETURN NULL;
+END
+$$;
+CREATE TRIGGER ip_reputation_lock
+    BEFORE INSERT OR UPDATE OR DELETE OR TRUNCATE ON ip_reputation
+    FOR EACH STATEMENT EXECUTE FUNCTION sibuna_reputation_lock();
+
+CREATE FUNCTION sibuna_reputation_change() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+    stamp BIGINT;
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        UPDATE reputation_clock SET seq = seq + 1 WHERE id = 1 RETURNING seq INTO stamp;
+        INSERT INTO reputation_changes VALUES
+            (stamp, OLD.ip_or_cidr, OLD.reputation_score, OLD.banned_until, 1);
+    ELSIF TG_OP = 'UPDATE' AND OLD.ip_or_cidr <> NEW.ip_or_cidr THEN
+        UPDATE reputation_clock SET seq = seq + 1 WHERE id = 1 RETURNING seq INTO stamp;
+        INSERT INTO reputation_changes VALUES
+            (stamp, OLD.ip_or_cidr, OLD.reputation_score, OLD.banned_until, 1);
+    END IF;
+    IF TG_OP <> 'DELETE' THEN
+        UPDATE reputation_clock SET seq = seq + 1 WHERE id = 1 RETURNING seq INTO stamp;
+        INSERT INTO reputation_changes VALUES
+            (stamp, NEW.ip_or_cidr, NEW.reputation_score, NEW.banned_until, 0);
+    END IF;
+    PERFORM pg_notify('sibuna_policy', '');
+    RETURN NULL;
+END
+$$;
+CREATE TRIGGER ip_reputation_change
+    AFTER INSERT OR DELETE OR UPDATE OF ip_or_cidr, reputation_score, banned_until
+    ON ip_reputation FOR EACH ROW EXECUTE FUNCTION sibuna_reputation_change();
+
+CREATE FUNCTION sibuna_reputation_reset() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+    stamp BIGINT;
+BEGIN
+    UPDATE reputation_clock SET seq = seq + 1 WHERE id = 1 RETURNING seq INTO stamp;
+    INSERT INTO reputation_changes VALUES (stamp, '', 0, NULL, 1);
+    PERFORM pg_notify('sibuna_policy', '');
+    RETURN NULL;
+END
+$$;
+CREATE TRIGGER ip_reputation_reset AFTER TRUNCATE ON ip_reputation
+    FOR EACH STATEMENT EXECUTE FUNCTION sibuna_reputation_reset();
 ";

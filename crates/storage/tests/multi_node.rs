@@ -12,9 +12,9 @@ mod common;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use common::{PostgresDb, postgres_config, recording_hooks, unix_now, wait_until};
+use common::{PostgresDb, postgres_config, recording_hooks_with_reputation, unix_now, wait_until};
 use sibuna_core::{Incident, Metrics};
-use sibuna_storage::{PolicySnapshot, Storage};
+use sibuna_storage::{PolicySnapshot, ReputationMirror, Storage};
 
 /// The poll interval; NOTIFY should make every node tick well before it.
 const POLL_MS: u64 = 1000;
@@ -22,14 +22,15 @@ const POLL_MS: u64 = 1000;
 struct Node {
     storage: Storage,
     latest: Arc<Mutex<Option<PolicySnapshot>>>,
+    reputation: Arc<Mutex<ReputationMirror>>,
     metrics: Arc<Metrics>,
 }
 
 fn start(db: &PostgresDb, node: u32) -> Node {
-    let (hooks, latest) = recording_hooks();
+    let (hooks, latest, reputation) = recording_hooks_with_reputation();
     let metrics = Arc::clone(&hooks.metrics);
     let storage = Storage::start(&postgres_config(&db.url, node, POLL_MS), hooks).expect("start");
-    Node { storage, latest, metrics }
+    Node { storage, latest, reputation, metrics }
 }
 
 fn sees(node: &Node, check: impl Fn(&PolicySnapshot) -> bool) -> bool {
@@ -62,14 +63,11 @@ fn three_nodes_share_policy_bans_and_collision_free_incident_ids() {
         ..Incident::default()
     };
     nodes[0].storage.record_incident(&honeypot);
-    let banned = |s: &PolicySnapshot| {
-        s.reputation
-            .iter()
-            .any(|row| row.ip_or_cidr == "198.51.100.66" && row.reputation_score < 0)
+    let banned = |node: &Node| {
+        let mirror = node.reputation.lock().unwrap();
+        mirror.rows.get("198.51.100.66").is_some_and(|(score, _)| *score < 0)
     };
-    let took = wait_until(Duration::from_millis(POLL_MS * 3), || {
-        nodes[1..].iter().all(|node| sees(node, banned))
-    });
+    let took = wait_until(Duration::from_millis(POLL_MS * 3), || nodes[1..].iter().all(banned));
     let took = took.expect("nodes 2 and 3 see node 1's honeypot ban");
     println!("honeypot ban reached nodes 2 and 3 in {took:?}");
 

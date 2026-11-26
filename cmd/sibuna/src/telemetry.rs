@@ -75,17 +75,20 @@ pub(crate) fn evaluate(
 ) -> Verdict {
     #[cfg(feature = "console")]
     {
-        let (engine, hits) = cache.refresh_observed(slot);
+        let (engine, reputation, hits) = cache.refresh_observed(slot);
         if let Some(hits) = hits {
             let mut matches = sibuna_policy::RuleMatches::new();
-            let decision = engine.evaluate_with_matches(view, &mut matches);
+            let decision = engine.evaluate_with_matches_in(view, reputation, &mut matches);
             hits.record(&matches, engine.rule_count());
             return Verdict::of(&decision);
         }
-        Verdict::of(&engine.evaluate(view))
+        Verdict::of(&engine.evaluate_in(view, reputation))
     }
     #[cfg(not(feature = "console"))]
-    Verdict::of(&cache.refresh(slot).evaluate(view))
+    {
+        let (engine, reputation) = cache.refresh_in(slot);
+        Verdict::of(&engine.evaluate_in(view, reputation))
+    }
 }
 
 /// Counts and samples the outcome selected for the request, with the status sent.

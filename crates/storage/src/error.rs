@@ -47,6 +47,11 @@ pub enum StorageError {
     InvalidMigrations(&'static str),
     /// `policy_revision` has lost its single row.
     MissingPolicyRevision,
+    /// `reputation_clock` has lost its single row (SID 0033).
+    MissingReputationClock,
+    /// Retention removed changes of `ip_reputation` faster than three full loads in a row
+    /// could read them (SID 0033); the node keeps its last reputation set.
+    ReputationLogMoved,
     /// The durable incident receipt of this node is zero or beyond 2^40.
     InvalidIncidentReceipt,
     /// This node has used all 2^40 incident sequence numbers.
@@ -134,6 +139,10 @@ impl StorageError {
             }
             StorageError::MissingPolicyRevision => {
                 "Restore it with `INSERT INTO policy_revision (id, revision) VALUES (1, 0)`."
+            }
+            StorageError::MissingReputationClock => {
+                "Restore it with `INSERT INTO reputation_clock (id, seq) SELECT 1, \
+                 COALESCE(MAX(seq), 0) FROM reputation_changes`."
             }
             StorageError::InvalidIncidentReceipt => {
                 "Repair this node's row in `incident_receipts`."
@@ -236,6 +245,12 @@ impl fmt::Display for StorageError {
             }
             StorageError::MissingPolicyRevision => {
                 write!(f, "the table policy_revision has no row")
+            }
+            StorageError::MissingReputationClock => {
+                write!(f, "the table reputation_clock has no row")
+            }
+            StorageError::ReputationLogMoved => {
+                write!(f, "the reputation change log moved during three loads in a row")
             }
             StorageError::InvalidIncidentReceipt => write!(f, "the incident receipt is invalid"),
             StorageError::IncidentIdExhausted => {

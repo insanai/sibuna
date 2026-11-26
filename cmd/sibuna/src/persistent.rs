@@ -2,12 +2,17 @@
 //!
 //! The storage thread reads a [`PolicySnapshot`] at one policy revision and hands it to the
 //! publish hook. The hook builds a complete engine from the startup policy file, the
-//! inspection override, the managed rules (ahead of the file's rules, so a generic admission
-//! rule cannot hide an operator's live denial) and the reputation rows, then publishes it.
-//! Any invalid row refuses the snapshot: the old engine stays live and the revision stays
-//! unapplied until the row is repaired. This is the port of `persistent_policy.zig`,
+//! inspection override and the managed rules (ahead of the file's rules, so a generic
+//! admission rule cannot hide an operator's live denial), then publishes it. Any invalid row
+//! refuses the snapshot: the old engine stays live and the revision stays unapplied until
+//! the row is repaired. This is the port of `persistent_policy.zig`,
 //! `policy_inspection.zig`, `policy_limits.zig` and `console_pages_load.zig`; the SQL lives
 //! in `sibuna-storage`.
+//!
+//! Reputation is not part of the engine (SID 0033). The storage thread hands the
+//! [`ReputationFollower`] the changes of `ip_reputation` after its cursor at every tick; the
+//! follower applies them to a [`ReputationBuilder`] and publishes the set beside the engine.
+//! A row the set cannot hold is refused alone and reported.
 //!
 //! The operator's page templates (read by the console's snapshot hook) are compiled into
 //! the engine too. A stored template that no longer compiles never refuses the snapshot:
@@ -22,10 +27,13 @@ use sibuna_policy::limits::{Limits, managed_identity};
 use sibuna_policy::loader::Diagnostic;
 use sibuna_policy::matchers::{self, MatcherError};
 use sibuna_policy::pages::{Kind, PageError, Template};
-use sibuna_policy::{Action, Algorithm, Engine, Mode, Modes, PolicyRule, RuleError};
+use sibuna_policy::{
+    Action, Algorithm, Engine, Mode, Modes, PolicyRule, ReputationBuilder, ReputationError,
+    RuleError,
+};
 use sibuna_storage::{
     ChallengeAlgorithm, Hooks, InspectionMode, InspectionRow, PageTemplate, PolicyAction,
-    PolicyRow, PolicySnapshot, RuleLimits, Storage, StorageError,
+    PolicyRow, PolicySnapshot, ReputationBatch, RuleLimits, Storage, StorageError, decides,
 };
 
 use crate::recipe::{BuildError, Recipe};
@@ -56,12 +64,6 @@ fn build_engine_reporting(
             RuleError::TooManyRules => BuildError::TooManyRules,
             other => invalid(row, other.name()),
         })?;
-    }
-    for row in &snapshot.reputation {
-        let action = if row.reputation_score < 0 { Action::Deny } else { Action::Allow };
-        engine
-            .insert_reputation(row.ip_or_cidr.as_bytes(), action)
-            .map_err(|_| BuildError::InvalidReputation(row.ip_or_cidr.clone()))?;
     }
     install_pages(&mut engine, &snapshot.pages, ignored);
     Ok(engine)
@@ -248,6 +250,87 @@ impl Publisher {
     }
 }
 
+/// Applies the reputation of each storage tick and publishes it beside the engine
+/// (SID 0033). It lives on the storage thread.
+#[derive(Debug)]
+pub struct ReputationFollower {
+    builder: ReputationBuilder,
+    slot: Arc<EngineSlot>,
+}
+
+impl ReputationFollower {
+    /// Returns a follower that publishes into `slot`, holding no reputation yet.
+    pub fn new(slot: Arc<EngineSlot>) -> ReputationFollower {
+        ReputationFollower { builder: ReputationBuilder::new(), slot }
+    }
+
+    /// Applies `batch`: on a full load forgets every entry and takes the loaded rows, then
+    /// applies the changes in order and removes the entries that ended at `batch.now`.
+    /// Publishes a new set only when something changed. A row the set cannot hold is
+    /// refused alone; the count and the first reason are reported.
+    pub fn apply(&mut self, batch: &ReputationBatch<'_>) {
+        let mut refused = Refused::default();
+        let mut changed = !batch.changes.is_empty();
+        if let Some(rows) = batch.reset {
+            self.builder.clear();
+            changed = true;
+            for row in rows {
+                let (score, until) = (row.reputation_score, row.banned_until);
+                refused.note(self.decide(&row.ip_or_cidr, score, until, false, batch.now));
+            }
+        }
+        for change in batch.changes {
+            let (score, until) = (change.reputation_score, change.banned_until);
+            let result = self.decide(&change.ip_or_cidr, score, until, change.removed, batch.now);
+            refused.note(result);
+        }
+        changed |= self.builder.expire(batch.now) > 0;
+        if changed {
+            let (set, ranges) = self.builder.publish();
+            refused.note(ranges.map_or(Ok(()), Err));
+            self.slot.publish_reputation(set);
+        }
+        if let Some(error) = refused.first {
+            let count = refused.count;
+            crate::cli::report(&format!(
+                "storage: {count} reputation row(s) not applied: {error}"
+            ));
+        }
+    }
+
+    /// Sets or removes one key, as the query of a full load would hold it.
+    fn decide(
+        &mut self,
+        cidr: &str,
+        score: i32,
+        until: Option<u64>,
+        removed: bool,
+        now: u64,
+    ) -> Result<(), ReputationError> {
+        if removed || !decides(score, until, now) {
+            return self.builder.remove(cidr.as_bytes());
+        }
+        let action = if score < 0 { Action::Deny } else { Action::Allow };
+        self.builder.set(cidr.as_bytes(), action, until)
+    }
+}
+
+/// The rows of one batch the set refused: how many, and the first reason.
+#[derive(Default)]
+struct Refused {
+    count: usize,
+    first: Option<ReputationError>,
+}
+
+impl Refused {
+    fn note(&mut self, result: Result<(), ReputationError>) {
+        if let Err(error) = result {
+            self.count += 1;
+            self.first.get_or_insert(error);
+        }
+    }
+}
+
 /// Starts the storage layer `config` selects. The first snapshot is built and published by
 /// `publisher` before this returns; later ones are published as the policy changes.
 /// Incidents are embedded with the SID 0006 embedding, and recovered storage errors are
@@ -260,9 +343,11 @@ pub fn start_storage(
     metrics: Arc<Metrics>,
     extend: impl FnOnce(&mut Hooks),
 ) -> Result<Storage, StorageError> {
+    let mut follower = ReputationFollower::new(Arc::clone(&publisher.slot));
     let mut hooks = Hooks {
         embed: Box::new(sibuna_policy::embedding::embed),
         publish: Box::new(move |snapshot: PolicySnapshot| publisher.publish(&snapshot)),
+        on_reputation: Box::new(move |batch| follower.apply(batch)),
         on_error: Some(Box::new(|error: &StorageError| {
             crate::cli::report(&format!("storage: {error}"));
         })),
@@ -338,22 +423,73 @@ mod tests {
             ),
             ..recipe()
         };
-        let mut snapshot = PolicySnapshot {
+        let snapshot = PolicySnapshot {
             rules: vec![row("live", PolicyAction::Deny, "/admin*")],
             ..Default::default()
         };
-        snapshot.reputation.push(ReputationRow {
+        let slot = Arc::new(EngineSlot::new(build_engine(&recipe, &snapshot).unwrap()));
+        let mut follower = ReputationFollower::new(Arc::clone(&slot));
+        let ban = ReputationRow {
             ip_or_cidr: "198.51.100.0/24".into(),
             reputation_score: -100,
             banned_until: None,
-        });
-        let engine = build_engine(&recipe, &snapshot).unwrap();
-        let admin = engine.evaluate(&RequestView::new(b"/admin/x", b"8.8.8.8", b"curl"));
-        assert_eq!((admin.action, admin.rule_name), (Action::Deny, "live"));
-        let open = engine.evaluate(&RequestView::new(b"/home", b"8.8.8.8", b"curl"));
-        assert_eq!((open.action, open.rule_name), (Action::Allow, "open"));
-        let banned = engine.evaluate(&RequestView::new(b"/home", b"198.51.100.7", b"curl"));
-        assert_eq!(banned.action, Action::Deny);
+        };
+        follower.apply(&ReputationBatch { reset: Some(&[ban]), changes: &[], now: 10 });
+        let mut cache = crate::slot::EngineCache::new();
+        let (engine, reputation) = cache.refresh_in(&slot);
+        let decide = |path: &[u8], ip: &[u8]| {
+            let decision = engine.evaluate_in(&RequestView::new(path, ip, b"curl"), reputation);
+            (decision.action, decision.rule_name.to_owned())
+        };
+        assert_eq!(decide(b"/admin/x", b"8.8.8.8"), (Action::Deny, "live".to_owned()));
+        assert_eq!(decide(b"/home", b"8.8.8.8"), (Action::Allow, "open".to_owned()));
+        assert_eq!(decide(b"/home", b"198.51.100.7").0, Action::Deny);
+    }
+
+    #[test]
+    fn the_follower_applies_changes_expires_and_publishes_only_on_a_change() {
+        use sibuna_storage::ReputationChange;
+
+        let slot = Arc::new(EngineSlot::new(Engine::new(8)));
+        let mut follower = ReputationFollower::new(Arc::clone(&slot));
+        let change = |seq, ip: &str, score, until, removed| ReputationChange {
+            seq,
+            ip_or_cidr: ip.into(),
+            reputation_score: score,
+            banned_until: until,
+            removed,
+        };
+        let verdict = |ip: &str| {
+            let mut cache = crate::slot::EngineCache::new();
+            let (_, set) = cache.refresh_in(&slot);
+            set.lookup(ip.parse().unwrap()).map(|(_, action)| action)
+        };
+        let changes = [
+            change(1, "192.0.2.1", -100, Some(100), false),
+            change(2, "192.0.2.2", -100, None, false),
+            // A score that does not decide removes the key; so does a removal.
+            change(3, "192.0.2.2", -10, None, false),
+            change(4, "not an address", -100, None, false),
+            change(5, "192.0.2.3", 80, None, false),
+            change(6, "192.0.2.3", 80, None, true),
+        ];
+        let generation = slot.generation();
+        follower.apply(&ReputationBatch { reset: None, changes: &changes, now: 50 });
+        assert_eq!(slot.generation(), generation + 1);
+        assert_eq!(verdict("192.0.2.1"), Some(Action::Deny));
+        assert_eq!(verdict("192.0.2.2"), None);
+        assert_eq!(verdict("192.0.2.3"), None);
+        // A tick with nothing new and nothing ended publishes nothing.
+        follower.apply(&ReputationBatch { reset: None, changes: &[], now: 60 });
+        assert_eq!(slot.generation(), generation + 1);
+        // The ban ends at its time, with no change from the database.
+        follower.apply(&ReputationBatch { reset: None, changes: &[], now: 100 });
+        assert_eq!(slot.generation(), generation + 2);
+        assert_eq!(verdict("192.0.2.1"), None);
+        // A new engine keeps the published reputation beside it.
+        follower.apply(&ReputationBatch { reset: None, changes: &changes[1..2], now: 100 });
+        slot.publish(Engine::new(9));
+        assert_eq!(verdict("192.0.2.2"), Some(Action::Deny));
     }
 
     #[test]

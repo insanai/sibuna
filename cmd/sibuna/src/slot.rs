@@ -38,7 +38,7 @@ use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, PoisonError, RwLock};
 
-use sibuna_policy::Engine;
+use sibuna_policy::{Engine, ReputationSet};
 
 #[cfg(feature = "console")]
 pub use crate::console::hits::RuleHits;
@@ -54,12 +54,14 @@ struct Sampled {
     retired: Option<Arc<RuleHits>>,
 }
 
-/// One publication: the engine and, with the console, its rule-hit counters.
+/// One publication: the engine, with the console its rule-hit counters, and the
+/// reputation set published beside it (SID 0033).
 #[derive(Clone, Debug)]
 struct Published {
     engine: Arc<Engine>,
     #[cfg(feature = "console")]
     hits: Option<Arc<RuleHits>>,
+    reputation: ReputationSet,
 }
 
 impl Published {
@@ -68,6 +70,7 @@ impl Published {
             engine: Arc::new(engine),
             #[cfg(feature = "console")]
             hits: None,
+            reputation: ReputationSet::default(),
         }
     }
 }
@@ -104,18 +107,39 @@ impl EngineSlot {
         self.replace(Published::plain(engine));
     }
 
+    /// Publishes `reputation` beside the current engine (SID 0033): later requests look
+    /// addresses up in it. The engine and its rule-hit counters stay as they are, so a
+    /// reputation change retires no counters and rebuilds nothing.
+    pub fn publish_reputation(&self, reputation: ReputationSet) {
+        let previous = {
+            let mut current = self.current.write().unwrap_or_else(PoisonError::into_inner);
+            std::mem::replace(&mut current.reputation, reputation)
+        };
+        self.generation.fetch_add(1, Ordering::Release);
+        // The old set is dropped outside the lock (when this was its last holder).
+        drop(previous);
+    }
+
     /// Publishes `engine` with the rule-hit counters its requests record into, as one
     /// publication.
     #[cfg(feature = "console")]
     pub fn publish_observed(&self, engine: Engine, hits: RuleHits) {
-        self.replace(Published { engine: Arc::new(engine), hits: Some(Arc::new(hits)) });
+        let reputation = ReputationSet::default();
+        self.replace(Published {
+            engine: Arc::new(engine),
+            hits: Some(Arc::new(hits)),
+            reputation,
+        });
     }
 
-    fn replace(&self, fresh: Published) {
+    /// Publishes a new engine (and counters); the reputation set published beside the old
+    /// engine stays beside the new one.
+    fn replace(&self, mut fresh: Published) {
         #[cfg(feature = "console")]
         let mut sampled = self.sampled.lock().unwrap_or_else(PoisonError::into_inner);
         let previous = {
             let mut current = self.current.write().unwrap_or_else(PoisonError::into_inner);
+            fresh.reputation = current.reputation.clone();
             std::mem::replace(&mut *current, fresh)
         };
         self.generation.fetch_add(1, Ordering::Release);
@@ -194,13 +218,24 @@ impl EngineCache {
         &self.refreshed(slot).engine
     }
 
-    /// As [`EngineCache::refresh`], and also returns the engine's rule-hit counters, when it
-    /// was published with them.
+    /// As [`EngineCache::refresh`], and also returns the reputation set published beside
+    /// the engine, which [`Engine::evaluate_in`] takes.
+    #[inline]
+    pub fn refresh_in(&mut self, slot: &EngineSlot) -> (&Engine, &ReputationSet) {
+        let published = self.refreshed(slot);
+        (&published.engine, &published.reputation)
+    }
+
+    /// As [`EngineCache::refresh_in`], and also returns the engine's rule-hit counters, when
+    /// it was published with them.
     #[cfg(feature = "console")]
     #[inline]
-    pub fn refresh_observed(&mut self, slot: &EngineSlot) -> (&Engine, Option<&RuleHits>) {
+    pub fn refresh_observed(
+        &mut self,
+        slot: &EngineSlot,
+    ) -> (&Engine, &ReputationSet, Option<&RuleHits>) {
         let published = self.refreshed(slot);
-        (&published.engine, published.hits.as_deref())
+        (&published.engine, &published.reputation, published.hits.as_deref())
     }
 
     #[inline]

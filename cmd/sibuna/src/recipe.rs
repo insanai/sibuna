@@ -65,8 +65,6 @@ pub enum BuildError {
     },
     /// Managed and file rules together exceed the engine's capacity.
     TooManyRules,
-    /// A reputation row's address does not parse, or the trie is full.
-    InvalidReputation(String),
 }
 
 impl fmt::Display for BuildError {
@@ -79,7 +77,6 @@ impl fmt::Display for BuildError {
                 write!(f, "stored policy {id:?} is invalid: {problem}")
             }
             BuildError::TooManyRules => f.write_str("too many rules"),
-            BuildError::InvalidReputation(cidr) => write!(f, "invalid reputation entry {cidr:?}"),
         }
     }
 }

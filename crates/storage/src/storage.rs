@@ -24,6 +24,7 @@ use crate::database::{Database, Target, Transaction};
 use crate::error::StorageError;
 use crate::incidents::{BatchIncident, IncidentHit};
 use crate::policy::{PageTemplate, PolicySnapshot};
+use crate::reputation::ReputationBatch;
 use crate::schema::MigrationSet;
 use crate::worker::{Settings, Shared, Worker};
 
@@ -66,6 +67,10 @@ pub type TickHook = Box<dyn FnMut(Database) -> LocalFuture<()> + Send>;
 pub type EmbedFn = Box<dyn Fn(&[u8]) -> Embedding + Send>;
 /// Receives each new policy snapshot; returns whether the daemon published it.
 pub type PublishFn = Box<dyn FnMut(PolicySnapshot) -> bool + Send>;
+/// Receives the reputation of each tick (SID 0033): on a full load the rows and the changes
+/// after them, otherwise the changes after the node's cursor, possibly none. It runs on the
+/// storage thread and must not block.
+pub type ReputationFn = Box<dyn FnMut(&ReputationBatch<'_>) + Send>;
 /// Receives errors the storage thread recovers from, for logging.
 pub type ErrorFn = Box<dyn FnMut(&StorageError) + Send>;
 /// Hears about each incident batch once its transaction is confirmed committed (the
@@ -103,6 +108,9 @@ pub struct Hooks {
     pub embed: EmbedFn,
     /// Builds and publishes the engine from a snapshot. The default accepts every snapshot.
     pub publish: PublishFn,
+    /// Applies the reputation of each tick and publishes it beside the engine. The default
+    /// ignores it.
+    pub on_reputation: ReputationFn,
     /// Runs at the end of each tick, after the policy check.
     pub on_tick: Option<TickHook>,
     /// Writes the console's sidecars of each incident batch in the batch's transaction;
@@ -128,6 +136,7 @@ impl Default for Hooks {
         Hooks {
             embed: Box::new(|_| [0.0; 64]),
             publish: Box::new(|_| true),
+            on_reputation: Box::new(|_| {}),
             on_tick: None,
             on_incidents: None,
             on_committed: None,

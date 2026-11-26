@@ -10,8 +10,8 @@ use std::sync::{Arc, mpsc};
 use std::time::{Duration, Instant};
 
 use common::{
-    PostgresDb, block_on, postgres_config, recording_hooks, scratch_dir, sqlite_config, unix_now,
-    wait_until,
+    PostgresDb, block_on, postgres_config, recording_hooks, recording_hooks_with_reputation,
+    scratch_dir, sqlite_config, unix_now, wait_until,
 };
 use sibuna_core::{Config, Incident};
 use sibuna_storage::{
@@ -35,7 +35,7 @@ fn incident(index: u64, category: &'static str) -> Incident<'static> {
 /// Starts a node, records incidents, bans and searches through the handle, and checks
 /// that shutdown flushes everything queued.
 fn persists_and_flushes(config: &Config, target: &Target) {
-    let (hooks, latest) = recording_hooks();
+    let (hooks, latest, reputation) = recording_hooks_with_reputation();
     let metrics = Arc::clone(&hooks.metrics);
     let storage = Storage::start(config, hooks).expect("start");
     assert!(latest.lock().unwrap().is_some(), "start publishes the first snapshot");
@@ -45,12 +45,9 @@ fn persists_and_flushes(config: &Config, target: &Target) {
     let until = unix_now() + 600;
     storage.ban_address("198.51.100.30", until, "operator", unix_now()).unwrap();
     let banned = wait_until(Duration::from_secs(5), || {
-        let snapshot = latest.lock().unwrap();
-        snapshot
-            .as_ref()
-            .is_some_and(|s| s.reputation.iter().any(|r| r.ip_or_cidr == "198.51.100.30"))
+        reputation.lock().unwrap().rows.contains_key("198.51.100.30")
     });
-    assert!(banned.is_some(), "the ban reaches the published snapshot");
+    assert!(banned.is_some(), "the ban reaches the node's reputation");
     let found = wait_until(Duration::from_secs(5), || {
         storage.search_incidents("admin", 1000).map(|hits| hits.len()).unwrap_or(0) > 0
     });

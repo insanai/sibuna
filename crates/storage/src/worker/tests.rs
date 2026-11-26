@@ -10,9 +10,7 @@ use sibuna_core::Incident;
 use crate::database::{Dialect, Target};
 use crate::error::StorageError;
 use crate::incidents::write_batch;
-use crate::policy::{
-    ChallengeAlgorithm, InspectionMode, InspectionRow, PolicyAction, ReputationRow, RuleLimits,
-};
+use crate::policy::{ChallengeAlgorithm, InspectionMode, InspectionRow, PolicyAction, RuleLimits};
 use crate::testing::{Fixture, for_each_backend};
 
 mod console_hooks;
@@ -21,6 +19,7 @@ mod ja4;
 #[cfg(feature = "sqlite")]
 mod plans;
 mod raw_bytes;
+mod reputation_log;
 mod search_conformance;
 
 fn honeypot(now: u64) -> Incident<'static> {
@@ -130,7 +129,8 @@ async fn store(target: Target) {
     let mut p = Fixture::open(&target).await;
     // Nothing is stored yet; the daemon's file policy is all that applies.
     let first = p.latest();
-    assert!(first.rules.is_empty() && first.reputation.is_empty() && first.inspection.is_none());
+    assert!(first.rules.is_empty() && first.inspection.is_none());
+    assert!(p.reputation().rows.is_empty());
 
     // A dynamic policy and a reputation ban appear after one tick.
     p.exec(INSERT_P1).await;
@@ -146,13 +146,11 @@ async fn store(target: Target) {
     assert_eq!(rule.header_matchers.as_deref(), Some(HEADERS));
     assert_eq!(rule.cidr_matchers.as_deref(), Some(CIDRS));
     assert_eq!((rule.weight, rule.limits), (0, None));
-    let ban = ReputationRow {
-        ip_or_cidr: "198.51.100.7".into(),
-        reputation_score: -100,
-        banned_until: Some(4_102_444_800),
-    };
-    assert_eq!(fresh.reputation, [ban]);
-    assert_eq!(fresh.next_expiry, Some(4_102_444_800));
+    let rows = p.reputation().rows;
+    assert_eq!(
+        rows.into_iter().collect::<Vec<_>>(),
+        [("198.51.100.7".to_owned(), (-100, Some(4_102_444_800)))]
+    );
 
     // Repeated updates with identical timestamps must reload every time.
     for round in 0..4 {
@@ -403,37 +401,69 @@ fn test_clock() -> u64 {
 }
 
 #[test]
-fn an_expired_ban_triggers_a_rebuild_without_a_write() {
-    for_each_backend("expiry", |target| Box::pin(expiry(target)));
+fn reputation_follows_its_change_log_and_rebuilds_no_engine() {
+    for_each_backend("reputation_log", |target| Box::pin(reputation_log(target)));
 }
 
-async fn expiry(target: Target) {
+async fn reputation_log(target: Target) {
     let mut owner = Fixture::open(&target).await;
     owner.worker.clock = test_clock;
     TEST_NOW.store(900, Ordering::Relaxed);
+    let published = owner.published();
+    let revision = owner.worker.applied_revision;
     owner.worker.db.ban_address("198.51.100.8", 1000, "test", 500).await.unwrap();
     owner
         .exec("INSERT INTO ip_reputation VALUES ('192.0.2.0/24', 60, NULL, 'allow', 1, 500)")
         .await;
     owner.exec("INSERT INTO ip_reputation VALUES ('192.0.2.77', -20, 2000, 'weak', 1, 500)").await;
     owner.worker_tick().await;
-    let mut addresses: Vec<String> =
-        owner.latest().reputation.into_iter().map(|row| row.ip_or_cidr).collect();
-    addresses.sort();
-    // The weak score is not decisive, so it is not loaded.
-    assert_eq!(addresses, ["192.0.2.0/24", "198.51.100.8"]);
-    assert_eq!(owner.latest().next_expiry, Some(1000));
-    let published = owner.published();
-    TEST_NOW.store(999, Ordering::Relaxed);
-    owner.worker_tick().await;
+    let rows = owner.reputation().rows;
+    let keys: Vec<&str> = rows.keys().map(String::as_str).collect();
+    // The weak score does not decide, so the node does not hold it.
+    assert_eq!(keys, ["192.0.2.0/24", "198.51.100.8"]);
+    // Reputation raised no policy revision and rebuilt no engine.
     assert_eq!(owner.published(), published);
+    assert_eq!(owner.worker.applied_revision, revision);
+    assert_eq!(owner.reputation().loads, 1);
+
+    // A delete and a renamed key arrive as changes, not as a reload.
+    owner.exec("DELETE FROM ip_reputation WHERE ip_or_cidr = '192.0.2.0/24'").await;
+    owner
+        .exec(
+            "UPDATE ip_reputation SET ip_or_cidr = '198.51.100.9' \
+             WHERE ip_or_cidr = '198.51.100.8'",
+        )
+        .await;
+    owner.worker_tick().await;
+    let rows = owner.reputation().rows;
+    assert_eq!(rows.keys().map(String::as_str).collect::<Vec<_>>(), ["198.51.100.9"]);
+    assert_eq!(owner.reputation().loads, 1);
+    // A repeated ban only counts hits: no change is recorded for it.
+    let stamp = owner.worker.db.reputation_clock().await.unwrap();
+    owner.exec("UPDATE ip_reputation SET hits = hits + 1").await;
+    assert_eq!(owner.worker.db.reputation_clock().await.unwrap(), stamp);
+
+    // Retention passed the cursor: the first change after it is gone, so the node meets a
+    // gap and loads the table once.
+    let cursor = owner.worker.reputation_cursor.unwrap();
+    owner.worker.db.ban_address("203.0.113.4", 5000, "test", 900).await.unwrap();
+    owner.worker.db.ban_address("203.0.113.5", 5000, "test", 900).await.unwrap();
+    let gone = crate::database::Sql::both("DELETE FROM reputation_changes WHERE seq = $1");
+    let first = i64::try_from(cursor + 1).unwrap();
+    owner.worker.db.execute(gone, &[first.into()]).await.unwrap();
+    owner.worker_tick().await;
+    let mirror = owner.reputation();
+    assert_eq!(mirror.loads, 2);
+    assert_eq!(
+        mirror.rows.keys().map(String::as_str).collect::<Vec<_>>(),
+        ["198.51.100.9", "203.0.113.4", "203.0.113.5"]
+    );
+    // Every tick hands a batch, with its time, even without a change.
+    let batches = mirror.batches;
     TEST_NOW.store(1000, Ordering::Relaxed);
     owner.worker_tick().await;
-    assert_eq!(owner.published(), published + 1);
-    let reputation = owner.latest().reputation;
-    assert_eq!(reputation.len(), 1);
-    assert_eq!(reputation[0].banned_until, None);
-    assert_eq!(owner.latest().next_expiry, None);
+    assert_eq!(owner.reputation().batches, batches + 1);
+    assert_eq!(owner.published(), published);
     owner.close().await;
 }
 

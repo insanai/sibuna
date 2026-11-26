@@ -54,7 +54,8 @@ async fn migration(target: Target) {
     let old_rule = "INSERT INTO policies (id, name, action, created_at, updated_at) \
                     VALUES ('old', 'Old', 'deny', 1, 1)";
     db.execute_script(old_rule).await.unwrap();
-    schema::migrate(&db, &[schema::CORE], 2).await.unwrap();
+    let second = MigrationSet { component: "core", migrations: &schema::CORE.migrations[..2] };
+    schema::migrate(&db, &[second], 2).await.unwrap();
     let pattern = Sql::both("SELECT ja4_pattern FROM policies WHERE id = 'old'");
     assert_eq!(db.fetch_all(pattern, &[]).await.unwrap(), [vec![Cell::Null]]);
     let version = Sql::both(

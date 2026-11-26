@@ -298,18 +298,16 @@ async fn page_load(target: Target) {
     p.worker.hooks.on_snapshot = Some(page_hook());
     let published = p.published();
     let applied = p.worker.applied_revision;
-    // The page table is missing: an expiry-driven rebuild fails and changes nothing.
-    p.worker.reputation_expires = Some(0);
+    // The page table is missing: a rebuild fails and changes nothing.
+    p.worker.applied_revision = None;
     assert!(p.worker.tick().await.is_err());
     assert_eq!(p.published(), published);
-    assert_eq!(p.worker.applied_revision, applied);
-    assert_eq!(p.worker.reputation_expires, Some(0));
+    assert_eq!(p.worker.applied_revision, None);
     p.exec(PAGES_TABLE).await;
     p.exec("INSERT INTO test_pages VALUES ('denied', '<p>{{ reason }}</p>', 1)").await;
     p.worker.tick().await.unwrap();
     assert_eq!(p.published(), published + 1);
     assert_eq!(p.worker.applied_revision, applied);
-    assert_eq!(p.worker.reputation_expires, None);
     let page =
         PageTemplate { kind: "denied".into(), html: "<p>{{ reason }}</p>".into(), revision: 1 };
     assert_eq!(p.latest().pages, [page]);
