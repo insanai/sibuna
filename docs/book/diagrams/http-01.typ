@@ -1,12 +1,21 @@
+// operations.rst: HTTP-01 validation of one name (RFC 8555).
 #import "style.typ": *
-#show: sheet.with(lang: "en")
+#show: figure-frame.with(lang: "en")
 
 #sequence(
-  ("Sibuna", "Certificate authority"),
   (
-    (0, 1, "Order · example.org"),
-    (1, 0, "GET /.well-known/acme-challenge/TOKEN"),
-    (0, 1, "TOKEN.THUMBPRINT"),
-    (1, 0, "Certificate"),
+    actor("sibuna", "Sibuna", kind: "accent"),
+    actor("ca", "Certificate authority", kind: "party"),
   ),
+  (
+    msg("sibuna", "ca", "Order `example.org`"),
+    msg("ca", "sibuna", "`TOKEN`", reply: true),
+    msg("sibuna", "ca", "Ready"),
+    msg("ca", "sibuna", "`GET /.well-known/acme-challenge/TOKEN` on port 80",
+      note: "Answered before the firewall"),
+    msg("sibuna", "ca", "`TOKEN.THUMBPRINT`", reply: true),
+    msg("ca", "sibuna", "Certificate", reply: true, accent: true),
+    act("sibuna", "Store it, serve it on port 443", accent: true),
+  ),
+  spacing: 70,
 )

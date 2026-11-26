@@ -1,14 +1,22 @@
+// cluster.rst and operations.rst: the listener handoff of SID 0029.
 #import "style.typ": *
-#show: sheet.with(lang: "en")
+#show: figure-frame.with(lang: "en")
 
 #sequence(
-  ("Replacement", "Old process"),
   (
-    (0, 1, "HELLO"),
-    (1, 0, "LISTENERS · SCM_RIGHTS"),
-    (0, 1, "READY · pause UDP"),
-    (1, 0, "FLOWS · COMMIT"),
-    (0, 1, "DONE"),
+    actor("old", "Old process"),
+    actor("new", "Replacement", kind: "accent"),
   ),
-  notes: ((4, 0, "adopt mappings · accept TCP"), (5, 0, "read UDP"), (5, 1, "drain TCP")),
+  (
+    msg("new", "old", "`HELLO`"),
+    msg("old", "new", "`LISTENERS` with `SCM_RIGHTS`"),
+    msg("new", "old", "`READY`", accent: true, note: "Nobody reads UDP; the kernel holds the datagrams"),
+    act("old", "Pause UDP, keep accepting TCP"),
+    msg("old", "new", "`FLOWS`, then `COMMIT`"),
+    act("new", "Adopt the mappings, accept TCP"),
+    msg("new", "old", "`DONE`", accent: true),
+    act("new", "Read UDP", accent: true),
+    act("old", "Drain TCP, exit"),
+  ),
+  spacing: 60,
 )
