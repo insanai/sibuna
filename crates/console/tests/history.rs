@@ -128,17 +128,17 @@ fn ranking_history_reads_closed_windows() {
     let (harness, session) = start("history-rankings");
     let minute = support::unix_now() / 60;
     let path = "/console/api/rankings/history";
-    let open = format!(
-        r#"{{"from_minute":{},"until_minute":{minute},"node":null,"before":null}}"#,
-        minute - 10
-    );
-    let refused = post(&harness, &session, path, &open);
+    let window = |until: u64| {
+        format!(
+            r#"{{"from_minute":{},"until_minute":{until},"node":null,"before":null}}"#,
+            minute - 10
+        )
+    };
+    // The request can reach the handler after a minute boundary. Keep the open
+    // window open throughout the test; the protocol unit test checks exact equality.
+    let refused = post(&harness, &session, path, &window(minute + 10));
     assert_eq!((refused.status, refused.code().as_str()), (400, "RANKHISTORY"));
-    let closed = open.replace(
-        &format!("\"until_minute\":{minute}"),
-        &format!("\"until_minute\":{}", minute - 1),
-    );
-    let reply = post(&harness, &session, path, &closed);
+    let reply = post(&harness, &session, path, &window(minute - 1));
     assert_eq!(reply.status, 200, "{}", reply.text());
     let text = reply.text();
     assert!(text.starts_with("{\"version\":1,\"metadata\":{"), "{text}");
