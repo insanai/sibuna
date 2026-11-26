@@ -75,9 +75,12 @@ fn the_console_adds_no_trigger() {
                        WHERE NOT t.tgisinternal AND n.nspname = current_schema()",
         };
         let triggers = names(&db, sql).await;
+        // SQLite: three revision triggers each on policies and policy_inspection, and three
+        // change triggers on ip_reputation. PostgreSQL: one revision trigger each on the two
+        // policy tables, and the lock, change and reset triggers of ip_reputation (SID 0033).
         let core = match db.dialect() {
             Dialect::Sqlite => 9,
-            Dialect::Postgres => 3,
+            Dialect::Postgres => 5,
         };
         assert_eq!(triggers.len(), core, "{triggers:?}");
         assert!(triggers.iter().all(|name| !name.starts_with("console")));
