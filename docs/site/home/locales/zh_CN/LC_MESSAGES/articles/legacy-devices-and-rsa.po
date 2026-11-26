@@ -1,0 +1,58 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: zh_CN\n"
+
+msgid "If RSA breaks, what happens to an older device?"
+msgstr "如果 RSA 被攻破，旧设备会怎样？"
+
+msgid "An industrial controller can outlive the software that connects it to the network. Putting its web interface behind Sibuna can protect new traffic while the controller stays in service. Whether that helps depends on what the device uses RSA for."
+msgstr "工业控制器的使用寿命可能比其联网软件更长。把控制器的 Web 界面放在 Sibuna 后面，可以在设备继续运行时保护新的流量。这样做是否有效，取决于设备用 RSA 做什么。"
+
+msgid "Pencil drawing of an industrial controller connected by cable to a small network gateway."
+msgstr "铅笔画：一台工业控制器通过电缆连接到小型网络网关。"
+
+msgid "One algorithm, three different jobs"
+msgstr "一种算法，三项不同的任务"
+
+msgid "**Keeping a session secret.** Some older TLS configurations used RSA to transport the session secret. If a future quantum computer can recover the RSA private key, a recording of such a handshake and its traffic could become readable. The useful life of the data matters as much as the age of the device. See `NIST`_."
+msgstr "**保护会话秘密。** 一些旧版 TLS 配置使用 RSA 传送会话秘密。如果未来的量子计算机能恢复 RSA 私钥，先前记录的握手和流量就可能被解读。数据需要保密多久，与设备用了多久同样重要。参见 `NIST`_。"
+
+msgid "**Proving a server's identity.** TLS 1.3 can use an RSA certificate with an ephemeral key exchange. Recovering the signing key would make impersonation possible in new connections. That key alone cannot decrypt earlier ephemeral sessions. A quantum computer capable of breaking classical elliptic-curve key exchange would pose a separate threat to those recordings. See `RFC 8446`_."
+msgstr "**证明服务器身份。** TLS 1.3 可以将 RSA 证书与临时密钥交换结合使用。恢复签名密钥可能使他人在新连接中冒充服务器。仅凭该密钥无法解密过去的临时密钥会话。若量子计算机能够破解经典椭圆曲线密钥交换，则会对这些记录构成另一种威胁。参见 `RFC 8446`_。"
+
+msgid "**Deciding what may boot.** On supported ESP32 revisions, Espressif's Secure Boot v2 can use RSA-PSS with a 3072-bit key to verify the bootloader and application. A forged signature would undermine that decision. The manufacturer's update path and the device's hardware trust anchor determine how this risk can be addressed. See `Espressif Secure Boot v2`_ and `NIST IR 8259r1`_."
+msgstr "**决定允许运行的软件。** 在受支持的 ESP32 芯片修订版上，乐鑫的 Secure Boot v2 可使用 RSA-PSS 和 3072 位密钥来验证引导加载程序和应用。伪造的签名会破坏这一判断。如何应对此风险，取决于厂商的更新机制和设备的硬件信任锚。参见 `Espressif Secure Boot v2`_ 和 `NIST IR 8259r1`_。"
+
+msgid "Pencil detail of a microcontroller and the traces on its circuit board."
+msgstr "铅笔绘制的微控制器和电路板走线细节。"
+
+msgid "Move the exposed connection first"
+msgstr "先迁移暴露在网络上的连接"
+
+msgid "Consider a customer opening the device's website. We put Sibuna at its public HTTPS address. A compatible browser and Sibuna can negotiate X25519MLKEM768. This combines classical X25519 with ML-KEM-768 for new session keys. After decryption the HTTP firewall can admit, challenge or deny the request. When the policy admits it, Sibuna selects a healthy backend and connects to it separately. See `RFC 10024`_."
+msgstr "客户打开设备的网站时，我们让 Sibuna 在其公共 HTTPS 地址接收连接。兼容的浏览器和 Sibuna 可以协商 X25519MLKEM768，结合经典 X25519 和 ML-KEM-768 建立新的会话密钥。解密后，HTTP 防火墙可以放行、发起质询或拒绝请求。策略放行时，Sibuna 会选择健康的后端并单独连接。参见 `RFC 10024`_。"
+
+msgid "The browser establishes hybrid TLS with Sibuna. The firewall inspects HTTP before Sibuna forwards an admitted request on a separate connection to the device."
+msgstr "浏览器与 Sibuna 建立混合 TLS 连接。防火墙检查 HTTP，然后 Sibuna 通过另一条连接向设备转发已放行的请求。"
+
+msgid "The browser, Sibuna and the device participate in two independent connections."
+msgstr "浏览器、Sibuna 和设备分别参与两条独立连接。"
+
+msgid "In this jlavi configuration the public certificate chain and private key are in ``edge.pem``. The backend's ``ca_file`` and ``sni`` tell Sibuna which CA and name to trust. We use loopback addresses for this test. If the device offers only a classical group, its connection remains classical. Running the gateway beside the device can shorten that leg."
+msgstr "在这个 jlavi 配置中，公共证书链和私钥位于 ``edge.pem ``。后端的 `` ca_file `` 和 `` sni`` 指定 Sibuna 应信任的 CA 和验证的名称。测试使用环回地址。如果设备仅提供经典组，设备侧的连接仍使用经典密钥交换。在设备旁部署网关可缩短这一段路径。"
+
+msgid "Record what changed on each connection"
+msgstr "分别记录每条连接的变化"
+
+msgid "In our test, the public connection negotiated hybrid TLS even when the origin accepted only X25519. The request returned HTTP 200. Giving Sibuna the wrong origin certificate name returned HTTP 502. The TLS groups, certificate identities and HTTP result belong in the service inventory. Firmware verification needs its own inventory entry and migration plan."
+msgstr "测试中，即使源站仅接受 X25519，公共连接仍成功协商混合 TLS，请求返回 HTTP 200。给 Sibuna 指定错误的源站证书名称后，请求返回 HTTP 502。应在服务清单中记录 TLS 组、证书身份和 HTTP 结果。固件验证需要单独的清单条目和迁移计划。"
+
+msgid "A hybrid frontend returned HTTP 200 with either a hybrid or a classical backend. A backend certificate name mismatch returned HTTP 502."
+msgstr "混合前端搭配混合或经典后端都返回 HTTP 200。后端证书名称不匹配时返回 HTTP 502。"
+
+msgid "Observed results with one frontend and three origin configurations."
+msgstr "同一前端搭配三种源站配置时观察到的结果。"
+
+msgid "The `migration guide <../book/post-quantum-transport.html>`_ gives the test policy, verification command and regional timelines. It also shows how an older device that initiates requests can use a local gateway for its outgoing connection."
+msgstr "`迁移指南 <../book/post-quantum-transport.html>`_ 提供测试策略、验证命令和各地区时间表，也说明主动发起请求的旧设备如何通过本地网关建立出站连接。"

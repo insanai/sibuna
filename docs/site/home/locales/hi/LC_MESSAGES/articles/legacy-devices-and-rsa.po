@@ -1,0 +1,58 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: hi\n"
+
+msgid "If RSA breaks, what happens to an older device?"
+msgstr "यदि RSA टूट जाए, तो पुराने उपकरण का क्या होगा?"
+
+msgid "An industrial controller can outlive the software that connects it to the network. Putting its web interface behind Sibuna can protect new traffic while the controller stays in service. Whether that helps depends on what the device uses RSA for."
+msgstr "औद्योगिक नियंत्रक उस सॉफ़्टवेयर से अधिक समय तक चल सकता है जो उसे नेटवर्क से जोड़ता है। उसका वेब इंटरफ़ेस Sibuna के पीछे रखने से नियंत्रक को सेवा में रखते हुए नए ट्रैफ़िक की सुरक्षा की जा सकती है। इससे कितना लाभ होगा यह इस पर निर्भर करता है कि उपकरण RSA का उपयोग किस काम के लिए करता है।"
+
+msgid "Pencil drawing of an industrial controller connected by cable to a small network gateway."
+msgstr "एक औद्योगिक नियंत्रक को केबल से छोटे नेटवर्क गेटवे से जुड़ा दिखाता पेंसिल चित्र।"
+
+msgid "One algorithm, three different jobs"
+msgstr "एक एल्गोरिदम, तीन अलग काम"
+
+msgid "**Keeping a session secret.** Some older TLS configurations used RSA to transport the session secret. If a future quantum computer can recover the RSA private key, a recording of such a handshake and its traffic could become readable. The useful life of the data matters as much as the age of the device. See `NIST`_."
+msgstr "**सत्र को गोपनीय रखना।** कुछ पुराने TLS कॉन्फ़िगरेशन सत्र का रहस्य भेजने के लिए RSA का उपयोग करते थे। यदि भविष्य का कोई क्वांटम कंप्यूटर RSA की निजी कुंजी निकाल सके, तो उस हैंडशेक और ट्रैफ़िक की रिकॉर्डिंग पढ़ी जा सकती है। उपकरण की उम्र जितनी महत्वपूर्ण है, उतना ही यह भी कि डेटा को कितने समय तक गोपनीय रहना है। `NIST`_ देखें।"
+
+msgid "**Proving a server's identity.** TLS 1.3 can use an RSA certificate with an ephemeral key exchange. Recovering the signing key would make impersonation possible in new connections. That key alone cannot decrypt earlier ephemeral sessions. A quantum computer capable of breaking classical elliptic-curve key exchange would pose a separate threat to those recordings. See `RFC 8446`_."
+msgstr "**सर्वर की पहचान सिद्ध करना।** TLS 1.3 में RSA प्रमाणपत्र के साथ अस्थायी कुंजी विनिमय हो सकता है। हस्ताक्षर कुंजी मिल जाने पर नए कनेक्शनों में सर्वर का प्रतिरूपण संभव होगा। अकेली वह कुंजी पुराने अस्थायी सत्रों को डिक्रिप्ट नहीं कर सकती। पारंपरिक दीर्घवृत्तीय-वक्र कुंजी विनिमय तोड़ सकने वाला क्वांटम कंप्यूटर उन रिकॉर्डिंग के लिए एक अलग खतरा होगा। `RFC 8446`_ देखें।"
+
+msgid "**Deciding what may boot.** On supported ESP32 revisions, Espressif's Secure Boot v2 can use RSA-PSS with a 3072-bit key to verify the bootloader and application. A forged signature would undermine that decision. The manufacturer's update path and the device's hardware trust anchor determine how this risk can be addressed. See `Espressif Secure Boot v2`_ and `NIST IR 8259r1`_."
+msgstr "**यह तय करना कि क्या बूट हो सकता है।** समर्थित ESP32 संस्करणों पर Espressif का Secure Boot v2 बूटलोडर और एप्लिकेशन के सत्यापन के लिए 3072-बिट कुंजी के साथ RSA-PSS का उपयोग कर सकता है। जाली हस्ताक्षर इस निर्णय को अविश्वसनीय बना देगा। निर्माता की अपडेट व्यवस्था और उपकरण का हार्डवेयर ट्रस्ट एंकर तय करते हैं कि इस जोखिम को कैसे कम किया जा सकता है। `Espressif Secure Boot v2`_ और `NIST IR 8259r1`_ देखें।"
+
+msgid "Pencil detail of a microcontroller and the traces on its circuit board."
+msgstr "माइक्रोकंट्रोलर और उसके सर्किट बोर्ड पर बनी पटरियों का पेंसिल चित्र।"
+
+msgid "Move the exposed connection first"
+msgstr "पहले बाहरी नेटवर्क के संपर्क वाले कनेक्शन को बदलें"
+
+msgid "Consider a customer opening the device's website. We put Sibuna at its public HTTPS address. A compatible browser and Sibuna can negotiate X25519MLKEM768. This combines classical X25519 with ML-KEM-768 for new session keys. After decryption the HTTP firewall can admit, challenge or deny the request. When the policy admits it, Sibuna selects a healthy backend and connects to it separately. See `RFC 10024`_."
+msgstr "मान लें कि कोई ग्राहक उपकरण की वेबसाइट खोलता है। हम उसके सार्वजनिक HTTPS पते पर Sibuna रखते हैं। संगत ब्राउज़र और Sibuna X25519MLKEM768 पर सहमत हो सकते हैं। यह नई सत्र कुंजियों के लिए पारंपरिक X25519 को ML-KEM-768 के साथ जोड़ता है। डिक्रिप्शन के बाद HTTP फ़ायरवॉल अनुरोध स्वीकार कर सकता है, चुनौती दे सकता है या उसे अस्वीकार कर सकता है। अनुमति मिलने पर Sibuna स्वस्थ बैकएंड चुनकर उससे अलग कनेक्शन खोलता है। `RFC 10024`_ देखें।"
+
+msgid "The browser establishes hybrid TLS with Sibuna. The firewall inspects HTTP before Sibuna forwards an admitted request on a separate connection to the device."
+msgstr "ब्राउज़र Sibuna से हाइब्रिड TLS कनेक्शन बनाता है। फ़ायरवॉल HTTP की जाँच करता है और Sibuna स्वीकृत अनुरोध अलग कनेक्शन पर उपकरण को भेजता है।"
+
+msgid "The browser, Sibuna and the device participate in two independent connections."
+msgstr "ब्राउज़र, Sibuna और उपकरण दो स्वतंत्र कनेक्शनों में भाग लेते हैं।"
+
+msgid "In this jlavi configuration the public certificate chain and private key are in ``edge.pem``. The backend's ``ca_file`` and ``sni`` tell Sibuna which CA and name to trust. We use loopback addresses for this test. If the device offers only a classical group, its connection remains classical. Running the gateway beside the device can shorten that leg."
+msgstr "इस jlavi कॉन्फ़िगरेशन में सार्वजनिक प्रमाणपत्र शृंखला और निजी कुंजी ``edge.pem `` में हैं। बैकएंड के `` ca_file `` और `` sni`` Sibuna को बताते हैं कि किस CA पर भरोसा करना है और कौन सा नाम सत्यापित करना है। इस परीक्षण में हम लूपबैक पते उपयोग करते हैं। यदि उपकरण केवल पारंपरिक समूह देता है, तो उसका कनेक्शन पारंपरिक ही रहता है। गेटवे को उपकरण के पास रखने से यह खंड छोटा हो सकता है।"
+
+msgid "Record what changed on each connection"
+msgstr "हर कनेक्शन पर क्या बदला, दर्ज करें"
+
+msgid "In our test, the public connection negotiated hybrid TLS even when the origin accepted only X25519. The request returned HTTP 200. Giving Sibuna the wrong origin certificate name returned HTTP 502. The TLS groups, certificate identities and HTTP result belong in the service inventory. Firmware verification needs its own inventory entry and migration plan."
+msgstr "हमारे परीक्षण में मूल सर्वर के केवल X25519 स्वीकार करने पर भी सार्वजनिक कनेक्शन ने हाइब्रिड TLS चुना। अनुरोध ने HTTP 200 लौटाया। मूल प्रमाणपत्र का गलत नाम देने पर Sibuna ने HTTP 502 लौटाया। TLS समूह, प्रमाणपत्र पहचान और HTTP परिणाम सेवा की सूची में दर्ज होते हैं। फ़र्मवेयर सत्यापन के लिए अलग प्रविष्टि और माइग्रेशन योजना चाहिए।"
+
+msgid "A hybrid frontend returned HTTP 200 with either a hybrid or a classical backend. A backend certificate name mismatch returned HTTP 502."
+msgstr "हाइब्रिड फ़्रंटएंड ने हाइब्रिड और पारंपरिक दोनों बैकएंड के साथ HTTP 200 लौटाया। बैकएंड के प्रमाणपत्र का नाम न मिलने पर HTTP 502 लौटा।"
+
+msgid "Observed results with one frontend and three origin configurations."
+msgstr "एक फ़्रंटएंड और मूल सर्वर के तीन कॉन्फ़िगरेशन पर देखे गए परिणाम।"
+
+msgid "The `migration guide <../book/post-quantum-transport.html>`_ gives the test policy, verification command and regional timelines. It also shows how an older device that initiates requests can use a local gateway for its outgoing connection."
+msgstr "`माइग्रेशन मार्गदर्शिका <../book/post-quantum-transport.html>`_ में परीक्षण नीति, सत्यापन कमांड और क्षेत्रीय समय-सीमाएँ हैं। इसमें यह भी दिखाया गया है कि अनुरोध शुरू करने वाला पुराना उपकरण अपने आउटगोइंग कनेक्शन के लिए स्थानीय गेटवे कैसे इस्तेमाल कर सकता है।"
