@@ -271,7 +271,19 @@ The metrics text of an edge has the counters above and then these series. ``show
    * - ``sibuna_edge_refused_total``
      - counter
      - ``reason``
-     - Refused connections, requests and datagrams. The reasons are ``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, ``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``, ``client_closed``, ``hook``, ``inspect_denied`` and ``udp_not_quic``
+     - Refused connections, requests and datagrams. The reasons are ``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, ``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``, ``client_closed``, ``hook``, ``inspect_denied``, ``udp_not_quic``, and from SID 0034 ``banned``, ``pressure``, ``frontend_limit``, ``client_flow_limit`` and ``udp_total_limit``
+   * - ``sibuna_edge_pressure``
+     - gauge
+     -
+     - 1 while pressure mode admits known addresses first, 0 otherwise (SID 0034)
+   * - ``sibuna_edge_pressure_switches_total``
+     - counter
+     -
+     - Switches of pressure mode, on or off
+   * - ``sibuna_edge_strikes_total``, ``sibuna_edge_auto_bans_total``
+     - counter
+     -
+     - Refusals that counted against ``auto_ban``, and the addresses they banned
    * - ``sibuna_edge_frontend_requests_total``
      - counter
      - ``frontend``, ``code``
@@ -572,6 +584,9 @@ The edge renders a failure as a diagnostic with a title rule that carries the co
    * - ``EDGE015``
      - *log*
      - The spill cache at start: created, reused, discarded, or in use by another process, with its size (SID 0027)
+   * - ``EDGE016``
+     - *log*
+     - Pressure mode switched on or off (SID 0034)
 
 The code holds no ``EDGE003`` to ``EDGE009``.
 

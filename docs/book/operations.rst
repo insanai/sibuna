@@ -1547,6 +1547,88 @@ The servers of the pool must choose random connection IDs of at least 8 bytes, a
     "udp_defense": {"mode": "rate_limit", "threshold_pps": 50000},
     "default_backend": "quic_fleet"}
 
+.. _edge-admission-under-attack:
+
+Admission under attack
+~~~~~~~~~~~~~~~~~~~~~~
+
+A rate per address stops a client that connects fast. It does not stop a client that connects slowly and holds thousands of streams, a flood on one port that takes the flow table of every other port, or a client that the firewall banned and that comes back over TCP. SID 0034 adds seven protections against floods from many real addresses. None needs privilege or a kernel program.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 32 18 50
+
+   * - Option
+     - Where
+     - Effect
+   * - ``"max_flows_per_ip": 20``
+     - frontend
+     - The most flows of one client address on the frontend at once. IPv6 counts per /64. Further connections are refused as ``client_flow_limit``. Off by default.
+   * - ``"max_flows": 5000``
+     - frontend
+     - The most flows of the frontend on the node, so a flood on one port cannot take the table of the others. Refused as ``frontend_limit``. Off by default.
+   * - ``"refuse": "reset"``
+     - ``tcp``, ``http``
+     - How a refused connection ends: ``"reset"`` (the default) sends one reset and leaves no ``TIME_WAIT`` state, ``"close"`` closes in order, ``"tarpit"`` holds the connection silent for 10 seconds and then resets it.
+   * - ``"auto_ban": {"strikes": 50, "window": "10s", "ban": "10m"}``
+     - ``tcp``, ``http``
+     - An address with more than ``strikes`` refusals for its rate or its cap within ``window`` is banned for ``ban``, on every node of the mesh.
+   * - ``"udp_defense": {..., "total_pps": 200000}``
+     - ``udp``
+     - The most datagrams a second the frontend passes. Datagrams of confirmed mappings may take the last half of the budget; others may not. Refused as ``udp_total_limit``.
+   * - ``"pressure": {"on": 90, "off": 75, "new_per_second": 1000}``
+     - ``global``
+     - Pressure mode. These are the defaults. ``"pressure": "off"`` switches it off.
+   * - ``"accept_threads": "auto"``
+     - ``global``
+     - The threads that accept and refuse connections: one per CPU, at most four, by default. From 1 to 64.
+
+.. code-block:: text
+
+   fn edge() -> Map<Value> {
+       return {
+           global: {
+               max_flows: 100000,
+               pressure: { on: 90, off: 75, new_per_second: 2000 },
+           },
+           frontends: {
+               web: {
+                   binds: ["0.0.0.0:443"], tls: { auto: ["shop.example.org"] },
+                   rate_limit: { conn_per_10s: 200 },
+                   max_flows_per_ip: 64, max_flows: 60000,
+                   auto_ban: { strikes: 100, window: "10s", ban: "15m" },
+               },
+               game: {
+                   proto: "udp", binds: ["192.0.2.10:7777"],
+                   udp_defense: { mode: "rate_limit", threshold_pps: 500, total_pps: 300000 },
+               },
+           },
+           backends: {
+               shop: { servers: ["10.0.0.11:8080", "10.0.0.12:8080"] },
+               game: { mode: "udp", servers: ["10.0.0.21:7777"] },
+           },
+       }
+   }
+
+**The order of the checks.** An accept thread runs the checks on each connection, and the first that fails refuses it: the node drains, the address is banned, the connection rate, the caps of the node, the frontend and the address, and pressure. A refused connection costs one accept and one reset. It reaches no hook, no inspection and no server. A proxy in ``trusted_proxies`` carries many clients, so the bans, the rate, the address cap and pressure do not apply to it. Behind ``proxy_protocol`` the client that the header names meets them instead.
+
+**Bans at accept.** The HTTP firewall and the packet worker share one ban table. A ban that the firewall, the operator or a peer issued refuses the address at accept on a ``tcp`` frontend and before a mapping opens on a ``udp`` frontend. An ``http`` frontend keeps answering a banned client with its ban page, so a person who was banned by mistake learns why; under pressure it refuses at accept instead, because then every accept counts. ``auto_ban`` counts only refusals that need a completed TCP handshake, so the address is real. The file refuses ``auto_ban`` on a ``udp`` frontend, because a spoofed datagram would ban the owner of the address.
+
+**Pressure mode.** Every 100 ms the node compares its flows with ``global.max_flows``. At ``on`` percent it switches pressure on, and at ``off`` percent it switches it off again; the gap keeps a steady load from switching it back and forth. While it is on, a new address passes only with a token from a bucket of ``new_per_second`` tokens a second, and a known address passes as before. An address is known for a day after one of its flows proved it: a TCP stream with bytes both ways, a UDP mapping that got a reply, an HTTP/3 handshake after Retry, or an HTTP request that a server answered with a status below 400. A challenge page proves nobody. Each switch is one line:
+
+.. code-block:: text
+
+   EDGE016: pressure mode is on: the flow table is nearly full, so new client addresses are admitted at global.pressure.new_per_second and known ones first
+   EDGE016: pressure mode is off: new client addresses pass again
+
+**Accept threads.** Each accept thread watches every TCP and HTTP listener. On Linux one connection wakes one thread, so a flood of connections is refused on several cores. An admitted connection goes with its flow slot to the packet worker, which runs the hooks and chooses a server as before. UDP stays on the packet worker. A drain and a handoff to a replacement process wait until no accept thread watches the listeners they give up.
+
+**Confirmed UDP mappings.** A mapping is confirmed when QUIC validated its client, or when the server answered and the client then sent again. A flood from random addresses therefore never takes the last half of ``total_pps``. The second rule is weak: a sender that forges an address can send twice without seeing the answer. A protocol with its own validation, such as QUIC with ``"udp_inspect": "quic"``, should use it.
+
+**What we see.** Five reasons join ``sibuna_edge_refused_total``: ``banned``, ``pressure``, ``frontend_limit``, ``client_flow_limit`` and ``udp_total_limit``. ``sibuna_edge_pressure`` is 1 while pressure is on, ``sibuna_edge_pressure_switches_total`` counts the switches, and ``sibuna_edge_strikes_total`` and ``sibuna_edge_auto_bans_total`` count the strikes and the bans they caused. The edge page of the console shows the pressure state and the 16 addresses with the most refusals in the current minute, with the cause of the last one. The metrics endpoint does not name addresses, to keep its series bounded.
+
+**What no node can do.** A flood larger than the link, a SYN flood at line rate and a reflection attack must be stopped before the node: by the provider's scrubbing, by anycast or by filters in the routers. Clients behind one carrier-grade NAT share an address, so ``max_flows_per_ip`` and ``auto_ban`` treat them as one; set them per frontend with that in mind.
+
 .. _edge-observing-the-edge:
 
 Observing the edge

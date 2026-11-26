@@ -285,15 +285,19 @@ Admission at the Socket
 An application filter can shed work only after the traffic reaches the host. The cheapest refusal is therefore the earliest one, and SID 0015 orders the stages so that each costs less than the next. SID 0032 completed them for TCP and UDP frontends.
 
 #. *Kernel listener admission.* ``defer_accept`` sets ``TCP_DEFER_ACCEPT`` on Linux: the kernel gives the node a connection only when its first bytes arrive, so a silent client costs no descriptor, no flow slot and no wake-up. ``backlog`` sets the length of the accept queue. Both need no privilege; when the platform refuses one, the node notes ``EDGE013`` and serves without it.
+#. *Bans.* The ban table that the HTTP firewall shares with the packet worker refuses a banned address at accept on a TCP frontend and before a UDP mapping opens (SID 0034). ``auto_ban`` bans an address that keeps breaking its limits, on every node.
 #. *Connection rate.* ``rate_limit.conn_per_10s`` per source IPv4 address or IPv6 /64, and ``udp_defense.threshold_pps`` for datagrams.
-#. *The flow budget.* One slot per client connection or UDP mapping, node-wide, up to ``global.max_flows`` (8,192 by default, at most 1,000,000). UDP mappings take at most ``global.max_udp_flows`` of it, because their sources are not validated. HTTP adds ``http.max_connections`` and ``http.max_connections_per_ip``.
+#. *The flow budget.* One slot per client connection or UDP mapping, node-wide, up to ``global.max_flows`` (8,192 by default, at most 1,000,000). A frontend may cap its own flows with ``max_flows`` and the flows of one address with ``max_flows_per_ip``. UDP mappings take at most ``global.max_udp_flows`` of it, because their sources are not validated, and ``udp_defense.total_pps`` keeps half the packet budget of a UDP frontend for confirmed mappings. HTTP adds ``http.max_connections`` and ``http.max_connections_per_ip``.
+#. *Pressure.* Above ``global.pressure.on`` percent of the table, a new address passes only within ``new_per_second``, and an address that proved a working flow passes first.
 #. *Bounded inspection*, of a TLS ClientHello on TCP, and of the QUIC header on UDP.
+
+Accept threads run the bans, the rate, the caps and pressure on several cores, and end a refused connection with a reset (SID 0034). The packet worker runs the stages after them.
 #. *The connection hooks*, then the pool: a server's ``max_flows`` and, in a cluster, its share of a fleet-wide limit (Part IX).
 #. *The HTTP firewall*, for HTTP frontends only.
 
 .. admonition:: Implementation: ``FlowBudget::reserve``
 
-   Takes one slot of the node-wide flow budget and returns a ``FlowPermit``, or nothing when the budget is full. The permit's ``Drop`` returns the slot on cancellation, close or expiry, so no path can leak one. A drain sets the limit to zero. In ``crates/lb/src/budget.rs``.
+   Takes one slot of the node-wide flow budget and returns a ``FlowPermit``, or nothing when the budget is full. The permit's ``Drop`` returns the slot on cancellation, close or expiry, so no path can leak one. A drain sets the limit to zero. ``FlowBudget::take`` does the same under the caps of a frontend and of an address and under pressure, all under one lock, so the caps hold whatever the order of the threads: ``caps_hold`` in the Lean model of SID 0034. In ``crates/lb/src/budget.rs``.
 
 ClientHello Inspection and Fallback Classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

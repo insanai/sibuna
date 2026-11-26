@@ -126,6 +126,8 @@ The command route takes ``set server ... state|weight``, ``add server``, ``del s
 
 Admission options of a frontend (SID 0032): ``"defer_accept": "5s"`` and ``"backlog": 4096`` on ``tcp`` and ``http``; ``"inspect_bytes"`` and ``"inspect_fallback": {"absent": {"action": "deny"}}`` beside ``tcp_inspect``; ``"udp_inspect": "quic"`` on ``udp``. All are off by default.
 
+Admission under attack (SID 0034): ``"max_flows_per_ip": 20`` and ``"max_flows": 5000`` on any frontend; ``"refuse": "reset"`` (the default), ``"close"`` or ``"tarpit"`` and ``"auto_ban": {"strikes": 50, "window": "10s", "ban": "10m"}`` on ``tcp`` and ``http``; ``"total_pps"`` in ``udp_defense``; ``"pressure": {"on": 90, "off": 75, "new_per_second": 1000}`` (on by default, ``"off"`` switches it off) and ``"accept_threads": "auto"`` in ``global``.
+
 Console (opt-in preview)
 ------------------------
 
