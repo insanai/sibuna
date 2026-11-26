@@ -9,238 +9,506 @@ msgstr ""
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: post-quantum-transport.rst:1
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:1
 msgid "Migrating a website to post-quantum transport"
 msgstr "Eine Website auf Post-Quanten-Transportverschlüsselung umstellen"
 
-#: post-quantum-transport.rst:4
-msgid "A hospital wants to protect appointment requests that must stay confidential for years. Its portal can move to a new web address, but a device behind it still runs an older web server. We can keep the public name and point it at Sibuna. A compatible browser negotiates hybrid TLS with Sibuna. Sibuna reads the request and opens a second connection to the device. Each connection has its own keys."
-msgstr "Ein Krankenhaus will Terminanfragen schützen, die über Jahre vertraulich bleiben müssen. Sein Portal kann auf eine neue Webadresse umziehen, doch ein dahinterliegendes Gerät betreibt noch einen älteren Webserver. Wir können den öffentlichen Namen beibehalten und auf Sibuna verweisen lassen. Ein kompatibler Browser handelt mit Sibuna eine hybride TLS-Verbindung aus. Sibuna liest die Anfrage und öffnet eine zweite Verbindung zum Gerät. Jede Verbindung hat ihre eigenen Schlüssel."
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:4
+msgid "A customer books a hospital appointment on a website whose records must stay confidential for years. Someone who records the encrypted request today might be able to read it later by breaking the classical key exchange. We can keep the website's public name and point it at Sibuna. The customer's browser and Sibuna can then agree a hybrid key. From Sibuna to the hospital application, we choose how to protect a second connection."
+msgstr "Ein Kunde vereinbart einen Krankenhaustermin auf einer Website, deren Daten jahrelang vertraulich bleiben müssen. Wer die verschlüsselte Anfrage heute aufzeichnet, könnte sie später lesen, falls der klassische Schlüsselaustausch gebrochen wird. Wir können den öffentlichen Namen der Website beibehalten und ihn auf Sibuna verweisen lassen. Der Browser des Kunden und Sibuna können dann einen hybriden Schlüssel vereinbaren. Für die zweite Verbindung von Sibuna zur Krankenhausanwendung wählen wir den Schutz gesondert."
 
-#: post-quantum-transport.rst:6
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:6
 msgid "What the change protects"
 msgstr "Was die Umstellung schützt"
 
-#: post-quantum-transport.rst:9
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:9
 msgid "In TLS 1.3, X25519MLKEM768 combines X25519 with ML-KEM-768. When the endpoints negotiate this group, a recording of that connection stays confidential while either component remains secure. The certificate still authenticates the handshake with a classical signature. A client that offers only X25519 can still connect. A TCP passthrough listener leaves TLS negotiation to the origin. If a CDN terminates TLS first, the CDN controls the browser's handshake. See `RFC 10024`_."
 msgstr "Bei TLS 1.3 kombiniert X25519MLKEM768 die Verfahren X25519 und ML-KEM-768. Handeln die Endpunkte diese Gruppe aus, bleiben die Daten einer aufgezeichneten Verbindung vertraulich, solange mindestens eine der beiden Komponenten sicher bleibt. Das Zertifikat authentisiert den Handshake weiterhin mit einer klassischen Signatur. Auch ein Client, der nur X25519 anbietet, kann sich verbinden. Ein Listener mit TCP-Passthrough überlässt die TLS-Aushandlung dem Ursprungsserver. Terminiert ein CDN die TLS-Verbindung zuerst, steuert das CDN den Handshake mit dem Browser. Siehe `RFC 10024`_."
 
-#: post-quantum-transport.rst:11
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:11
 msgid "Deadlines at a glance"
 msgstr "Fristen im Überblick"
 
-#: post-quantum-transport.rst:14
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:14
 msgid "The OpenSSL survey is a starting point. We match each service to its owner, jurisdiction and contract before choosing a deadline. These examples were checked on 26 November 2026. See the `OpenSSL survey`_."
 msgstr "Die Übersicht von OpenSSL dient als Ausgangspunkt. Bevor wir eine Frist wählen, klären wir für jeden Dienst, wer ihn betreibt, welcher Rechtsordnung er unterliegt und welcher Vertrag gilt. Wir haben diese Beispiele am 26. November 2026 geprüft. Siehe `OpenSSL survey`_."
 
-#: post-quantum-transport.rst:16
-msgid "**United States.** Executive Order 14412 directs federal agencies to migrate designated high-value assets and high-impact systems to post-quantum key establishment by 31 December 2030 and digital signatures by 31 December 2031. National Security Systems follow separate requirements. A supplier checks the clauses in its contract. See `EO 14412`_ and `OMB M-26-15`_."
-msgstr "**USA.** Die Executive Order 14412 weist Bundesbehörden an, für ausdrücklich als besonders wertvoll eingestufte Ressourcen und für Systeme mit hohem Schadenspotenzial bis zum 31. Dezember 2030 Post-Quanten-Verfahren zur Schlüsselvereinbarung und bis zum 31. Dezember 2031 für digitale Signaturen einzuführen. Für die als National Security Systems eingestuften Systeme gelten gesonderte Vorgaben. Lieferanten prüfen die Klauseln ihres Vertrags. Siehe `EO 14412`_ und `OMB M-26-15`_."
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:17
+msgid "The EU roadmap starts in 2026. Singapore calls for plans in 2027. US and EU milestones follow in 2030, US and Singapore milestones in 2031, and EU and Singapore targets in 2035."
+msgstr "Der EU-Fahrplan beginnt 2026. Singapur erwartet 2027 Pläne. 2030 folgen Etappenziele der USA und der EU, 2031 der USA und Singapurs und 2035 der EU und Singapurs."
 
-#: post-quantum-transport.rst:18
-msgid "**European Union.** The NIS Cooperation Group roadmap recommends that Member States start the transition by the end of 2026. It targets high-risk uses by the end of 2030, medium-risk uses by the end of 2035 and as many low-risk uses as feasible by then. We identify the risk class and the national or sector rules for our service. See the `EU roadmap`_."
-msgstr "**Europäische Union.** Der Fahrplan der NIS-Kooperationsgruppe empfiehlt den Mitgliedstaaten, bis Ende 2026 mit der Umstellung zu beginnen. Für Anwendungsfälle mit hohem Risiko ist die Umstellung bis Ende 2030 vorgesehen, für solche mit mittlerem Risiko bis Ende 2035. Bis dahin sollen auch möglichst viele Anwendungsfälle mit geringem Risiko umgestellt sein. Wir bestimmen die Risikoklasse unseres Dienstes und die für ihn geltenden nationalen oder sektorspezifischen Vorgaben. Siehe `EU roadmap`_."
-
-#: post-quantum-transport.rst:20
-msgid "**Singapore.** CSA expects designated Critical Information Infrastructure owners to submit plans by 31 March 2027 and complete migration by 31 December 2031. Its public advisory encourages other exposed organisations to plan by the end of 2027 and migrate by 2035. We record which category applies to the system. See the `CSA advisory`_ and `CSA CII guidance`_."
-msgstr "**Singapur.** Die Cyber Security Agency (CSA) erwartet von den Betreibern ausgewiesener kritischer Informationsinfrastrukturen, dass sie bis zum 31. März 2027 Pläne vorlegen und die Migration bis zum 31. Dezember 2031 abschließen. Anderen betroffenen Organisationen empfiehlt sie öffentlich, bis Ende 2027 einen Plan zu erstellen und die Migration bis 2035 abzuschließen. Wir halten fest, in welche Kategorie das System fällt. Siehe `CSA advisory`_ und `CSA CII guidance`_."
-
-#: post-quantum-transport.rst:22
-msgid "Three deployments"
-msgstr "Drei Einsatzbeispiele"
-
-#: post-quantum-transport.rst:25
-msgid "The examples use HTTP/1.1 to make both connections easy to inspect. We run each file separately from the directory containing its policy and certificates. The policy permits the diagnostic path and challenges other requests. We substitute our application policy before deployment."
-msgstr "Die Beispiele verwenden HTTP/1.1, damit sich beide Verbindungen leicht überprüfen lassen. Wir starten Sibuna für jede Konfigurationsdatei gesondert aus dem Verzeichnis, in dem ihre Richtlinie und ihre Zertifikate liegen. Die Richtlinie erlaubt den Diagnosepfad und fordert für andere Anfragen einen Arbeitsnachweis an. Vor dem produktiven Einsatz ersetzen wir sie durch die Richtlinie unserer Anwendung."
-
-#: post-quantum-transport.rst:27
-msgid "{\"default_action\":\"CHALLENGE\",\"rules\":[{\"name\":\"status\",\"path\":\"/status\",\"action\":\"ALLOW\"}]}"
-msgstr "{\"default_action\":\"CHALLENGE\",\"rules\":[{\"name\":\"status\",\"path\":\"/status\",\"action\":\"ALLOW\"}]}"
-
-#: post-quantum-transport.rst:30
-msgid "A website with a local HTTP origin"
-msgstr "Eine Website mit lokalem HTTP-Ursprungsserver"
-
-#: post-quantum-transport.rst:33
-msgid "We save this file as ``website.jlv`` and the policy above as ``probe-policy.json``. The file ``edge.pem`` contains the certificate chain for ``edge.example.test`` and its private key. Our HTTP application answers ``/status`` on port 29443. Plaintext stays on loopback. For a remote device we place the gateway on its host or identify and protect the private link separately."
-msgstr "Wir speichern diese Datei als ``website.jlv`` und die obige Richtlinie als ``probe-policy.json``. Die Datei ``edge.pem`` enthält die Zertifikatskette für ``edge.example.test`` und den zugehörigen privaten Schlüssel. Unsere HTTP-Anwendung beantwortet Anfragen an ``/status`` auf Port 29443. Klartext bleibt auf der Loopback-Schnittstelle. Bei einem entfernten Gerät betreiben wir das Gateway auf dessen Host oder erfassen und schützen die private Verbindung gesondert."
-
-#: post-quantum-transport.rst:35
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:17
 msgid ""
-"fn edge() -> Map<Value> {\n"
-"    return {\n"
-"        http: { policy_file: \"probe-policy.json\" },\n"
-"        frontends: {\n"
-"            web: {\n"
-"                binds: [\"127.0.0.1:28443\"],\n"
-"                tls: { crt: \"edge.pem\" },\n"
-"                default_backend: \"app\",\n"
-"            },\n"
-"        },\n"
-"        backends: {\n"
-"            app: {\n"
-"                http_version: \"1.1\",\n"
-"                servers: [\"127.0.0.1:29443\"],\n"
-"            },\n"
-"        },\n"
-"    }\n"
-"}"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#let year(s) = text(weight: \"bold\", size: 9pt, fill: green-deep, s)\n"
+"#let mark(s) = table.cell(fill: pale, text(size: 8pt, fill: green-deep, s))\n"
+"#let region(s) = text(size: 8pt, weight: \"semibold\", s)\n"
+"#table(\n"
+"  columns: (24mm, 20mm, 20mm, 22mm, 24mm, 24mm),\n"
+"  stroke: (x, y) => (bottom: 0.6pt + rule),\n"
+"  align: left + horizon, inset: 4pt,\n"
+"  [], year(\"2026\"), year(\"2027\"), year(\"2030\"), year(\"2031\"), year(\"2035\"),\n"
+"  region(\"US federal\"), [], [], mark(\"Key exchange\"), mark(\"Signatures\"), [],\n"
+"  region(\"EU roadmap\"), mark(\"Start\"), [], mark(\"High risk\"), [], mark(\"Medium risk\"),\n"
+"  region(\"Singapore\"), [], mark(\"Plans\"), [], mark(\"CII migration\"), mark(\"Other exposed organisations\"),\n"
+")\n"
 msgstr ""
-"fn edge() -> Map<Value> {\n"
-"    return {\n"
-"        http: { policy_file: \"probe-policy.json\" },\n"
-"        frontends: {\n"
-"            web: {\n"
-"                binds: [\"127.0.0.1:28443\"],\n"
-"                tls: { crt: \"edge.pem\" },\n"
-"                default_backend: \"app\",\n"
-"            },\n"
-"        },\n"
-"        backends: {\n"
-"            app: {\n"
-"                http_version: \"1.1\",\n"
-"                servers: [\"127.0.0.1:29443\"],\n"
-"            },\n"
-"        },\n"
-"    }\n"
-"}"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"de\")\n"
+"\n"
+"#let year(s) = text(weight: \"bold\", size: 9pt, fill: green-deep, s)\n"
+"#let mark(s) = table.cell(fill: pale, text(size: 8pt, fill: green-deep, s))\n"
+"#let region(s) = text(size: 8pt, weight: \"semibold\", s)\n"
+"#table(\n"
+"  columns: (24mm, 20mm, 20mm, 22mm, 24mm, 24mm),\n"
+"  stroke: (x, y) => (bottom: 0.6pt + rule),\n"
+"  align: left + horizon, inset: 4pt,\n"
+"  [], year(\"2026\"), year(\"2027\"), year(\"2030\"), year(\"2031\"), year(\"2035\"),\n"
+"  region(\"Bund (USA)\"), [], [], mark(\"Schlüssel vereinbaren\"), mark(\"Signaturen\"), [],\n"
+"  region(\"EU-Fahrplan\"), mark(\"Beginn\"), [], mark(\"Hohes Risiko\"), [], mark(\"Mittleres Risiko\"),\n"
+"  region(\"Singapur\"), [], mark(\"Pläne\"), [], mark(\"CII-Migration\"), mark(\"Andere betroffene Organisationen\"),\n"
+")\n"
 
-#: post-quantum-transport.rst:38
-msgid ""
-"sibuna check -f website.jlv\n"
-"sibuna --config-file website.jlv"
-msgstr ""
-"sibuna check -f website.jlv\n"
-"sibuna --config-file website.jlv"
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:17
+msgid "Selected milestones for the systems covered below."
+msgstr "Ausgewählte Meilensteine für die unten aufgeführten Systeme."
 
-#: post-quantum-transport.rst:43
-msgid "An organisation with an HTTPS origin"
-msgstr "Eine Organisation mit HTTPS-Ursprungsserver"
-
-#: post-quantum-transport.rst:46
-msgid "We save this file as ``secure-origin.jlv``. The origin serves HTTPS on port 29443. Its certificate names ``origin.example.test``, and ``ca.pem`` contains the issuing CA certificate. Sibuna verifies the origin and negotiates a separate key exchange. An older origin can use X25519 while the public connection uses the hybrid group. Once the origin supports the hybrid group, the same configuration can protect both connections."
-msgstr "Wir speichern diese Datei als ``secure-origin.jlv``. Der Ursprungsserver bietet HTTPS auf Port 29443 an. Sein Zertifikat nennt den Namen ``origin.example.test``. Die Datei ``ca.pem`` enthält das Zertifikat der ausstellenden Zertifizierungsstelle. Sibuna prüft die Identität des Ursprungsservers und handelt mit ihm eigene Schlüssel aus. Ein älterer Server kann X25519 verwenden, während die öffentliche Verbindung die hybride Gruppe nutzt. Sobald der Server die hybride Gruppe unterstützt, kann dieselbe Konfiguration beide Verbindungen damit schützen."
-
-#: post-quantum-transport.rst:48
-msgid ""
-"fn edge() -> Map<Value> {\n"
-"    return {\n"
-"        http: { policy_file: \"probe-policy.json\" },\n"
-"        frontends: {\n"
-"            web: {\n"
-"                binds: [\"127.0.0.1:28443\"],\n"
-"                tls: { crt: \"edge.pem\" },\n"
-"                default_backend: \"app\",\n"
-"            },\n"
-"        },\n"
-"        backends: {\n"
-"            app: {\n"
-"                http_version: \"1.1\",\n"
-"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
-"                servers: [\"127.0.0.1:29443\"],\n"
-"            },\n"
-"        },\n"
-"    }\n"
-"}"
-msgstr ""
-"fn edge() -> Map<Value> {\n"
-"    return {\n"
-"        http: { policy_file: \"probe-policy.json\" },\n"
-"        frontends: {\n"
-"            web: {\n"
-"                binds: [\"127.0.0.1:28443\"],\n"
-"                tls: { crt: \"edge.pem\" },\n"
-"                default_backend: \"app\",\n"
-"            },\n"
-"        },\n"
-"        backends: {\n"
-"            app: {\n"
-"                http_version: \"1.1\",\n"
-"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
-"                servers: [\"127.0.0.1:29443\"],\n"
-"            },\n"
-"        },\n"
-"    }\n"
-"}"
-
-#: post-quantum-transport.rst:51
-msgid "An older device that makes requests"
-msgstr "Ein älteres Gerät als Client"
-
-#: post-quantum-transport.rst:54
-msgid "Here the device is the client. We save the file as ``device-gateway.jlv`` and run Sibuna beside it. The device sends HTTP to the loopback listener. Sibuna opens authenticated TLS to the central service. Only that outgoing connection can negotiate the hybrid group. The listener must stay reachable only by the intended client. If the device already supports classical HTTPS, the preceding configuration also accepts it on the client side."
-msgstr "Hier stellt das Gerät selbst Anfragen. Wir speichern die Datei als ``device-gateway.jlv`` und betreiben Sibuna auf demselben Host. Das Gerät sendet HTTP an den Loopback-Listener. Sibuna öffnet eine authentisierte TLS-Verbindung zum zentralen Dienst. Nur diese ausgehende Verbindung kann die hybride Gruppe aushandeln. Der Listener darf ausschließlich für den vorgesehenen Client erreichbar sein. Unterstützt das Gerät bereits klassisches HTTPS, kann es sich auch als Client mit der Konfiguration des vorigen Beispiels verbinden."
-
-#: post-quantum-transport.rst:56
-msgid ""
-"fn edge() -> Map<Value> {\n"
-"    return {\n"
-"        http: { policy_file: \"probe-policy.json\" },\n"
-"        frontends: {\n"
-"            web: {\n"
-"                binds: [\"127.0.0.1:28443\"],\n"
-"                default_backend: \"app\",\n"
-"            },\n"
-"        },\n"
-"        backends: {\n"
-"            app: {\n"
-"                http_version: \"1.1\",\n"
-"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
-"                servers: [\"127.0.0.1:29443\"],\n"
-"            },\n"
-"        },\n"
-"    }\n"
-"}"
-msgstr ""
-"fn edge() -> Map<Value> {\n"
-"    return {\n"
-"        http: { policy_file: \"probe-policy.json\" },\n"
-"        frontends: {\n"
-"            web: {\n"
-"                binds: [\"127.0.0.1:28443\"],\n"
-"                default_backend: \"app\",\n"
-"            },\n"
-"        },\n"
-"        backends: {\n"
-"            app: {\n"
-"                http_version: \"1.1\",\n"
-"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
-"                servers: [\"127.0.0.1:29443\"],\n"
-"            },\n"
-"        },\n"
-"    }\n"
-"}"
-
-#: post-quantum-transport.rst:59
-msgid "Verify the negotiated group"
-msgstr "Die ausgehandelte Gruppe prüfen"
-
-#: post-quantum-transport.rst:62
-msgid "We use OpenSSL 3.5 or later to make a fresh connection to the website. Here ``ca.pem`` also trusts the issuer of the public test certificate. Restricting the probe to one group makes the result unambiguous. We check the certificate verification, the negotiated group and the HTTP response."
-msgstr "Mit OpenSSL ab Version 3.5 öffnen wir eine neue Verbindung zur Website. Hier vertrauen wir über ``ca.pem`` auch der Zertifizierungsstelle des öffentlichen Testzertifikats. Wenn wir die Prüfung auf eine Gruppe beschränken, ist das Ergebnis eindeutig. Wir prüfen die Zertifikatsvalidierung, die ausgehandelte Gruppe und die HTTP-Antwort."
-
-#: post-quantum-transport.rst:64
-msgid ""
-"printf 'GET /status HTTP/1.1\\r\\nHost: edge.example.test\\r\\nConnection: close\\r\\n\\r\\n' |\n"
-"  openssl s_client -connect 127.0.0.1:28443 -servername edge.example.test \\\n"
-"    -verify_hostname edge.example.test -CAfile ca.pem -verify_return_error \\\n"
-"    -tls1_3 -groups X25519MLKEM768 -alpn http/1.1 -brief -ign_eof"
-msgstr ""
-"printf 'GET /status HTTP/1.1\\r\\nHost: edge.example.test\\r\\nConnection: close\\r\\n\\r\\n' |\n"
-"  openssl s_client -connect 127.0.0.1:28443 -servername edge.example.test \\\n"
-"    -verify_hostname edge.example.test -CAfile ca.pem -verify_return_error \\\n"
-"    -tls1_3 -groups X25519MLKEM768 -alpn http/1.1 -brief -ign_eof"
-
-#: post-quantum-transport.rst:71
-msgid "For RC6, OpenSSL 3.5.7 reported ``Verification: OK`` and ``Negotiated TLS1.3 group: X25519MLKEM768``. We observed the origin separately with an OpenSSL test server restricted first to the hybrid group and then to X25519. Both returned HTTP 200. A mismatched origin certificate name returned 502. The older client example also returned 200 on a hybrid-only origin."
-msgstr "Bei RC6 meldete OpenSSL 3.5.7 ``Verification: OK`` und ``Negotiated TLS1.3 group: X25519MLKEM768``. Den Ursprungsserver prüften wir gesondert mit einem OpenSSL-Testserver, den wir zunächst auf die hybride Gruppe und anschließend auf X25519 beschränkten. In beiden Fällen erhielten wir HTTP 200. Bei einem unpassenden Namen im Zertifikat des Ursprungsservers erhielten wir 502. Auch das Beispiel mit dem älteren Client lieferte 200, wenn der Ursprungsserver nur die hybride Gruppe unterstützte."
-
-#: post-quantum-transport.rst:73
-msgid "We record the date, endpoints, certificate identities, negotiated groups and any plaintext segments for each service. Offering the group permits classical fallback. A policy that requires hybrid-only sessions needs enforcement and evidence on every covered connection. Post-quantum signatures, FIPS 140 module validation and SQLx database TLS each need separate evidence. An edge handshake establishes one item in that inventory."
-msgstr "Für jeden Dienst halten wir Datum, Endpunkte, Identitäten der Zertifikate, ausgehandelte Gruppen und etwaige Klartextstrecken fest. Das Angebot der hybriden Gruppe lässt einen Rückgriff auf klassische Verfahren zu. Verlangt eine Richtlinie ausschließlich hybride Sitzungen, müssen wir das auf jeder betroffenen Verbindung durchsetzen und nachweisen. Für Post-Quanten-Signaturen, die Modulvalidierung nach FIPS 140 und die TLS-Verbindung von SQLx zur Datenbank benötigen wir jeweils eigene Nachweise. Der Handshake am Edge belegt einen Eintrag in diesem Inventar."
-
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:24
 msgid "Milestones"
 msgstr "Meilensteine"
 
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:25
 msgid "Systems covered"
 msgstr "Betroffene Systeme"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:26
+msgid "2030, 2031"
+msgstr "2030, 2031"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:27
+msgid "**United States.** Executive Order 14412 directs federal agencies to migrate designated high-value assets and high-impact systems to post-quantum key establishment by 31 December 2030 and digital signatures by 31 December 2031. National Security Systems follow separate requirements. A supplier checks the clauses in its contract. See `EO 14412`_ and `OMB M-26-15`_."
+msgstr "**USA.** Die Executive Order 14412 weist Bundesbehörden an, für ausdrücklich als besonders wertvoll eingestufte Ressourcen und für Systeme mit hohem Schadenspotenzial bis zum 31. Dezember 2030 Post-Quanten-Verfahren zur Schlüsselvereinbarung und bis zum 31. Dezember 2031 für digitale Signaturen einzuführen. Für die als National Security Systems eingestuften Systeme gelten gesonderte Vorgaben. Lieferanten prüfen die Klauseln ihres Vertrags. Siehe `EO 14412`_ und `OMB M-26-15`_."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:28
+msgid "2026, 2030, 2035"
+msgstr "2026, 2030, 2035"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:29
+msgid "**European Union.** The NIS Cooperation Group roadmap recommends that Member States start the transition by the end of 2026. It targets high-risk uses by the end of 2030, medium-risk uses by the end of 2035 and as many low-risk uses as feasible by then. We identify the risk class and the national or sector rules for our service. See the `EU roadmap`_."
+msgstr "**Europäische Union.** Der Fahrplan der NIS-Kooperationsgruppe empfiehlt den Mitgliedstaaten, bis Ende 2026 mit der Umstellung zu beginnen. Für Anwendungsfälle mit hohem Risiko ist die Umstellung bis Ende 2030 vorgesehen, für solche mit mittlerem Risiko bis Ende 2035. Bis dahin sollen auch möglichst viele Anwendungsfälle mit geringem Risiko umgestellt sein. Wir bestimmen die Risikoklasse unseres Dienstes und die für ihn geltenden nationalen oder sektorspezifischen Vorgaben. Siehe `EU roadmap`_."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:30
+msgid "2027, 2031, 2035"
+msgstr "2027, 2031, 2035"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:31
+msgid "**Singapore.** CSA expects designated Critical Information Infrastructure owners to submit plans by 31 March 2027 and complete migration by 31 December 2031. Its public advisory encourages other exposed organisations to plan by the end of 2027 and migrate by 2035. We record which category applies to the system. See the `CSA advisory`_ and `CSA CII guidance`_."
+msgstr "**Singapur.** Die Cyber Security Agency (CSA) erwartet von den Betreibern ausgewiesener kritischer Informationsinfrastrukturen, dass sie bis zum 31. März 2027 Pläne vorlegen und die Migration bis zum 31. Dezember 2031 abschließen. Anderen betroffenen Organisationen empfiehlt sie öffentlich, bis Ende 2027 einen Plan zu erstellen und die Migration bis 2035 abzuschließen. Wir halten fest, in welche Kategorie das System fällt. Siehe `CSA advisory`_ und `CSA CII guidance`_."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:33
+msgid "From a deadline to a deployment"
+msgstr "Von der Frist zur Umsetzung"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:36
+msgid "We start with a service covered by the policy and follow one request from its client to the application. We record who owns each TLS endpoint and how long the request must stay confidential. The first example changes the public connection. The second also authenticates the connection to the website. In the third, an older device initiates the request and Sibuna protects its outgoing traffic."
+msgstr "Wir beginnen mit einem Dienst im Geltungsbereich der Vorgabe und verfolgen eine Anfrage vom Client bis zur Anwendung. Wir halten für jeden TLS-Endpunkt den Betreiber fest und bestimmen, wie lange die Anfrage vertraulich bleiben muss. Im ersten Beispiel ändern wir die öffentliche Verbindung. Im zweiten authentisieren wir zusätzlich die Verbindung zur Website. Im dritten stellt ein älteres Gerät die Anfrage und Sibuna schützt seinen ausgehenden Datenverkehr."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:38
+msgid "Three deployments"
+msgstr "Drei Einsatzbeispiele"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:41
+msgid "The examples use HTTP/1.1 to make both connections easy to inspect. We run each file separately from the directory containing its policy and certificates. The policy permits the diagnostic path and challenges other requests. We substitute our application policy before deployment."
+msgstr "Die Beispiele verwenden HTTP/1.1, damit sich beide Verbindungen leicht überprüfen lassen. Wir starten Sibuna für jede Konfigurationsdatei gesondert aus dem Verzeichnis, in dem ihre Richtlinie und ihre Zertifikate liegen. Die Richtlinie erlaubt den Diagnosepfad und fordert für andere Anfragen einen Arbeitsnachweis an. Vor dem produktiven Einsatz ersetzen wir sie durch die Richtlinie unserer Anwendung."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:43
+msgid "{\"default_action\":\"CHALLENGE\",\"rules\":[{\"name\":\"status\",\"path\":\"/status\",\"action\":\"ALLOW\"}]}"
+msgstr "{\"default_action\":\"CHALLENGE\",\"rules\":[{\"name\":\"status\",\"path\":\"/status\",\"action\":\"ALLOW\"}]}"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:46
+msgid "A website with a local HTTP origin"
+msgstr "Eine Website mit lokalem HTTP-Ursprungsserver"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:49
+msgid "We save this file as ``website.jlv`` and the policy above as ``probe-policy.json``. The file ``edge.pem`` contains the certificate chain for ``edge.example.test`` and its private key. Our HTTP application answers ``/status`` on port 29443. Plaintext stays on loopback. For a remote device we place the gateway on its host or identify and protect the private link separately."
+msgstr "Wir speichern diese Datei als ``website.jlv`` und die obige Richtlinie als ``probe-policy.json``. Die Datei ``edge.pem`` enthält die Zertifikatskette für ``edge.example.test`` und den zugehörigen privaten Schlüssel. Unsere HTTP-Anwendung beantwortet Anfragen an ``/status`` auf Port 29443. Klartext bleibt auf der Loopback-Schnittstelle. Bei einem entfernten Gerät betreiben wir das Gateway auf dessen Host oder erfassen und schützen die private Verbindung gesondert."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:52
+msgid "The browser negotiates hybrid TLS with Sibuna. Sibuna forwards the request locally and sends the response through the browser's encrypted connection."
+msgstr "Der Browser handelt mit Sibuna hybrides TLS aus. Sibuna leitet die Anfrage lokal weiter und sendet die Antwort über die verschlüsselte Browserverbindung zurück."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:52
+msgid ""
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#sequence(\n"
+"  (actor(\"c\", \"Customer browser\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
+"   actor(\"w\", \"Website\", kind: \"party\")),\n"
+"  (\n"
+"    msg(\"c\", \"s\", \"Offer hybrid TLS\", accent: true),\n"
+"    msg(\"s\", \"c\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
+"    msg(\"c\", \"s\", \"`GET /status`\"),\n"
+"    msg(\"s\", \"w\", \"HTTP on loopback\"),\n"
+"    msg(\"w\", \"s\", \"`200 OK`\", reply: true),\n"
+"    msg(\"s\", \"c\", \"Encrypted response\", reply: true, accent: true),\n"
+"  ),\n"
+"  spacing: 45,\n"
+")\n"
+msgstr ""
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"de\")\n"
+"\n"
+"#sequence(\n"
+"  (actor(\"c\", \"Browser des Kunden\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
+"   actor(\"w\", \"Website\", kind: \"party\")),\n"
+"  (\n"
+"    msg(\"c\", \"s\", \"Hybrides TLS anbieten\", accent: true),\n"
+"    msg(\"s\", \"c\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
+"    msg(\"c\", \"s\", \"`GET /status`\"),\n"
+"    msg(\"s\", \"w\", \"HTTP über Loopback\"),\n"
+"    msg(\"w\", \"s\", \"`200 OK`\", reply: true),\n"
+"    msg(\"s\", \"c\", \"Verschlüsselte Antwort\", reply: true, accent: true),\n"
+"  ),\n"
+"  spacing: 45,\n"
+")\n"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:52
+msgid "A customer reaches a website that serves HTTP on the same host as Sibuna."
+msgstr "Ein Kunde erreicht eine Website, die auf demselben Rechner wie Sibuna HTTP anbietet."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:55
+msgid "The frontend's ``tls.crt`` makes Sibuna the TLS endpoint. The ``default_backend`` selects the pool named ``app``. Its loopback address keeps the HTTP request on this host. For public service we bind the frontend to the public interface and provision a certificate for the site's actual name."
+msgstr "Mit ``tls.crt`` im Frontend wird Sibuna zum TLS-Endpunkt. ``default_backend`` wählt den Pool ``app``. Durch dessen Loopback-Adresse bleibt die HTTP-Anfrage auf diesem Rechner. Für den öffentlichen Betrieb binden wir das Frontend an die öffentliche Schnittstelle und hinterlegen ein Zertifikat für den tatsächlichen Namen der Website."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:57
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:60
+msgid ""
+"sibuna check -f website.jlv\n"
+"sibuna --config-file website.jlv"
+msgstr ""
+"sibuna check -f website.jlv\n"
+"sibuna --config-file website.jlv"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:65
+msgid "An organisation with an HTTPS origin"
+msgstr "Eine Organisation mit HTTPS-Ursprungsserver"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:68
+msgid "We save this file as ``secure-origin.jlv``. The origin serves HTTPS on port 29443. Its certificate names ``origin.example.test``, and ``ca.pem`` contains the issuing CA certificate. Sibuna verifies the origin and negotiates a separate key exchange. An older origin can use X25519 while the public connection uses the hybrid group. Once the origin supports the hybrid group, the same configuration can protect both connections."
+msgstr "Wir speichern diese Datei als ``secure-origin.jlv``. Der Ursprungsserver bietet HTTPS auf Port 29443 an. Sein Zertifikat nennt den Namen ``origin.example.test``. Die Datei ``ca.pem`` enthält das Zertifikat der ausstellenden Zertifizierungsstelle. Sibuna prüft die Identität des Ursprungsservers und handelt mit ihm eigene Schlüssel aus. Ein älterer Server kann X25519 verwenden, während die öffentliche Verbindung die hybride Gruppe nutzt. Sobald der Server die hybride Gruppe unterstützt, kann dieselbe Konfiguration beide Verbindungen damit schützen."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:71
+msgid "After the browser connects, Sibuna negotiates TLS with the website and verifies its identity before forwarding the request. The two connections can negotiate different groups."
+msgstr "Nach dem Verbindungsaufbau des Browsers handelt Sibuna mit der Website TLS aus und prüft deren Identität, bevor die Anfrage weitergeleitet wird. Beide Verbindungen können verschiedene Gruppen aushandeln."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:71
+msgid ""
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#sequence(\n"
+"  (actor(\"c\", \"Customer browser\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
+"   actor(\"w\", \"Website\", kind: \"party\")),\n"
+"  (\n"
+"    msg(\"c\", \"s\", \"Offer hybrid TLS\", accent: true),\n"
+"    msg(\"s\", \"c\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
+"    msg(\"c\", \"s\", \"`GET /status`\"),\n"
+"    msg(\"s\", \"w\", \"Offer TLS to the origin\", accent: true),\n"
+"    msg(\"w\", \"s\", \"Origin certificate and selected group\", reply: true),\n"
+"    act(\"s\", \"Verify the origin name and issuer\"),\n"
+"    msg(\"s\", \"w\", \"`GET /status`\", accent: true),\n"
+"    msg(\"w\", \"s\", \"`200 OK`\", reply: true),\n"
+"    msg(\"s\", \"c\", \"Encrypted response\", reply: true),\n"
+"  ),\n"
+"  spacing: 45,\n"
+")\n"
+msgstr ""
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"de\")\n"
+"\n"
+"#sequence(\n"
+"  (actor(\"c\", \"Browser des Kunden\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
+"   actor(\"w\", \"Website\", kind: \"party\")),\n"
+"  (\n"
+"    msg(\"c\", \"s\", \"Hybrides TLS anbieten\", accent: true),\n"
+"    msg(\"s\", \"c\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
+"    msg(\"c\", \"s\", \"`GET /status`\"),\n"
+"    msg(\"s\", \"w\", \"TLS am Ursprung anbieten\", accent: true),\n"
+"    msg(\"w\", \"s\", \"Zertifikat und gewählte Gruppe des Ursprungs\", reply: true),\n"
+"    act(\"s\", \"Ursprungsnamen und Aussteller prüfen\"),\n"
+"    msg(\"s\", \"w\", \"`GET /status`\", accent: true),\n"
+"    msg(\"w\", \"s\", \"`200 OK`\", reply: true),\n"
+"    msg(\"s\", \"c\", \"Verschlüsselte Antwort\", reply: true),\n"
+"  ),\n"
+"  spacing: 45,\n"
+")\n"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:71
+msgid "Sibuna accepts the customer's TLS connection and opens another to the website."
+msgstr "Sibuna nimmt die TLS-Verbindung des Kunden an und öffnet eine weitere zur Website."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:74
+msgid "In the backend, ``servers`` gives the address to dial, ``tls.sni`` gives the name to authenticate and ``tls.ca_file`` supplies the trust anchor. These settings let us route to an IP address while verifying the certificate against a DNS name."
+msgstr "Im Backend gibt ``servers`` die Zieladresse an, ``tls.sni`` den zu prüfenden Namen und ``tls.ca_file`` den Vertrauensanker. So können wir eine IP-Adresse anwählen und das Zertifikat anhand eines DNS-Namens prüfen."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:76
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:79
+msgid "An older device that makes requests"
+msgstr "Ein älteres Gerät als Client"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:82
+msgid "Here the device is the client. We save the file as ``device-gateway.jlv`` and run Sibuna beside it. The device sends HTTP to the loopback listener. Sibuna opens authenticated TLS to the central service. Only that outgoing connection can negotiate the hybrid group. The listener must stay reachable only by the intended client. If the device already supports classical HTTPS, the preceding configuration also accepts it on the client side."
+msgstr "Hier stellt das Gerät selbst Anfragen. Wir speichern die Datei als ``device-gateway.jlv`` und betreiben Sibuna auf demselben Host. Das Gerät sendet HTTP an den Loopback-Listener. Sibuna öffnet eine authentisierte TLS-Verbindung zum zentralen Dienst. Nur diese ausgehende Verbindung kann die hybride Gruppe aushandeln. Der Listener darf ausschließlich für den vorgesehenen Client erreichbar sein. Unterstützt das Gerät bereits klassisches HTTPS, kann es sich auch als Client mit der Konfiguration des vorigen Beispiels verbinden."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:85
+msgid "The device sends local HTTP to Sibuna. Sibuna verifies the central service and uses a hybrid connection for the network leg. The reply returns to the device over local HTTP."
+msgstr "Das Gerät sendet lokal HTTP an Sibuna. Sibuna prüft den zentralen Dienst und nutzt für den Netzabschnitt eine hybride Verbindung. Die Antwort erreicht das Gerät über lokales HTTP."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:85
+msgid ""
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#sequence(\n"
+"  (actor(\"c\", \"Older device\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
+"   actor(\"w\", \"Central service\", kind: \"party\")),\n"
+"  (\n"
+"    msg(\"c\", \"s\", \"HTTP on loopback\"),\n"
+"    msg(\"s\", \"w\", \"Offer hybrid TLS\", accent: true),\n"
+"    msg(\"w\", \"s\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
+"    act(\"s\", \"Verify the service name and issuer\"),\n"
+"    msg(\"s\", \"w\", \"`GET /status`\", accent: true),\n"
+"    msg(\"w\", \"s\", \"Encrypted response\", reply: true),\n"
+"    msg(\"s\", \"c\", \"Local HTTP response\", reply: true),\n"
+"  ),\n"
+"  spacing: 45,\n"
+")\n"
+msgstr ""
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"de\")\n"
+"\n"
+"#sequence(\n"
+"  (actor(\"c\", \"Älteres Gerät\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
+"   actor(\"w\", \"Zentraler Dienst\", kind: \"party\")),\n"
+"  (\n"
+"    msg(\"c\", \"s\", \"HTTP über Loopback\"),\n"
+"    msg(\"s\", \"w\", \"Hybrides TLS anbieten\", accent: true),\n"
+"    msg(\"w\", \"s\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
+"    act(\"s\", \"Dienstnamen und Aussteller prüfen\"),\n"
+"    msg(\"s\", \"w\", \"`GET /status`\", accent: true),\n"
+"    msg(\"w\", \"s\", \"Verschlüsselte Antwort\", reply: true),\n"
+"    msg(\"s\", \"c\", \"Lokale HTTP-Antwort\", reply: true),\n"
+"  ),\n"
+"  spacing: 45,\n"
+")\n"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:85
+msgid "A device uses its local gateway to call a central service."
+msgstr "Ein Gerät ruft über sein lokales Gateway einen zentralen Dienst auf."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:88
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:91
+msgid "Verify the negotiated group"
+msgstr "Die ausgehandelte Gruppe prüfen"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:94
+msgid "We use OpenSSL 3.5 or later to make a fresh connection to the website. Here ``ca.pem`` also trusts the issuer of the public test certificate. Restricting the probe to one group makes the result unambiguous. We check the certificate verification, the negotiated group and the HTTP response."
+msgstr "Mit OpenSSL ab Version 3.5 öffnen wir eine neue Verbindung zur Website. Hier vertrauen wir über ``ca.pem`` auch der Zertifizierungsstelle des öffentlichen Testzertifikats. Wenn wir die Prüfung auf eine Gruppe beschränken, ist das Ergebnis eindeutig. Wir prüfen die Zertifikatsvalidierung, die ausgehandelte Gruppe und die HTTP-Antwort."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:96
+msgid ""
+"printf 'GET /status HTTP/1.1\\r\\nHost: edge.example.test\\r\\nConnection: close\\r\\n\\r\\n' |\n"
+"  openssl s_client -connect 127.0.0.1:28443 -servername edge.example.test \\\n"
+"    -verify_hostname edge.example.test -CAfile ca.pem -verify_return_error \\\n"
+"    -tls1_3 -groups X25519MLKEM768 -alpn http/1.1 -brief -ign_eof"
+msgstr ""
+"printf 'GET /status HTTP/1.1\\r\\nHost: edge.example.test\\r\\nConnection: close\\r\\n\\r\\n' |\n"
+"  openssl s_client -connect 127.0.0.1:28443 -servername edge.example.test \\\n"
+"    -verify_hostname edge.example.test -CAfile ca.pem -verify_return_error \\\n"
+"    -tls1_3 -groups X25519MLKEM768 -alpn http/1.1 -brief -ign_eof"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:103
+msgid "Certificate verification checks the frontend's identity. The negotiated group tells us which key exchange protected this session. We check the response body for the application's expected status. To collect equivalent evidence for the backend, we observe the connection made by Sibuna at the origin. An independent probe to the origin only shows what that probe could negotiate."
+msgstr "Die Zertifikatsprüfung bestätigt die Identität des Frontends. Die ausgehandelte Gruppe zeigt, welcher Schlüsselaustausch diese Sitzung schützt. Wir prüfen, ob die Antwort den erwarteten Status der Anwendung enthält. Für einen entsprechenden Nachweis am Backend beobachten wir am Ursprungsserver die von Sibuna aufgebaute Verbindung. Eine separate Testverbindung zum Ursprung zeigt nur, was dieser Testclient aushandeln konnte."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:105
+msgid "With RC6 and OpenSSL 3.5.7, we restricted the test origin to one group at a time. The table records the results. A classical client or origin can complete a request even when only the other connection uses hybrid keys."
+msgstr "Mit RC6 und OpenSSL 3.5.7 beschränkten wir den Testursprung je Durchlauf auf eine Gruppe. Die Tabelle zeigt die Ergebnisse. Ein klassischer Client oder Ursprung kann die Anfrage abschließen, auch wenn nur die jeweils andere Verbindung hybride Schlüssel nutzt."
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:107
+msgid "Observations for one request to ``/status``"
+msgstr "Beobachtungen bei einer Anfrage an ``/status``"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:111
+msgid "Client to Sibuna"
+msgstr "Client zu Sibuna"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:112
+msgid "Sibuna to application"
+msgstr "Sibuna zur Anwendung"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:113
+msgid "HTTP result"
+msgstr "HTTP-Ergebnis"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:114
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:117
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:120
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:121
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:124
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:127
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:129
+msgid "``X25519MLKEM768``"
+msgstr "``X25519MLKEM768``"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:115
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:126
+msgid "HTTP on loopback"
+msgstr "HTTP über Loopback"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:116
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:119
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:122
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:125
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:128
+msgid "``200``"
+msgstr "``200``"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:118
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:123
+msgid "``X25519``"
+msgstr "``X25519``"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:130
+msgid "Origin name mismatch"
+msgstr "Ursprungsname stimmt nicht überein"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:131
+msgid "``502``"
+msgstr "``502``"
+
+#: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:133
+msgid "We record the date, endpoints, certificate identities, negotiated groups and any plaintext segments for each service. Offering the group permits classical fallback. A policy that requires hybrid-only sessions needs enforcement and evidence on every covered connection. Post-quantum signatures, FIPS 140 module validation and SQLx database TLS each need separate evidence. An edge handshake establishes one item in that inventory."
+msgstr "Für jeden Dienst halten wir Datum, Endpunkte, Identitäten der Zertifikate, ausgehandelte Gruppen und etwaige Klartextstrecken fest. Das Angebot der hybriden Gruppe lässt einen Rückgriff auf klassische Verfahren zu. Verlangt eine Richtlinie ausschließlich hybride Sitzungen, müssen wir das auf jeder betroffenen Verbindung durchsetzen und nachweisen. Für Post-Quanten-Signaturen, die Modulvalidierung nach FIPS 140 und die TLS-Verbindung von SQLx zur Datenbank benötigen wir jeweils eigene Nachweise. Der Handshake am Edge belegt einen Eintrag in diesem Inventar."
