@@ -1,71 +1,67 @@
-//! `cargo xtask figures`: renders the documentation figures from their Typst sources into
-//! SVG files, one per figure and language, and records what each file was rendered from.
+//! `cargo xtask figures`: keeps the files that the documentation figures share or read
+//! identical to their sources.
 //!
-//! A figure is a Typst file in one of the source directories of [`SETS`]. The languages
-//! are the word tables in [`WORDS`]: `en.toml` gives the English file `name.svg`, and
-//! `de.toml` gives `name.de.svg`, the name guidedog looks for in a German build
-//! (`figure_language_filename`). Typst receives the language as `--input lang=<code>`.
+//! Guidedog compiles every figure with its embedded Typst during the build, and a Typst
+//! figure cannot read a file outside its guidedog project. So each project keeps its own
+//! copy of what several projects share (the figure style, the chart helpers and word
+//! tables) and of the benchmark results its charts read. [`COPIES`] lists each source and
+//! its copies, relative to the workspace root.
 //!
-//! The SVG files are committed, and the documentation builds use them as they are. They
-//! are rendered again only when their inputs change: for each file, [`MANIFEST`] records
-//! the inputs Typst reported (`--deps`) inside the repository, with one SHA-256 over their
-//! contents. A figure whose recorded inputs are unchanged is skipped, so a run on another
-//! machine, with other fonts or another Typst, leaves the committed files alone. Typst
-//! packages live outside the repository and are pinned by the version in each import.
-//!
-//! `--force` renders every figure. `--check` renders nothing and fails when a figure is
-//! missing, out of date or no longer has a source, so CI notices a source change that was
-//! not rendered; it needs neither Typst nor its fonts.
+//! Without arguments the command writes every copy that differs from its source. A source
+//! may be a directory: its files are copied, not its subdirectories, and a file in a copy
+//! that the source lacks is removed, so the copy mirrors the source. `--check` writes
+//! nothing and fails when a copy differs, is missing or has a file its source lacks; CI
+//! runs it.
 
-use std::collections::BTreeMap;
 use std::ffi::OsString;
-use std::fmt::{self, Write as _};
+use std::fmt;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
-use sibuna_crypto::sha256::Sha256;
-use sibuna_json::Value;
-
-/// A directory of figure sources and the directory their SVG files go to, both relative to
-/// the workspace root.
-pub struct FigureSet {
-    /// Where the `.typ` sources are; files in subdirectories are not figures.
-    pub sources: &'static str,
-    /// Where the SVG files are written, inside the guidedog project that shows them.
-    pub output: &'static str,
+/// A file or directory and the places it is copied to, relative to the workspace root.
+pub struct Copy {
+    /// The file or directory that is edited.
+    pub source: &'static str,
+    /// Where identical copies live, each inside the project that reads it.
+    pub copies: &'static [&'static str],
 }
 
-/// The figure sets: the book's and the whitepaper's.
-pub const SETS: [FigureSet; 2] = [
-    FigureSet { sources: "docs/figures/book", output: "docs/book/assets/figures" },
-    FigureSet { sources: "docs/figures/whitepaper", output: "docs/whitepaper/assets/figures" },
+/// Everything the figures share or read: the book's files are the sources, except the
+/// benchmark results, which `cargo xtask bench` writes.
+pub const COPIES: [Copy; 5] = [
+    Copy {
+        source: "benchmarks/results/primitives-latest.json",
+        copies: &[
+            "docs/book/diagrams/charts/data/primitives-latest.json",
+            "docs/whitepaper/diagrams/charts/data/primitives-latest.json",
+        ],
+    },
+    Copy {
+        source: "docs/book/diagrams/style.typ",
+        copies: &["docs/whitepaper/diagrams/style.typ", "docs/sid/diagrams/style.typ"],
+    },
+    Copy {
+        source: "docs/book/diagrams/charts/chart.typ",
+        copies: &["docs/whitepaper/diagrams/charts/chart.typ"],
+    },
+    Copy {
+        source: "docs/book/diagrams/charts/draw/tree.typ",
+        copies: &["docs/whitepaper/diagrams/charts/draw/tree.typ"],
+    },
+    Copy {
+        source: "docs/book/diagrams/charts/words",
+        copies: &["docs/whitepaper/diagrams/charts/words"],
+    },
 ];
 
-/// The directory of word tables, one per language, relative to the workspace root.
-pub const WORDS: &str = "docs/figures/words";
-
-/// The record of what each SVG file was rendered from, relative to the workspace root.
-pub const MANIFEST: &str = "docs/figures/rendered.txt";
-
-/// The language whose files carry no language in their name.
-const ENGLISH: &str = "en";
-
-/// Where Typst writes its output and dependency list before they are compared.
-const SCRATCH: &str = "target/xtask-figures";
-
-/// Why the figures could not be rendered or checked.
+/// Why the copies could not be written or checked.
 #[derive(Debug)]
 pub enum FiguresError {
-    /// An argument other than `--check` or `--force`.
+    /// An argument other than `--check`.
     Usage(String),
-    /// A file could not be read, written or removed.
+    /// A file or directory could not be read, written or removed.
     Io { path: PathBuf, error: io::Error },
-    /// The manifest or a word table name cannot be read.
-    Invalid { path: PathBuf, detail: String },
-    /// Typst could not be started, failed, or warned.
-    Typst { source: String, detail: String },
-    /// `--check` found figures to render; it holds one line per figure.
+    /// `--check` found copies that differ from their sources; one line per copy.
     Stale(Vec<String>),
 }
 
@@ -75,39 +71,26 @@ impl FiguresError {
         match self {
             FiguresError::Usage(_) => "UNKNOWN ARGUMENT",
             FiguresError::Io { .. } => "FILE ERROR",
-            FiguresError::Invalid { .. } => "UNREADABLE FILE",
-            FiguresError::Typst { .. } => "TYPST FAILED",
-            FiguresError::Stale(_) => "FIGURES OUT OF DATE",
+            FiguresError::Stale(_) => "FIGURE COPIES OUT OF DATE",
         }
     }
 
     /// The file the diagnostic is about.
     pub fn location(&self) -> String {
         match self {
-            FiguresError::Io { path, .. } | FiguresError::Invalid { path, .. } => {
-                path.display().to_string()
-            }
-            FiguresError::Typst { source, .. } => source.clone(),
-            FiguresError::Usage(_) | FiguresError::Stale(_) => MANIFEST.to_owned(),
+            FiguresError::Io { path, .. } => path.display().to_string(),
+            FiguresError::Usage(_) | FiguresError::Stale(_) => "tools/xtask/src/figures.rs".into(),
         }
     }
 
     /// How to fix the problem.
     pub fn hint(&self) -> &'static str {
         match self {
-            FiguresError::Usage(_) => {
-                "Run `cargo xtask figures`, with `--check` to verify or `--force` to redo all."
-            }
+            FiguresError::Usage(_) => "Run `cargo xtask figures`, or `--check` to only verify.",
             FiguresError::Io { .. } => "Check that the path exists and is writable.",
-            FiguresError::Invalid { .. } => {
-                "Run `cargo xtask figures --force` to write the manifest again."
-            }
-            FiguresError::Typst { .. } => {
-                "Install Typst 0.15 (or set TYPST to its path), the Noto fonts (fonts-noto-core \
-                 and fonts-noto-cjk) and network access for its packages, then run again."
-            }
             FiguresError::Stale(_) => {
-                "Run `cargo xtask figures` and commit the SVG files and docs/figures/rendered.txt."
+                "Edit the source, not the copy. Then run `cargo xtask figures` and commit the \
+                 copies with their source."
             }
         }
     }
@@ -120,12 +103,8 @@ impl fmt::Display for FiguresError {
                 write!(f, "`{argument}` is not an option of `figures`.")
             }
             FiguresError::Io { path, error } => write!(f, "{}: {error}.", path.display()),
-            FiguresError::Invalid { path, detail } => write!(f, "{}: {detail}.", path.display()),
-            FiguresError::Typst { source, detail } => {
-                write!(f, "Typst could not render {source}:\n\n{}", detail.trim_end())
-            }
             FiguresError::Stale(lines) => {
-                f.write_str("These figures do not match their sources:\n")?;
+                f.write_str("These copies do not match their sources:\n")?;
                 for line in lines {
                     write!(f, "\n    {line}")?;
                 }
@@ -137,378 +116,212 @@ impl fmt::Display for FiguresError {
 
 impl std::error::Error for FiguresError {}
 
-/// What the command does.
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Mode {
-    /// Render the figures whose inputs changed.
-    Render,
-    /// Render every figure.
-    Force,
-    /// Render nothing; fail when a figure is out of date.
-    Check,
+/// One copy to keep: the source file and the copy, relative to the workspace root.
+#[derive(Debug, PartialEq, Eq)]
+struct Pair {
+    source: PathBuf,
+    copy: PathBuf,
 }
 
-/// One SVG file to produce: its source, its language and its path, relative to the root.
-struct Job {
-    source: String,
-    language: String,
-    output: String,
+/// The pairs of files that `copies` describes, and the files in copied directories that
+/// their source lacks.
+#[derive(Debug, Default)]
+struct Plan {
+    pairs: Vec<Pair>,
+    extra: Vec<PathBuf>,
 }
 
-/// One manifest line: the digest of an output's inputs and the inputs themselves.
-#[derive(Clone, Debug, PartialEq, Eq)]
-struct Entry {
-    digest: String,
-    inputs: Vec<String>,
-}
-
-/// Renders (or with `--check`, checks) the figures of the workspace at `root`, and reports
-/// what it did on `out`.
+/// Writes (or with `--check`, checks) the copies of [`COPIES`] in the workspace at `root`,
+/// and reports what it did on `out`.
 ///
 /// Fails with [`FiguresError`] when an argument is unknown, a file cannot be read or
-/// written, Typst fails or warns, or `--check` finds a figure out of date.
+/// written, or `--check` finds a copy that differs from its source.
 pub fn run(root: &Path, arguments: &[OsString], out: &mut dyn Write) -> Result<(), FiguresError> {
-    let mode = match arguments {
-        [] => Mode::Render,
-        [flag] if flag == "--check" => Mode::Check,
-        [flag] if flag == "--force" => Mode::Force,
+    let check_only = match arguments {
+        [] => false,
+        [flag] if flag == "--check" => true,
         [other, ..] => return Err(FiguresError::Usage(other.to_string_lossy().into_owned())),
     };
-    let jobs = jobs(root, &languages(root)?)?;
-    let manifest_path = root.join(MANIFEST);
-    let old = match std::fs::read_to_string(&manifest_path) {
-        Ok(text) => parse_manifest(&text)
-            .map_err(|detail| FiguresError::Invalid { path: manifest_path.clone(), detail })?,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => BTreeMap::new(),
-        Err(error) => return Err(FiguresError::Io { path: manifest_path, error }),
-    };
-    if mode == Mode::Check {
-        return check(root, &jobs, &old, out);
-    }
-    let mut new = BTreeMap::new();
-    let mut rendered = 0;
-    for job in &jobs {
-        let current = old.get(&job.output).filter(|_| mode != Mode::Force);
-        if let Some(entry) = current
-            && is_current(root, job, entry)?
-        {
-            new.insert(job.output.clone(), entry.clone());
+    let plan = plan(root, &COPIES)?;
+    if check_only { check(root, &plan, out) } else { write(root, &plan, out) }
+}
+
+/// Expands `copies` into pairs of files: a file source gives one pair per copy, and a
+/// directory source one pair per file in it and copy.
+fn plan(root: &Path, copies: &[Copy]) -> Result<Plan, FiguresError> {
+    let mut plan = Plan::default();
+    for entry in copies {
+        let source = Path::new(entry.source);
+        if !root.join(source).is_dir() {
+            for copy in entry.copies {
+                plan.pairs.push(Pair { source: source.into(), copy: copy.into() });
+            }
             continue;
         }
-        let entry = render(root, job)?;
-        let _ = writeln!(out, "rendered {}", job.output);
-        rendered += 1;
-        new.insert(job.output.clone(), entry);
-    }
-    for orphan in old.keys().filter(|output| !new.contains_key(*output)) {
-        let path = root.join(orphan);
-        match std::fs::remove_file(&path) {
-            Ok(()) => {}
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-            Err(error) => return Err(FiguresError::Io { path, error }),
-        }
-        let _ = writeln!(out, "removed {orphan}");
-    }
-    let text = render_manifest(&new);
-    if old != new || !manifest_path.exists() {
-        std::fs::write(&manifest_path, text)
-            .map_err(|error| FiguresError::Io { path: manifest_path, error })?;
-    }
-    let _ = writeln!(out, "{} figures, {rendered} rendered.", jobs.len());
-    Ok(())
-}
-
-/// The `--check` mode: every job has a current entry and an output, and no entry lacks a
-/// job.
-fn check(
-    root: &Path,
-    jobs: &[Job],
-    manifest: &BTreeMap<String, Entry>,
-    out: &mut dyn Write,
-) -> Result<(), FiguresError> {
-    let mut stale = Vec::new();
-    for job in jobs {
-        match manifest.get(&job.output) {
-            None => stale.push(format!("{}: never rendered", job.output)),
-            Some(entry) if !is_current(root, job, entry)? => {
-                stale.push(format!("{}: its inputs changed", job.output));
+        let names = file_names(&root.join(source))?;
+        for copy in entry.copies.iter().map(Path::new) {
+            for name in &names {
+                plan.pairs.push(Pair { source: source.join(name), copy: copy.join(name) });
             }
-            Some(_) => {}
+            let present = match file_names(&root.join(copy)) {
+                Ok(present) => present,
+                Err(FiguresError::Io { error, .. }) if error.kind() == io::ErrorKind::NotFound => {
+                    Vec::new()
+                }
+                Err(error) => return Err(error),
+            };
+            let extra = present.into_iter().filter(|name| !names.contains(name));
+            plan.extra.extend(extra.map(|name| copy.join(name)));
         }
     }
-    for output in manifest.keys() {
-        if !jobs.iter().any(|job| &job.output == output) {
-            stale.push(format!("{output}: its source is gone"));
-        }
-    }
-    if !stale.is_empty() {
-        return Err(FiguresError::Stale(stale));
-    }
-    let _ = writeln!(out, "{MANIFEST} is current ({} figures).", jobs.len());
-    Ok(())
-}
-
-/// Whether `entry` still describes `job`: its output exists and its inputs, which must all
-/// still exist, have the recorded digest.
-fn is_current(root: &Path, job: &Job, entry: &Entry) -> Result<bool, FiguresError> {
-    if !root.join(&job.output).is_file() {
-        return Ok(false);
-    }
-    if entry.inputs.iter().any(|input| !root.join(input).is_file()) {
-        return Ok(false);
-    }
-    Ok(digest(root, &job.language, &entry.inputs)? == entry.digest)
-}
-
-/// The languages of the word tables, English first, then by code.
-fn languages(root: &Path) -> Result<Vec<String>, FiguresError> {
-    let directory = root.join(WORDS);
-    let mut codes = Vec::new();
-    for name in sorted_file_names(&directory)? {
-        let Some(code) = name.strip_suffix(".toml") else { continue };
-        if code.is_empty() || !code.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_') {
-            let detail = format!("`{name}` is not a language code followed by .toml");
-            return Err(FiguresError::Invalid { path: directory, detail });
-        }
-        codes.push(code.to_owned());
-    }
-    if !codes.iter().any(|code| code == ENGLISH) {
-        let detail = "there is no en.toml, the table every language falls back to".to_owned();
-        return Err(FiguresError::Invalid { path: directory, detail });
-    }
-    codes.sort_by_key(|code| (code != ENGLISH, code.clone()));
-    Ok(codes)
-}
-
-/// Every (figure, language) pair of every set, in a fixed order.
-fn jobs(root: &Path, languages: &[String]) -> Result<Vec<Job>, FiguresError> {
-    let mut jobs = Vec::new();
-    for set in &SETS {
-        for name in sorted_file_names(&root.join(set.sources))? {
-            let Some(stem) = name.strip_suffix(".typ") else { continue };
-            for language in languages {
-                let suffix =
-                    if language == ENGLISH { String::new() } else { format!(".{language}") };
-                jobs.push(Job {
-                    source: format!("{}/{name}", set.sources),
-                    language: language.clone(),
-                    output: format!("{}/{stem}{suffix}.svg", set.output),
-                });
-            }
-        }
-    }
-    Ok(jobs)
+    Ok(plan)
 }
 
 /// The names of the regular files in `directory`, sorted.
-fn sorted_file_names(directory: &Path) -> Result<Vec<String>, FiguresError> {
-    let io_error = |error| FiguresError::Io { path: directory.to_owned(), error };
+fn file_names(directory: &Path) -> Result<Vec<OsString>, FiguresError> {
+    let io_error = |error| FiguresError::Io { path: directory.to_path_buf(), error };
     let mut names = Vec::new();
     for entry in std::fs::read_dir(directory).map_err(io_error)? {
         let entry = entry.map_err(io_error)?;
-        if entry.file_type().map_err(io_error)?.is_file()
-            && let Some(name) = entry.file_name().to_str()
-        {
-            names.push(name.to_owned());
+        if entry.file_type().map_err(io_error)?.is_file() {
+            names.push(entry.file_name());
         }
     }
     names.sort();
     Ok(names)
 }
 
-/// The SHA-256, in hexadecimal, of the language and of every input's path and contents.
-/// Lengths separate the parts, so no two lists of inputs hash alike by concatenation.
-fn digest(root: &Path, language: &str, inputs: &[String]) -> Result<String, FiguresError> {
-    let mut hasher = Sha256::new();
-    let mut part = |bytes: &[u8]| {
-        hasher.update(&(bytes.len() as u64).to_le_bytes());
-        hasher.update(bytes);
-    };
-    part(language.as_bytes());
-    for input in inputs {
-        let path = root.join(input);
-        let contents = std::fs::read(&path)
-            .map_err(|error| FiguresError::Io { path: path.clone(), error })?;
-        part(input.as_bytes());
-        part(&contents);
+/// Reads the file at `path`; a missing file reads as `None`.
+fn read(path: &Path) -> Result<Option<Vec<u8>>, FiguresError> {
+    match std::fs::read(path) {
+        Ok(bytes) => Ok(Some(bytes)),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(FiguresError::Io { path: path.to_path_buf(), error }),
     }
-    let mut hex = String::with_capacity(64);
-    for byte in hasher.finalize() {
-        let _ = write!(hex, "{byte:02x}");
-    }
-    Ok(hex)
 }
 
-/// Renders `job` with Typst, writes its SVG file when the bytes differ from the committed
-/// one, and returns its manifest entry.
-fn render(root: &Path, job: &Job) -> Result<Entry, FiguresError> {
-    let scratch = root.join(SCRATCH);
-    std::fs::create_dir_all(&scratch)
-        .map_err(|error| FiguresError::Io { path: scratch.clone(), error })?;
-    let svg = scratch.join("figure.svg");
-    let deps = scratch.join("figure.deps.json");
-    let program = std::env::var_os("TYPST").unwrap_or_else(|| OsString::from("typst"));
-    let typst_error = |detail: String| FiguresError::Typst { source: job.source.clone(), detail };
-    let output = Command::new(program)
-        .arg("compile")
-        .arg("--root")
-        .arg(root)
-        .arg("--input")
-        .arg(format!("lang={}", job.language))
-        .arg("--deps")
-        .arg(&deps)
-        .args(["--deps-format", "json"])
-        .arg(&job.source)
-        .arg(&svg)
-        .current_dir(root)
-        .output()
-        .map_err(|error| typst_error(format!("cannot run typst: {error}")))?;
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    // A warning is a failure: a missing font would otherwise draw other letters.
-    if !output.status.success() || stderr.contains("warning:") {
-        return Err(typst_error(stderr.into_owned()));
-    }
-    let read = |path: &Path| {
-        std::fs::read(path).map_err(|error| FiguresError::Io { path: path.to_owned(), error })
-    };
-    let listing = read(&deps)?;
-    let inputs = parse_deps(root, &listing).map_err(typst_error)?;
-    let bytes = read(&svg)?;
-    let target = root.join(&job.output);
-    if std::fs::read(&target).ok().as_deref() != Some(bytes.as_slice()) {
-        if let Some(parent) = target.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|error| FiguresError::Io { path: parent.to_owned(), error })?;
-        }
-        std::fs::write(&target, &bytes)
-            .map_err(|error| FiguresError::Io { path: target.clone(), error })?;
-    }
-    Ok(Entry { digest: digest(root, &job.language, &inputs)?, inputs })
+/// Reads the source of `pair`, which must exist, and its copy, which may not.
+fn read_pair(root: &Path, pair: &Pair) -> Result<(Vec<u8>, Option<Vec<u8>>), FiguresError> {
+    let source_path = root.join(&pair.source);
+    let source = read(&source_path)?.ok_or_else(|| FiguresError::Io {
+        path: source_path,
+        error: io::Error::from(io::ErrorKind::NotFound),
+    })?;
+    Ok((source, read(&root.join(&pair.copy))?))
 }
 
-/// The inputs of a Typst dependency list (`{"inputs": [...], "outputs": [...]}`) that lie
-/// inside `root`, relative to it with `/` separators, sorted. Paths outside the root (the
-/// package cache) are left out.
-fn parse_deps(root: &Path, listing: &[u8]) -> Result<Vec<String>, String> {
-    let document = sibuna_json::parse(listing).map_err(|error| error.to_string())?;
-    let inputs = document
-        .as_object()
-        .and_then(|object| object.get("inputs"))
-        .and_then(Value::as_array)
-        .ok_or("the dependency list has no `inputs` array")?;
-    let mut paths = Vec::new();
-    for input in inputs {
-        let text = input.as_str().ok_or("a dependency is not a string")?;
-        let path = Path::new(text);
-        let relative = if path.is_absolute() {
-            match path.strip_prefix(root) {
-                Ok(inside) => inside,
-                Err(_) => continue,
-            }
-        } else {
-            path
-        };
-        let parts: Vec<&str> = relative.iter().filter_map(|part| part.to_str()).collect();
-        let joined = parts.join("/");
-        if joined.chars().any(char::is_whitespace) {
-            return Err(format!("the input `{joined}` has white space in its path"));
-        }
-        paths.push(joined);
-    }
-    paths.sort();
-    paths.dedup();
-    Ok(paths)
-}
-
-/// The manifest's text: a header, then one line per output, sorted.
-fn render_manifest(entries: &BTreeMap<String, Entry>) -> String {
-    let mut text = String::from(
-        "# The figures `cargo xtask figures` rendered, and what from. Do not edit.\n\
-         # Each line: the SVG file, the SHA-256 of its language and inputs, and the inputs.\n",
-    );
-    for (output, entry) in entries {
-        let _ = writeln!(text, "{output} {} {}", entry.digest, entry.inputs.join(" "));
-    }
-    text
-}
-
-/// Parses the manifest written by [`render_manifest`]; fails with a description of the
-/// first malformed line.
-fn parse_manifest(text: &str) -> Result<BTreeMap<String, Entry>, String> {
-    let mut entries = BTreeMap::new();
-    for (number, line) in text.lines().enumerate() {
-        if line.starts_with('#') || line.trim().is_empty() {
+/// The default mode: writes every copy that differs from its source and removes the files
+/// that a copied directory's source lacks.
+fn write(root: &Path, plan: &Plan, out: &mut dyn Write) -> Result<(), FiguresError> {
+    let mut written = 0;
+    for pair in &plan.pairs {
+        let (source, copy) = read_pair(root, pair)?;
+        if copy.as_deref() == Some(source.as_slice()) {
             continue;
         }
-        let mut words = line.split(' ');
-        let (Some(output), Some(digest)) = (words.next(), words.next()) else {
-            return Err(format!("line {} has no digest", number + 1));
-        };
-        if digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit()) {
-            return Err(format!("line {} has no SHA-256 digest", number + 1));
+        let path = root.join(&pair.copy);
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|error| FiguresError::Io { path: parent.to_path_buf(), error })?;
         }
-        let inputs: Vec<String> = words.map(str::to_owned).collect();
-        if inputs.is_empty() {
-            return Err(format!("line {} lists no inputs", number + 1));
-        }
-        entries.insert(output.to_owned(), Entry { digest: digest.to_owned(), inputs });
+        std::fs::write(&path, &source).map_err(|error| FiguresError::Io { path, error })?;
+        let _ = writeln!(out, "copied {} to {}", pair.source.display(), pair.copy.display());
+        written += 1;
     }
-    Ok(entries)
+    for extra in &plan.extra {
+        let path = root.join(extra);
+        std::fs::remove_file(&path).map_err(|error| FiguresError::Io { path, error })?;
+        let _ = writeln!(out, "removed {}", extra.display());
+    }
+    let _ = writeln!(out, "{} copies, {written} written.", plan.pairs.len());
+    Ok(())
+}
+
+/// The `--check` mode: every copy exists and equals its source, and no copied directory
+/// holds a file its source lacks.
+fn check(root: &Path, plan: &Plan, out: &mut dyn Write) -> Result<(), FiguresError> {
+    let mut stale = Vec::new();
+    for pair in &plan.pairs {
+        let (source, copy) = read_pair(root, pair)?;
+        let (source_name, copy_name) = (pair.source.display(), pair.copy.display());
+        match copy {
+            None => stale.push(format!("{copy_name} is missing (a copy of {source_name})")),
+            Some(copy) if copy != source => {
+                stale.push(format!("{copy_name} differs from {source_name}"));
+            }
+            Some(_) => {}
+        }
+    }
+    for extra in &plan.extra {
+        stale.push(format!("{} has no source", extra.display()));
+    }
+    if !stale.is_empty() {
+        return Err(FiguresError::Stale(stale));
+    }
+    let _ = writeln!(out, "{} copies match their sources.", plan.pairs.len());
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn the_manifest_reads_back_what_it_wrote() {
-        let mut entries = BTreeMap::new();
-        entries.insert(
-            "docs/book/assets/figures/gcra.de.svg".to_owned(),
-            Entry {
-                digest: "ab".repeat(32),
-                inputs: vec!["docs/figures/book/gcra.typ".into(), "docs/figures/style.typ".into()],
-            },
-        );
-        let text = render_manifest(&entries);
-        assert!(text.is_ascii());
-        assert_eq!(parse_manifest(&text).unwrap(), entries);
+    /// A fresh, empty directory under the system's temporary directory.
+    fn scratch(name: &str) -> PathBuf {
+        let process = std::process::id();
+        let path = std::env::temp_dir().join(format!("xtask-figures-{process}-{name}"));
+        let _ = std::fs::remove_dir_all(&path);
+        std::fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    const TEST_COPIES: [Copy; 2] = [
+        Copy { source: "data.json", copies: &["a/data.json", "b/data.json"] },
+        Copy { source: "words", copies: &["a/words"] },
+    ];
+
+    fn workspace(name: &str) -> PathBuf {
+        let root = scratch(name);
+        std::fs::write(root.join("data.json"), "{}").unwrap();
+        std::fs::create_dir_all(root.join("words")).unwrap();
+        std::fs::write(root.join("words/en.toml"), "x = 1").unwrap();
+        std::fs::write(root.join("words/de.toml"), "x = 2").unwrap();
+        root
+    }
+
+    fn checked(root: &Path) -> Result<(), FiguresError> {
+        check(root, &plan(root, &TEST_COPIES)?, &mut Vec::new())
     }
 
     #[test]
-    fn malformed_manifest_lines_are_errors() {
-        assert!(parse_manifest("a.svg\n").is_err());
-        assert!(parse_manifest("a.svg 1234 b.typ\n").is_err());
-        assert!(parse_manifest(&format!("a.svg {}\n", "0".repeat(64))).is_err());
-        assert!(parse_manifest("# comment\n\n").unwrap().is_empty());
+    fn writing_makes_every_copy_identical() {
+        let root = workspace("write");
+        assert!(matches!(checked(&root), Err(FiguresError::Stale(lines)) if lines.len() == 4));
+        write(&root, &plan(&root, &TEST_COPIES).unwrap(), &mut Vec::new()).unwrap();
+        checked(&root).unwrap();
+        assert_eq!(std::fs::read_to_string(root.join("a/words/de.toml")).unwrap(), "x = 2");
+        let _ = std::fs::remove_dir_all(root);
     }
 
     #[test]
-    fn dependencies_outside_the_root_are_left_out() {
-        let root = Path::new("/work/sibuna");
-        let listing = br#"{"inputs": ["/home/u/.cache/typst/packages/preview/cetz/0.5.2/lib.typ",
-            "docs/figures/style.typ", "/work/sibuna/docs/figures/words/en.toml",
-            "docs/figures/style.typ"], "outputs": ["x.svg"]}"#;
-        assert_eq!(
-            parse_deps(root, listing).unwrap(),
-            ["docs/figures/style.typ", "docs/figures/words/en.toml"]
-        );
-        assert!(parse_deps(root, b"[]").is_err());
+    fn check_names_a_changed_copy_and_a_stray_file() {
+        let root = workspace("stale");
+        write(&root, &plan(&root, &TEST_COPIES).unwrap(), &mut Vec::new()).unwrap();
+        std::fs::write(root.join("b/data.json"), "{\"edited\": true}").unwrap();
+        std::fs::write(root.join("a/words/fr.toml"), "x = 3").unwrap();
+        let Err(FiguresError::Stale(lines)) = checked(&root) else {
+            panic!("the check passed");
+        };
+        assert_eq!(lines, ["b/data.json differs from data.json", "a/words/fr.toml has no source"]);
+        write(&root, &plan(&root, &TEST_COPIES).unwrap(), &mut Vec::new()).unwrap();
+        assert!(!root.join("a/words/fr.toml").exists());
+        checked(&root).unwrap();
+        let _ = std::fs::remove_dir_all(root);
     }
 
     #[test]
-    fn the_digest_depends_on_language_paths_and_contents() {
-        let root = std::env::temp_dir().join(format!("xtask-figures-{}", std::process::id()));
-        std::fs::create_dir_all(&root).unwrap();
-        std::fs::write(root.join("a.typ"), "one").unwrap();
-        std::fs::write(root.join("b.typ"), "one").unwrap();
-        let inputs = |name: &str| vec![name.to_owned()];
-        let first = digest(&root, "en", &inputs("a.typ")).unwrap();
-        assert_eq!(first, digest(&root, "en", &inputs("a.typ")).unwrap());
-        assert_ne!(first, digest(&root, "de", &inputs("a.typ")).unwrap());
-        assert_ne!(first, digest(&root, "en", &inputs("b.typ")).unwrap());
-        std::fs::write(root.join("a.typ"), "two").unwrap();
-        assert_ne!(first, digest(&root, "en", &inputs("a.typ")).unwrap());
-        std::fs::remove_dir_all(&root).unwrap();
+    fn rejects_unknown_arguments() {
+        let error = run(Path::new("."), &["--force".into()], &mut Vec::new()).unwrap_err();
+        assert!(matches!(error, FiguresError::Usage(argument) if argument == "--force"));
     }
 }

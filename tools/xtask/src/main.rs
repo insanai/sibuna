@@ -5,9 +5,9 @@
 //! structural limits of the house rules, and `browser`, which runs the `sibuna-browser`
 //! tool (`tools/browser`) for checks in headless Chromium, and `bench`, which builds the
 //! daemon and runs the `sibuna-bench` tool (`tools/bench`) in release mode, `licenses`,
-//! which writes `LICENSES/THIRD-PARTY-RUST.txt`, and `figures`, which renders the
-//! documentation figures from their Typst sources. Builds of the WebAssembly solver (`wasm`)
-//! are meant to join them as a further module and table entry.
+//! which writes `LICENSES/THIRD-PARTY-RUST.txt`, and `figures`, which keeps the files the
+//! documentation figures share or read identical to their sources. Builds of the
+//! WebAssembly solver (`wasm`) are meant to join them as a further module and table entry.
 //!
 //! Deliberate changes from the Zig repository's `tools/check-style.sh` and
 //! `check-style.awk`:
@@ -64,8 +64,8 @@ const COMMANDS: [Command; 6] = [
     },
     Command {
         name: "figures",
-        synopsis: "[--check | --force]",
-        summary: "Render the documentation figures whose Typst sources changed",
+        synopsis: "[--check]",
+        summary: "Copy the files the documentation figures share or read into each project",
     },
     Command { name: "help", synopsis: "", summary: "Print this help" },
 ];
@@ -209,9 +209,9 @@ fn help() -> ExitCode {
          arguments on; run `cargo xtask bench help` for its commands and options.\n\n\
          `licenses` lists the third-party crates of the release executable with their\n\
          licenses in LICENSES/THIRD-PARTY-RUST.txt; `--check` only verifies the file.\n\n\
-         `figures` renders each Typst figure of docs/figures once per language into SVG,\n\
-         skipping those whose inputs are unchanged since docs/figures/rendered.txt was\n\
-         written; `--force` renders all, and `--check` only verifies the record.\n",
+         `figures` copies the benchmark results the charts read, and the figure style,\n\
+         chart helpers and word tables the projects share, into each guidedog project;\n\
+         `--check` only verifies that every copy equals its source.\n",
     );
     match io::stdout().lock().write_all(text.as_bytes()) {
         Ok(()) => ExitCode::SUCCESS,
