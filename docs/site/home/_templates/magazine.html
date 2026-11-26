@@ -1,2 +1,26 @@
 {% extends "layout.html" %}
-{% block content %}<div class="magazine gd-article">{{ body }}</div>{% endblock %}
+{% block content %}
+<div class="magazine gd-article">
+  <section id="writings">
+    <h1 id="articles">{{ _(collection.title) }}</h1>
+    <p>{{ _('Field notes on load balancing, web application firewalls and the connections they protect.') }}</p>
+    <div class="postlist"><ul>
+    {% for post in collection.posts %}
+      <li>
+        <p><time dir="ltr" datetime="{{ post.date }}">{{ post.date }}</time>
+          {% for name in post.meta.authors %}<bdi class="byline" translate="no">{{ name }}</bdi>{% endfor %}
+          <a href="{{ post.url }}">{{ post.title }}</a></p>
+        {{ post.excerpt_html }}
+        {% if post.meta.pdf_url %}<a class="article-download" download type="application/pdf" href="{{ post.meta.pdf_url }}">{{ _('Download PDF') }}</a>{% endif %}
+      </li>
+    {% endfor %}
+    </ul></div>
+  </section>
+  <section class="collected-paper">
+    <h2><a href="{{ edition_url }}whitepaper/">{{ _('Architecture whitepaper') }}</a></h2>
+    <bdi class="byline" translate="no">Vikrant Rathore</bdi>
+    <p>{{ _('How Sibuna admits and inspects HTTP requests, with measurements of latency, throughput and memory use in the beta firewall.') }}</p>
+    <a class="article-download" type="application/pdf" download href="{{ edition_url }}pdf/sibuna-whitepaper.pdf">{{ _('Download PDF') }}</a>
+  </section>
+</div>
+{% endblock %}

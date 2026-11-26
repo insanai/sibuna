@@ -1,8 +1,10 @@
 {% extends "layout.html" %}
 {% block content %}
 <article class="editorial gd-article">
-  <div class="article-meta"><a href="{{ edition_url }}articles/">{{ _('Articles') }}</a>
+  <div class="article-meta"><a href="{{ edition_url }}articles/">{{ _('Writings') }}</a>
     <time dir="ltr" datetime="{{ page.meta.date }}">{{ page.meta.date }}</time>
+    {% for name in page.meta.authors %}<bdi class="byline" translate="no">{{ name }}</bdi>{% endfor %}
+    {% if page.meta.pdf_url %}<a class="article-download" type="application/pdf" download href="{{ page.meta.pdf_url }}">{{ _('Download PDF') }}</a>{% endif %}
     {% if outline %}<details class="article-outline">
       <summary id="outline-title">{{ _('On this page') }}</summary>
       <nav aria-labelledby="outline-title">{{ outline }}</nav>

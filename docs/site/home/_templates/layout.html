@@ -7,7 +7,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 {% if not route %}<meta name="description" content="{{ _('Sibuna routes TCP, UDP and HTTP to healthy servers. We can run one edge or connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes.') }}">{% endif %}
-<title>{% if route %}{{ title|striptags }} · Sibuna{% else %}{{ _('Distributed load balancer and web application firewall · Sibuna') }}{% endif %}</title>
+<title>{% if collection %}{{ _(collection.title) }} · Sibuna{% elif route %}{{ title|striptags }} · Sibuna{% else %}{{ _('Distributed load balancer and web application firewall · Sibuna') }}{% endif %}</title>
 {% for item in site_languages %}<link rel="alternate" hreflang="{{ item.code }}" href="{{ site_url }}{{ item.prefix }}{{ route }}">
 {% endfor %}<link rel="alternate" hreflang="x-default" href="{{ site_url }}{{ route }}">
 <link rel="icon" type="image/svg+xml" href="{{ site_base }}assets/favicon.svg">
@@ -21,10 +21,9 @@
 <a class="skip" href="#main">{{ _('Skip to content') }}</a>
 <header class="nav"><a class="brand" href="{{ edition_url }}" translate="no"><i aria-hidden="true">s.</i>sibuna</a>
 <nav aria-label="{{ _('Main') }}">
-<a href="{{ edition_url }}articles/">{{ _('Articles') }}</a>
+<a href="{{ edition_url }}articles/"{% if pagename == "articles/index" %} aria-current="page"{% elif pagename[:9] == "articles/" %} aria-current="location"{% endif %}>{{ _('Writings') }}</a>
 <a href="{{ edition_url }}book/">{{ _('Book') }}</a>
 <a href="{{ edition_url }}book/operations.html">{{ _('Operations') }}</a>
-<a href="{{ edition_url }}whitepaper/">{{ _('Whitepaper') }}</a>
 <a href="{{ site_base }}sid/">{{ _('SIDs') }}</a>
 <a href="https://github.com/insanai/sibuna">{{ _('GitHub') }}</a>
 <details class="language-menu" translate="no"><summary><span class="language-sr">{{ _('Language:') }} </span><span lang="{{ edition.code }}">{{ edition.label }}</span></summary>

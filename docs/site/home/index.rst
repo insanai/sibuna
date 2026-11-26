@@ -5,5 +5,6 @@ Sibuna
 
 .. toctree::
    :hidden:
+   :glob:
 
-   articles/index
+   articles/*

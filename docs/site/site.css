@@ -667,6 +667,15 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
 .article-outline li + li {margin-block-start:.35rem}
 .article-outline a {text-decoration-thickness:1px}
 .article-outline summary:focus-visible {outline:3px solid var(--gold);outline-offset:4px}
+.article-download {display:inline-block;font-weight:600;text-decoration-thickness:1px}
+.byline {font:500 .92rem/1.5 system-ui,sans-serif;color:var(--ink)}
+.postlist time + .byline {margin-inline-start:.75rem}
+.postlist li > .article-download {grid-column:1;justify-self:start}
+.collected-paper {border-block-start:1px solid var(--line);padding-block:1.6rem}
+.collected-paper h2 {margin:0;font:500 clamp(1.7rem,3vw,2.5rem)/1.15 var(--story-title);text-wrap:balance}
+.collected-paper h2 a {color:var(--ink);text-decoration:none}
+.collected-paper h2 a:hover {text-decoration:underline;text-decoration-thickness:1px}
+.collected-paper p {max-inline-size:var(--column);margin-block:.7rem}
 .editorial .headerlink,.magazine .headerlink {font:.65em system-ui;opacity:0;margin-inline-start:.35em;text-decoration:none}
 .editorial :is(h1,h2,h3):hover .headerlink,.magazine h1:hover .headerlink,.home .headerlink:focus {opacity:1}
 .gd-article :where(section > p,.postlist li > p:not(:first-child),dd) {
@@ -705,7 +714,7 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
 .magazine .postlist li > p:first-child {align-self:end}
 .magazine .postlist li > p:first-child a {display:block;margin:.8rem 0 .25rem;font-size:clamp(2rem,3.8vw,3.6rem);line-height:1.08;letter-spacing:-.035em;text-decoration:none;color:var(--ink)}
 .magazine .postlist li > p:first-child a:hover {text-decoration:underline;text-decoration-thickness:1px}
-.magazine .postlist li > img {grid-column:2;grid-row:1/span 2;align-self:center;width:100%;border-radius:6px}
+.magazine .postlist li > img {grid-column:2;grid-row:1/span 3;align-self:center;width:100%;border-radius:6px}
 .magazine .postlist li:not(:has(> img)) {grid-template-columns:minmax(0,72ch)}
 :is(.editorial,.magazine):is(:lang(ar),:lang(hi),:lang(ja),:lang(ko),:lang(zh))
   :is(h1,h2,.postlist li > p:first-child a) {letter-spacing:normal;line-height:1.25}

@@ -11,7 +11,7 @@ name = "home"
 source = "home"
 output = ""
 # Publish Guidedog's self-contained _static/typography.js for the reading pages.
-exclude = ["search.html", "genindex.html", "_static/*.css", "_static/guidedog.js", "_static/searchindex.js", "_sources/**", "gd-dependencies.json", "objects.inv", "searchindex.js"]
+exclude = ["search.html", "genindex.html", "_static/*.css", "_static/guidedog.js", "_static/searchindex.js", "_sources/**", "sources/**", "gd-dependencies.json", "objects.inv", "searchindex.js"]
 editions = [
   {language = "en", output = ""},
   {language = "zh_CN", output = "zh-hans"},

@@ -558,5 +558,14 @@ msgstr "auf einem Host."
 msgid "· CHECK THE PROOF AT SIBUNA"
 msgstr "· SIBUNA PRÜFT DEN NACHWEIS"
 
-msgid "Articles"
-msgstr "Artikel"
+msgid "Writings"
+msgstr "Beiträge"
+
+msgid "Download PDF"
+msgstr "PDF herunterladen"
+
+msgid "How Sibuna admits and inspects HTTP requests, with measurements of latency, throughput and memory use in the beta firewall."
+msgstr "Wie Sibuna HTTP-Anfragen zulässt und prüft, mit Messungen zu Latenz, Durchsatz und Speicherbedarf der Firewall in der Betaversion."
+
+msgid "Field notes on load balancing, web application firewalls and the connections they protect."
+msgstr "Praxisberichte über Lastverteilung, Web Application Firewalls und die Verbindungen, die sie schützen."

@@ -558,5 +558,14 @@ msgstr "同一台主机。"
 msgid "· CHECK THE PROOF AT SIBUNA"
 msgstr "· 在 SIBUNA 验证证明"
 
-msgid "Articles"
+msgid "Writings"
 msgstr "文章"
+
+msgid "Download PDF"
+msgstr "下载 PDF"
+
+msgid "How Sibuna admits and inspects HTTP requests, with measurements of latency, throughput and memory use in the beta firewall."
+msgstr "介绍 Sibuna 如何接纳和检查 HTTP 请求，并给出测试版防火墙的延迟、吞吐量和内存占用测量结果。"
+
+msgid "Field notes on load balancing, web application firewalls and the connections they protect."
+msgstr "关于负载均衡、Web 应用防火墙及其所保护连接的实践笔记。"

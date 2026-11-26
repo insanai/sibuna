@@ -22,7 +22,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 language = "en"
 # Translation catalogs: the whitepaper's own, then the book's catalogs of guidedog's
 # interface words for ar, hi and ko, which guidedog lacks (read in place, not copied).
-locale_dirs = ["locales", "../book/_templates/locales"]
+locale_dirs = ["locales", "../book/_templates/locales", "../site/home/locales"]
 # Literal blocks are messages too, so diagram labels and code comments can be translated;
 # a translator copies the code itself unchanged. Graphviz alt text (image) and the raw
 # Typst block of the metric cards (raw) are visible text too; a translator changes only

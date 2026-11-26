@@ -6,7 +6,7 @@
 The site has these parts, served under /sibuna/:
 
     /sibuna/              the landing page (Guidedog SSG with the Sibuna theme and admission demo)
-    /sibuna/articles/     the magazine and its dated articles, rendered by the same SSG theme
+    /sibuna/articles/     Writings, with dated articles, their print editions and the whitepaper
     /sibuna/book/         The Sibuna Book, `guidedog build html` of docs/book
     /sibuna/whitepaper/   the whitepaper, `guidedog build html` of docs/whitepaper
     /sibuna/sid/          the Sibuna Discussions, `guidedog dsc build` of docs/sid
@@ -21,7 +21,9 @@ map instead (see Bundle.shown). The SIDs exist only in English.
 
 Guidedog writes each project into its own _build folder; this script copies the results,
 adds the site's links and the language menu to the header of every documentation page,
-and checks every local link and anchor. It copies the output of guidedog ssg build docs/site
+and checks every local link and anchor. A dated article declares :author: with the public
+display name and :pdf: article for a standalone print edition beside its HTML in every language.
+The script copies the output of guidedog ssg build docs/site
 into the Pages artifact. The build needs guidedog on PATH and Python 3.11 or later. The
 PDF books and whitepapers in Chinese, Japanese, Korean, Hindi and Arabic need the Noto
 fonts (Debian packages fonts-noto-cjk and fonts-noto-core). --no-build reuses the _build
@@ -31,7 +33,7 @@ from dataclasses import dataclass
 from html import escape
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
+from urllib.parse import unquote, urljoin, urlsplit
 import argparse
 import hashlib
 import json
@@ -71,8 +73,8 @@ BUNDLES = (
     Bundle("whitepaper", "docs/whitepaper", "sibuna-whitepaper-en.pdf",
            "sibuna-whitepaper.pdf", ("copyright", "html_title", "today")),
 )
-NAVIGATION = (("Home", ""), ("Articles", "articles/"), ("Book", "book/"), ("Operations", "book/operations.html"),
-              ("Whitepaper", "whitepaper/"), ("SIDs", "sid/"))
+NAVIGATION = (("Home", ""), ("Writings", "articles/"), ("Book", "book/"),
+              ("Operations", "book/operations.html"), ("SIDs", "sid/"))
 # The sections that exist in every language: the landing page and the bundles. The SIDs
 # exist only in English, and every edition links to them.
 TRANSLATED = ("", "articles/") + tuple(f"{bundle.folder}/" for bundle in BUNDLES)
@@ -196,10 +198,14 @@ def site_links(route, pdf, language):
     items = []
     for label, target in NAVIGATION:
         mark = ' aria-current="page"' if target == section else ""
+        if section == "whitepaper/" and target == "articles/":
+            mark = ' aria-current="location"'
         label = escape(languages.word(words, label))
         items.append(f'<li><a href="{section_url(target, language)}"{mark}>{label}</a></li>')
     if pdf:
-        items.append(f'<li><a href="{BASE}{pdf}">{languages.word(words, "PDF")}</a></li>')
+        label = "Download PDF" if route.startswith("whitepaper/") else "PDF"
+        items.append(f'<li><a type="application/pdf" download href="{BASE}{pdf}">'
+                     f'{escape(languages.word(words, label))}</a></li>')
     items.append(f'<li><a href="{REPO}">GitHub</a></li>')
     return '<ul class="rellinks">' + "".join(items) + "</ul>"
 
@@ -291,13 +297,34 @@ class Links(HTMLParser):
         super().__init__()
         self.links = []
         self.ids = set()
+        self.article = False
+        self.downloads = []
+        self.bylines = []
+        self.in_byline = False
 
     def handle_starttag(self, tag, attrs):
+        attributes = dict(attrs)
+        classes = attributes.get("class", "").split()
+        if "article-meta" in classes:
+            self.article = True
+        if tag == "bdi" and "byline" in classes:
+            self.in_byline = True
+            self.bylines.append("")
+        if tag == "a" and "download" in attributes and attributes.get("type") == "application/pdf":
+            self.downloads.append(attributes.get("href", ""))
         for key, value in attrs:
             if key in ("id", "name") and value:
                 self.ids.add(value)
             if key in ("href", "src") and value:
                 self.links.append(value)
+
+    def handle_data(self, data):
+        if self.in_byline:
+            self.bylines[-1] += data
+
+    def handle_endtag(self, tag):
+        if tag == "bdi":
+            self.in_byline = False
 
 
 def validate(site):
@@ -306,6 +333,15 @@ def validate(site):
     for path in site.rglob("*.html"):
         parser = Links()
         parser.feed(path.read_text())
+        if any("@" in name for name in parser.bylines):
+            raise SystemExit(f"{path}: use a public display name without an email address")
+        if parser.article:
+            if not any(name.strip() for name in parser.bylines):
+                raise SystemExit(f"{path}: missing article byline; set :author: to a display name")
+            route = path.relative_to(site)
+            expected = BASE + route.with_suffix(".pdf").as_posix()
+            if not any(urljoin(BASE + route.as_posix(), href) == expected for href in parser.downloads):
+                raise SystemExit(f"{path}: missing article PDF download; set :pdf: article")
         pages[path.resolve()] = parser
     broken = []
     for path, parser in pages.items():

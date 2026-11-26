@@ -125,6 +125,7 @@ document.documentElement.dataset.theme=m}catch(e){}</script>
     {%- endif %}
     {%- block document %}
     <article class="gd-article">
+    {% if pagename == root_doc %}<p class="gd-download"><a href="../pdf/sibuna-whitepaper.pdf" download type="application/pdf">{{ _('Download PDF') }}</a></p>{% endif %}
 {% block body %}{{ body }}{% endblock %}
     </article>
     {%- endblock %}

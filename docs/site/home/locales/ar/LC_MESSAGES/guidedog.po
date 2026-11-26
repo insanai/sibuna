@@ -558,8 +558,17 @@ msgstr "على مضيف واحد."
 msgid "· CHECK THE PROOF AT SIBUNA"
 msgstr "· التحقق من الإثبات في Sibuna"
 
-msgid "Articles"
-msgstr "مقالات"
+msgid "Writings"
+msgstr "كتابات"
 
 msgid "On this page"
 msgstr "في هذه الصفحة"
+
+msgid "Download PDF"
+msgstr "تنزيل ملف PDF"
+
+msgid "How Sibuna admits and inspects HTTP requests, with measurements of latency, throughput and memory use in the beta firewall."
+msgstr "كيف يتحكم Sibuna في قبول طلبات HTTP ويفحصها، مع قياسات لزمن الاستجابة ومعدل المعالجة واستهلاك الذاكرة في الإصدار التجريبي من جدار الحماية."
+
+msgid "Field notes on load balancing, web application firewalls and the connections they protect."
+msgstr "ملاحظات ميدانية عن موازنة الحمل وجدران حماية تطبيقات الويب والاتصالات التي تحميها."

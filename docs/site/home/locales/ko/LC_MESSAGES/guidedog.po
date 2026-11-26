@@ -558,5 +558,14 @@ msgstr "한 호스트에서."
 msgid "· CHECK THE PROOF AT SIBUNA"
 msgstr "· SIBUNA에서 증명 검증"
 
-msgid "Articles"
-msgstr "기사"
+msgid "Writings"
+msgstr "글 모음"
+
+msgid "Download PDF"
+msgstr "PDF 다운로드"
+
+msgid "How Sibuna admits and inspects HTTP requests, with measurements of latency, throughput and memory use in the beta firewall."
+msgstr "Sibuna가 HTTP 요청을 받아들이고 검사하는 방식과 베타 버전 방화벽에서 측정한 지연 시간, 처리량, 메모리 사용량을 살펴봅니다."
+
+msgid "Field notes on load balancing, web application firewalls and the connections they protect."
+msgstr "부하 분산, 웹 애플리케이션 방화벽 및 이들이 보호하는 연결에 관한 현장 기록입니다."

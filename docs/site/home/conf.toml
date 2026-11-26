@@ -9,6 +9,13 @@ exclude_patterns = ["_build", "locales/**"]
 html_use_index = false
 html_copy_source = false
 
+[[site.collections]]
+output = "articles"
+title = "Writings"
+path = "articles/*"
+template = "magazine.html"
+page_size = 0
+
 [html_context]
 site_base = "/sibuna/"
 site_url = "https://insanai.github.io/sibuna/"

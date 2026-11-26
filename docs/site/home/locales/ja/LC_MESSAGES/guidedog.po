@@ -558,5 +558,14 @@ msgstr "1 台のホストで。"
 msgid "· CHECK THE PROOF AT SIBUNA"
 msgstr "· SIBUNA で証明を検証"
 
-msgid "Articles"
-msgstr "記事"
+msgid "Writings"
+msgstr "読みもの"
+
+msgid "Download PDF"
+msgstr "PDF をダウンロード"
+
+msgid "How Sibuna admits and inspects HTTP requests, with measurements of latency, throughput and memory use in the beta firewall."
+msgstr "Sibuna が HTTP リクエストを受け入れて検査する仕組みと、ベータ版ファイアウォールで測定した遅延、スループット、メモリ使用量を紹介します。"
+
+msgid "Field notes on load balancing, web application firewalls and the connections they protect."
+msgstr "負荷分散、Web アプリケーションファイアウォール、そしてそれらが守る接続についての実践記事。"
