@@ -1,0 +1,20 @@
+digraph atdp_regimes {
+  // SID 0015: the routing regime as a function of active peers and the sampled p95 RTT.
+  // With peers present, the regional and wide-area regimes keep their state between the
+  // thresholds.
+  graph [rankdir=TB, bgcolor="transparent", pad=0.1, nodesep=0.4, ranksep=0.45];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.7, margin="0.12,0.06", height=0.3];
+  edge [fontname="Helvetica", fontsize=8, fontcolor="#55665e", color="#6a7c73", arrowsize=0.6, penwidth=0.7];
+
+  standalone [label=<<B>Standalone or VIP</B><BR/><FONT POINT-SIZE="8" COLOR="#55665e"><FONT FACE="Courier">peers = 0</FONT><BR/>P2C Peak-EWMA scheduler<BR/>local <FONT FACE="Courier">sibuna-kv</FONT> mmap store<BR/>no network gossip</FONT>>];
+  regional [label=<<B>Regional PoP mesh</B><BR/><FONT POINT-SIZE="8" COLOR="#55665e">bounded-load Maglev, M = 65537<BR/>one-hop consistent peer forwarding<BR/>batched UDP delta-CRDT stick tables</FONT>>, color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c"];
+  wan [label=<<B>Geo-anycast WAN</B><BR/><FONT POINT-SIZE="8" COLOR="#55665e">locality-tiered Maglev, local PoP first<BR/>stateless AEAD flow routing tokens<BR/>async PostgreSQL ban and policy sync</FONT>>, color="#8f5512", fillcolor="#fbf4e4"];
+  { rank=same; regional; wan; }
+
+  standalone -> regional [label="peer found,\nRTT up to 3.0 ms"];
+  standalone -> wan [label="peer found,\nRTT above 3.0 ms"];
+  regional -> standalone [label=<<FONT FACE="Courier">peers == 0</FONT>>];
+  wan -> standalone [label=<<FONT FACE="Courier">peers == 0</FONT>>];
+  regional -> wan [label="p95 RTT above 3.0 ms"];
+  wan -> regional [label="p95 RTT below 1.5 ms"];
+}

@@ -30,10 +30,11 @@ jobs:
           tar -xzf guidedog-linux-amd64.tar.gz
           echo "$RUNNER_TEMP/guidedog/guidedog-linux-amd64" >> "$GITHUB_PATH"
       - name: Install fonts for the translated PDF books and whitepapers
-        # Chinese, Japanese and Korean (fonts-noto-cjk); Hindi and Arabic (fonts-noto-core).
+        # Chinese, Japanese and Korean (fonts-noto-cjk); Hindi and Arabic (fonts-noto-core);
+        # the labels of Graphviz figures in every PDF (fonts-liberation).
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends fonts-noto-cjk fonts-noto-core
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk fonts-noto-core fonts-liberation
           fc-list : family | grep -E 'Noto (Serif|Sans) CJK SC|Noto Sans Mono CJK SC|Noto Serif Devanagari|Noto Naskh Arabic'
       - name: Show tool versions
         run: guidedog --version && python3 --version

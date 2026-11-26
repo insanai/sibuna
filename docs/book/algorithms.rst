@@ -36,7 +36,7 @@ Sibuna has two literal-pattern sets: about forty bot signatures and about a hund
 
 A state is stored as its row offset in one flat table, so a step is one add and one load. States are numbered so that every match state comes after every other state; detecting a match is then one comparison against ``first_match``, with no second table to load in the inner loop.
 
-.. typst-diagram:: diagrams/aho-corasick.typ
+.. graphviz:: diagrams/aho-corasick.dot
    :caption: Trie states and failure edges for two signatures
    :alt: A trie from the root through G and GP to the GPTBot match state, and through C and Cl to the ClaudeBot match state; dashed failure edges lead from GP and Cl back to the root.
 

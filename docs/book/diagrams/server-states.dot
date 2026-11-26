@@ -1,0 +1,24 @@
+digraph server_states {
+  // edge.rst: the life of a server in a pool. Only "In service" and "Ramping" take new
+  // flows; slow start applies when it is configured.
+  graph [rankdir=LR, bgcolor="transparent", pad=0.1, nodesep=0.34, ranksep=0.22];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.7, margin="0.1,0.05", height=0.3];
+  edge [fontname="Helvetica", fontsize=8, fontcolor="#55665e", color="#6a7c73", arrowsize=0.6, penwidth=0.7];
+
+  service [label=<<B>In service</B>>, color="#2b7a45", fillcolor="#e2f1e4"];
+  down [label=<<B>Down</B><BR/><FONT POINT-SIZE="8" COLOR="#55665e">active probe</FONT>>];
+  ejected [label=<<B>Ejected</B><BR/><FONT POINT-SIZE="8" COLOR="#55665e">passive health</FONT>>];
+  marked [label=<<B>Marked</B><BR/><FONT POINT-SIZE="8" COLOR="#55665e">connect failed</FONT>>];
+  drained [label=<<B>Drained</B><BR/><FONT POINT-SIZE="8" COLOR="#55665e">operator</FONT>>, color="#8f5512", fillcolor="#fbf4e4"];
+  ramp [label=<<B>Ramping</B><BR/><FONT POINT-SIZE="8" COLOR="#55665e">slow start</FONT>>, color="#2b7a45", fillcolor="#e2f1e4"];
+
+  service -> down [label=<<FONT FACE="Courier">fall</FONT> failures>];
+  service -> ejected [label="failures in a row"];
+  service -> marked [label="connect fails"];
+  service -> drained [label=<<FONT FACE="Courier">set state drain</FONT>>];
+  down -> ramp [label=<<FONT FACE="Courier">rise</FONT> passes>];
+  ejected -> ramp [label="ejection ends"];
+  marked -> ramp [label="2 s"];
+  drained -> ramp [label=<<FONT FACE="Courier">set state ready</FONT>>];
+  ramp -> service [label="ramp ends", color="#176a4b", penwidth=1.1];
+}

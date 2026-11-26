@@ -271,7 +271,7 @@ A new flow first filters out unhealthy, draining and administratively disabled s
 
 A hard node-local backend limit requires an atomic reservation or disjoint worker quotas whose sum fits the limit. We release a reservation on connect failure, timeout or close. Independent nodes can observe different health and load. A fleet-wide hard cap would require a quota allocation protocol.
 
-.. typst-diagram:: ../diagrams/atdp-regimes.typ
+.. graphviz:: ../diagrams/atdp-regimes.dot
    :caption: Routing regime as a function of active peers and sampled p95 RTT.
    :alt: With peers present, the regional and wide-area regimes retain their previous state between the thresholds.
 

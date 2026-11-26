@@ -34,10 +34,10 @@
 // - The form follows the idea. Messages between parties over time: a sequence diagram
 //   with lifelines. A lifecycle: a state machine. A path with decisions: a flow, top
 //   down or left to right. Who depends on whom: layers, highest at the top. Bytes on
-//   the wire: a field strip. Graphviz only where automatic layout of a real graph is the
-//   point, such as the dependency graph of the crates. A Graphviz graph takes the same
-//   colours and names the font Helvetica: Graphviz measures labels with its own metrics,
-//   and with Noto Sans its boxes come out too small for their labels.
+//   the wire: a field strip. Graphviz where the layout of a real graph is the point: a
+//   dependency graph, a state machine or a routing graph whose edges would cross when
+//   placed by hand. Where position itself carries meaning (lanes, columns, a timeline),
+//   Typst. See "Graphviz figures" below.
 // - A figure keeps a margin of 6 pt inside its image, and nothing is drawn past it.
 // - Light colours only. On a dark page guidedog sets the drawing on a light plate, so
 //   one set of colours serves both themes and the PDF.
@@ -46,6 +46,49 @@
 // ink #20352f, green #176a4b, gold #dba65c, pale #e7eee4. The type is Noto Sans, the
 // face the figures have always used, with the Noto face of each script; names from the
 // code are set in DejaVu Sans Mono, which Typst carries.
+//
+// Graphviz figures. A Graphviz figure is a DOT file beside the Typst ones, shown with
+// `.. graphviz:: diagrams/<name>.dot` and the same caption, alt text and name options.
+// The file starts with `digraph` (the site's build finds graph messages by that word)
+// and keeps its comment inside the graph. It copies these defaults:
+//
+//   graph [rankdir=LR, bgcolor="transparent", pad=0.1, nodesep=0.3, ranksep=0.3];
+//   node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5,
+//     fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.7,
+//     margin="0.1,0.05", height=0.3];
+//   edge [fontname="Helvetica", fontsize=8, fontcolor="#55665e", color="#6a7c73",
+//     arrowsize=0.6, penwidth=0.7];
+//
+// - Helvetica, because Graphviz sizes a box from its own table of Helvetica widths. A
+//   name from the code is <FONT FACE="Courier">...</FONT>, which it also measures.
+//   Typst has neither face; the PDF preamble (_templates/preamble.typ) sets the text of
+//   images in Liberation Sans, which has the same widths.
+// - A tone is an outline (color) and a fill (fillcolor), as in `tones` below: accent
+//   #176a4b on #e7eee4 with text #0c402c; party #3d5d70 on #e8eff2; decision or wait
+//   #8f5512 on #fbf4e4; good #2b7a45 on #e2f1e4; stop #a3432b on #f9e9e3; store
+//   #6a7c73 on #eef1e9; quiet #c3cec0 on #f7f6f1. A label in a tone takes its outline
+//   colour as fontcolor. The path that matters: color="#176a4b", penwidth=1.1.
+// - Shapes. Graphviz rounds a corner by at most a third of a side, so it has no pill: a
+//   step, a component, a party and a state are all rounded boxes. A state has a bold
+//   title (<B>...</B>), a party has the slate tone. A store is shape=cylinder, a
+//   decision shape=diamond, data in flight shape=parallelogram with margin=0, the start
+//   of a state machine a filled shape=point. Shared state has a dashed outline and
+//   dashed edges without arrowheads.
+// - A second line is <BR/><FONT POINT-SIZE="8" COLOR="#55665e">...</FONT> in an
+//   HTML-like label. A group is a cluster with style="dashed,rounded,filled",
+//   color="#c3cec0" and fillcolor="#f7f6f1".
+// - One main direction (rankdir). A return edge carries a label; dir=back keeps a back
+//   edge in the ranking where constraint=false would send it around the graph.
+// - pad=0.1 (7 pt) keeps the drawing off the edge of the image, as the 6 pt margin does.
+// - No `graphviz-adaptive` class: its dark palette has no colour for a refusal. Our
+//   graphs keep their colours and get the light plate, as the Typst figures do.
+// - A translation copies the whole file and changes only the labels. A run of another
+//   script names its Noto face before Helvetica, such as
+//   <FONT FACE="Noto Sans CJK JP, Helvetica">...</FONT>, so that the browser and the
+//   PDF take the right glyphs. Graphviz places the spans of a line from left to right,
+//   so an Arabic line is one span inside a right-to-left embedding, &#x202B;...&#x202C;.
+//   Typst draws a graph's Devanagari without shaping; the site's build therefore keeps
+//   the English graphs in the Hindi PDF.
 
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 #import "@preview/cetz:0.3.4"
