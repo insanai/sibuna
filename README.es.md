@@ -54,7 +54,7 @@ Sibuna dirige TCP, UDP y HTTP a servidores en buen estado. Podemos ejecutar un n
 
 ## Balanceo de carga
 
-Sibuna 1.0.0-rc.2 incluye el modo de borde. También podemos [compilar el candidato desde el código fuente](#build-from-source).
+Sibuna 1.0.0-rc.3 incluye el modo de borde. También podemos [compilar el candidato desde el código fuente](#build-from-source).
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -86,7 +86,7 @@ enumera lo que está construido y las carencias conocidas.
 
 ## Inicio rápido
 
-[Descarga una versión](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.2) para tu
+[Descarga una versión](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.3) para tu
 plataforma. El paquete por defecto incluye soporte de almacenamiento y consola. La consola
 arranca con `--console`.
 
@@ -97,8 +97,8 @@ arranca con `--console`.
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 o posterior |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 o posterior |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 o posterior; `sibuna.exe` nativo |
-| FreeBSD x86-64 | `sibuna-1.0.0-rc.2-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; paquete CLI |
-| OpenBSD x86-64 | `sibuna-1.0.0-rc.2.tgz` | OpenBSD 7.9; paquete CLI |
+| FreeBSD x86-64 | `sibuna-1.0.0-rc.3-freebsd-15.1-amd64.pkg` | FreeBSD 15.1; paquete CLI |
+| OpenBSD x86-64 | `sibuna-1.0.0-rc.3.tgz` | OpenBSD 7.9; paquete CLI |
 
 Las compilaciones para macOS no están firmadas. Cada paquete incluye
 licencias, enlaces a las fuentes y un manifiesto de compilación. Verifica el archivo contra
@@ -127,8 +127,8 @@ sibuna --version
 Para Linux x86-64, con tu aplicación escuchando en el puerto 3000:
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.2/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.2/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.3/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.3/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)

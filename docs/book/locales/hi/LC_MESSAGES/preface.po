@@ -30,8 +30,8 @@ msgid "We begin with a journey that needs no knowledge of Rust, cryptography or 
 msgstr "पहला उदाहरण समझने के लिए Rust, क्रिप्टोग्राफ़ी या कॉन्फ़िगरेशन का ज्ञान आवश्यक नहीं है। डिज़ाइन के अध्यायों में हम इन्हीं निर्णयों को एल्गोरिदम और कोड तक ले जाते हैं। प्रणाली का उद्देश्य समझने के बाद हम मापन और संचालन पर आते हैं।"
 
 #: ../../preface.rst:20
-msgid "Sibuna 1.0.0-rc.2, November 2026"
-msgstr "Sibuna 1.0.0-rc.2, नवंबर 2026"
+msgid "Sibuna 1.0.0-rc.3, November 2026"
+msgstr "Sibuna 1.0.0-rc.3, नवंबर 2026"
 
 #: ../../preface.rst:22
 msgid ""

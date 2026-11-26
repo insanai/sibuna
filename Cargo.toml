@@ -5,7 +5,7 @@ exclude = ["vendor/jlv"]
 default-members = ["crates/*", "cmd/sibuna", "tools/*"]
 
 [workspace.package]
-version = "1.0.0-rc.2"
+version = "1.0.0-rc.3"
 edition = "2024"
 rust-version = "1.100"
 license = "LGPL-3.0-or-later"
@@ -15,7 +15,7 @@ authors = ["Vikrant Rathore"]
 
 # Workspace crates share these dependency declarations.
 [workspace.dependencies]
-sibuna-ingress = { path = "crates/ingress", version = "1.0.0-rc.2" }
+sibuna-ingress = { path = "crates/ingress", version = "1.0.0-rc.3" }
 # SID 0015. Hyper handles HTTP framing and flow control, Quinn and h3 terminate QUIC.
 hyper = { version = "1", default-features = false, features = ["http1", "http2", "client", "server"] }
 # Hyper's HTTP/2 implementation, already in the build through hyper. It is named so
@@ -31,36 +31,36 @@ h3-quinn = "0.0.10"
 quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls-ring"] }
 tokio-rustls = { version = "0.26", default-features = false, features = ["ring"] }
 
-sibuna-acme = { path = "crates/acme", version = "1.0.0-rc.2" }
-sibuna-crypto = { path = "crates/crypto", version = "1.0.0-rc.2" }
-sibuna-encoding = { path = "crates/encoding", version = "1.0.0-rc.2" }
-sibuna-json = { path = "crates/json", version = "1.0.0-rc.2" }
-sibuna-pow = { path = "crates/pow", version = "1.0.0-rc.2" }
-sibuna-http = { path = "crates/http", version = "1.0.0-rc.2" }
-sibuna-patterns = { path = "crates/patterns", version = "1.0.0-rc.2" }
-sibuna-cidr = { path = "crates/cidr", version = "1.0.0-rc.2" }
-sibuna-store = { path = "crates/store", version = "1.0.0-rc.2" }
-sibuna-inflate = { path = "crates/inflate", version = "1.0.0-rc.2" }
-sibuna-geoip = { path = "crates/geoip", version = "1.0.0-rc.2" }
-sibuna-core = { path = "crates/core", version = "1.0.0-rc.2" }
-sibuna-policy = { path = "crates/policy", version = "1.0.0-rc.2" }
-sibuna-challenge = { path = "crates/challenge", version = "1.0.0-rc.2" }
-sibuna-jlv = { path = "crates/jlv", version = "1.0.0-rc.2" }
-sibuna-lb = { path = "crates/lb", version = "1.0.0-rc.2" }
-sibuna-net = { path = "crates/net", version = "1.0.0-rc.2" }
-sibuna-reactor = { path = "crates/reactor", version = "1.0.0-rc.2" }
-sibuna-spill = { path = "crates/spill", version = "1.0.0-rc.2" }
-sibuna-upgrade = { path = "crates/upgrade", version = "1.0.0-rc.2" }
-sibuna-storage = { path = "crates/storage", version = "1.0.0-rc.2", default-features = false }
-sibuna-html = { path = "crates/html", version = "1.0.0-rc.2", default-features = false }
-sibuna-console-protocol = { path = "crates/console-protocol", version = "1.0.0-rc.2" }
-sibuna-serve = { path = "crates/serve", version = "1.0.0-rc.2" }
-sibuna-tls = { path = "crates/tls", version = "1.0.0-rc.2" }
-sibuna-console-storage = { path = "crates/console-storage", version = "1.0.0-rc.2", default-features = false }
-sibuna-console = { path = "crates/console", version = "1.0.0-rc.2", default-features = false }
+sibuna-acme = { path = "crates/acme", version = "1.0.0-rc.3" }
+sibuna-crypto = { path = "crates/crypto", version = "1.0.0-rc.3" }
+sibuna-encoding = { path = "crates/encoding", version = "1.0.0-rc.3" }
+sibuna-json = { path = "crates/json", version = "1.0.0-rc.3" }
+sibuna-pow = { path = "crates/pow", version = "1.0.0-rc.3" }
+sibuna-http = { path = "crates/http", version = "1.0.0-rc.3" }
+sibuna-patterns = { path = "crates/patterns", version = "1.0.0-rc.3" }
+sibuna-cidr = { path = "crates/cidr", version = "1.0.0-rc.3" }
+sibuna-store = { path = "crates/store", version = "1.0.0-rc.3" }
+sibuna-inflate = { path = "crates/inflate", version = "1.0.0-rc.3" }
+sibuna-geoip = { path = "crates/geoip", version = "1.0.0-rc.3" }
+sibuna-core = { path = "crates/core", version = "1.0.0-rc.3" }
+sibuna-policy = { path = "crates/policy", version = "1.0.0-rc.3" }
+sibuna-challenge = { path = "crates/challenge", version = "1.0.0-rc.3" }
+sibuna-jlv = { path = "crates/jlv", version = "1.0.0-rc.3" }
+sibuna-lb = { path = "crates/lb", version = "1.0.0-rc.3" }
+sibuna-net = { path = "crates/net", version = "1.0.0-rc.3" }
+sibuna-reactor = { path = "crates/reactor", version = "1.0.0-rc.3" }
+sibuna-spill = { path = "crates/spill", version = "1.0.0-rc.3" }
+sibuna-upgrade = { path = "crates/upgrade", version = "1.0.0-rc.3" }
+sibuna-storage = { path = "crates/storage", version = "1.0.0-rc.3", default-features = false }
+sibuna-html = { path = "crates/html", version = "1.0.0-rc.3", default-features = false }
+sibuna-console-protocol = { path = "crates/console-protocol", version = "1.0.0-rc.3" }
+sibuna-serve = { path = "crates/serve", version = "1.0.0-rc.3" }
+sibuna-tls = { path = "crates/tls", version = "1.0.0-rc.3" }
+sibuna-console-storage = { path = "crates/console-storage", version = "1.0.0-rc.3", default-features = false }
+sibuna-console = { path = "crates/console", version = "1.0.0-rc.3", default-features = false }
 # SID 0030. The hook tiers. The WebAssembly interpreter is written in-house: no crate.
-sibuna-plugin = { path = "crates/plugin", version = "1.0.0-rc.2" }
-sibuna-authority = { path = "crates/authority", version = "1.0.0-rc.2", default-features = false }
+sibuna-plugin = { path = "crates/plugin", version = "1.0.0-rc.3" }
+sibuna-authority = { path = "crates/authority", version = "1.0.0-rc.3", default-features = false }
 
 # The LGPL JLV kernel runs only while loading an edge configuration (SID 0015).
 jlv-compiler = { path = "vendor/jlv/crates/jlv-compiler" }

@@ -30,8 +30,8 @@ msgid "We begin with a journey that needs no knowledge of Rust, cryptography or 
 msgstr "Wir beginnen mit einem Beispiel, das keine Kenntnisse in Rust, Kryptografie oder Konfiguration voraussetzt. In den Entwurfskapiteln verfolgen wir dieselben Entscheidungen bis zu Algorithmen und Code. Messungen und Betriebsverfahren folgen, sobald wir wissen, was das System leisten soll."
 
 #: ../../preface.rst:20
-msgid "Sibuna 1.0.0-rc.2, November 2026"
-msgstr "Sibuna 1.0.0-rc.2, November 2026"
+msgid "Sibuna 1.0.0-rc.3, November 2026"
+msgstr "Sibuna 1.0.0-rc.3, November 2026"
 
 #: ../../preface.rst:22
 msgid ""

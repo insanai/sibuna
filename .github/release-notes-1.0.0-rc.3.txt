@@ -1,0 +1,9 @@
+Sibuna 1.0.0-rc.3 fixes how reputation reaches the nodes of the firewall daemon, with PostgreSQL in a cluster and with SQLite on one node (issue #2).
+
+Until now every ban, lift or operator's reputation row rebuilt the whole policy engine on every node. The engine kept reputation in a trie of 8,192 nodes, so once a few hundred to a few thousand addresses were banned every rebuild failed, and a node stopped applying the operator's policy changes. Reputation is now published beside the engine. Each write of ip_reputation is stamped by a counter that writers take in commit order, and each node applies only the changes after the last one it applied. One change to a set of a million addresses costs about 2 microseconds; a million IPv4 addresses take about 50 MiB. Bans end on time without a database read, and a policy change no longer reads reputation. No request waits for any of this. SID 0033 specifies the design, and a Lean model proves that the node's set equals the table.
+
+Core migration 3 adds the change log. In a cluster we upgrade all nodes together: a node of an older version does not see new bans after the migration.
+
+The book's figures are redrawn, and the operations chapter describes how a policy or reputation change reaches the nodes, in all eight languages.
+
+The release uses Rust 1.100.0. The optional OpenBSD 7.9 amd64 package uses the system Rust 1.94.1 and is attached after native package checks pass. SHA256SUMS lists the published assets.
