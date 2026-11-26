@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 03:40+0000\n"
+"POT-Creation-Date: 2026-11-26 04:13+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,7 +36,7 @@ msgstr "運用構成と設定"
 
 #: ../../operations.rst:9 ../../operations.rst:172 ../../operations.rst:2856
 #: ../../operations.rst:3055 ../../operations.rst:3084
-#: ../../operations.rst:3199
+#: ../../operations.rst:3226
 msgid "Objectives"
 msgstr "この章の学習目標"
 
@@ -7725,7 +7725,7 @@ msgstr ""
 msgid "Run-time changes and the file"
 msgstr "実行時の変更とファイル"
 
-#: ../../operations.rst:2238
+#: ../../operations.rst:2238 ../../operations.rst:3191
 msgid "Change"
 msgstr "変更"
 
@@ -11227,9 +11227,11 @@ msgstr "``policy_revision``"
 
 #: ../../operations.rst:3104
 msgid ""
-"The policy revision, one row; triggers on the three policy tables advance "
-"it."
-msgstr "ポリシーのリビジョン、1行。三つのポリシーの表のトリガーがこれを進めます。"
+"The policy revision, one row; triggers on ``policies``, "
+"``policy_inspection`` and the console's page templates advance it."
+msgstr ""
+"ポリシーのリビジョン、1行。\\ ``policies``\\ 、\\ ``policy_inspection``\\ "
+"、コンソールのページテンプレートのトリガーがこれを進めます。"
 
 #: ../../operations.rst:3105
 msgid "``policies``"
@@ -11260,20 +11262,42 @@ msgid "Scores, hit counts and expiry, keyed by address or prefix."
 msgstr "スコア、ヒット数、期限。キーはアドレスまたは接頭辞。"
 
 #: ../../operations.rst:3111
+msgid "``reputation_clock``"
+msgstr "``reputation_clock``"
+
+#: ../../operations.rst:3112
+msgid ""
+"One row: the stamp of the last change of ``ip_reputation`` (SID 0033)."
+msgstr "1行。\\ ``ip_reputation``\\ の最後の変更のスタンプ（SID 0033）。"
+
+#: ../../operations.rst:3113
+msgid "``reputation_changes``"
+msgstr "``reputation_changes``"
+
+#: ../../operations.rst:3114
+msgid ""
+"The change log of ``ip_reputation``: the whole new state of one key per "
+"stamp, or its removal, keyed by stamp. The last 1,000,000 changes are "
+"kept."
+msgstr ""
+"``ip_reputation``\\ "
+"の変更ログ。スタンプごとに一つのキーの新しい状態全体、またはその削除を持ちます。キーはスタンプ。最新の1,000,000件の変更を保持します。"
+
+#: ../../operations.rst:3115
 msgid "``incident_receipts``"
 msgstr "``incident_receipts``"
 
-#: ../../operations.rst:3112
+#: ../../operations.rst:3116
 msgid ""
 "Each node's durable incident receipt (the next sequence after its last "
 "committed batch), keyed by node."
 msgstr "各ノードの永続的なインシデントの受領記録（最後にコミットしたバッチの次のシーケンス）。キーはノード。"
 
-#: ../../operations.rst:3113
+#: ../../operations.rst:3117
 msgid "``security_incidents``"
 msgstr "``security_incidents``"
 
-#: ../../operations.rst:3114
+#: ../../operations.rst:3118
 msgid ""
 "One bounded event record with its 64-component embedding (256 bytes), "
 "keyed by ``node_id << 40 | sequence``. The nullable ``ja4`` holds the "
@@ -11282,11 +11306,11 @@ msgstr ""
 "64成分の埋め込みベクトル（256バイト）を持つ、上限のある一つのイベントのレコード。キーは\\ ``node_id << 40 | "
 "sequence``\\ 。NULLを許す\\ ``ja4``\\ はリクエストのJA4フィンガープリントで、ちょうど36バイト。"
 
-#: ../../operations.rst:3115
+#: ../../operations.rst:3119
 msgid "``incidents_fts``"
 msgstr "``incidents_fts``"
 
-#: ../../operations.rst:3116
+#: ../../operations.rst:3120
 msgid ""
 "On SQLite: an FTS5 table over the canonical tokens of paths and payloads. "
 "On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of "
@@ -11295,22 +11319,23 @@ msgstr ""
 "SQLiteでは、パスとペイロードの正規化したトークンに対するFTS5の表。PostgreSQLでは、同じトークンがGIN索引付きの\\ "
 "``security_incidents``\\ の\\ ``tsvector``\\ 列\\ ``search``\\ です。"
 
-#: ../../operations.rst:3117
+#: ../../operations.rst:3121
 msgid "``sibuna_schema``"
 msgstr "``sibuna_schema``"
 
-#: ../../operations.rst:3118
+#: ../../operations.rst:3122
 msgid "Every applied migration, keyed by component and version."
 msgstr "適用したすべてのマイグレーション。キーはコンポーネントとバージョン。"
 
-#: ../../operations.rst:3120
+#: ../../operations.rst:3124
 msgid ""
 "The core schema is ``crates/storage/src/schema.rs``, written once per "
 "dialect. With the console the component ``console`` adds 33 tables whose "
 "names start with ``console_`` (SID 0013; "
 "``crates/console-storage/src/schema/``). Migrations are numbered per "
 "component and compiled into the binary. Core migration 2 adds the two JA4 "
-"columns; a database created before it is migrated on start. All pending "
+"columns, and core migration 3 adds the reputation change log (SID 0033); "
+"a database created before them is migrated on start. All pending "
 "migrations run in one transaction, and a node refuses a database whose "
 "version of a component is newer than it knows. An abbreviated printed "
 "schema is not an upgrade script. SQLite tables are ``STRICT``, and "
@@ -11322,16 +11347,17 @@ msgstr ""
 "で、方言ごとに一度ずつ書かれています。コンソールがあると、コンポーネント\\ ``console``\\ が、名前が\\ "
 "``console_``\\ で始まる33個の表を加えます（SID 0013、\\ "
 "``crates/console-storage/src/schema/``\\ "
-"）。マイグレーションはコンポーネントごとに番号が付き、バイナリにコンパイルされます。中核のマイグレーション2で二つのJA4の列が加わります。それより前に作成したデータベースは、起動時にマイグレーションされます。保留中のマイグレーションはすべて一つのトランザクションで実行され、ノードは、コンポーネントのバージョンが自分の知るものより新しいデータベースを拒否します。省略して印刷したスキーマは、アップグレードのスクリプトではありません。SQLiteの表は\\ "
+"）。マイグレーションはコンポーネントごとに番号が付き、バイナリにコンパイルされます。中核のマイグレーション2で二つのJA4の列が加わり、中核のマイグレーション3でレピュテーションの変更ログが加わります（SID "
+"0033）。それより前に作成したデータベースは、起動時にマイグレーションされます。保留中のマイグレーションはすべて一つのトランザクションで実行され、ノードは、コンポーネントのバージョンが自分の知るものより新しいデータベースを拒否します。省略して印刷したスキーマは、アップグレードのスクリプトではありません。SQLiteの表は\\ "
 "``STRICT``\\ で、\\ ``CHECK``\\ "
 "制約がRustの型を写しているので、デーモンが表現できない行はデータベースが拒否します。列挙値は小文字で保存します。\\ ``'DENY'``\\ "
 "を直接書き込むと拒否されます。"
 
-#: ../../operations.rst:3122
+#: ../../operations.rst:3126
 msgid "Operating It"
 msgstr "運用"
 
-#: ../../operations.rst:3125
+#: ../../operations.rst:3129
 msgid ""
 "Use the ``sqlite3`` shell on ``sibuna.db`` (WAL mode lets it read while "
 "the daemon runs), or ``psql`` on the cluster database:"
@@ -11339,7 +11365,7 @@ msgstr ""
 "``sibuna.db``\\ には\\ ``sqlite3``\\ "
 "シェルを使い（WALモードなので、デーモンの実行中も読めます）、クラスターのデータベースには\\ ``psql``\\ を使います。"
 
-#: ../../operations.rst:3127
+#: ../../operations.rst:3131
 msgid ""
 "-- Add a dynamic rule; every node rebuilds on its next tick.\n"
 "INSERT INTO policies (id, name, priority, path_pattern, action, "
@@ -11383,7 +11409,7 @@ msgstr ""
 "FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
 "WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
 
-#: ../../operations.rst:3145
+#: ../../operations.rst:3149
 msgid ""
 "The statements are written for SQLite. On PostgreSQL, ``enabled`` is "
 "``TRUE``, the time is ``CAST(extract(epoch FROM now()) AS BIGINT)`` "
@@ -11403,7 +11429,7 @@ msgstr ""
 "）を保持します。制約に反する直接の書き込みはデータベースが拒否し、ノードには届きません。PostgreSQLでは、リビジョンのトリガーが\\ "
 "``NOTIFY sibuna_policy``\\ も発行するので、他のノードはすぐにティックします。保証となるのは引き続きポーリングです。"
 
-#: ../../operations.rst:3147
+#: ../../operations.rst:3151
 msgid ""
 "Scores at or below :math:`-50` become ``deny`` prefixes in the trie, "
 "scores at or above :math:`50` become ``allow``, and ``banned_until`` "
@@ -11416,11 +11442,11 @@ msgstr ""
 ":math:`-100`\\ "
 "のレコードを挿入するので、共有PostgreSQLデータベースでは、一つのノードで作動した罠がすべてのノードでそのアドレスを禁止します。"
 
-#: ../../operations.rst:3149
+#: ../../operations.rst:3153
 msgid "A Transaction Receipt Makes Retry Safe"
 msgstr "トランザクションの受領記録が再試行を安全にする"
 
-#: ../../operations.rst:3152
+#: ../../operations.rst:3156
 msgid ""
 "The storage thread collects at most 32 pending records and builds one SQL "
 "transaction. The transaction inserts incidents, updates the full-text "
@@ -11433,11 +11459,11 @@ msgstr ""
 "``incident_receipts``\\ "
 "の自分の行を持ちます。データを変更する文はすべてその受領記録で守られ、トランザクションは最後にそれを進め、決して戻しません。"
 
-#: ../../operations.rst:3154
+#: ../../operations.rst:3158
 msgid "Worked example: the acknowledgement disappears"
 msgstr "例題：確認応答が消える"
 
-#: ../../operations.rst:3156
+#: ../../operations.rst:3160
 msgid ""
 "Suppose issuer 2 prepares sequences 101 through 132, ending at receipt "
 "133. The database commits all records and receipt 133, then the "
@@ -11450,7 +11476,7 @@ msgid ""
 msgstr ""
 "発行者2がシーケンス101から132を用意し、受領記録133で終えるとします。データベースはすべてのレコードと受領記録133をコミットし、その後、確認応答が届く前に接続が切れます。ストレージスレッドは用意したバッチ（識別子、埋め込みベクトル、キャンペーン）を保持して再試行します。受領記録はすでに133なので、守られた書き込みは何もしません。インシデントもハニーポットのヒット数も二重になりません。元のトランザクションがロールバックされていれば、古い受領記録が残り、再試行はすべての書き込みを一度だけ適用します。"
 
-#: ../../operations.rst:3158
+#: ../../operations.rst:3162
 msgid ""
 "A failed commit retains the pending batch in memory and increments "
 "``incident_write_failures``. The tick still attempts policy polling. A "
@@ -11465,11 +11491,11 @@ msgstr ""
 "``incidents_dropped``\\ "
 "を数えます。ディスクを待ってHTTPの応答をブロックすることはありません。保留中のバッチは32レコード分の空間を加えます。コミット前にプロセスが死ぬと、キューに入ったデータは失われ得ます。これは上限のある非同期のフォレンジックの経路であり、キューに入れた時点で永続化されるメッセージキューではありません。"
 
-#: ../../operations.rst:3160
+#: ../../operations.rst:3164
 msgid "Exercise 11.1"
 msgstr "演習11.1"
 
-#: ../../operations.rst:3162
+#: ../../operations.rst:3166
 msgid ""
 "Move the receipt update outside the data transaction. Construct one crash "
 "schedule that duplicates a reputation effect and another that loses an "
@@ -11477,11 +11503,11 @@ msgid ""
 msgstr ""
 "受領記録の更新をデータのトランザクションの外に移してください。レピュテーションへの効果を重複させるクラッシュの起き方と、インシデントを失わせる起き方を一つずつ構成してください。"
 
-#: ../../operations.rst:3164
+#: ../../operations.rst:3168
 msgid "Campaign Clustering"
 msgstr "キャンペーンのクラスタリング"
 
-#: ../../operations.rst:3167
+#: ../../operations.rst:3171
 msgid ""
 "Each incident payload is embedded as a 64-dimensional unit vector by the "
 "hashing trick over byte trigrams (digits folded, case folded) and stored "
@@ -11503,11 +11529,11 @@ msgstr ""
 ":math:`0.35`\\ 以下なら、新しいインシデントはそのインシデントの\\ ``campaign_id``\\ "
 "に加わり、そうでなければ自身の識別子を名前とするキャンペーンを始めます。窓より古いインシデントとは比較しません。類似度はヒューリスティックです。回帰テストの例では関連するSQLのペイロードがまとまりますが、攻撃のどの組も同じキャンペーンに属するという保証ではありません。モデルは実行せず、何も学習しません。"
 
-#: ../../operations.rst:3169
+#: ../../operations.rst:3173
 msgid "Clustering"
 msgstr "クラスタリング"
 
-#: ../../operations.rst:3172
+#: ../../operations.rst:3176
 msgid ""
 "A cluster is a set of nodes that share one PostgreSQL database. Build "
 "with the ``postgres-tls`` feature (``cargo build --release -p sibuna "
@@ -11518,7 +11544,7 @@ msgstr ""
 "フィーチャーでビルドし（\\ ``cargo build --release -p sibuna --features "
 "postgres-tls``\\ 。\\ ``postgres``\\ も含みます）、各メンバーをデータベースと固有のノードIDで起動します。"
 
-#: ../../operations.rst:3174
+#: ../../operations.rst:3178
 msgid ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
@@ -11526,7 +11552,7 @@ msgstr ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
 
-#: ../../operations.rst:3179
+#: ../../operations.rst:3183
 msgid ""
 "Every member must use the same master secret and a unique "
 "``--cluster-node`` from 1 to 8,388,607. The URL file holds one "
@@ -11540,7 +11566,114 @@ msgstr ""
 "のURLを一つ持ち、所有者だけが読めなければなりません。バナーがURLを表示することはありません。書き込みはPostgreSQLのプライマリーに送られます。各ノードのストレージスレッドは、コミットされたリビジョンの変化を（\\ "
 "``NOTIFY``\\ またはポーリングで）見て、エンジンを再構築します。"
 
-#: ../../operations.rst:3181
+#: ../../operations.rst:3185
+msgid ""
+"**How a change reaches the nodes.** A node's storage thread wakes at a "
+"``NOTIFY`` or at its poll (``--storage-poll-ms``, 500 ms by default), and "
+"does two separate things. A change of policies, of the inspection modes "
+"or of a page template raises ``policy_revision``, and the node rebuilds "
+"its engine from the policy file and the stored rules. A change of "
+"reputation, such as a ban written by any node, does not touch the engine "
+"(SID 0033). Every write of ``ip_reputation`` is stamped by "
+"``reputation_clock`` in commit order and recorded in "
+"``reputation_changes``. The node reads the changes after the last one it "
+"applied and publishes a new reputation set beside the engine. Each node "
+"does this alone, and no request waits for it: request threads read the "
+"engine and the set without a lock, as before."
+msgstr ""
+"**変更がノードに届くまで。**\\ ノードのストレージスレッドは、\\ ``NOTIFY``\\ を受けたとき、またはポーリングのとき（\\ "
+"``--storage-poll-ms``\\ 、既定は500 "
+"ms）に起き、二つの別々のことをします。ポリシー、検査モード、ページテンプレートのいずれかが変わると\\ "
+"``policy_revision``\\ "
+"が上がり、ノードはポリシーファイルと保存されたルールからエンジンを再構築します。レピュテーションの変更、たとえばいずれかのノードが書いた禁止は、エンジンに触れません（SID "
+"0033）。\\ ``ip_reputation``\\ への書き込みはすべて、\\ ``reputation_clock``\\ "
+"によってコミット順にスタンプされ、\\ ``reputation_changes``\\ "
+"に記録されます。ノードは最後に適用した変更より後の変更を読み、エンジンの隣に新しいレピュテーションの集合を公開します。各ノードはこれを単独で行い、どのリクエストもそれを待ちません。リクエストスレッドは、これまでどおりロックなしでエンジンと集合を読みます。"
+
+#: ../../operations.rst:3187
+msgid "What a change costs a node"
+msgstr "変更がノードに課すコスト"
+
+#: ../../operations.rst:3192
+msgid "What the node does"
+msgstr "ノードがすること"
+
+#: ../../operations.rst:3193
+msgid "A ban, a lift, an operator's reputation row, a country set"
+msgstr "禁止、禁止の解除、運用者のレピュテーションの行、国の集合"
+
+#: ../../operations.rst:3194
+msgid ""
+"Reads the new changes only, and publishes the set. One change to a set of "
+"a million entries costs about 2 microseconds, merges included."
+msgstr "新しい変更だけを読み、集合を公開します。百万項目の集合への一つの変更のコストは、マージを含めて約2マイクロ秒です。"
+
+#: ../../operations.rst:3195
+msgid "A ban that ends"
+msgstr "終了する禁止"
+
+#: ../../operations.rst:3196
+msgid "Removes the entry at the next tick, without reading the database."
+msgstr "データベースを読まずに、次のティックで項目を取り除きます。"
+
+#: ../../operations.rst:3197
+msgid "A policy, inspection or page change"
+msgstr "ポリシー、検査、ページの変更"
+
+#: ../../operations.rst:3198
+msgid ""
+"Rebuilds the engine (well under a millisecond with the default policy) "
+"and keeps the reputation set."
+msgstr "エンジンを再構築し（既定のポリシーなら1ミリ秒を大きく下回ります）、レピュテーションの集合は保ちます。"
+
+#: ../../operations.rst:3199
+msgid ""
+"A node that was away longer than the log keeps, or a ``TRUNCATE`` of "
+"``ip_reputation``"
+msgstr "ログが保持する期間より長く離れていたノード、または\\ ``ip_reputation``\\ の\\ ``TRUNCATE``"
+
+#: ../../operations.rst:3200
+msgid "Loads the whole table once, then follows the log again."
+msgstr "表全体を一度読み込み、その後は再びログを追います。"
+
+#: ../../operations.rst:3202
+msgid ""
+"Every writer of ``ip_reputation`` takes the counter row first and holds "
+"it until it commits, so writers of reputation run one at a time. Incident "
+"batches are short, so this costs little. A long transaction of our own "
+"that writes ``ip_reputation`` holds the other writers of reputation, on "
+"every node, until it ends."
+msgstr ""
+"``ip_reputation``\\ "
+"の書き手はすべて、まずカウンターの行を取り、コミットするまで保持します。そのため、レピュテーションの書き手は一度に一つずつ動きます。インシデントのバッチは短いので、このコストは小さいものです。\\ "
+"``ip_reputation``\\ "
+"に書き込む私たち自身の長いトランザクションは、終わるまで、すべてのノードで他のレピュテーションの書き手を待たせます。"
+
+#: ../../operations.rst:3204
+msgid ""
+"``NOTIFY`` does not pass through PgBouncer in transaction pooling mode, "
+"and a notification sent while a node is reconnecting is lost. The poll "
+"covers both cases, so a change still arrives within one poll."
+msgstr ""
+"``NOTIFY``\\ "
+"は、トランザクションプーリングモードのPgBouncerを通過しません。また、ノードが再接続している間に送られた通知は失われます。ポーリングが両方の場合を補うので、変更はそれでも1回のポーリングの間に届きます。"
+
+#: ../../operations.rst:3206
+msgid ""
+"The set holds up to 1,048,576 exact addresses and ranges in a trie of "
+"1,048,576 nodes. A million IPv4 addresses take about 50 MiB, and a merge "
+"briefly holds a second copy of the part that changed. A row that does not "
+"fit, or that does not parse, is refused alone and reported as ``storage: "
+"N reputation row(s) not applied``. Earlier versions rebuilt the engine "
+"for every reputation change and stopped applying policy changes once a "
+"few thousand addresses were banned."
+msgstr ""
+"集合は、1,048,576個のノードを持つトライに、最大1,048,576個の正確なアドレスと範囲を保持します。百万個のIPv4アドレスで約50 "
+"MiBを使い、マージの間は変わった部分の2つ目のコピーを短時間保持します。収まらない行や解析できない行は、その行だけが拒否され、\\ "
+"``storage: N reputation row(s) not applied``\\ "
+"として報告されます。以前のバージョンはレピュテーションの変更のたびにエンジンを再構築し、数千個のアドレスが禁止されるとポリシーの変更を適用しなくなっていました。"
+
+#: ../../operations.rst:3208
 msgid ""
 "Nodes reach the shared database across the network, so we encrypt and "
 "verify that connection. We give the server a certificate signed by our "
@@ -11553,7 +11686,7 @@ msgstr ""
 "``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``\\ "
 "です。サーバーでは、\\ ``pg_hba.conf``\\ の\\ ``hostssl``\\ 行を通してだけTCPを受け付けます。"
 
-#: ../../operations.rst:3183
+#: ../../operations.rst:3210
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -11577,7 +11710,7 @@ msgstr ""
 "``sslrootcert``\\ はシステムのトラストストアに自分たちの認証局を加えますが、システムの認証局を取り除くことはしません（SID "
 "0011、SID 0012）。"
 
-#: ../../operations.rst:3185
+#: ../../operations.rst:3212
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -11598,7 +11731,7 @@ msgstr ""
 "0005）は読みません。ポリシーは\\ ``sibuna console policies export``\\ と\\ ``sibuna "
 "console policies import``\\ で移し、フォレンジックの履歴は移行しません。"
 
-#: ../../operations.rst:3187
+#: ../../operations.rst:3214
 msgid ""
 "**The cluster and the mesh.** This cluster is one of the firewall daemon. "
 "An edge does not join it: ``--config-file`` takes no storage option, the "
@@ -11624,11 +11757,11 @@ msgstr ""
 "、\\ ``edge_nodes``\\ ）を持ち、それらはファイアウォールのデータベースにも別のデータベースにも置けます（\\ "
 "*トポロジーのためのデータベース*\\ の節）。エッジはインシデントもレピュテーションもデータベースに記録しません。"
 
-#: ../../operations.rst:3189
+#: ../../operations.rst:3216
 msgid "Cluster Challenge Routing"
 msgstr "クラスターでのチャレンジのルーティング"
 
-#: ../../operations.rst:3192
+#: ../../operations.rst:3219
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -11644,18 +11777,18 @@ msgstr ""
 "``crates/storage/tests/multi_node.rs``\\ 、SID 0011の基準2。\\ "
 "``SIBUNA_TEST_DATABASE_URL``\\ を設定すると実行されます）。"
 
-#: ../../operations.rst:3196
+#: ../../operations.rst:3223
 msgid "Packaging"
 msgstr "パッケージング"
 
-#: ../../operations.rst:3201
+#: ../../operations.rst:3228
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
 msgstr ""
 "リリースパッケージをインストールして検証し、Sibunaをサービスとして、コンテナーで、またはKubernetesの下で実行し、バイナリを自分たちでビルドします。"
 
-#: ../../operations.rst:3203
+#: ../../operations.rst:3230
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -11663,19 +11796,19 @@ msgid ""
 msgstr ""
 "GitHubのどのリリースにも、プラットフォームごとに同じ実行ファイルが含まれます。これはリリースタグから既定のフィーチャー（SQLiteストレージとコンソール）でビルドしたものです。PostgreSQLのクラスターには、自分たちでビルドしたものが必要です（後述）。"
 
-#: ../../operations.rst:3209
+#: ../../operations.rst:3236
 msgid "Platform"
 msgstr "プラットフォーム"
 
-#: ../../operations.rst:3210
+#: ../../operations.rst:3237
 msgid "Release assets"
 msgstr "リリースアセット"
 
-#: ../../operations.rst:3211
+#: ../../operations.rst:3238
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64、ARM64"
 
-#: ../../operations.rst:3212
+#: ../../operations.rst:3239
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -11691,11 +11824,11 @@ msgstr ""
 "``sibuna-<version>-1.aarch64.rpm``\\ は、それをsystemdサービスとともにインストールします。Arch "
 "Linuxでは\\ ``sibuna-bin-<version>-1-x86_64.pkg.tar.zst``\\ が同じことをします。"
 
-#: ../../operations.rst:3213
+#: ../../operations.rst:3240
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64、x86-64"
 
-#: ../../operations.rst:3214
+#: ../../operations.rst:3241
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -11703,11 +11836,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``\\ 、\\ ``sibuna-macos-amd64.tar.gz``\\ "
 "。macOS 12以降に対応します。"
 
-#: ../../operations.rst:3215
+#: ../../operations.rst:3242
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:3216
+#: ../../operations.rst:3243
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -11715,11 +11848,11 @@ msgstr ""
 "``sibuna-windows-amd64.zip``\\ には\\ ``sibuna.exe``\\ が入っています。Windows "
 "10またはServer 2016以降に対応します。"
 
-#: ../../operations.rst:3217
+#: ../../operations.rst:3244
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1、OpenBSD 7.9（amd64）"
 
-#: ../../operations.rst:3218
+#: ../../operations.rst:3245
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg``. The optional OpenBSD job "
 "adds ``sibuna-<version>.tgz`` when its native qualification passes."
@@ -11727,11 +11860,11 @@ msgstr ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg``. 任意の OpenBSD "
 "ジョブはネイティブ環境での検証に成功するとパッケージを追加します。 (``sibuna-<version>.tgz``)."
 
-#: ../../operations.rst:3219
+#: ../../operations.rst:3246
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew、Kubernetes、コンテナー"
 
-#: ../../operations.rst:3220
+#: ../../operations.rst:3247
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -11741,15 +11874,15 @@ msgstr ""
 "、そしてamd64とarm64向けのイメージ\\ ``ghcr.io/insanai/sibuna:<version>``\\ "
 "。イメージのダイジェストは\\ ``IMAGE-DIGEST.txt``\\ にあります。"
 
-#: ../../operations.rst:3221
+#: ../../operations.rst:3248
 msgid "Source"
 msgstr "ソース"
 
-#: ../../operations.rst:3222
+#: ../../operations.rst:3249
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``\\ 。"
 
-#: ../../operations.rst:3224
+#: ../../operations.rst:3251
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -11766,14 +11899,14 @@ msgstr ""
 "が入っています。このマニフェストは、バージョン、コミット、Rustのターゲット、コンパイラーのバージョン、フィーチャー、そして実行ファイルとその二つのWebAssemblyモジュールのSHA-256を記録します。リリースワークフローは、何かを公開する前にすべての実行ファイルをそれぞれのプラットフォームで起動し、Debian、Fedora、Arch "
 "Linux、FreeBSD、OpenBSDでパッケージのインストール、再インストール、削除を行います。"
 
-#: ../../operations.rst:3226
+#: ../../operations.rst:3253
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
 msgstr ""
 "アセットには署名がありません。インストールする前に、ダウンロードしたものを同じリリースの\\ ``SHA256SUMS``\\ と照合します。"
 
-#: ../../operations.rst:3228
+#: ../../operations.rst:3255
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -11783,7 +11916,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.3.tgz      # OpenBSD"
 
-#: ../../operations.rst:3234
+#: ../../operations.rst:3261
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -11792,11 +11925,11 @@ msgstr ""
 "macOSでは、ブラウザーでダウンロードしたファイルに隔離属性が付き、これが署名のない実行ファイルを止めます。照合の後、\\ ``xattr -d "
 "com.apple.quarantine sibuna``\\ でこの属性を取り除きます。"
 
-#: ../../operations.rst:3236
+#: ../../operations.rst:3263
 msgid "The systemd service"
 msgstr "systemdサービス"
 
-#: ../../operations.rst:3239
+#: ../../operations.rst:3266
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -11811,7 +11944,7 @@ msgstr ""
 "``/etc/sibuna/service.env``\\ "
 "をインストールします。インストールしても何も起動しません。設定ファイルにオリジンをIPリテラルで設定し、サービスを起動します。"
 
-#: ../../operations.rst:3241
+#: ../../operations.rst:3268
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -11823,7 +11956,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:3247
+#: ../../operations.rst:3274
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -11845,7 +11978,7 @@ msgstr ""
 "``/var/lib/sibuna``\\ に保存します。ユニットは、ケーパビリティなし、読み取り専用のシステム（\\ "
 "``ProtectSystem=strict``\\ ）、プライベートな\\ ``/tmp``\\ とデバイス、新しい特権なしで動きます。"
 
-#: ../../operations.rst:3249
+#: ../../operations.rst:3276
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -11854,7 +11987,7 @@ msgid ""
 msgstr ""
 "アップグレードは設定ファイル、シード、状態を保ち、サービスを再起動しません。バックアップの後で自分たちで再起動します。削除はサービスを停止して無効にしますが、アカウント、シード、設定、状態は残します。これらはホストを退役させるときに自分たちで削除します。"
 
-#: ../../operations.rst:3251
+#: ../../operations.rst:3278
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -11867,11 +12000,11 @@ msgstr ""
 "unsigned``\\ "
 "）。サービス、アカウント、状態は作成しません。デーモンは、専用のシードとデータディレクトリを持つ特権のないユーザーで実行します。"
 
-#: ../../operations.rst:3253
+#: ../../operations.rst:3280
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:3256
+#: ../../operations.rst:3283
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -11885,7 +12018,7 @@ msgstr ""
 "``wasm32-unknown-unknown``\\ "
 "向けの標準ライブラリがなく、埋め込む二つのWebAssemblyモジュールのビルドにはそれが必要だからです。アーカイブには、リリースワークフローが確認済みの実行ファイルが入っています。Homebrewはtapからしかformulaをインストールしないので、formulaをローカルのtapに置きます。"
 
-#: ../../operations.rst:3258
+#: ../../operations.rst:3285
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -11897,18 +12030,18 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:3264
+#: ../../operations.rst:3291
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
 msgstr ""
 "このformulaはサービスを起動しません。注意書き（caveats）はシードの作り方を示し、テストは同じデータディレクトリでデーモンを2回起動します。"
 
-#: ../../operations.rst:3266
+#: ../../operations.rst:3293
 msgid "Containers and Kubernetes"
 msgstr "コンテナーとKubernetes"
 
-#: ../../operations.rst:3269
+#: ../../operations.rst:3296
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -11922,7 +12055,7 @@ msgstr ""
 "``sibuna``\\ "
 "なので、引数はデーモンのオプションです。リリースワークフローはこのイメージを、読み取り専用、ケーパビリティなしで、シードを読み取り専用でマウントし、状態用のボリュームを付けて実行し、1回再起動します。"
 
-#: ../../operations.rst:3271
+#: ../../operations.rst:3298
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -11942,7 +12075,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:3279
+#: ../../operations.rst:3306
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -11973,7 +12106,7 @@ msgstr ""
 "はIPリテラルでなければならず、\\ ``extraArgs``\\ "
 "は追加のデーモンオプションを渡します。ワークフローは、Restricted標準を強制するkindクラスターで、チャートのインストール、アップグレード、アンインストールを行います。"
 
-#: ../../operations.rst:3281
+#: ../../operations.rst:3308
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -11989,11 +12122,11 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:3288
+#: ../../operations.rst:3315
 msgid "Building from source"
 msgstr "ソースからビルドする"
 
-#: ../../operations.rst:3291
+#: ../../operations.rst:3318
 msgid ""
 "All feature sets require Rust 1.100. The default build includes the JLV "
 "compiler. We build the JSON-only daemon using ``cargo build -p sibuna "
@@ -12004,7 +12137,7 @@ msgstr ""
 "``cargo build -p sibuna --no-default-features`` を使います。SQLite とコンソールを含めるには "
 "``--features sqlite,console`` を加えます。"
 
-#: ../../operations.rst:3293
+#: ../../operations.rst:3320
 msgid ""
 "We install the release toolchain with ``rustup toolchain install 1.100.0 "
 "--profile minimal --target wasm32-unknown-unknown`` and select it with "
@@ -12014,7 +12147,7 @@ msgstr ""
 "--target wasm32-unknown-unknown`` でインストールし、以下のコマンドでは ``cargo +1.100.0`` "
 "で選択します。"
 
-#: ../../operations.rst:3295
+#: ../../operations.rst:3322
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -12031,7 +12164,7 @@ msgstr ""
 "``SIBUNA_POW_WASM=<path>``\\ と\\ ``SIBUNA_CONSOLE_WASM=<path>``\\ "
 "を指定すると、代わりにビルド済みのモジュールを埋め込みます。"
 
-#: ../../operations.rst:3296
+#: ../../operations.rst:3323
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -12043,7 +12176,7 @@ msgstr ""
 "``--database-url``\\ は起動時に\\ ``StorageDisabled``\\ で、\\ ``sibuna "
 "console``\\ は\\ ``CONSOLEBUILD``\\ で拒否されます。"
 
-#: ../../operations.rst:3297
+#: ../../operations.rst:3324
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -12052,7 +12185,7 @@ msgstr ""
 "``cargo build --release -p sibuna --features postgres-tls``\\ "
 "は、データベースへの検証付きTLSを備えたPostgreSQLのクラスターを加えます。OpenSSLは必要ありません。"
 
-#: ../../operations.rst:3298
+#: ../../operations.rst:3325
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -12064,7 +12197,7 @@ msgstr ""
 "--locked -p sibuna --target x86_64-unknown-linux-musl``\\ （または\\ "
 "``aarch64-unknown-linux-musl``\\ ）でビルドしたものです。"
 
-#: ../../operations.rst:3300
+#: ../../operations.rst:3327
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -12077,7 +12210,7 @@ msgstr ""
 "``cargo xtask licenses``\\ で\\ ``LICENSES/THIRD-PARTY-RUST.txt``\\ "
 "を再生成します。"
 
-#: ../../operations.rst:3302
+#: ../../operations.rst:3329
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -12089,11 +12222,11 @@ msgstr ""
 "Windowsでは、デーモンはCtrl+C、Ctrl+Break、コンソールを閉じるイベントで停止します。Windowsサービスとしては動きません。Windowsのファイルにはモードビットがないので、Sibunaは他者が読めるかもしれない鍵、認証情報、データベースURLのファイルを拒否できません。これらのファイルはACLで制限します。コンソールのメモリとCPUのゲージは\\ "
 "``/proc``\\ から読むので、他のシステムでは使えません。"
 
-#: ../../operations.rst:3304
+#: ../../operations.rst:3331
 msgid "Exercise 11.2"
 msgstr "演習11.2"
 
-#: ../../operations.rst:3306
+#: ../../operations.rst:3333
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -12105,7 +12238,7 @@ msgstr ""
 "で識別するパートナーのスクレイパーを10秒あたり30リクエストで許可するために必要な、ポリシーファイルと\\ "
 "``ip_reputation``\\ の行を書いてください。"
 
-#: ../../operations.rst:3308
+#: ../../operations.rst:3335
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -12113,11 +12246,11 @@ msgstr ""
 "ヒント：デーモンのフラグは、すべてのリクエストが最初に通るクライアントごとの制限を設定します。ルールは\\ ``limits``\\ "
 "で専用のクォータを持てます。"
 
-#: ../../operations.rst:3310
+#: ../../operations.rst:3337
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
-#: ../../operations.rst:3312
+#: ../../operations.rst:3339
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "

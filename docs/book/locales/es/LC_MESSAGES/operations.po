@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 03:40+0000\n"
+"POT-Creation-Date: 2026-11-26 04:13+0000\n"
 "PO-Revision-Date: 2026-10-16 05:19+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -40,7 +40,7 @@ msgstr "Modos de protección y configuración"
 
 #: ../../operations.rst:9 ../../operations.rst:172 ../../operations.rst:2856
 #: ../../operations.rst:3055 ../../operations.rst:3084
-#: ../../operations.rst:3199
+#: ../../operations.rst:3226
 msgid "Objectives"
 msgstr "Objetivos"
 
@@ -8665,7 +8665,7 @@ msgstr ""
 msgid "Run-time changes and the file"
 msgstr "Cambios en tiempo de ejecución y el archivo"
 
-#: ../../operations.rst:2238
+#: ../../operations.rst:2238 ../../operations.rst:3191
 msgid "Change"
 msgstr "Cambio"
 
@@ -12800,11 +12800,12 @@ msgstr "``policy_revision``"
 
 #: ../../operations.rst:3104
 msgid ""
-"The policy revision, one row; triggers on the three policy tables advance "
-"it."
+"The policy revision, one row; triggers on ``policies``, "
+"``policy_inspection`` and the console's page templates advance it."
 msgstr ""
 "La revisión de la política, una fila; la hacen avanzar disparadores en "
-"las tres tablas de políticas."
+"``policies``, ``policy_inspection`` y las plantillas de página de la "
+"consola."
 
 #: ../../operations.rst:3105
 msgid "``policies``"
@@ -12838,10 +12839,34 @@ msgstr ""
 "dirección o prefijo."
 
 #: ../../operations.rst:3111
+msgid "``reputation_clock``"
+msgstr "``reputation_clock``"
+
+#: ../../operations.rst:3112
+msgid ""
+"One row: the stamp of the last change of ``ip_reputation`` (SID 0033)."
+msgstr ""
+"Una fila: el sello del último cambio de ``ip_reputation`` (SID 0033)."
+
+#: ../../operations.rst:3113
+msgid "``reputation_changes``"
+msgstr "``reputation_changes``"
+
+#: ../../operations.rst:3114
+msgid ""
+"The change log of ``ip_reputation``: the whole new state of one key per "
+"stamp, or its removal, keyed by stamp. The last 1,000,000 changes are "
+"kept."
+msgstr ""
+"El registro de cambios de ``ip_reputation``: el nuevo estado completo de "
+"una clave por sello, o su eliminación, con clave por sello. Se conservan "
+"los últimos 1.000.000 de cambios."
+
+#: ../../operations.rst:3115
 msgid "``incident_receipts``"
 msgstr "``incident_receipts``"
 
-#: ../../operations.rst:3112
+#: ../../operations.rst:3116
 msgid ""
 "Each node's durable incident receipt (the next sequence after its last "
 "committed batch), keyed by node."
@@ -12849,11 +12874,11 @@ msgstr ""
 "El recibo duradero de incidentes de cada nodo (la secuencia siguiente a "
 "su último lote confirmado), con clave por nodo."
 
-#: ../../operations.rst:3113
+#: ../../operations.rst:3117
 msgid "``security_incidents``"
 msgstr "``security_incidents``"
 
-#: ../../operations.rst:3114
+#: ../../operations.rst:3118
 msgid ""
 "One bounded event record with its 64-component embedding (256 bytes), "
 "keyed by ``node_id << 40 | sequence``. The nullable ``ja4`` holds the "
@@ -12864,11 +12889,11 @@ msgstr ""
 "admite nulos, guarda la huella JA4 de la petición, de exactamente 36 "
 "bytes."
 
-#: ../../operations.rst:3115
+#: ../../operations.rst:3119
 msgid "``incidents_fts``"
 msgstr "``incidents_fts``"
 
-#: ../../operations.rst:3116
+#: ../../operations.rst:3120
 msgid ""
 "On SQLite: an FTS5 table over the canonical tokens of paths and payloads. "
 "On PostgreSQL the same tokens are the ``tsvector`` column ``search`` of "
@@ -12878,22 +12903,23 @@ msgstr ""
 "cargas útiles. En PostgreSQL los mismos tokens son la columna "
 "``tsvector`` ``search`` de ``security_incidents`` con un índice GIN."
 
-#: ../../operations.rst:3117
+#: ../../operations.rst:3121
 msgid "``sibuna_schema``"
 msgstr "``sibuna_schema``"
 
-#: ../../operations.rst:3118
+#: ../../operations.rst:3122
 msgid "Every applied migration, keyed by component and version."
 msgstr "Cada migración aplicada, con clave por componente y versión."
 
-#: ../../operations.rst:3120
+#: ../../operations.rst:3124
 msgid ""
 "The core schema is ``crates/storage/src/schema.rs``, written once per "
 "dialect. With the console the component ``console`` adds 33 tables whose "
 "names start with ``console_`` (SID 0013; "
 "``crates/console-storage/src/schema/``). Migrations are numbered per "
 "component and compiled into the binary. Core migration 2 adds the two JA4 "
-"columns; a database created before it is migrated on start. All pending "
+"columns, and core migration 3 adds the reputation change log (SID 0033); "
+"a database created before them is migrated on start. All pending "
 "migrations run in one transaction, and a node refuses a database whose "
 "version of a component is newer than it knows. An abbreviated printed "
 "schema is not an upgrade script. SQLite tables are ``STRICT``, and "
@@ -12906,9 +12932,10 @@ msgstr ""
 "cuyos nombres empiezan por ``console_`` (SID 0013; "
 "``crates/console-storage/src/schema/``). Las migraciones se numeran por "
 "componente y se compilan en el binario. La migración 2 del núcleo añade "
-"las dos columnas JA4; una base de datos creada antes de ella se migra al "
-"arrancar. Todas las migraciones pendientes se ejecutan en una sola "
-"transacción, y un nodo rechaza una base de datos cuya versión de un "
+"las dos columnas JA4, y la migración 3 del núcleo añade el registro de "
+"cambios de reputación (SID 0033); una base de datos creada antes de ellas "
+"se migra al arrancar. Todas las migraciones pendientes se ejecutan en una "
+"sola transacción, y un nodo rechaza una base de datos cuya versión de un "
 "componente es más nueva que la que conoce. Un esquema impreso abreviado "
 "no es un script de actualización. Las tablas SQLite son ``STRICT``, y las "
 "restricciones ``CHECK`` reflejan los tipos de Rust, así que la base de "
@@ -12916,11 +12943,11 @@ msgstr ""
 "enumerados se guardan en minúsculas: una escritura directa de ``'DENY'`` "
 "se rechaza."
 
-#: ../../operations.rst:3122
+#: ../../operations.rst:3126
 msgid "Operating It"
 msgstr "Operación"
 
-#: ../../operations.rst:3125
+#: ../../operations.rst:3129
 msgid ""
 "Use the ``sqlite3`` shell on ``sibuna.db`` (WAL mode lets it read while "
 "the daemon runs), or ``psql`` on the cluster database:"
@@ -12929,7 +12956,7 @@ msgstr ""
 "mientras el daemon se ejecuta), o ``psql`` sobre la base de datos del "
 "clúster:"
 
-#: ../../operations.rst:3127
+#: ../../operations.rst:3131
 msgid ""
 "-- Add a dynamic rule; every node rebuilds on its next tick.\n"
 "INSERT INTO policies (id, name, priority, path_pattern, action, "
@@ -12975,7 +13002,7 @@ msgstr ""
 "FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
 "WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
 
-#: ../../operations.rst:3145
+#: ../../operations.rst:3149
 msgid ""
 "The statements are written for SQLite. On PostgreSQL, ``enabled`` is "
 "``TRUE``, the time is ``CAST(extract(epoch FROM now()) AS BIGINT)`` "
@@ -12998,7 +13025,7 @@ msgstr ""
 "sibuna_policy``, así que los demás nodos ejecutan su ciclo de inmediato; "
 "el sondeo sigue siendo la garantía."
 
-#: ../../operations.rst:3147
+#: ../../operations.rst:3151
 msgid ""
 "Scores at or below :math:`-50` become ``deny`` prefixes in the trie, "
 "scores at or above :math:`50` become ``allow``, and ``banned_until`` "
@@ -13013,11 +13040,11 @@ msgstr ""
 "que, con una base de datos PostgreSQL compartida, una trampa activada en "
 "un nodo bloquea la dirección en todos ellos."
 
-#: ../../operations.rst:3149
+#: ../../operations.rst:3153
 msgid "A Transaction Receipt Makes Retry Safe"
 msgstr "Un recibo de transacción hace que reintentar sea seguro"
 
-#: ../../operations.rst:3152
+#: ../../operations.rst:3156
 msgid ""
 "The storage thread collects at most 32 pending records and builds one SQL "
 "transaction. The transaction inserts incidents, updates the full-text "
@@ -13034,11 +13061,11 @@ msgstr ""
 "protegida por ese recibo; la transacción lo hace avanzar en último lugar, "
 "y nunca hacia atrás."
 
-#: ../../operations.rst:3154
+#: ../../operations.rst:3158
 msgid "Worked example: the acknowledgement disappears"
 msgstr "Ejemplo resuelto: el acuse de recibo desaparece"
 
-#: ../../operations.rst:3156
+#: ../../operations.rst:3160
 msgid ""
 "Suppose issuer 2 prepares sequences 101 through 132, ending at receipt "
 "133. The database commits all records and receipt 133, then the "
@@ -13059,7 +13086,7 @@ msgstr ""
 "transacción original se deshizo, el recibo antiguo permanece y el "
 "reintento aplica todas las escrituras una vez."
 
-#: ../../operations.rst:3158
+#: ../../operations.rst:3162
 msgid ""
 "A failed commit retains the pending batch in memory and increments "
 "``incident_write_failures``. The tick still attempts policy polling. A "
@@ -13078,11 +13105,11 @@ msgstr ""
 "forense asíncrono y acotado, no una cola de mensajes duradera en el "
 "momento de encolar."
 
-#: ../../operations.rst:3160
+#: ../../operations.rst:3164
 msgid "Exercise 11.1"
 msgstr "Ejercicio 11.1"
 
-#: ../../operations.rst:3162
+#: ../../operations.rst:3166
 msgid ""
 "Move the receipt update outside the data transaction. Construct one crash "
 "schedule that duplicates a reputation effect and another that loses an "
@@ -13092,11 +13119,11 @@ msgstr ""
 "Construye una secuencia de caídas que duplique un efecto de reputación y "
 "otra que pierda un incidente."
 
-#: ../../operations.rst:3164
+#: ../../operations.rst:3168
 msgid "Campaign Clustering"
 msgstr "Agrupación en campañas"
 
-#: ../../operations.rst:3167
+#: ../../operations.rst:3171
 msgid ""
 "Each incident payload is embedded as a 64-dimensional unit vector by the "
 "hashing trick over byte trigrams (digits folded, case folded) and stored "
@@ -13126,11 +13153,11 @@ msgstr ""
 "útiles SQL relacionadas, pero eso no garantiza que cada par de ataques "
 "comparta campaña. No se ejecuta ningún modelo ni se entrena nada."
 
-#: ../../operations.rst:3169
+#: ../../operations.rst:3173
 msgid "Clustering"
 msgstr "Funcionamiento en clúster"
 
-#: ../../operations.rst:3172
+#: ../../operations.rst:3176
 msgid ""
 "A cluster is a set of nodes that share one PostgreSQL database. Build "
 "with the ``postgres-tls`` feature (``cargo build --release -p sibuna "
@@ -13142,7 +13169,7 @@ msgstr ""
 "--release -p sibuna --features postgres-tls``; implica ``postgres``) e "
 "inicia cada miembro con la base de datos y un id de nodo propio:"
 
-#: ../../operations.rst:3174
+#: ../../operations.rst:3178
 msgid ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
@@ -13150,7 +13177,7 @@ msgstr ""
 "sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 \\\n"
 "       --secret-file /etc/sibuna/secret"
 
-#: ../../operations.rst:3179
+#: ../../operations.rst:3183
 msgid ""
 "Every member must use the same master secret and a unique "
 "``--cluster-node`` from 1 to 8,388,607. The URL file holds one "
@@ -13167,7 +13194,138 @@ msgstr ""
 "revisión confirmada (mediante ``NOTIFY`` o por sondeo) y reconstruye su "
 "motor."
 
-#: ../../operations.rst:3181
+#: ../../operations.rst:3185
+msgid ""
+"**How a change reaches the nodes.** A node's storage thread wakes at a "
+"``NOTIFY`` or at its poll (``--storage-poll-ms``, 500 ms by default), and "
+"does two separate things. A change of policies, of the inspection modes "
+"or of a page template raises ``policy_revision``, and the node rebuilds "
+"its engine from the policy file and the stored rules. A change of "
+"reputation, such as a ban written by any node, does not touch the engine "
+"(SID 0033). Every write of ``ip_reputation`` is stamped by "
+"``reputation_clock`` in commit order and recorded in "
+"``reputation_changes``. The node reads the changes after the last one it "
+"applied and publishes a new reputation set beside the engine. Each node "
+"does this alone, and no request waits for it: request threads read the "
+"engine and the set without a lock, as before."
+msgstr ""
+"**Cómo llega un cambio a los nodos.** El hilo de almacenamiento de un "
+"nodo despierta con un ``NOTIFY`` o con su sondeo (``--storage-poll-ms``, "
+"500 ms por defecto), y hace dos cosas separadas. Un cambio de las "
+"políticas, de los modos de inspección o de una plantilla de página eleva "
+"``policy_revision``, y el nodo reconstruye su motor a partir del archivo "
+"de políticas y de las reglas almacenadas. Un cambio de reputación, como "
+"un bloqueo escrito por cualquier nodo, no toca el motor (SID 0033). Cada "
+"escritura de ``ip_reputation`` recibe un sello de ``reputation_clock`` en "
+"el orden de confirmación y queda anotada en ``reputation_changes``. El "
+"nodo lee los cambios posteriores al último que aplicó y publica un nuevo "
+"conjunto de reputación junto al motor. Cada nodo lo hace por su cuenta, y "
+"ninguna petición lo espera: los hilos de peticiones leen el motor y el "
+"conjunto sin cerrojo, como antes."
+
+#: ../../operations.rst:3187
+msgid "What a change costs a node"
+msgstr "Lo que cuesta un cambio a un nodo"
+
+#: ../../operations.rst:3192
+msgid "What the node does"
+msgstr "Qué hace el nodo"
+
+#: ../../operations.rst:3193
+msgid "A ban, a lift, an operator's reputation row, a country set"
+msgstr ""
+"Un bloqueo, un levantamiento de bloqueo, una fila de reputación de un "
+"operador, un conjunto de país"
+
+#: ../../operations.rst:3194
+msgid ""
+"Reads the new changes only, and publishes the set. One change to a set of "
+"a million entries costs about 2 microseconds, merges included."
+msgstr ""
+"Lee solo los cambios nuevos y publica el conjunto. Un cambio en un "
+"conjunto de un millón de entradas cuesta unos 2 microsegundos, fusiones "
+"incluidas."
+
+#: ../../operations.rst:3195
+msgid "A ban that ends"
+msgstr "Un bloqueo que termina"
+
+#: ../../operations.rst:3196
+msgid "Removes the entry at the next tick, without reading the database."
+msgstr ""
+"Elimina la entrada en el siguiente ciclo, sin leer la base de datos."
+
+#: ../../operations.rst:3197
+msgid "A policy, inspection or page change"
+msgstr "Un cambio de política, de inspección o de página"
+
+#: ../../operations.rst:3198
+msgid ""
+"Rebuilds the engine (well under a millisecond with the default policy) "
+"and keeps the reputation set."
+msgstr ""
+"Reconstruye el motor (muy por debajo de un milisegundo con la política "
+"por defecto) y conserva el conjunto de reputación."
+
+#: ../../operations.rst:3199
+msgid ""
+"A node that was away longer than the log keeps, or a ``TRUNCATE`` of "
+"``ip_reputation``"
+msgstr ""
+"Un nodo que estuvo ausente más tiempo del que guarda el registro, o un "
+"``TRUNCATE`` de ``ip_reputation``"
+
+#: ../../operations.rst:3200
+msgid "Loads the whole table once, then follows the log again."
+msgstr ""
+"Carga la tabla completa una vez y después vuelve a seguir el registro."
+
+#: ../../operations.rst:3202
+msgid ""
+"Every writer of ``ip_reputation`` takes the counter row first and holds "
+"it until it commits, so writers of reputation run one at a time. Incident "
+"batches are short, so this costs little. A long transaction of our own "
+"that writes ``ip_reputation`` holds the other writers of reputation, on "
+"every node, until it ends."
+msgstr ""
+"Cada escritor de ``ip_reputation`` toma primero la fila del contador y la "
+"retiene hasta confirmar, así que los escritores de reputación se ejecutan "
+"de uno en uno. Los lotes de incidentes son cortos, así que esto cuesta "
+"poco. Una transacción larga nuestra que escriba ``ip_reputation`` retiene "
+"a los demás escritores de reputación, en todos los nodos, hasta que "
+"termina."
+
+#: ../../operations.rst:3204
+msgid ""
+"``NOTIFY`` does not pass through PgBouncer in transaction pooling mode, "
+"and a notification sent while a node is reconnecting is lost. The poll "
+"covers both cases, so a change still arrives within one poll."
+msgstr ""
+"``NOTIFY`` no atraviesa PgBouncer en el modo de agrupación por "
+"transacción, y una notificación enviada mientras un nodo se reconecta se "
+"pierde. El sondeo cubre ambos casos, así que un cambio llega igualmente "
+"en un sondeo."
+
+#: ../../operations.rst:3206
+msgid ""
+"The set holds up to 1,048,576 exact addresses and ranges in a trie of "
+"1,048,576 nodes. A million IPv4 addresses take about 50 MiB, and a merge "
+"briefly holds a second copy of the part that changed. A row that does not "
+"fit, or that does not parse, is refused alone and reported as ``storage: "
+"N reputation row(s) not applied``. Earlier versions rebuilt the engine "
+"for every reputation change and stopped applying policy changes once a "
+"few thousand addresses were banned."
+msgstr ""
+"El conjunto admite hasta 1.048.576 direcciones exactas y rangos en un "
+"trie de 1.048.576 nodos. Un millón de direcciones IPv4 ocupan unos 50 "
+"MiB, y una fusión mantiene brevemente una segunda copia de la parte que "
+"cambió. Una fila que no cabe, o que no se puede analizar, se rechaza sola "
+"y se informa como ``storage: N reputation row(s) not applied``. Las "
+"versiones anteriores reconstruían el motor con cada cambio de reputación "
+"y dejaban de aplicar cambios de política en cuanto se bloqueaban unos "
+"pocos miles de direcciones."
+
+#: ../../operations.rst:3208
 msgid ""
 "Nodes reach the shared database across the network, so we encrypt and "
 "verify that connection. We give the server a certificate signed by our "
@@ -13184,7 +13342,7 @@ msgstr ""
 "En el servidor aceptamos TCP solo mediante líneas ``hostssl`` en "
 "``pg_hba.conf``."
 
-#: ../../operations.rst:3183
+#: ../../operations.rst:3210
 msgid ""
 "At startup the daemon prints one line about the database connection. With "
 "``verify-full`` it says that the certificate and host name are verified. "
@@ -13211,7 +13369,7 @@ msgstr ""
 "nuestra autoridad al almacén de confianza del sistema; no elimina las "
 "autoridades del sistema (SID 0011, SID 0012)."
 
-#: ../../operations.rst:3185
+#: ../../operations.rst:3212
 msgid ""
 "Sibuna does not replicate a database of its own and elects no leader. "
 "Replication, failover and backups are PostgreSQL's (streaming "
@@ -13241,7 +13399,7 @@ msgstr ""
 "políticas se trasladan con ``sibuna console policies export`` y ``sibuna "
 "console policies import``, y el historial forense no se migra."
 
-#: ../../operations.rst:3187
+#: ../../operations.rst:3214
 msgid ""
 "**The cluster and the mesh.** This cluster is one of the firewall daemon. "
 "An edge does not join it: ``--config-file`` takes no storage option, the "
@@ -13271,11 +13429,11 @@ msgstr ""
 "otra (sección *Una base de datos para la topología*). Un edge no registra "
 "incidentes ni reputación en una base de datos."
 
-#: ../../operations.rst:3189
+#: ../../operations.rst:3216
 msgid "Cluster Challenge Routing"
 msgstr "Enrutamiento de desafíos en el clúster"
 
-#: ../../operations.rst:3192
+#: ../../operations.rst:3219
 msgid ""
 "Challenge keys are bound to ``--cluster-node``; keep challenge issuance "
 "and verification on the same member. Tokens use the shared seed and work "
@@ -13297,11 +13455,11 @@ msgstr ""
 "(``crates/storage/tests/multi_node.rs``, criterio 2 de SID 0011; se "
 "ejecuta cuando se define ``SIBUNA_TEST_DATABASE_URL``)."
 
-#: ../../operations.rst:3196
+#: ../../operations.rst:3223
 msgid "Packaging"
 msgstr "Empaquetado"
 
-#: ../../operations.rst:3201
+#: ../../operations.rst:3228
 msgid ""
 "Install and verify a release package, run Sibuna as a service, in a "
 "container or under Kubernetes, and build the binary ourselves."
@@ -13310,7 +13468,7 @@ msgstr ""
 "Sibuna como servicio, en un contenedor o en Kubernetes, y compilamos el "
 "binario nosotros mismos."
 
-#: ../../operations.rst:3203
+#: ../../operations.rst:3230
 msgid ""
 "Every release on GitHub carries the same executable for each platform, "
 "built from the release tag with the default features: SQLite storage and "
@@ -13321,19 +13479,19 @@ msgstr ""
 "por defecto: almacenamiento SQLite y la consola. Los clústeres PostgreSQL "
 "necesitan una compilación propia (más abajo)."
 
-#: ../../operations.rst:3209
+#: ../../operations.rst:3236
 msgid "Platform"
 msgstr "Plataforma"
 
-#: ../../operations.rst:3210
+#: ../../operations.rst:3237
 msgid "Release assets"
 msgstr "Archivos de la versión"
 
-#: ../../operations.rst:3211
+#: ../../operations.rst:3238
 msgid "Linux x86-64, ARM64"
 msgstr "Linux x86-64, ARM64"
 
-#: ../../operations.rst:3212
+#: ../../operations.rst:3239
 msgid ""
 "``sibuna-linux-amd64.tar.gz`` and ``sibuna-linux-arm64.tar.gz`` hold a "
 "static musl executable that runs on any distribution. "
@@ -13349,11 +13507,11 @@ msgstr ""
 "instalan con un servicio systemd; "
 "``sibuna-bin-<version>-1-x86_64.pkg.tar.zst`` hace lo mismo en Arch Linux."
 
-#: ../../operations.rst:3213
+#: ../../operations.rst:3240
 msgid "macOS arm64, x86-64"
 msgstr "macOS arm64, x86-64"
 
-#: ../../operations.rst:3214
+#: ../../operations.rst:3241
 msgid ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, for macOS "
 "12 or later."
@@ -13361,11 +13519,11 @@ msgstr ""
 "``sibuna-macos-arm64.tar.gz``, ``sibuna-macos-amd64.tar.gz``, para macOS "
 "12 o posterior."
 
-#: ../../operations.rst:3215
+#: ../../operations.rst:3242
 msgid "Windows x86-64"
 msgstr "Windows x86-64"
 
-#: ../../operations.rst:3216
+#: ../../operations.rst:3243
 msgid ""
 "``sibuna-windows-amd64.zip`` holds ``sibuna.exe``, for Windows 10 or "
 "Server 2016 or later."
@@ -13373,11 +13531,11 @@ msgstr ""
 "``sibuna-windows-amd64.zip`` contiene ``sibuna.exe``, para Windows 10 o "
 "Server 2016 o posterior."
 
-#: ../../operations.rst:3217
+#: ../../operations.rst:3244
 msgid "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 msgstr "FreeBSD 15.1, OpenBSD 7.9 (amd64)"
 
-#: ../../operations.rst:3218
+#: ../../operations.rst:3245
 msgid ""
 "``sibuna-<version>-freebsd-15.1-amd64.pkg``. The optional OpenBSD job "
 "adds ``sibuna-<version>.tgz`` when its native qualification passes."
@@ -13386,11 +13544,11 @@ msgstr ""
 "OpenBSD añade el paquete si supera las comprobaciones nativas. "
 "(``sibuna-<version>.tgz``)."
 
-#: ../../operations.rst:3219
+#: ../../operations.rst:3246
 msgid "Homebrew, Kubernetes, containers"
 msgstr "Homebrew, Kubernetes, contenedores"
 
-#: ../../operations.rst:3220
+#: ../../operations.rst:3247
 msgid ""
 "``sibuna.rb``, ``helm-sibuna-<version>.tgz``, and the image "
 "``ghcr.io/insanai/sibuna:<version>`` for amd64 and arm64, whose digest is "
@@ -13400,15 +13558,15 @@ msgstr ""
 "``ghcr.io/insanai/sibuna:<version>`` para amd64 y arm64, cuyo digest está "
 "en ``IMAGE-DIGEST.txt``."
 
-#: ../../operations.rst:3221
+#: ../../operations.rst:3248
 msgid "Source"
 msgstr "Fuentes"
 
-#: ../../operations.rst:3222
+#: ../../operations.rst:3249
 msgid "``sibuna-<version>-source.tar.gz``."
 msgstr "``sibuna-<version>-source.tar.gz``."
 
-#: ../../operations.rst:3224
+#: ../../operations.rst:3251
 msgid ""
 "Each archive and package carries ``LICENSE``, ``NOTICE``, ``LICENSES/`` "
 "(with ``THIRD-PARTY-RUST.txt``, the crates in the executable), "
@@ -13428,7 +13586,7 @@ msgstr ""
 "en su propia plataforma antes de publicar nada, e instala, reinstala y "
 "elimina los paquetes en Debian, Fedora, Arch Linux, FreeBSD y OpenBSD."
 
-#: ../../operations.rst:3226
+#: ../../operations.rst:3253
 msgid ""
 "The assets are not signed. We check a download against ``SHA256SUMS`` "
 "from the same release before we install it:"
@@ -13436,7 +13594,7 @@ msgstr ""
 "Los archivos no están firmados. Comprobamos cada descarga contra "
 "``SHA256SUMS`` de la misma versión antes de instalarla:"
 
-#: ../../operations.rst:3228
+#: ../../operations.rst:3255
 msgid ""
 "sha256sum --ignore-missing -c SHA256SUMS          # Linux\n"
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
@@ -13446,7 +13604,7 @@ msgstr ""
 "shasum -a 256 --ignore-missing -c SHA256SUMS      # macOS, FreeBSD\n"
 "sha256 -C SHA256SUMS sibuna-1.0.0-beta.3.tgz      # OpenBSD"
 
-#: ../../operations.rst:3234
+#: ../../operations.rst:3261
 msgid ""
 "On macOS a browser download carries a quarantine attribute that stops an "
 "unsigned executable; ``xattr -d com.apple.quarantine sibuna`` removes it "
@@ -13456,11 +13614,11 @@ msgstr ""
 "cuarentena que bloquea un ejecutable sin firmar; ``xattr -d "
 "com.apple.quarantine sibuna`` lo elimina después de la comprobación."
 
-#: ../../operations.rst:3236
+#: ../../operations.rst:3263
 msgid "The systemd service"
 msgstr "El servicio systemd"
 
-#: ../../operations.rst:3239
+#: ../../operations.rst:3266
 msgid ""
 "The Debian, RPM and Arch packages install ``/usr/bin/sibuna``, the unit "
 "``sibuna.service``, the account ``sibuna`` (through "
@@ -13475,7 +13633,7 @@ msgstr ""
 "``/etc/sibuna/service.env``. La instalación no arranca nada. Fijamos el "
 "origen, un literal IP, en el archivo de ajustes y arrancamos el servicio:"
 
-#: ../../operations.rst:3241
+#: ../../operations.rst:3268
 msgid ""
 "sudoedit /etc/sibuna/service.env      # SIBUNA_UPSTREAM_HOST, "
 "SIBUNA_UPSTREAM_PORT\n"
@@ -13487,7 +13645,7 @@ msgstr ""
 "sudo systemctl enable --now sibuna\n"
 "curl -s http://127.0.0.1:8080/__sibuna/health"
 
-#: ../../operations.rst:3247
+#: ../../operations.rst:3274
 msgid ""
 "The service listens on ``127.0.0.1:8080`` until ``SIBUNA_HOST`` and "
 "``SIBUNA_PORT`` say otherwise. ``SIBUNA_OPTIONS`` passes further options, "
@@ -13513,7 +13671,7 @@ msgstr ""
 "(``ProtectSystem=strict``), ``/tmp`` y dispositivos privados, y sin "
 "nuevos privilegios."
 
-#: ../../operations.rst:3249
+#: ../../operations.rst:3276
 msgid ""
 "An upgrade keeps the settings file, the seed and the state, and does not "
 "restart the service; we restart it after a backup. Removal stops and "
@@ -13526,7 +13684,7 @@ msgstr ""
 "conserva la cuenta, la semilla, los ajustes y el estado, que borramos "
 "nosotros mismos cuando retiramos el host."
 
-#: ../../operations.rst:3251
+#: ../../operations.rst:3278
 msgid ""
 "The FreeBSD and OpenBSD packages install only ``/usr/local/bin/sibuna`` "
 "and its documents (``pkg add``, or ``pkg_add -D unsigned`` for a package "
@@ -13540,11 +13698,11 @@ msgstr ""
 "cuenta ni estado: ejecutamos el daemon como un usuario sin privilegios, "
 "con una semilla y un directorio de datos privados."
 
-#: ../../operations.rst:3253
+#: ../../operations.rst:3280
 msgid "Homebrew"
 msgstr "Homebrew"
 
-#: ../../operations.rst:3256
+#: ../../operations.rst:3283
 msgid ""
 "``sibuna.rb`` installs the release archive for the machine: macOS or "
 "Linux, arm64 or x86-64. It does not build from source, because Homebrew's "
@@ -13561,7 +13719,7 @@ msgstr ""
 "que el flujo de trabajo de publicación ya comprobó. Homebrew solo instala "
 "fórmulas desde taps, así que ponemos la fórmula en un tap local:"
 
-#: ../../operations.rst:3258
+#: ../../operations.rst:3285
 msgid ""
 "brew tap-new \"$USER/local\"\n"
 "cp sibuna.rb \"$(brew "
@@ -13573,7 +13731,7 @@ msgstr ""
 "--repository)/Library/Taps/$USER/homebrew-local/Formula/\"\n"
 "brew install \"$USER/local/sibuna\""
 
-#: ../../operations.rst:3264
+#: ../../operations.rst:3291
 msgid ""
 "The formula starts no service. Its caveats show how to create a seed; its "
 "test starts the daemon twice on the same data directory."
@@ -13582,11 +13740,11 @@ msgstr ""
 "muestran cómo crear una semilla; su prueba arranca el daemon dos veces "
 "sobre el mismo directorio de datos."
 
-#: ../../operations.rst:3266
+#: ../../operations.rst:3293
 msgid "Containers and Kubernetes"
 msgstr "Contenedores y Kubernetes"
 
-#: ../../operations.rst:3269
+#: ../../operations.rst:3296
 msgid ""
 "The image ``ghcr.io/insanai/sibuna:<version>`` holds the static "
 "executable on a distroless base: CA certificates, user 65532, no shell "
@@ -13603,7 +13761,7 @@ msgstr ""
 "montada en solo lectura y un volumen para el estado, y la reinicia una "
 "vez:"
 
-#: ../../operations.rst:3271
+#: ../../operations.rst:3298
 msgid ""
 "docker run -d --read-only --cap-drop=ALL --security-opt=no-new-privileges "
 "\\\n"
@@ -13623,7 +13781,7 @@ msgstr ""
 "/var/lib/sibuna/data \\\n"
 "  --upstream-host 10.0.0.5 --upstream-port 3000"
 
-#: ../../operations.rst:3279
+#: ../../operations.rst:3306
 msgid ""
 "The Helm chart ``helm-sibuna-<version>.tgz`` runs one Pod of that image. "
 "It requires a Secret that we create (``secret.existingSecret``, key "
@@ -13657,7 +13815,7 @@ msgstr ""
 "actualiza y desinstala el chart en un clúster kind que aplica el estándar "
 "Restricted."
 
-#: ../../operations.rst:3281
+#: ../../operations.rst:3308
 msgid ""
 "kubectl -n sibuna create secret generic sibuna-admission "
 "--from-file=admission.seed\n"
@@ -13673,11 +13831,11 @@ msgstr ""
 "  --set secret.existingSecret=sibuna-admission \\\n"
 "  --set upstream.host=10.0.0.5 --set upstream.port=3000"
 
-#: ../../operations.rst:3288
+#: ../../operations.rst:3315
 msgid "Building from source"
 msgstr "Compilar desde las fuentes"
 
-#: ../../operations.rst:3291
+#: ../../operations.rst:3318
 msgid ""
 "All feature sets require Rust 1.100. The default build includes the JLV "
 "compiler. We build the JSON-only daemon using ``cargo build -p sibuna "
@@ -13689,7 +13847,7 @@ msgstr ""
 "daemon solo JSON con ``cargo build -p sibuna --no-default-features`` "
 "Añadimos ``--features sqlite,console`` para incluir SQLite y la consola."
 
-#: ../../operations.rst:3293
+#: ../../operations.rst:3320
 msgid ""
 "We install the release toolchain with ``rustup toolchain install 1.100.0 "
 "--profile minimal --target wasm32-unknown-unknown`` and select it with "
@@ -13699,7 +13857,7 @@ msgstr ""
 "install 1.100.0 --profile minimal --target wasm32-unknown-unknown`` y la "
 "seleccionamos con ``cargo +1.100.0`` en los comandos siguientes."
 
-#: ../../operations.rst:3295
+#: ../../operations.rst:3322
 msgid ""
 "``cargo build --release -p sibuna`` produces ``target/release/sibuna`` "
 "with the default features: SQLite storage and the console. sqlx bundles "
@@ -13719,7 +13877,7 @@ msgstr ""
 "``SIBUNA_CONSOLE_WASM=<path>`` incorporan en su lugar módulos "
 "precompilados."
 
-#: ../../operations.rst:3296
+#: ../../operations.rst:3323
 msgid ""
 "``cargo build --release -p sibuna --no-default-features`` produces the "
 "in-memory firewall with no external crate at all; ``--data-dir`` and "
@@ -13731,7 +13889,7 @@ msgstr ""
 "``--database-url`` se rechazan entonces al arrancar con "
 "``StorageDisabled``, y ``sibuna console`` con ``CONSOLEBUILD``."
 
-#: ../../operations.rst:3297
+#: ../../operations.rst:3324
 msgid ""
 "``cargo build --release -p sibuna --features postgres-tls`` adds "
 "PostgreSQL clusters with verified TLS to the database. It needs no "
@@ -13741,7 +13899,7 @@ msgstr ""
 "clústeres PostgreSQL con TLS verificado hacia la base de datos. No "
 "necesita OpenSSL."
 
-#: ../../operations.rst:3298
+#: ../../operations.rst:3325
 msgid ""
 "The static Linux executables of the releases come from ``cargo build "
 "--release --locked -p sibuna --target x86_64-unknown-linux-musl`` (or "
@@ -13754,7 +13912,7 @@ msgstr ""
 "``musl-gcc`` como compilador de C "
 "(``CC_x86_64_unknown_linux_musl=musl-gcc``)."
 
-#: ../../operations.rst:3300
+#: ../../operations.rst:3327
 msgid ""
 "The release profile uses fat LTO and one codegen unit. The workflow "
 "builds the two WebAssembly modules once and passes them to every "
@@ -13769,7 +13927,7 @@ msgstr ""
 "licenses`` regenera ``LICENSES/THIRD-PARTY-RUST.txt`` cuando cambia una "
 "dependencia."
 
-#: ../../operations.rst:3302
+#: ../../operations.rst:3329
 msgid ""
 "On Windows the daemon stops on Ctrl+C, Ctrl+Break and console close "
 "events; it does not run as a Windows service. Windows files have no mode "
@@ -13786,11 +13944,11 @@ msgstr ""
 "indicadores de memoria y CPU de la consola se leen de ``/proc`` y no "
 "están disponibles en otros sistemas."
 
-#: ../../operations.rst:3304
+#: ../../operations.rst:3331
 msgid "Exercise 11.2"
 msgstr "Ejercicio 11.2"
 
-#: ../../operations.rst:3306
+#: ../../operations.rst:3333
 msgid ""
 "Write the policy file and the ``ip_reputation`` rows needed so that a "
 "staging network (``10.20.0.0/16``) bypasses challenges, ``/admin/*`` "
@@ -13803,7 +13961,7 @@ msgstr ""
 "de un socio identificado por ``X-Partner-Key`` se admita a 30 peticiones "
 "cada 10 segundos."
 
-#: ../../operations.rst:3308
+#: ../../operations.rst:3335
 msgid ""
 "Hint: The daemon flags set the per-client limit every request meets "
 "first; a rule can carry a quota of its own in ``limits``."
@@ -13812,11 +13970,11 @@ msgstr ""
 "petición encuentra primero; una regla puede llevar una cuota propia en "
 "``limits``."
 
-#: ../../operations.rst:3310
+#: ../../operations.rst:3337
 msgid "Explain the invariant"
 msgstr "Explica el invariante"
 
-#: ../../operations.rst:3312
+#: ../../operations.rst:3339
 msgid ""
 "Explain to an operator why adding a row to ``policies`` takes effect "
 "without a restart and without a request ever waiting, in terms of the "
