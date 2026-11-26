@@ -17,7 +17,7 @@ Dwork and Naor's "Pricing via Processing" (CRYPTO 1992) proposed that a service 
 
 Hash search is embarrassingly parallel, so a requester with more cores finishes sooner. Mahmoody, Moran, and Vadhan (CRYPTO 2013) defined proofs of *sequential* work, in which the prover must perform a long chain of dependent steps whatever its core count, and Cohen and Pietrzak (EUROCRYPT 2018) gave the simple hash-graph construction whose verifier needs only :math:`O(t \log N)` work. Blocki, Lee, and Zhou (ITC 2021) proved the same construction sound against quantum provers in the quantum random-oracle model. Part III derives Sibuna's Tier Two from that line of work; SID 0006 records the assumptions.
 
-.. graphviz:: diagrams/lineage.dot
+.. typst-diagram:: diagrams/lineage.typ
    :caption: Lineage of the ideas Sibuna combines. The left column is the cryptography of client puzzles and sequential work, the right column the algorithms and systems Sibuna builds on, and the middle column the products in the same space; time runs downward. Thin arrows are direct descent, and the filled boxes are the ideas Sibuna takes directly. An earlier storage design drew on Multi-Paxos (Lamport 1998; SID 0005); Sibuna now stores its state in SQLite or PostgreSQL (SID 0011).
    :alt: A lineage graph. Dwork-Naor 1992 leads to Hashcash 1997, Juels-Brainard 1999, Mahmoody et al. 2013, Cohen-Pietrzak 2018 and Blocki-Lee-Zhou 2021. Aho-Corasick 1975 leads to Hyperscan 2019; ModSecurity and CRS 2002 lead to libinjection 2012. Hashcash leads to the Anubis interstitial and libinjection to the SafeLine semantic WAF; the Cloudflare hosted edge stands beside them. Sibuna (Gate, Shield, Edge) descends from Hashcash, Cohen-Pietrzak, Blocki-Lee-Zhou, Aho-Corasick, libinjection, GCRA (ATM Forum 1996), Anubis, SafeLine and Cloudflare.
 
@@ -243,7 +243,7 @@ Four papers decide how the edge places a flow and what it remembers.
 - *Rendezvous hashing* (Thaler and Ravishankar, IEEE/ACM Transactions on Networking 1998) gives each server a score from a hash of its name and the key, and the largest score wins. Losing a server moves only its own keys and needs no table. Source stickiness ranks servers in this way (SID 0019), and peer forwarding chooses the owner of a client among the nodes in this way (SID 0026).
 - *TinyLFU* (Einziger, Friedman and Manes, ACM Transactions on Storage 2017) admits a new entry to a full cache only when a small frequency sketch says that it is used more often than the entry it would push out. The spill cache of SID 0027 admits hints to its file by this rule.
 
-.. graphviz:: diagrams/lb-lineage.dot
+.. typst-diagram:: diagrams/lb-lineage.typ
    :caption: What the edge load balancer takes from earlier systems and papers. Solid arrows are ideas taken directly; dashed lines are ideas shared.
    :alt: HAProxy gives the vocabulary and the admin socket, nginx the event-driven workers, and Envoy shares the idea of hook stages. Maglev and bounded loads give the bounded Maglev pool, rendezvous hashing gives source stickiness and the owner of a client, and TinyLFU gives the admission of the spill cache. HAProxy's hash-balance-factor shares the idea of bounded loads.
 
