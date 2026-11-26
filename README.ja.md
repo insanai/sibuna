@@ -67,7 +67,7 @@ sibuna --config-file edge.jlv
 [JlaviでSibunaを設定する](https://insanai.github.io/sibuna/ja/book/jlavi.html)
 
 - **転送：** TCPとUDP、サーバー名でルーティングするTLSパススルー、QUICパススルー、PROXYプロトコル。
-- **HTTP：** HAProxy形式のPEMバンドルでTLSを終端します。HTTP/1.1、HTTP/2、HTTP/3、WebSocketに対応し、ホスト名とパスでHTTP/1.1、HTTP/2、HTTP/3のサーバーへルーティングします。Linuxでは、イベント駆動のワーカーが接続を処理します。ワーカーはプロセッサーごとに1つです。
+- **HTTP：** HAProxy形式のPEMバンドルでTLSを終端し、耐量子鍵交換（X25519MLKEM768）を使います。HTTP/1.1、HTTP/2、HTTP/3、WebSocketに対応し、ホスト名とパスでHTTP/1.1、HTTP/2、HTTP/3のサーバーへルーティングします。Linuxでは、イベント駆動のワーカーが接続を処理します。ワーカーはプロセッサーごとに1つです。
 - **証明書：** ACMEによる自動取得と更新、フォールバック認証局、外部アカウントバインディング。フックプログラム、RFC 2136更新、Cloudflare APIを使ったDNS経由のワイルドカード証明書。OCSPステープリング。ガードの背後でのオンデマンド証明書。`localhost`、内部の名前、IPアドレス向けのローカル認証局。ローカル認証局は失効リストと独自のACMEサーバーを備えます。
 - **サーバー：** ヘルスチェック、スロースタート、ドレイン、重み、スティッキーセッション、サーバーごとのフロー数の上限。
 - **動かしたままの変更：** 設定の再読み込みに成功すると、確立済みのTCP接続は維持されます。管理ソケットで、サーバーのドレイン、重み付け、追加、削除ができます（`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`）。Linuxでは、新しい実行ファイルが古い実行ファイルからリスニングソケットとUDPマッピングを引き継ぎます。QUIC接続は終了します。
