@@ -132,7 +132,7 @@ The Request Pipeline
 
 A request passes the checks below in a fixed order. The cheap checks come first, and each decision that ends the request does so before any more expensive stage runs.
 
-.. graphviz:: diagrams/pipeline.dot
+.. typst-diagram:: diagrams/pipeline.typ
    :caption: The request pipeline, with the median time of each primitive on one core where the primitive suite measures it (``benchmarks/results/primitives-latest.md``). Stages run in the numbered order; dashed arrows show early refusals (the GCRA limiter and the reputation trie refuse in the same way). The whole classification of a browser request takes 75.9 ns in the Gate profile and 790.8 ns in the Shield profile.
    :alt: A pipeline. Accept and read into the 64 KiB buffer, then the zero-copy parse (132.5 ns), the ban table, the internal routes for challenges and verification, the GCRA limiter (6.2 ns), then the policy snapshot: Shield inspection of an 8 KiB body (12.8 us), the reputation trie (IPv4 32.0 ns), ordered rules and WEIGH scores, and the bot automaton (55.7 ns). A challenge decision checks the session token (155.8 ns); with a valid session the request is admitted, without one the interstitial is served. Admitted requests are proxied to the origin through the pool or answered with a forward-auth verdict. Banned, rate-limited and denied requests end early.
 
@@ -319,7 +319,7 @@ One Storage Thread
 
 One storage thread owns the database connections; nothing else touches SQL. Request threads never wait on it. They push incident records into a bounded ring of 512 slots, which drops and counts a record when it is full, and they read the published engine. Every 500 ms by default the storage thread runs one tick: it writes up to 32 queued incidents in one transaction, reads the policy revision and, when it changed, rebuilds the engine and publishes it. A rebuild reads the revision before and after loading; if a writer committed in between, the candidate is discarded and the old engine stays live. Operators may write the policy tables directly: triggers advance the revision in the writer's transaction, and under PostgreSQL a ``NOTIFY`` lets nodes tick at once, while polling remains the guarantee [#storage-thread]_.
 
-.. graphviz:: diagrams/cluster.dot
+.. typst-diagram:: diagrams/cluster.typ
    :caption: A Sibuna cluster. Every node keeps its request path in memory and gives all SQL to one storage thread; the nodes share one PostgreSQL database, whose replication and failover are PostgreSQL's (SID 0011). A single node uses an embedded SQLite file instead.
    :alt: An ingress sends traffic to three Sibuna nodes. In each node, connection threads read a published engine and push incidents into a bounded ring; a storage thread drains the ring, writes batches and rebuilds the engine. All three storage threads connect to one PostgreSQL primary, optionally over TLS with verify-full. The primary replicates to a standby by streaming replication, which the operator runs.
 
@@ -350,7 +350,7 @@ The Console
 
 Sibuna includes an opt-in management console: authenticated dashboards with live traffic, an investigation path from a denial to its recorded evidence, policy editing, address groups, country enrichment from open GeoIP data, users with Argon2id passwords and a TOTP second factor, an audit trail, webhooks, and the management of a cluster. It is compiled into the same binary, and its interface runs in the browser as a WebAssembly module [#console-sources]_.
 
-.. graphviz:: diagrams/console.dot
+.. typst-diagram:: diagrams/console.typ
    :caption: The console. The browser runs the interface as a WebAssembly module; the console server reads the data plane's counters and gives its SQL to the storage thread; outbound connections to peers, webhooks and GeoIP publishers use TLS with verified certificates (SIDs 0007, 0012, 0013).
    :alt: A browser runs the console interface, a WebAssembly module, and talks to the console server over HTTP and a WebSocket. The console server reads the data plane's counters without entering a request thread and submits jobs to the storage thread, which owns SQLite or PostgreSQL. Outbound HTTPS and WSS connections to peer consoles, webhooks and GeoIP publishers use TLS.
 
