@@ -415,6 +415,13 @@ impl Worker {
         super::trace::settle(&self.server, &mut conn.trace, self.now);
         exchange.target.completed(exchange.started);
         exchange.target.answered(exchange.relay.status());
+        // A server's answer that is not an error proves the client for pressure mode
+        // (SID 0034). A page of Sibuna's own, such as a challenge, proves nobody.
+        if (100..400).contains(&exchange.relay.status())
+            && let Some(permit) = &conn.permit
+        {
+            permit.prove();
+        }
         let whole = exchange.upload.is_done() && exchange.inbound.is_empty();
         // `whole` says that the server took the whole body, so the next byte of the
         // client begins a request.

@@ -357,13 +357,8 @@ impl Serving {
     /// hands it to the peers.
     fn change(&mut self, command: &Command, share: bool) -> Result<String, RuntimeError> {
         if let Command::DelBan { client } = command {
-            let Some(http) = &self.http else {
-                return Err(RuntimeError::invalid(
-                    "This edge has no HTTP frontend, and so no bans.".to_owned(),
-                    "Bans belong to the firewall of an HTTP frontend.",
-                ));
-            };
-            http.lift_ban(*client, share);
+            // Every edge has a ban table, with or without an HTTP frontend (SID 0034).
+            self.edge.defense().lift(*client, share);
             return Ok(String::new());
         }
         let Some(change) = control::mesh_command(command, &self.edge.servers()) else {
@@ -528,6 +523,7 @@ fn start_console(
 ) -> io::Result<console::Link> {
     let parts = console::Parts {
         stats: edge.stats(),
+        defense: edge.defense(),
         observe: Arc::clone(observed.shared()),
         source: Arc::clone(source),
         jobs: jobs.clone(),
@@ -559,7 +555,7 @@ fn serve(source: Source, revision: Revision, secret: Option<&str>) -> io::Result
     mesh.iter().for_each(|mesh| mesh.share_state(edge.cluster_state()));
     forward::begin(&mut edge, takeover)?;
     let http = http.map(|p| http::Http::start(p, &edge, secret, &plugins)).transpose()?;
-    let drains = join(http.as_ref(), &adapters, mesh.as_ref());
+    let drains = join(&edge, http.as_ref(), &adapters, mesh.as_ref());
     let observed = observed::Observed::start(http.as_ref(), &observe_options, &edge, &plugins)?;
     let (jobs, inbox) = mpsc::channel();
     let console = start_console(console_options.as_ref(), &edge, &observed, &source, &jobs)?;
@@ -703,6 +699,18 @@ fn step(edge: &mut Edge, http: Option<&http::Http>) -> io::Result<()> {
     for fault in edge.listen_faults() {
         note(format_args!("EDGE013: {fault}"));
     }
+    // Pressure mode admits known clients first while the flow table is nearly full
+    // (SID 0034). Each switch is a line, so the operator sees when an attack began.
+    for on in edge.pressure_changes() {
+        if on {
+            note(format_args!(
+                "EDGE016: pressure mode is on: the flow table is nearly full, so new client \
+                 addresses are admitted at global.pressure.new_per_second and known ones first"
+            ));
+        } else {
+            note(format_args!("EDGE016: pressure mode is off: new client addresses pass again"));
+        }
+    }
     if let Some(http) = http {
         for accepted in edge.accepted() {
             http.accept(accepted);
@@ -796,11 +804,23 @@ fn commit(adapters: &mut Adapters) {
 /// Joins the started parts of the edge: the HTTP runtime learns the multiplexed
 /// servers of the adapters, and the daemon shares bans and drain commands with the mesh
 /// (SID 0022).
-fn join(http: Option<&http::Http>, adapters: &Adapters, mesh: Option<&sibuna_lb::Mesh>) -> Drains {
+fn join(
+    edge: &Edge,
+    http: Option<&http::Http>,
+    adapters: &Adapters,
+    mesh: Option<&sibuna_lb::Mesh>,
+) -> Drains {
     attach(http, adapters);
     let Some(mesh) = mesh else { return Drains::default() };
-    if let Some(http) = http {
-        http.share_bans(mesh);
+    // The bans of the edge reach the peers with or without an HTTP frontend (SID 0034).
+    match http {
+        Some(http) => {
+            edge.defense().share(mesh, http.refused_ban());
+            http.share_bans(mesh);
+        }
+        None => {
+            edge.defense().share(mesh, || {});
+        }
     }
     let (commands, remote) = mpsc::sync_channel(1024);
     // The mesh thread never waits for the edge worker. A full queue drops the command.

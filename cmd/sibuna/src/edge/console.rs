@@ -92,6 +92,8 @@ struct Running {
 /// What the console reads of the edge, handed over at start.
 pub(super) struct Parts {
     pub stats: Arc<Stats>,
+    /// The ban table of the edge, which the console counts and clears (SID 0034).
+    pub defense: Arc<sibuna_lb::Defense>,
     pub observe: Arc<Observe>,
     pub source: Arc<Source>,
     pub jobs: Sender<admin::Job>,
@@ -204,6 +206,7 @@ fn start(options: &ConsoleOptions, parts: Parts, board: Arc<Board>) -> io::Resul
     };
     let peer_key = if options.peers.is_empty() { None } else { key(&options.peer_key_file)? };
     let keys = Keys { totp: key(&options.key_file)?, peer: peer_key };
+    let node = Arc::new(EdgeNode(Arc::clone(&parts.defense)));
     let host = Host {
         board,
         stats: parts.stats,
@@ -225,7 +228,7 @@ fn start(options: &ConsoleOptions, parts: Parts, board: Arc<Board>) -> io::Resul
         keys,
         assets: ASSETS,
         clock: Arc::clone(&seams.clock) as Arc<dyn sibuna_console::Clock>,
-        ..Inputs::new(Arc::clone(&storage), Arc::new(EdgeNode), seams.boot)
+        ..Inputs::new(Arc::clone(&storage), node, seams.boot)
     };
     let console = Console::start(console_config(options), inputs)
         .map_err(|error| failed("start", &error))?;
@@ -262,11 +265,17 @@ fn console_config(options: &ConsoleOptions) -> ConsoleConfig {
     }
 }
 
-/// The node of an edge, for the pages of the firewall console. An edge has no ban
-/// table, no rule counters and no drain flag of that kind: every reading is empty and
-/// every effect does nothing. The edge page drains servers through the admin path.
-#[derive(Debug)]
-struct EdgeNode;
+/// The node of an edge, for the pages of the firewall console. The ban table is the
+/// edge's own, which every edge has (SID 0034). An edge has no rule counters and no
+/// drain flag of that kind: those readings are empty and those effects do nothing. The
+/// edge page drains servers through the admin path.
+struct EdgeNode(Arc<sibuna_lb::Defense>);
+
+impl fmt::Debug for EdgeNode {
+    fn fmt(&self, out: &mut fmt::Formatter<'_>) -> fmt::Result {
+        out.write_str("EdgeNode")
+    }
+}
 
 impl Node for EdgeNode {
     fn set_draining(&self, _draining: bool) {}
@@ -275,12 +284,12 @@ impl Node for EdgeNode {
         false
     }
 
-    fn clear_local_bans(&self, _now: u64) -> u32 {
-        0
+    fn clear_local_bans(&self, now: u64) -> u32 {
+        self.0.bans().clear(now)
     }
 
-    fn active_bans(&self, _now: u64) -> Option<u32> {
-        None
+    fn active_bans(&self, now: u64) -> Option<u32> {
+        Some(self.0.bans().approximate_active_count(now))
     }
 
     fn sample_rule_hits(&self, _sample: &mut RuleHitSample) -> bool {
@@ -415,6 +424,16 @@ impl Host {
                 .refused
                 .iter()
                 .map(|(reason, count)| Refused { reason: reason.name().to_owned(), count: *count })
+                .collect(),
+            pressure: stats.pressure,
+            top_refused: stats
+                .top_refused
+                .iter()
+                .map(|source| sibuna_console_protocol::edge::Source {
+                    address: source.address.to_string(),
+                    count: source.count,
+                    reason: source.reason.name().to_owned(),
+                })
                 .collect(),
         }
     }

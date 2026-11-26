@@ -22,9 +22,7 @@ use sibuna_net::buffered::Writer;
 use sibuna_net::connect::{set_no_delay, wake_listener};
 use sibuna_net::peers::{PeerTable, PeerTicket};
 use sibuna_net::{IdleTable, Pool};
-use sibuna_store::ban_table::BanTable;
 use sibuna_store::limiter::RateLimiter;
-use sibuna_store::placement::ClientHasher;
 #[cfg(feature = "console")]
 use sibuna_store::telemetry::ConsoleTelemetry;
 
@@ -85,10 +83,6 @@ pub struct Server {
     /// Automatic HTTPS of an edge (SID 0021): challenge answers and managed names.
     #[cfg(feature = "https")]
     pub(crate) automatic: Option<Arc<sibuna_ingress::Automatic>>,
-    /// Hands each ban to the peers of the edge mesh (SID 0022), once the mesh shares.
-    pub(crate) ban_feed: std::sync::OnceLock<sibuna_lb::BanFeed>,
-    /// Where a ban that the operator lifts goes, when the edge has a mesh (SID 0022).
-    pub(crate) lift_feed: std::sync::OnceLock<sibuna_lb::LiftFeed>,
     /// The hooks of the edge (SID 0030), once the edge serves.
     pub(crate) plugins: std::sync::OnceLock<Arc<sibuna_plugin::Slot>>,
     /// The default per-client request limiter is off (edge mode only).
@@ -98,14 +92,15 @@ pub struct Server {
     pub(crate) config: Config,
     pub(crate) slot: Arc<EngineSlot>,
     pub(crate) coordinator: Coordinator,
-    /// Hashes each request's client key once, under a key drawn when the server is built;
-    /// the rate limiters and the ban table derive their placements from that hash.
-    pub(crate) client_hasher: ClientHasher,
+    /// The ban table, the hasher of client keys and the feeds of bans to the mesh. Each
+    /// request's client key is hashed once with its hasher; the rate limiters and the ban
+    /// table derive their placements from that hash. An edge shares its own with the
+    /// packet worker, which refuses banned clients at accept (SID 0034).
+    pub(crate) defense: Arc<sibuna_lb::Defense>,
     pub(crate) rate_limiter: RateLimiter,
     pub(crate) rule_rate_limiter: RateLimiter,
     /// The challenge budget's own table, so challenge traffic cannot crowd request cells.
     pub(crate) challenge_rate_limiter: RateLimiter,
-    pub(crate) bans: BanTable,
     pub(crate) idle: IdleTable,
     /// Idle keep-alive connections to the origin.
     pub(crate) pool: Pool,
@@ -151,8 +146,6 @@ impl Server {
             observe: None,
             #[cfg(feature = "https")]
             automatic: None,
-            ban_feed: std::sync::OnceLock::new(),
-            lift_feed: std::sync::OnceLock::new(),
             plugins: std::sync::OnceLock::new(),
             unlimited: false,
             balances_only: false,
@@ -161,11 +154,10 @@ impl Server {
             config,
             slot,
             coordinator,
-            client_hasher: ClientHasher::new(),
+            defense: Arc::new(sibuna_lb::Defense::new(ban_slots)),
             rate_limiter: RateLimiter::with_cells(rate_cells),
             rule_rate_limiter: RateLimiter::with_cells(rate_cells),
             challenge_rate_limiter: RateLimiter::with_cells(rate_cells),
-            bans: BanTable::with_capacity(ban_slots),
             idle: IdleTable::with_capacity(capacity),
             pool: Pool::new(),
             tasks: TaskPool::new(capacity),
@@ -241,8 +233,8 @@ impl Server {
 
     /// Returns the ban table, for the console's gauge and clear command.
     #[cfg(feature = "console")]
-    pub fn bans(&self) -> &BanTable {
-        &self.bans
+    pub fn bans(&self) -> &sibuna_store::ban_table::BanTable {
+        self.defense.bans()
     }
 }
 

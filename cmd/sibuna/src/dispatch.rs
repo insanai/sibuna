@@ -84,7 +84,7 @@ fn route<'c, W: Write>(ctx: &mut Ctx<'c, W>, spare: &'c mut [u8]) -> io::Result<
     if submission {
         telemetry::observe_submission(ctx);
     }
-    if server.bans.is_banned_hashed(ctx.client_hash, ctx.now) {
+    if server.defense.bans().is_banned_hashed(ctx.client_hash, ctx.now) {
         if submission {
             telemetry::observe_banned_submission(ctx);
         }
@@ -161,10 +161,10 @@ fn check_rate<W: Write>(
 /// whether the ban was recorded.
 pub(crate) fn ban_client<W: Write>(ctx: &Ctx<'_, W>, until: u64) -> bool {
     let metrics = &ctx.server.metrics;
-    match ctx.server.bans.ban_hashed(ctx.client_hash, until, ctx.now) {
+    match ctx.server.defense.bans().ban_hashed(ctx.client_hash, until, ctx.now) {
         Ok(()) => {
             metrics.bans_issued.bump();
-            if let Some(feed) = ctx.server.ban_feed.get() {
+            if let Some(feed) = ctx.server.defense.ban_feed() {
                 let prefix = ctx.server.config.ipv6_prefix;
                 let key =
                     crate::context::ClientKey::new(ctx.client_ip, ctx.client_address, prefix);

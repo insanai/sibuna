@@ -21,6 +21,8 @@ pub(super) struct Parts {
     pub observe: Arc<Observe>,
     pub source: Arc<Source>,
     pub jobs: Sender<admin::Job>,
+    /// The ban table of the edge (SID 0034).
+    pub defense: Arc<sibuna_lb::Defense>,
 }
 
 fn absent() -> io::Error {
@@ -33,7 +35,7 @@ fn absent() -> io::Error {
 impl Link {
     /// Refuses a `console` section.
     pub fn start(options: Option<&ConsoleOptions>, parts: Parts) -> io::Result<Self> {
-        drop((parts.stats, parts.observe, parts.source, parts.jobs));
+        drop((parts.stats, parts.observe, parts.source, parts.jobs, parts.defense));
         if options.is_some() { Err(absent()) } else { Ok(Self) }
     }
 

@@ -244,6 +244,8 @@ impl Http {
             hooks: Hooks::default(),
         });
         server.edge_routes = Some(edge.http_routes());
+        // One ban table for the firewall and the packet worker (SID 0034).
+        server.defense = edge.defense();
         server.unlimited = prepared.options.rate_limit.is_none();
         let observe = start_observe(&prepared.observe, edge)?;
         let _ = observe.hooks.set(Arc::clone(hooks));
@@ -292,43 +294,19 @@ impl Http {
         }
     }
 
-    /// Shares bans with the peers of the mesh (SID 0022): a ban issued here goes to them,
-    /// and a ban they issued enters the ban table here.
+    /// Shows the counters of ban replication on the metrics endpoint (SID 0022). The
+    /// edge shares the bans themselves (SID 0034), and a ban of a peer that the table
+    /// refuses is counted in `bans_refused`.
     pub fn share_bans(&self, mesh: &sibuna_lb::Mesh) {
-        let server = self.server.clone();
-        let sink = Box::new(move |client: &[u8], until: u64| {
-            let elapsed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
-            let now = elapsed.map_or(0, |elapsed| elapsed.as_secs());
-            let hash = server.client_hasher.hash(client);
-            if server.bans.ban_hashed(hash, until, now).is_err() {
-                server.metrics.bans_refused.bump();
-            }
-        });
-        if let Some(feed) = mesh.share_bans(sink) {
-            let _ = self.server.ban_feed.set(feed);
-        }
         if let Some(counters) = mesh.ban_counters() {
             let _ = self.observe.mesh_bans.set(counters);
         }
-        let server = self.server.clone();
-        let lift = move |client: &[u8]| {
-            server.bans.lift_hashed(server.client_hasher.hash(client));
-        };
-        if let Some(feed) = mesh.share_lifts(Box::new(lift)) {
-            let _ = self.server.lift_feed.set(feed);
-        }
     }
 
-    /// Lifts the ban of the client at `address`, and with `share` tells the peers of
-    /// the mesh to lift it too. A client without a ban is left as it is.
-    pub fn lift_ban(&self, address: std::net::IpAddr, share: bool) {
-        let prefix = self.server.config.ipv6_prefix;
-        let key = crate::context::ClientKey::new(&[], Some(address), prefix);
-        let hash = self.server.client_hasher.hash(key.as_bytes());
-        self.server.bans.lift_hashed(hash);
-        if let (true, Some(feed)) = (share, self.server.lift_feed.get()) {
-            feed.publish(key.as_bytes());
-        }
+    /// Counts a ban of a peer that the ban table refused.
+    pub fn refused_ban(&self) -> impl Fn() + Send + Sync + 'static {
+        let metrics = Arc::clone(&self.server.metrics);
+        move || metrics.bans_refused.bump()
     }
 
     /// The certificate thread of automatic HTTPS, when the daemon started one.
