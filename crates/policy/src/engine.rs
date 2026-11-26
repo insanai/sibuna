@@ -19,6 +19,7 @@ use crate::inspection::{self, Findings, Modes};
 use crate::limits::{Limits, file_identity};
 use crate::pages::Pages;
 use crate::pattern::TextMatcher;
+use crate::reputation::ReputationSet;
 use crate::request::RequestView;
 use crate::rule::{Action, Algorithm, Header, MAX_RULE_CIDRS, MAX_RULE_HEADERS, PolicyRule};
 use crate::waf::{self, Signatures};
@@ -435,9 +436,9 @@ impl Engine {
             + self.pages.heap_bytes()
     }
 
-    /// Evaluates `request`. Allocates nothing.
+    /// Evaluates `request` with the engine's own reputation only. Allocates nothing.
     pub fn evaluate<'e>(&'e self, request: &RequestView<'_>) -> Decision<'e> {
-        self.evaluate_observed(request, &mut ())
+        self.evaluate_observed(request, None, &mut ())
     }
 
     /// Evaluates `request` and records in `matches` (cleared first) every declarative rule
@@ -448,13 +449,48 @@ impl Engine {
         matches: &mut RuleMatches,
     ) -> Decision<'e> {
         matches.clear();
-        self.evaluate_observed(request, matches)
+        self.evaluate_observed(request, None, matches)
+    }
+
+    /// Evaluates `request` with the reputation set published beside the engine (SID 0033)
+    /// as well as the engine's own. Allocates nothing.
+    pub fn evaluate_in<'e>(
+        &'e self,
+        request: &RequestView<'_>,
+        reputation: &ReputationSet,
+    ) -> Decision<'e> {
+        self.evaluate_observed(request, Some(reputation), &mut ())
+    }
+
+    /// As [`Engine::evaluate_in`], recording the matched rules as
+    /// [`Engine::evaluate_with_matches`] does.
+    pub fn evaluate_with_matches_in<'e>(
+        &'e self,
+        request: &RequestView<'_>,
+        reputation: &ReputationSet,
+        matches: &mut RuleMatches,
+    ) -> Decision<'e> {
+        matches.clear();
+        self.evaluate_observed(request, Some(reputation), matches)
+    }
+
+    /// The reputation verdict for `address`: the longest prefix of the engine's trie (the
+    /// policy file's rows) and of the published set, the set winning a tie, as one trie
+    /// holding the file's rows and then the database's rows answered before SID 0033.
+    fn reputation_of(&self, address: IpAddr, published: Option<&ReputationSet>) -> Option<Action> {
+        let own = self.reputation.lookup_prefix(address);
+        match (published.and_then(|set| set.lookup(address)), own) {
+            (Some((stored, action)), Some((file, _))) if stored >= file => Some(action),
+            (Some((_, action)), None) => Some(action),
+            (_, own) => own.map(|(_, action)| *action),
+        }
     }
 
     #[inline(always)]
     fn evaluate_observed<'e>(
         &'e self,
         request: &RequestView<'_>,
+        published: Option<&ReputationSet>,
         observer: &mut impl Observer,
     ) -> Decision<'e> {
         let mut findings = Findings::default();
@@ -466,7 +502,7 @@ impl Engine {
                 return decision;
             }
         }
-        let mut decision = self.evaluate_admission(request, observer);
+        let mut decision = self.evaluate_admission(request, published, observer);
         decision.audited = findings.audited;
         decision
     }
@@ -484,10 +520,11 @@ impl Engine {
     fn evaluate_admission<'e>(
         &'e self,
         request: &RequestView<'_>,
+        published: Option<&ReputationSet>,
         observer: &mut impl Observer,
     ) -> Decision<'e> {
         let address = request.address();
-        let verdict = address.and_then(|address| self.reputation.lookup(address).copied());
+        let verdict = address.and_then(|address| self.reputation_of(address, published));
         if let Some(action @ (Action::Deny | Action::Allow)) = verdict {
             return self.reputation_decision(action, 0);
         }

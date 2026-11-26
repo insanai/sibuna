@@ -296,3 +296,31 @@ fn reputation_node_count_covers_every_entry() {
     engine.clear_reputation();
     assert_eq!(engine.reputation_node_count(), empty);
 }
+
+#[test]
+fn published_reputation_and_the_engines_own_answer_by_the_longest_prefix() {
+    use crate::reputation::ReputationBuilder;
+
+    let mut engine = Engine::new(8);
+    engine.insert_reputation(b"203.0.113.0/24", Action::Allow).unwrap();
+    engine.insert_reputation(b"203.0.113.9", Action::Allow).unwrap();
+    let mut builder = ReputationBuilder::new();
+    builder.set(b"203.0.113.0/25", Action::Deny, None).unwrap();
+    builder.set(b"203.0.113.0/24", Action::Deny, None).unwrap();
+    let (set, _) = builder.publish();
+    let action = |ip: &[u8], set: &ReputationSet| {
+        engine.evaluate_in(&view(b"/", ip, b"curl/8"), set).action
+    };
+    // The set's /25 is longer than the file's /24.
+    assert_eq!(action(b"203.0.113.1", &set), Action::Deny);
+    // A tie at /24: the set wins, as the database's row replaced the file's before.
+    assert_eq!(action(b"203.0.113.200", &set), Action::Deny);
+    // The file's exact address is longer than any range of the set.
+    assert_eq!(action(b"203.0.113.9", &set), Action::Allow);
+    // Without a published set the engine answers with its own trie, as before.
+    assert_eq!(engine.evaluate(&view(b"/", b"203.0.113.1", b"curl/8")).action, Action::Allow);
+    // An exact address of the set beats the file's exact address.
+    builder.set(b"203.0.113.9", Action::Deny, None).unwrap();
+    let (set, _) = builder.publish();
+    assert_eq!(action(b"203.0.113.9", &set), Action::Deny);
+}
