@@ -67,6 +67,7 @@ sibuna --config-file edge.jlv
 [Configurar Sibuna con Jlavi](https://insanai.github.io/sibuna/es/book/jlavi.html)
 
 - **Reenvío:** TCP y UDP, paso de TLS sin descifrar (passthrough) enrutado por nombre de servidor, paso de QUIC sin descifrar y el protocolo PROXY.
+- **Bajo ataque:** límites de flujos por dirección de cliente y por frontend, bloqueos comprobados al aceptar la conexión y compartidos por la malla, bloqueos automáticos, rechazo por reset o tarpit, un modo de presión que admite primero a los clientes conocidos, hilos de aceptación en varios núcleos y un presupuesto de paquetes UDP que reserva una parte para los clientes confirmados.
 - **HTTP:** terminación TLS con paquetes PEM al estilo de HAProxy e intercambio de claves poscuántico (X25519MLKEM768); HTTP/1.1, HTTP/2, HTTP/3 y WebSocket; enrutamiento por nombre de host y ruta hacia servidores HTTP/1.1, HTTP/2 o HTTP/3. En Linux, workers dirigidos por eventos atienden las conexiones, un worker por procesador.
 - **Certificados:** automáticos mediante ACME con renovación, autoridades de respaldo y vinculación de cuenta externa; comodines mediante DNS con un programa hook, una actualización RFC 2136 o la API de Cloudflare; grapado OCSP; certificados bajo demanda detrás de una guarda; una autoridad local para `localhost`, nombres internos y direcciones IP, con una lista de revocación y un servidor ACME propio.
 - **Servidores:** comprobaciones de estado, arranque lento, drenaje, pesos, sesiones persistentes y un límite de flujos por servidor.
