@@ -25,10 +25,10 @@ msgid "2026, Vikrant Rathore and Sibuna contributors"
 msgstr "2026, Vikrant Rathore und die Mitwirkenden an Sibuna"
 
 msgid "A browser challenge adds a cost to automated access, and a signed session lets an admitted visitor return. Rules allow, challenge or deny. The shield checks requests for SQL injection, XSS, path traversal and command injection."
-msgstr "Eine Browser-Challenge macht automatisierte Zugriffe teurer, und mit einer signierten Sitzung kann ein zugelassener Besucher zurückkehren. Regeln erlauben, stellen eine Challenge oder lehnen ab. Shield prüft Anfragen auf SQL-Injection, XSS, Path Traversal und Command Injection."
+msgstr "Eine Browser-Challenge macht automatisierte Zugriffe teurer, und mit einer signierten Session kann ein zugelassener Besucher zurückkehren. Regeln erlauben, stellen eine Challenge oder lehnen ab. Shield prüft Anfragen auf SQL-Injection, XSS, Path Traversal und Command Injection."
 
 msgid "A checked reload applies new routes to new work. Established TCP streams keep their backend. Linux also supports listener handoff during a binary upgrade."
-msgstr "Nach einem geprüften Neuladen gelten neue Routen für neuen Verkehr. Bestehende TCP-Verbindungen behalten ihr Backend. Unter Linux können wir beim Austausch der Programmdatei auch die Listener übergeben."
+msgstr "Nach einem geprüften Reload gelten neue Routen für neuen Traffic. Bestehende TCP-Verbindungen behalten ihr Backend. Unter Linux unterstützt Sibuna beim Binary-Upgrade außerdem die Übergabe der Listener."
 
 msgid "A cluster of edge nodes"
 msgstr "Ein Cluster aus Edge-Knoten"
@@ -37,7 +37,7 @@ msgid "A compatible browser can agree a quantum-resistant key with Sibuna. Sibun
 msgstr "Ein kompatibler Browser kann mit Sibuna einen quantenresistenten Schlüssel vereinbaren. Sibuna öffnet eine eigene Verbindung zum Webserver. So kann ein älteres Gerät während der Umstellung in Betrieb bleiben."
 
 msgid "A configured rule refuses this request, even with a valid session."
-msgstr "Eine konfigurierte Regel lehnt diese Anfrage ab, auch mit gültiger Sitzung."
+msgstr "Eine konfigurierte Regel lehnt diese Anfrage ab, auch mit gültiger Session."
 
 msgid "A deny rule matches"
 msgstr "Eine Ablehnungsregel trifft zu"
@@ -46,13 +46,13 @@ msgid "A request arrives"
 msgstr "Eine Anfrage trifft ein"
 
 msgid "A session does not bypass applicable inspection, deny rules or rate limits."
-msgstr "Eine Sitzung umgeht weder geltende Prüfungen noch Ablehnungsregeln oder Ratenlimits."
+msgstr "Eine Session umgeht weder geltende Prüfungen noch Ablehnungsregeln oder Rate-Limits."
 
 msgid "Access decisions"
 msgstr "Zugriffsentscheidungen"
 
 msgid "Admit, challenge or refuse. A session avoids another puzzle here; applicable rules and rate limits still apply."
-msgstr "Zulassen, eine Challenge stellen oder ablehnen. Mit einer Sitzung entfällt hier ein weiteres Rätsel; geltende Regeln und Ratenlimits bleiben wirksam."
+msgstr "Zulassen, eine Challenge stellen oder ablehnen. Mit einer Session entfällt hier ein weiteres Rätsel; geltende Regeln und Rate-Limits bleiben wirksam."
 
 msgid "Admitted"
 msgstr "Zugelassen"
@@ -115,7 +115,7 @@ msgid "Check access again"
 msgstr "Zugriff erneut prüfen"
 
 msgid "Check the proof. Issue a session."
-msgstr "Nachweis prüfen. Sitzung ausstellen."
+msgstr "Nachweis prüfen. Session ausstellen."
 
 msgid "Checking the proof is designed to take less computation than creating it."
 msgstr "Der Nachweis ist so ausgelegt, dass seine Prüfung weniger Rechenarbeit erfordert als seine Erstellung."
@@ -154,7 +154,7 @@ msgid "Deployment examples and migration timelines"
 msgstr "Einsatzbeispiele und Migrationsfristen"
 
 msgid "Deployment guide"
-msgstr "Bereitstellungsanleitung"
+msgstr "Deployment-Anleitung"
 
 msgid "Design discussions"
 msgstr "Entwurfsdiskussionen (Englisch)"
@@ -169,13 +169,13 @@ msgid "Digital signatures follow for the same federal systems."
 msgstr "Für dieselben Systeme der Bundesbehörden folgen die digitalen Signaturen."
 
 msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
-msgstr "Wir verteilen eine geprüfte Routingkonfiguration im Mesh. Die Knoten können Sperren und gelernte Serverzuordnungen austauschen, während jeder Knoten Verkehr an seine Backend-Pools weiterleitet."
+msgstr "Eine geprüfte Routing-Konfiguration im Mesh verteilen. Knoten können Sperren und gelernte Affinitäten teilen, während jeder Knoten Traffic an seine eigenen Backend-Pools weiterleitet."
 
 msgid "Distributed edge load balancer and web application firewall"
-msgstr "Verteilter Edge-Lastverteiler und Web Application Firewall"
+msgstr "Verteilter Edge-Load-Balancer und Web Application Firewall"
 
 msgid "Distributed edge load balancer and web application firewall · Sibuna"
-msgstr "Verteilter Edge-Lastverteiler und Web Application Firewall · Sibuna"
+msgstr "Verteilter Edge-Load-Balancer und Web Application Firewall · Sibuna"
 
 msgid "Download."
 msgstr "Herunterladen."
@@ -205,7 +205,7 @@ msgid "From proofs to protection"
 msgstr "Vom Nachweis zum Schutz"
 
 msgid "From source · load balancer"
-msgstr "Aus dem Quellcode · Load Balancer"
+msgstr "Aus dem Quellcode · Load-Balancer"
 
 msgid "From the socket to the server."
 msgstr "Vom Socket zum Server."
@@ -217,7 +217,7 @@ msgid "HTTP/1.1 over TLS"
 msgstr "HTTP/1.1 über TLS"
 
 msgid "HTTPS ingress"
-msgstr "HTTPS-Eingangsproxy"
+msgstr "HTTPS-Ingress"
 
 msgid "HTTPS without a second proxy."
 msgstr "HTTPS ohne zweiten Proxy."
@@ -226,7 +226,7 @@ msgid "Home"
 msgstr "Start"
 
 msgid "Hooks run at the connection and at the request: compiled in, as WebAssembly with a budget, or in a separate process. Metrics, access logs and a console show servers, flows and the reason for each refusal."
-msgstr "Hooks laufen bei der Verbindung und bei der Anfrage: einkompiliert, als WebAssembly mit einem Budget oder in einem eigenen Prozess. Metriken, Zugriffsprotokolle und eine Konsole zeigen Server, Flüsse und den Grund jeder Ablehnung."
+msgstr "Hooks laufen auf Verbindungs- und Request-Ebene: einkompiliert, als WebAssembly mit Budget oder in einem separaten Prozess. Metriken, Access-Logs und eine Konsole zeigen Server, Flows und den Grund jeder Ablehnung."
 
 msgid "How to try it"
 msgstr "So probierst du es aus"
@@ -241,7 +241,7 @@ msgid "Internal gRPC services"
 msgstr "Interne gRPC-Dienste"
 
 msgid "Issue certificates for internal names with the local CA. Clients trust its root and call the service over TLS. An HTTP/2 backend carries gRPC messages and trailers."
-msgstr "Wir stellen mit der lokalen CA Zertifikate für interne Namen aus. Clients vertrauen ihrem Stammzertifikat und rufen den Dienst über TLS auf. Ein HTTP/2-Backend überträgt gRPC-Nachrichten und Trailer."
+msgstr "Zertifikate für interne Namen über die lokale CA ausstellen. Clients vertrauen ihrem Root-Zertifikat und rufen den Dienst über TLS auf. Ein HTTP/2-Backend überträgt gRPC-Nachrichten und Trailer."
 
 msgid "Know the boundary"
 msgstr "Die Grenzen kennen"
@@ -259,13 +259,13 @@ msgid "Legacy device"
 msgstr "Älteres Gerät"
 
 msgid "Load balancer design"
-msgstr "Entwurf des Load Balancers (Englisch)"
+msgstr "Entwurf des Load-Balancers (Englisch)"
 
 msgid "Main"
 msgstr "Hauptnavigation"
 
 msgid "Measured, with the losses"
-msgstr "Gemessen, samt Niederlagen"
+msgstr "Gemessen, auch die Schwächen"
 
 msgid "Member States begin the transition."
 msgstr "Die Mitgliedstaaten beginnen die Umstellung."
@@ -277,7 +277,7 @@ msgid "Next step"
 msgstr "Nächster Schritt"
 
 msgid "Nodes of a mesh share the sticky table and the limits of a server, and forward a client to the node that owns it. A PostgreSQL database can publish one configuration to every node and roll it back."
-msgstr "Die Knoten eines Mesh teilen die Sticky-Tabelle und die Limits eines Servers und leiten einen Client an den Knoten weiter, dem er gehört. Eine PostgreSQL-Datenbank kann eine Konfiguration an alle Knoten verteilen und sie zurückrollen."
+msgstr "Die Knoten eines Mesh teilen die Sticky-Tabelle und die Limits eines Servers und leiten einen Client an den zuständigen Knoten weiter. Eine PostgreSQL-Datenbank kann eine Konfiguration an alle Knoten ausrollen und zurückrollen."
 
 msgid "November 2026"
 msgstr "November 2026"
@@ -295,10 +295,10 @@ msgid "Or build."
 msgstr "Oder bauen."
 
 msgid "Origin connection"
-msgstr "Verbindung zum Ursprungsserver"
+msgstr "Verbindung zum Origin-Server"
 
 msgid "Origins"
-msgstr "Ursprungsserver"
+msgstr "Origin-Server"
 
 msgid "Other exposed organisations are encouraged to complete migration."
 msgstr "Anderen gefährdeten Organisationen wird empfohlen, die Umstellung abzuschließen."
@@ -337,7 +337,7 @@ msgid "Public websites"
 msgstr "Öffentliche Websites"
 
 msgid "RC7 includes the load balancer, firewall and console in one executable."
-msgstr "RC7 enthält Lastverteiler, Firewall und Konsole in einer ausführbaren Datei."
+msgstr "RC7 enthält Load-Balancer, Firewall und Konsole in einer einzigen Binärdatei."
 
 msgid "RC7 on Linux x86-64"
 msgstr "RC7 unter Linux x86-64"
@@ -361,10 +361,10 @@ msgid "Requests in a second. More is better."
 msgstr "Anfragen pro Sekunde. Mehr ist besser."
 
 msgid "Requests pass from a client through an HTTPS ingress to Sibuna. Sibuna may admit, challenge or refuse them. A client creates a proof; Sibuna verifies it and issues a session. Requests with sessions still pass applicable checks."
-msgstr "Anfragen gelangen vom Client über einen HTTPS-Eingangsproxy zu Sibuna. Sibuna kann sie zulassen, ihnen eine Challenge stellen oder sie ablehnen. Der Client erstellt einen Nachweis; Sibuna verifiziert ihn und stellt eine Sitzung aus. Auch Anfragen mit Sitzung durchlaufen die geltenden Prüfungen."
+msgstr "Anfragen gelangen vom Client über einen HTTPS-Ingress zu Sibuna. Sibuna kann sie zulassen, mit einer Challenge belegen oder ablehnen. Der Client erstellt einen Nachweis; Sibuna verifiziert ihn und stellt eine Session aus. Auch Anfragen mit Session durchlaufen die geltenden Prüfungen."
 
 msgid "Return with a session"
-msgstr "Mit einer Sitzung zurückkehren"
+msgstr "Mit einer Session zurückkehren"
 
 msgid "Roadmap target for high-risk uses."
 msgstr "Ziel des Fahrplans für Anwendungen mit hohem Risiko."
@@ -379,7 +379,7 @@ msgid "STEP"
 msgstr "SCHRITT"
 
 msgid "Scripted illustration, not live traffic or measured timing. Proof time varies by device and settings. This shows the reverse-proxy path; with forward-auth, your ingress forwards admitted requests."
-msgstr "Eine Darstellung mit festem Ablauf, kein echter Datenverkehr und keine gemessenen Zeiten. Wie lange der Nachweis dauert, hängt von Gerät und Einstellungen ab. Gezeigt wird der Weg im Reverse-Proxy-Modus; im Forward-Auth-Modus leitet dein Eingangsproxy zugelassene Anfragen weiter."
+msgstr "Eine Darstellung mit festem Ablauf, kein echter Traffic und keine gemessenen Zeiten. Wie lange der Nachweis dauert, hängt von Gerät und Einstellungen ab. Gezeigt wird der Weg im Reverse-Proxy-Modus; im Forward-Auth-Modus leitet dein Ingress zugelassene Anfragen weiter."
 
 msgid "See and shape the decisions."
 msgstr "Entscheidungen sehen und gestalten."
@@ -388,7 +388,7 @@ msgid "Sequential work happens in the browser. Later steps depend on earlier res
 msgstr "Die sequenzielle Arbeit findet im Browser statt. Spätere Schritte hängen von früheren Ergebnissen ab."
 
 msgid "Serve browsers over HTTP/2 or HTTP/3, renew public certificates with Let's Encrypt and inspect requests before forwarding them to HTTP/1.1 replicas."
-msgstr "Wir bedienen Browser über HTTP/2 oder HTTP/3, erneuern öffentliche Zertifikate mit Let's Encrypt und prüfen Anfragen vor der Weiterleitung an HTTP/1.1-Replikate."
+msgstr "Browser über HTTP/2 oder HTTP/3 bedienen, öffentliche Zertifikate über Let's Encrypt erneuern und Anfragen prüfen, bevor sie an HTTP/1.1-Replikas weitergeleitet werden."
 
 msgid "Several nodes, one behaviour."
 msgstr "Mehrere Knoten, ein Verhalten."
@@ -403,7 +403,7 @@ msgid "Sibuna checks requests before they reach your application"
 msgstr "Sibuna prüft Anfragen, bevor sie deine Anwendung erreichen"
 
 msgid "Sibuna checks the session and applicable rules. A new puzzle is not needed here."
-msgstr "Sibuna prüft die Sitzung und die geltenden Regeln. Hier ist kein neues Rätsel nötig."
+msgstr "Sibuna prüft die Session und die geltenden Regeln. Hier ist kein neues Rätsel nötig."
 
 msgid "Sibuna does not forward this refused request to the application."
 msgstr "Sibuna leitet diese abgelehnte Anfrage nicht an die Anwendung weiter."
@@ -415,10 +415,10 @@ msgid "Sibuna returns a challenge to the client."
 msgstr "Sibuna sendet dem Client eine Challenge."
 
 msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods."
-msgstr "Sibuna leitet TCP, UDP und HTTP von einem einzelnen Edge-Knoten oder einem Mesh an gesunde Server weiter. Es kann TLS terminieren, ausgewählte HTTP-Routen prüfen und Backends vor DDoS-Fluten schützen."
+msgstr "Sibuna routet TCP, UDP und HTTP von einem einzelnen Edge-Knoten oder einem Mesh an gesunde Server. Es kann TLS terminieren, ausgewählte HTTP-Routen inspizieren und Backends vor DDoS-Fluten schützen."
 
 msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name, by a wildcard such as *.example.org, and by path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
-msgstr "Sibuna terminiert TLS und bedient HTTP/1.1, HTTP/2, HTTP/3 und WebSocket. Es routet jede Anfrage nach Hostname, nach einer Wildcard wie *.example.org und nach Pfad. Zertifikate kommen von Let's Encrypt oder einer anderen ACME-Zertifizierungsstelle, und eine lokale Zertifizierungsstelle deckt interne Namen ab."
+msgstr "Sibuna terminiert TLS und bedient HTTP/1.1, HTTP/2, HTTP/3 und WebSocket. Es routet jede Anfrage nach Hostname, nach einer Wildcard wie *.example.org und nach Pfad. Zertifikate kommen von Let's Encrypt oder einer anderen ACME-CA, und eine lokale CA deckt interne Namen ab."
 
 msgid "Singapore"
 msgstr "Singapur"
@@ -436,7 +436,7 @@ msgid "TCP forwarding"
 msgstr "TCP-Weiterleitung"
 
 msgid "TCP streams and UDP mappings go to a pool of servers. A TLS connection can pass through undecrypted, routed by its server name. QUIC can pass through too. The PROXY protocol carries the address of the client."
-msgstr "TCP-Streams und UDP-Zuordnungen gehen an einen Pool von Servern. Eine TLS-Verbindung kann unentschlüsselt durchgereicht werden, geroutet nach ihrem Servernamen. Auch QUIC kann durchgereicht werden. Das PROXY-Protokoll überträgt die Adresse des Clients."
+msgstr "TCP-Streams und UDP-Zuordnungen gehen an einen Server-Pool. Eine TLS-Verbindung kann per TLS-Passthrough unentschlüsselt anhand ihres Servernamens geroutet werden. Auch QUIC-Passthrough wird unterstützt. Das PROXY-Protokoll überträgt die Client-Adresse."
 
 msgid "The admitted request is forwarded to the application."
 msgstr "Die zugelassene Anfrage wird an die Anwendung weitergeleitet."
@@ -445,10 +445,10 @@ msgid "The book"
 msgstr "Das Handbuch"
 
 msgid "The browser retries the request with its session."
-msgstr "Der Browser wiederholt die Anfrage mit seiner Sitzung."
+msgstr "Der Browser wiederholt die Anfrage mit seiner Session."
 
 msgid "The browser sends a request through your HTTPS ingress."
-msgstr "Der Browser sendet eine Anfrage über deinen HTTPS-Eingangsproxy."
+msgstr "Der Browser sendet eine Anfrage über deinen HTTPS-Ingress."
 
 msgid "The built-in inspector checks the first 8 KiB of supported bodies. WebSocket messages are relayed without inspection. Sibuna does not provide volumetric network mitigation. A challenge adds work. It does not establish that a visitor is human."
 msgstr "Die integrierte Prüfung untersucht die ersten 8 KiB unterstützter Request-Bodys. WebSocket-Nachrichten werden ungeprüft weitergeleitet. Gegen volumetrische Netzwerkangriffe schützt Sibuna nicht. Eine Challenge verlangt Rechenarbeit. Sie beweist nicht, dass der Besucher ein Mensch ist."
@@ -460,7 +460,7 @@ msgid "The client creates a proof"
 msgstr "Der Client erstellt einen Nachweis"
 
 msgid "The client sends another request with its signed session."
-msgstr "Der Client sendet eine weitere Anfrage mit seiner signierten Sitzung."
+msgstr "Der Client sendet eine weitere Anfrage mit seiner signierten Session."
 
 msgid "The client submits its proof to Sibuna."
 msgstr "Der Client übermittelt seinen Nachweis an Sibuna."
@@ -481,7 +481,7 @@ msgid "The request stops here"
 msgstr "Hier endet die Anfrage"
 
 msgid "The upper route inspects a browser request and sends it to a web replica. The lower route carries a gRPC call over HTTP/2. The dotted link shows the two nodes exchanging mesh state."
-msgstr "Die obere Route prüft eine Browseranfrage und leitet sie an ein Webreplikat weiter. Die untere überträgt einen gRPC-Aufruf über HTTP/2. Die gepunktete Linie zeigt den Zustandsaustausch im Mesh."
+msgstr "Die obere Route prüft eine Browseranfrage und leitet sie an eine Web-Replika weiter. Die untere überträgt einen gRPC-Aufruf über HTTP/2. Die gepunktete Linie zeigt den Zustandsaustausch im Mesh."
 
 msgid "Third-party libraries retain their respective licenses."
 msgstr "Bibliotheken von Drittanbietern behalten ihre jeweiligen Lizenzen."
@@ -490,13 +490,13 @@ msgid "This admitted request is forwarded to the application."
 msgstr "Diese zugelassene Anfrage wird an die Anwendung weitergeleitet."
 
 msgid "This request also reaches Sibuna through your ingress."
-msgstr "Auch diese Anfrage erreicht Sibuna über deinen Eingangsproxy."
+msgstr "Auch diese Anfrage erreicht Sibuna über deinen Ingress."
 
 msgid "This route asks for work"
 msgstr "Diese Route verlangt Rechenarbeit"
 
 msgid "Try again with a session"
-msgstr "Mit einer Sitzung erneut versuchen"
+msgstr "Mit einer Session erneut versuchen"
 
 msgid "Try it"
 msgstr "Ausprobieren"
@@ -511,10 +511,10 @@ msgid "Vikrant Rathore, with assistance from Ronak Rathore and Kanak Rathore"
 msgstr "Vikrant Rathore, mit Unterstützung von Ronak Rathore und Kanak Rathore"
 
 msgid "We state the limits beside the features. Linux requires kernel 5.10 or later, macOS 12 or later, and Windows 10 or Server 2016 or later. The event-driven workers and the replacement of the executable without lost connections exist on Linux only."
-msgstr "Wir nennen die Grenzen neben den Funktionen. Linux benötigt Kernel 5.10 oder neuer, macOS Version 12 oder neuer und Windows mindestens Windows 10 oder Server 2016. Die ereignisgesteuerten Worker und der Austausch der ausführbaren Datei ohne verlorene Verbindungen existieren nur unter Linux."
+msgstr "Wir nennen die Grenzen direkt neben den Funktionen. Linux benötigt Kernel 5.10 oder neuer, macOS Version 12 oder neuer und Windows mindestens Windows 10 oder Server 2016. Die eventgesteuerten Worker und das unterbrechungsfreie Binary-Upgrade gibt es nur unter Linux."
 
 msgid "We tested the cluster on three hosts. Qualification under production traffic remains open. Replacing the executable ends QUIC connections."
-msgstr "Wir haben den Cluster auf drei Hosts getestet. Die Erprobung unter Produktionslast steht aus. Beim Austausch der ausführbaren Datei enden QUIC-Verbindungen."
+msgstr "Wir haben den Cluster auf drei Hosts getestet. Die Qualifizierung unter Produktivlast steht noch aus. Beim Austausch der Binärdatei enden QUIC-Verbindungen."
 
 msgid "What is Sibuna?"
 msgstr "Was ist Sibuna?"
@@ -535,7 +535,7 @@ msgid "Whitepaper PDF"
 msgstr "Whitepaper als PDF"
 
 msgid "With a session"
-msgstr "Mit einer Sitzung"
+msgstr "Mit einer Session"
 
 msgid "Work before access."
 msgstr "Erst die Arbeit, dann der Zugriff."
@@ -568,10 +568,13 @@ msgid "How Sibuna admits and inspects HTTP requests, with measurements of latenc
 msgstr "Wie Sibuna HTTP-Anfragen zulässt und prüft, mit Messungen zu Latenz, Durchsatz und Speicherbedarf der Firewall in der Betaversion."
 
 msgid "Field notes on load balancing, web application firewalls and the connections they protect."
-msgstr "Praxisberichte über Lastverteilung, Web Application Firewalls und die Verbindungen, die sie schützen."
+msgstr "Praxisberichte zu Load Balancing, Web Application Firewalls und den Verbindungen, die sie schützen."
 
 msgid "DDoS protection at the edge"
-msgstr "DDoS-Schutz am Netzrand"
+msgstr "DDoS-Schutz am Edge"
 
 msgid "We can cap concurrent flows per client IP and frontend, limit admission of new addresses under pressure and reserve UDP capacity for confirmed flows. Floods that saturate the uplink require upstream filtering."
-msgstr "Wir können gleichzeitige Datenflüsse pro Client-IP und Frontend begrenzen, bei hoher Auslastung weniger neue Adressen zulassen und UDP-Kapazität für bestätigte Datenflüsse reservieren. Bei Angriffen, die den Netzanschluss auslasten, muss der Verkehr bereits im vorgelagerten Netz gefiltert werden."
+msgstr "Wir können gleichzeitige Flows pro Client-IP und Frontend begrenzen, unter Last die Zulassung neuer Adressen drosseln und UDP-Kapazität für bestätigte Flows reservieren. Bei Angriffen, die den Uplink sättigen, ist vorgelagertes Upstream-Filtering erforderlich."
+
+msgid "On this page"
+msgstr "Auf dieser Seite"

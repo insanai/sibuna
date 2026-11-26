@@ -335,10 +335,7 @@ msgstr "Frontend"
 msgid ""
 "A named set of listening addresses of one protocol, ``tcp``, ``udp`` or "
 "``http``, with its routes, its limits and its default backend."
-msgstr ""
-"Eine benannte Menge lauschender Adressen eines Protokolls, ``tcp``, "
-"``udp`` oder ``http``, mit ihren Routen, ihren Limits und ihrem "
-"Standard-Backend."
+msgstr "Eine benannte Menge von Listener-Adressen eines Protokolls, ``tcp``, ``udp`` oder ``http``, mit ihren Routen, ihren Limits und ihrem Standard-Backend."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:69
 msgid "Gate"
@@ -377,11 +374,7 @@ msgid ""
 "the old process passes its listening sockets and its live UDP mappings to "
 "the new one over a Unix socket and then drains its TCP streams. Linux "
 "only (SID 0029)."
-msgstr ""
-"Der Austausch einer laufenden Edge-Binärdatei mit "
-"``global.upgrade_socket``: Der alte Prozess übergibt seine lauschenden "
-"Sockets und seine laufenden UDP-Zuordnungen über einen Unix-Socket an den "
-"neuen und lässt dann seine TCP-Streams auslaufen. Nur Linux (SID 0029)."
+msgstr "Der Austausch einer laufenden Edge-Binärdatei mit ``global.upgrade_socket``: Der alte Prozess übergibt seine Listening-Sockets und seine laufenden UDP-Zuordnungen über einen Unix-Socket an den neuen und lässt dann seine TCP-Streams auslaufen. Nur Linux (SID 0029)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:78
 msgid "Hashcash"
@@ -477,7 +470,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:96
 msgid "Judge"
-msgstr "Urteils-Thread"
+msgstr "Judge-Thread"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:97
 msgid ""
@@ -532,7 +525,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:108
 msgid "Maglev"
-msgstr ""
+msgstr "Maglev"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:109
 msgid ""
@@ -601,10 +594,7 @@ msgid ""
 "In a sequential-work proof, one leaf label plus the sibling labels along "
 "its path to the root; the verifier recomputes the path and compares with "
 "the commitment."
-msgstr ""
-"In einem Nachweis sequenzieller Arbeit ein Blattlabel plus die "
-"Geschwisterlabels entlang seines Pfads zur Wurzel; der Verifizierer "
-"berechnet den Pfad neu und vergleicht mit dem Commitment."
+msgstr "In einem Nachweis sequenzieller Arbeit ein Blattlabel plus die Sibling-Labels entlang seines Pfads zur Wurzel; der Verifizierer berechnet den Pfad neu und vergleicht mit dem Commitment."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:123
 msgid "Owner"
@@ -666,7 +656,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:135
 msgid "Pool"
-msgstr ""
+msgstr "Pool"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:136
 msgid "See *Backend*."
@@ -1132,18 +1122,4 @@ msgid ""
 "TLS on the workers, shared affinity and fleet caps, peer forwarding, the "
 "spill cache, the database authority, the upgrade handoff, plugin tiers, "
 "the operator console of the edge, and staged admission."
-msgstr ""
-"Sibuna Discussions 0001 bis 0032, ``docs/sid/records``, 2026: Prozess, "
-"Grundarchitektur, deklarative Richtlinien-Engine, semantische Prüfung, "
-"Speicherarchitektur von Zaxonlite, mathematische Grundlagen, "
-"Verwaltungsoberfläche der Konsole, Überwachung des Datenverkehrs von "
-"KI-Bots, Chunked-Request-Bodies, die Portierung nach Rust, Speicherung "
-"über sqlx, ausgehendes TLS für die Konsole über rustls, Konsolenspeicher, "
-"vertrauenswürdige JA4-Fingerabdrücke vom Eingangsproxy, der verteilte "
-"Edge-Load-Balancer, ereignisgesteuerte HTTP-Worker, Austausch im Prozess, "
-"einfache Einrichtung und Konfiguration zur Laufzeit, Verkehrsrichtlinie, "
-"Beobachtbarkeit des Edge, automatisches HTTPS, replizierte Sperren, "
-"Cluster-Konfiguration, TLS auf den Workern, gemeinsame Affinität und "
-"flottenweite Obergrenzen, Peer-Weiterleitung, der Spill-Cache, die "
-"Datenbank als Authority, die Übergabe beim Upgrade, Plugin-Ebenen, die "
-"Betreiberkonsole des Edge und gestaffelte Zulassung."
+msgstr "Sibuna Discussions 0001 bis 0032, ``docs/sid/records``, 2026: Prozess, Grundarchitektur, deklarative Richtlinien-Engine, semantische Prüfung, Speicherarchitektur von Zaxonlite, mathematische Grundlagen, Verwaltungsoberfläche der Konsole, Überwachung des Datenverkehrs von KI-Bots, Chunked-Request-Bodies, die Portierung nach Rust, Speicherung über sqlx, ausgehendes TLS für die Konsole über rustls, Konsolenspeicher, vertrauenswürdige JA4-Fingerabdrücke vom Eingangsproxy, der verteilte Edge-Load-Balancer, ereignisgesteuerte HTTP-Worker, Austausch im Prozess, einfache Einrichtung und Konfiguration zur Laufzeit, Verkehrsrichtlinie, Observability des Edge, automatisches HTTPS, replizierte Sperren, Cluster-Konfiguration, TLS auf den Workern, gemeinsame Affinität und flottenweite Obergrenzen, Peer-Weiterleitung, der Spill-Cache, die Datenbank als Authority, die Übergabe beim Upgrade, Plugin-Ebenen, die Betreiberkonsole des Edge und gestaffelte Zulassung."

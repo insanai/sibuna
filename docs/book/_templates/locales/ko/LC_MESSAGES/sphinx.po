@@ -13,7 +13,7 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgid "Attention"
-msgstr "주의"
+msgstr "유의"
 
 msgid "Caution"
 msgstr "주의"
@@ -112,7 +112,7 @@ msgid "Template Parameters"
 msgstr "템플릿 매개변수"
 
 msgid "Throws"
-msgstr "던지는 예외"
+msgstr "발생 예외"
 
 msgid "Arguments"
 msgstr "인수"
@@ -142,7 +142,7 @@ msgid "see"
 msgstr "참조"
 
 msgid "Skip to content"
-msgstr "본문으로 건너뛰기"
+msgstr "본문으로 이동"
 
 msgid "Search (press /)"
 msgstr "검색 (/ 키)"
@@ -169,7 +169,7 @@ msgid "Documentation"
 msgstr "문서"
 
 msgid "On this page"
-msgstr "이 페이지의 내용"
+msgstr "이 페이지에서"
 
 msgid "Last updated on %s."
 msgstr "마지막 업데이트: %s."

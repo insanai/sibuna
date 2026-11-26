@@ -313,9 +313,7 @@ msgstr "Gate"
 msgid ""
 "The surface with proof-of-work admission, sessions, rules, reputation, "
 "GCRA limits and bans, but no application inspection (``--gate``)."
-msgstr ""
-"作業証明による許可、セッション、ルール、レピュテーション、GCRAによる制限、禁止を備え、アプリケーションの検査を持たない運用構成です（\\ "
-"``--gate``\\ ）。"
+msgstr "Proof of Workによる許可、セッション、ルール、レピュテーション、GCRAによる制限、禁止を備え、アプリケーションの検査を持たない運用構成です（\\ ``--gate``\\ ）。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:72
 msgid "GCRA"
@@ -326,9 +324,7 @@ msgid ""
 "The Generic Cell Rate Algorithm: one theoretical arrival time per client "
 "that admits a burst of :math:`N` then one request per emission interval, "
 "with no window boundaries."
-msgstr ""
-"Generic Cell Rate Algorithmです。クライアントごとに一つの理論到着時刻を持ち、\\ :math:`N`\\ "
-"個のバーストを許可した後は送出間隔ごとに一つのリクエストを許可します。窓の境界はありません。"
+msgstr "Generic Cell Rate Algorithmです。クライアントごとに一つの理論到着時刻を持ち、\\ :math:`N`\\ 個のバーストを許可した後は送出間隔ごとに一つのリクエストを許可します。ウィンドウ境界はありません。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:75
 msgid "Handoff"
@@ -540,8 +536,7 @@ msgid ""
 "In a sequential-work proof, one leaf label plus the sibling labels along "
 "its path to the root; the verifier recomputes the path and compares with "
 "the commitment."
-msgstr ""
-"逐次作業証明における、一つの葉のラベルと、その葉から根までの経路上の兄弟ラベルの組です。検証者は経路を再計算し、コミットメントと比較します。"
+msgstr "Proof of Sequential Work（PoSW）における、一つのリーフノードのラベルと、そのリーフノードからルートまでの経路上の兄弟ノードのラベルの組です。検証者は経路を再計算し、コミットメントと比較します。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:123
 msgid "Owner"
@@ -605,7 +600,7 @@ msgstr "*バックエンド*\\ を参照。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:138
 msgid "Proof of Sequential Work (PoSW)"
-msgstr "逐次作業証明（PoSW）"
+msgstr "Proof of Sequential Work（PoSW）"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:139
 msgid ""

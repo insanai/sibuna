@@ -46,9 +46,7 @@ msgid ""
 "renew public certificates through Let's Encrypt. For an internal service, "
 "it can issue a certificate from a local authority whose root we install "
 "on the clients."
-msgstr ""
-"浏览器向时刻表的公共主机名发起加密连接。Sibuna 出示该名称的证书。如果浏览器信任证书，双方就建立安全连接。Sibuna 可以通过 Let's "
-"Encrypt 获取并续订公共证书。对于内部服务，它可以从本地证书颁发机构签发证书，我们将该机构的根证书装入客户端。"
+msgstr "浏览器向时刻表的公共主机名发起加密连接。Sibuna 出示该名称的证书。如果浏览器信任证书，双方就建立安全连接。Sibuna 可以通过 Let's Encrypt 获取并续期公共证书。对于内部服务，它可以从本地证书颁发机构签发证书，我们将该机构的根证书装入客户端。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:11
 msgid ""
@@ -168,8 +166,7 @@ msgid ""
 "a client previously used. A passenger's next connection may reach a "
 "different edge. This is why the cluster chapters ask which decisions a "
 "node can make alone and which facts its peers need to know."
-msgstr ""
-"每个节点都转发自己收到的流量。通过网状网络，它们可以交换路由配置、封禁信息以及客户端上次使用的源站信息。旅客的下一次连接可能到达不同的边缘节点。因此，集群章节要讨论哪些决定可以由节点独立做出，哪些事实需要让同伴知道。"
+msgstr "每个节点都转发自己收到的流量。通过网状网络，它们可以交换路由配置、封禁信息以及客户端上次使用的源站信息。旅客的下一次连接可能到达不同的边缘节点。因此，集群章节要讨论哪些决定可以由节点独立做出，哪些事实需要同步给对等节点。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:33
 msgid ""

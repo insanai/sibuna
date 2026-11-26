@@ -19,31 +19,51 @@ msgstr ""
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:1
 msgid "Migrating a website to post-quantum transport"
-msgstr "वेबसाइट के ट्रांसपोर्ट को क्वांटम-प्रतिरोधी बनाना"
+msgstr "वेबसाइट को पोस्ट-क्वांटम ट्रांसपोर्ट पर माइग्रेट करना"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:4
 msgid "A customer books a hospital appointment on a website whose records must stay confidential for years. Someone who records the encrypted request today might be able to read it later by breaking the classical key exchange. We can keep the website's public name and point it at Sibuna. The customer's browser and Sibuna can then agree a hybrid key. From Sibuna to the hospital application, we choose how to protect a second connection."
-msgstr "एक व्यक्ति अस्पताल की वेबसाइट पर मिलने का समय लेता है। अस्पताल को यह रिकॉर्ड कई वर्षों तक गोपनीय रखना है। यदि कोई आज एन्क्रिप्टेड अनुरोध रिकॉर्ड कर ले, तो भविष्य में पारंपरिक कुंजी विनिमय तोड़कर वह उसे पढ़ सकता है। हम वेबसाइट का सार्वजनिक नाम बनाए रखकर उसे Sibuna की ओर निर्देशित कर सकते हैं। तब व्यक्ति का ब्राउज़र और Sibuna हाइब्रिड कुंजी पर सहमत हो सकते हैं। Sibuna से अस्पताल के अनुप्रयोग तक के दूसरे कनेक्शन के लिए हम सुरक्षा अलग से चुनते हैं।"
+msgstr ""
+"एक मरीज़ अस्पताल की वेबसाइट पर अपॉइंटमेंट बुक करता है, जिसके रिकॉर्ड कई "
+"सालों तक गोपनीय रहने चाहिए। अगर कोई आज एन्क्रिप्टेड रिक्वेस्ट रिकॉर्ड "
+"कर ले, तो भविष्य में क्लासिकल की एक्सचेंज तोड़कर उसे पढ़ सकता है। हम "
+"वेबसाइट का पब्लिक नाम वही रखकर उसे Sibuna पर पॉइंट कर सकते हैं। तब "
+"मरीज़ का ब्राउज़र और Sibuna एक हाइब्रिड की तय कर सकते हैं। Sibuna से "
+"अस्पताल के एप्लिकेशन तक के दूसरे कनेक्शन को कैसे सुरक्षित करना है, यह "
+"हम अलग से चुनते हैं।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:6
 msgid "What the change protects"
-msgstr "बदलाव से किसे सुरक्षा मिलती है"
+msgstr "इस बदलाव से क्या सुरक्षित होता है"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:9
 msgid "In TLS 1.3, X25519MLKEM768 combines X25519 with ML-KEM-768. When the endpoints negotiate this group, a recording of that connection stays confidential while either component remains secure. The certificate still authenticates the handshake with a classical signature. A client that offers only X25519 can still connect. A TCP passthrough listener leaves TLS negotiation to the origin. If a CDN terminates TLS first, the CDN controls the browser's handshake. See `RFC 10024`_."
-msgstr "TLS 1.3 में X25519MLKEM768, X25519 और ML-KEM-768 को जोड़ता है। जब दोनों छोर इस समूह को चुनते हैं, तब दोनों में से किसी एक घटक के सुरक्षित रहने तक उस कनेक्शन की रिकॉर्डिंग गोपनीय रहती है। प्रमाणपत्र अब भी पारंपरिक हस्ताक्षर से हैंडशेक को प्रमाणित करता है। केवल X25519 प्रस्तुत करने वाला क्लाइंट भी जुड़ सकता है। TCP पासथ्रू में TLS का चुनाव मूल सर्वर करता है। यदि CDN पहले TLS को समाप्त करता है, तो ब्राउज़र का हैंडशेक उसी के नियंत्रण में है। `RFC 10024`_ देखें।"
+msgstr ""
+"TLS 1.3 में X25519MLKEM768, X25519 और ML-KEM-768 को जोड़ता है। जब दोनों "
+"छोर इस ग्रुप को चुनते हैं, तो दोनों में से किसी एक कंपोनेंट के सुरक्षित "
+"रहने तक उस कनेक्शन की रिकॉर्डिंग गोपनीय रहती है। सर्टिफ़िकेट अब भी "
+"क्लासिकल सिग्नेचर से हैंडशेक को ऑथेंटिकेट करता है। सिर्फ़ X25519 ऑफ़र "
+"करने वाला क्लाइंट भी कनेक्ट हो सकता है। TCP पासथ्रू लिसनर TLS नेगोशिएशन "
+"ऑरिजिन पर छोड़ देता है। अगर कोई CDN पहले TLS टर्मिनेट करता है, तो "
+"ब्राउज़र का हैंडशेक उसी CDN के कंट्रोल में होता है। `RFC 10024`_ देखें।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:11
 msgid "Deadlines at a glance"
-msgstr "समयसीमा एक नज़र में"
+msgstr "डेडलाइंस एक नज़र में"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:14
 msgid "The OpenSSL survey is a starting point. We match each service to its owner, jurisdiction and contract before choosing a deadline. These examples were checked on 26 November 2026. See the `OpenSSL survey`_."
-msgstr "OpenSSL का सर्वेक्षण एक शुरुआती संदर्भ है। समयसीमा चुनने से पहले हम प्रत्येक सेवा के स्वामी, क्षेत्राधिकार और अनुबंध की पहचान करते हैं। इन उदाहरणों की जाँच 26 नवंबर 2026 को हुई थी। `OpenSSL survey`_ देखें।"
+msgstr ""
+"OpenSSL सर्वे एक शुरुआती बिंदु है। डेडलाइन तय करने से पहले हम हर सर्विस "
+"के ओनर, अधिकार क्षेत्र और कॉन्ट्रैक्ट से उसका मिलान करते हैं। ये उदाहरण "
+"26 नवंबर 2026 को जाँचे गए थे। `OpenSSL survey`_ देखें।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:17
 msgid "The EU roadmap starts in 2026. Singapore calls for plans in 2027. US and EU milestones follow in 2030, US and Singapore milestones in 2031, and EU and Singapore targets in 2035."
-msgstr "यूरोपीय संघ की रूपरेखा 2026 में शुरू होती है। सिंगापुर ने 2027 तक योजनाएँ माँगी हैं। 2030 में अमेरिका और यूरोपीय संघ के, 2031 में अमेरिका और सिंगापुर के, और 2035 में यूरोपीय संघ और सिंगापुर के लक्ष्य आते हैं।"
+msgstr ""
+"EU रोडमैप 2026 में शुरू होता है। सिंगापुर 2027 में प्लान माँगता है। "
+"2030 में US और EU के, 2031 में US और सिंगापुर के, और 2035 में EU और "
+"सिंगापुर के लक्ष्य आते हैं।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:17
 msgid ""
@@ -74,22 +94,22 @@ msgstr ""
 "  stroke: (x, y) => (bottom: 0.6pt + rule),\n"
 "  align: left + horizon, inset: 4pt,\n"
 "  [], year(\"2026\"), year(\"2027\"), year(\"2030\"), year(\"2031\"), year(\"2035\"),\n"
-"  region(\"अमेरिकी संघीय\"), [], [], mark(\"कुंजी विनिमय\"), mark(\"हस्ताक्षर\"), [],\n"
-"  region(\"यूरोपीय संघ की रूपरेखा\"), mark(\"शुरुआत\"), [], mark(\"उच्च जोखिम\"), [], mark(\"मध्यम जोखिम\"),\n"
-"  region(\"सिंगापुर\"), [], mark(\"योजनाएँ\"), [], mark(\"महत्त्वपूर्ण अवसंरचना का माइग्रेशन\"), mark(\"जोखिम वाले अन्य संगठन\"),\n"
+"  region(\"US फ़ेडरल\"), [], [], mark(\"की एक्सचेंज\"), mark(\"सिग्नेचर\"), [],\n"
+"  region(\"EU रोडमैप\"), mark(\"शुरुआत\"), [], mark(\"हाई रिस्क\"), [], mark(\"मीडियम रिस्क\"),\n"
+"  region(\"सिंगापुर\"), [], mark(\"प्लान\"), [], mark(\"CII माइग्रेशन\"), mark(\"अन्य प्रभावित संगठन\"),\n"
 ")\n"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:17
 msgid "Selected milestones for the systems covered below."
-msgstr "नीचे बताई गई प्रणालियों के लिए कुछ प्रमुख पड़ाव।"
+msgstr "नीचे बताए गए सिस्टम्स के लिए प्रमुख माइलस्टोन।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:24
 msgid "Milestones"
-msgstr "प्रमुख वर्ष"
+msgstr "माइलस्टोन"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:25
 msgid "Systems covered"
-msgstr "संबंधित प्रणालियाँ"
+msgstr "कवर किए गए सिस्टम"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:26
 msgid "2030, 2031"
@@ -97,7 +117,13 @@ msgstr "2030, 2031"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:27
 msgid "**United States.** Executive Order 14412 directs federal agencies to migrate designated high-value assets and high-impact systems to post-quantum key establishment by 31 December 2030 and digital signatures by 31 December 2031. National Security Systems follow separate requirements. A supplier checks the clauses in its contract. See `EO 14412`_ and `OMB M-26-15`_."
-msgstr "**संयुक्त राज्य अमेरिका।** कार्यकारी आदेश 14412 संघीय एजेंसियों को निर्देश देता है कि वे निर्दिष्ट उच्च-मूल्य परिसंपत्तियों और उच्च-प्रभाव प्रणालियों की कुंजी स्थापना को 31 दिसंबर 2030 तक और डिजिटल हस्ताक्षरों को 31 दिसंबर 2031 तक क्वांटम-प्रतिरोधी बनाएँ। राष्ट्रीय सुरक्षा प्रणालियों के लिए अलग आवश्यकताएँ हैं। आपूर्तिकर्ता अपने अनुबंध की शर्तें जाँचता है। `EO 14412`_ और `OMB M-26-15`_ देखें।"
+msgstr ""
+"**संयुक्त राज्य अमेरिका।** Executive Order 14412 फ़ेडरल एजेंसियों को "
+"निर्देश देता है कि वे तय high-value एसेट्स और high-impact सिस्टम्स के "
+"की एस्टैब्लिशमेंट को 31 दिसंबर 2030 तक और डिजिटल सिग्नेचर को 31 दिसंबर "
+"2031 तक पोस्ट-क्वांटम पर माइग्रेट करें। National Security Systems के "
+"लिए अलग नियम हैं। सप्लायर अपने कॉन्ट्रैक्ट की शर्तें जाँचता है। `EO "
+"14412`_ और `OMB M-26-15`_ देखें।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:28
 msgid "2026, 2030, 2035"
@@ -105,7 +131,13 @@ msgstr "2026, 2030, 2035"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:29
 msgid "**European Union.** The NIS Cooperation Group roadmap recommends that Member States start the transition by the end of 2026. It targets high-risk uses by the end of 2030, medium-risk uses by the end of 2035 and as many low-risk uses as feasible by then. We identify the risk class and the national or sector rules for our service. See the `EU roadmap`_."
-msgstr "**यूरोपीय संघ।** NIS सहयोग समूह का रोडमैप सदस्य देशों को 2026 के अंत तक बदलाव शुरू करने की सलाह देता है। उच्च जोखिम वाले उपयोगों का लक्ष्य 2030 का अंत है। मध्यम जोखिम वाले उपयोगों और यथासंभव अधिक कम जोखिम वाले उपयोगों का लक्ष्य 2035 का अंत है। हम अपनी सेवा के जोखिम वर्ग और लागू राष्ट्रीय या क्षेत्रीय नियमों की पहचान करते हैं। `EU roadmap`_ देखें।"
+msgstr ""
+"**यूरोपीय संघ।** NIS Cooperation Group का रोडमैप सदस्य देशों को 2026 के "
+"अंत तक माइग्रेशन शुरू करने की सलाह देता है। इसमें हाई-रिस्क उपयोगों का "
+"लक्ष्य 2030 के अंत तक, मीडियम-रिस्क का 2035 के अंत तक, और तब तक जितना "
+"संभव हो उतने लो-रिस्क उपयोगों को शामिल करने का लक्ष्य है। हम अपनी "
+"सर्विस का रिस्क क्लास और लागू राष्ट्रीय या सेक्टर नियम पहचानते हैं। `EU "
+"roadmap`_ देखें।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:30
 msgid "2027, 2031, 2035"
@@ -113,23 +145,40 @@ msgstr "2027, 2031, 2035"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:31
 msgid "**Singapore.** CSA expects designated Critical Information Infrastructure owners to submit plans by 31 March 2027 and complete migration by 31 December 2031. Its public advisory encourages other exposed organisations to plan by the end of 2027 and migrate by 2035. We record which category applies to the system. See the `CSA advisory`_ and `CSA CII guidance`_."
-msgstr "**सिंगापुर।** CSA अपेक्षा करता है कि निर्दिष्ट महत्वपूर्ण सूचना अवसंरचना के स्वामी 31 मार्च 2027 तक योजनाएँ प्रस्तुत करें और 31 दिसंबर 2031 तक बदलाव पूरा करें। सार्वजनिक परामर्श में वह जोखिम का सामना कर रहे अन्य संगठनों को 2027 के अंत तक योजना बनाने और 2035 तक बदलाव पूरा करने की सलाह देता है। हम दर्ज करते हैं कि हमारी प्रणाली किस श्रेणी में आती है। `CSA advisory`_ और `CSA CII guidance`_ देखें।"
+msgstr ""
+"**सिंगापुर।** CSA की अपेक्षा है कि तय क्रिटिकल इन्फ़ॉर्मेशन "
+"इंफ़्रास्ट्रक्चर (CII) ओनर्स 31 मार्च 2027 तक प्लान जमा करें और 31 "
+"दिसंबर 2031 तक माइग्रेशन पूरा करें। उसकी पब्लिक एडवाइज़री अन्य प्रभावित "
+"संगठनों को 2027 के अंत तक प्लान बनाने और 2035 तक माइग्रेट करने की सलाह "
+"देती है। हम दर्ज करते हैं कि हमारे सिस्टम पर कौन-सी कैटेगरी लागू होती "
+"है। `CSA advisory`_ और `CSA CII guidance`_ देखें।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:33
 msgid "From a deadline to a deployment"
-msgstr "समय-सीमा से परिनियोजन तक"
+msgstr "डेडलाइन से डिप्लॉयमेंट तक"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:36
 msgid "We start with a service covered by the policy and follow one request from its client to the application. We record who owns each TLS endpoint and how long the request must stay confidential. The first example changes the public connection. The second also authenticates the connection to the website. In the third, an older device initiates the request and Sibuna protects its outgoing traffic."
-msgstr "हम नीति के दायरे में आने वाली एक सेवा चुनते हैं और क्लाइंट से अनुप्रयोग तक एक अनुरोध का मार्ग देखते हैं। हम दर्ज करते हैं कि हर TLS एंडपॉइंट कौन चलाता है और अनुरोध कब तक गोपनीय रहना चाहिए। पहले उदाहरण में हम सार्वजनिक कनेक्शन बदलते हैं। दूसरे में वेबसाइट से कनेक्शन बनाते समय उसकी पहचान भी जाँचते हैं। तीसरे में पुराना उपकरण अनुरोध शुरू करता है और Sibuna उससे बाहर जाने वाले ट्रैफ़िक को सुरक्षित करता है।"
+msgstr ""
+"हम पॉलिसी के दायरे में आने वाली एक सर्विस चुनते हैं और उसके क्लाइंट से "
+"एप्लिकेशन तक एक रिक्वेस्ट का रास्ता देखते हैं। हम नोट करते हैं कि हर "
+"TLS एंडपॉइंट किसके पास है और रिक्वेस्ट को कब तक गोपनीय रहना है। पहला "
+"उदाहरण पब्लिक कनेक्शन बदलता है। दूसरा वेबसाइट तक के कनेक्शन को भी "
+"ऑथेंटिकेट करता है। तीसरे में एक पुराना डिवाइस रिक्वेस्ट शुरू करता है और "
+"Sibuna उसका आउटगोइंग ट्रैफ़िक सुरक्षित करता है।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:38
 msgid "Three deployments"
-msgstr "परिनियोजन के तीन उदाहरण"
+msgstr "तीन डिप्लॉयमेंट"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:41
 msgid "The examples use HTTP/1.1 to make both connections easy to inspect. We run each file separately from the directory containing its policy and certificates. The policy permits the diagnostic path and challenges other requests. We substitute our application policy before deployment."
-msgstr "दोनों कनेक्शन को आसानी से जाँचने के लिए उदाहरणों में HTTP/1.1 का उपयोग किया गया है। हम हर फ़ाइल को उसकी नीति और प्रमाणपत्रों वाली डायरेक्टरी से अलग चलाते हैं। नीति जाँच के लिए एक पथ की अनुमति देती है और बाकी अनुरोधों पर चुनौती देती है। परिनियोजन से पहले हम अपने अनुप्रयोग की नीति लगाते हैं।"
+msgstr ""
+"दोनों कनेक्शन आसानी से इंस्पेक्ट करने के लिए इन उदाहरणों में HTTP/1.1 "
+"का इस्तेमाल किया गया है। हम हर फ़ाइल को उसकी पॉलिसी और सर्टिफ़िकेट्स "
+"वाली डायरेक्टरी से अलग चलाते हैं। पॉलिसी डायग्नोस्टिक पाथ को अनुमति "
+"देती है और बाकी रिक्वेस्ट को चैलेंज करती है। डिप्लॉयमेंट से पहले हम इसे "
+"अपने एप्लिकेशन की पॉलिसी से बदल देते हैं।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:43
 msgid "{\"default_action\":\"CHALLENGE\",\"rules\":[{\"name\":\"status\",\"path\":\"/status\",\"action\":\"ALLOW\"}]}"
@@ -137,15 +186,24 @@ msgstr "{\"default_action\":\"CHALLENGE\",\"rules\":[{\"name\":\"status\",\"path
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:46
 msgid "A website with a local HTTP origin"
-msgstr "स्थानीय HTTP मूल सर्वर वाली वेबसाइट"
+msgstr "लोकल HTTP ऑरिजिन वाली वेबसाइट"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:49
 msgid "We save this file as ``website.jlv`` and the policy above as ``probe-policy.json``. The file ``edge.pem`` contains the certificate chain for ``edge.example.test`` and its private key. Our HTTP application answers ``/status`` on port 29443. Plaintext stays on loopback. For a remote device we place the gateway on its host or identify and protect the private link separately."
-msgstr "हम इस फ़ाइल को ``website.jlv`` और ऊपर की नीति को ``probe-policy.json`` नाम से सहेजते हैं। ``edge.pem`` में ``edge.example.test`` की प्रमाणपत्र शृंखला और उसकी निजी कुंजी है। हमारा HTTP अनुप्रयोग पोर्ट 29443 पर ``/status`` का उत्तर देता है। सादा पाठ लूपबैक तक सीमित रहता है। दूरस्थ उपकरण के लिए हम गेटवे उसी होस्ट पर रखते हैं या निजी लिंक की पहचान कर उसे अलग से सुरक्षित करते हैं।"
+msgstr ""
+"हम इस फ़ाइल को ``website.jlv`` और ऊपर की पॉलिसी को "
+"``probe-policy.json`` के नाम से सेव करते हैं। ``edge.pem`` में "
+"``edge.example.test`` की सर्टिफ़िकेट चेन और उसकी प्राइवेट की है। हमारा "
+"HTTP एप्लिकेशन पोर्ट 29443 पर ``/status`` का जवाब देता है। प्लेनटेक्स्ट "
+"सिर्फ़ लूपबैक तक सीमित रहता है। किसी रिमोट डिवाइस के लिए हम गेटवे उसी "
+"होस्ट पर रखते हैं या प्राइवेट लिंक को अलग से पहचानकर सुरक्षित करते हैं।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:52
 msgid "The browser negotiates hybrid TLS with Sibuna. Sibuna forwards the request locally and sends the response through the browser's encrypted connection."
-msgstr "ब्राउज़र Sibuna के साथ हाइब्रिड TLS तय करता है। Sibuna अनुरोध को स्थानीय रूप से आगे भेजता है और ब्राउज़र के एन्क्रिप्टेड कनेक्शन पर जवाब लौटाता है।"
+msgstr ""
+"ब्राउज़र Sibuna के साथ हाइब्रिड TLS नेगोशिएट करता है। Sibuna रिक्वेस्ट "
+"को लोकली आगे भेजता है और ब्राउज़र के एन्क्रिप्टेड कनेक्शन पर रिस्पॉन्स "
+"लौटाता है।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:52
 msgid ""
@@ -173,23 +231,30 @@ msgstr ""
 "  (actor(\"c\", \"ग्राहक का ब्राउज़र\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
 "   actor(\"w\", \"वेबसाइट\", kind: \"party\")),\n"
 "  (\n"
-"    msg(\"c\", \"s\", \"हाइब्रिड TLS का प्रस्ताव\", accent: true),\n"
+"    msg(\"c\", \"s\", \"हाइब्रिड TLS ऑफ़र\", accent: true),\n"
 "    msg(\"s\", \"c\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
 "    msg(\"c\", \"s\", \"`GET /status`\"),\n"
 "    msg(\"s\", \"w\", \"लूपबैक पर HTTP\"),\n"
 "    msg(\"w\", \"s\", \"`200 OK`\", reply: true),\n"
-"    msg(\"s\", \"c\", \"एन्क्रिप्टेड जवाब\", reply: true, accent: true),\n"
+"    msg(\"s\", \"c\", \"एन्क्रिप्टेड रिस्पॉन्स\", reply: true, accent: true),\n"
 "  ),\n"
 "  spacing: 45,\n"
 ")\n"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:52
 msgid "A customer reaches a website that serves HTTP on the same host as Sibuna."
-msgstr "ग्राहक ऐसी वेबसाइट से जुड़ता है जो Sibuna के साथ उसी होस्ट पर HTTP सेवा देती है।"
+msgstr ""
+"ग्राहक ऐसी वेबसाइट तक पहुँचता है जो Sibuna के साथ उसी होस्ट पर HTTP "
+"सर्व करती है।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:55
 msgid "The frontend's ``tls.crt`` makes Sibuna the TLS endpoint. The ``default_backend`` selects the pool named ``app``. Its loopback address keeps the HTTP request on this host. For public service we bind the frontend to the public interface and provision a certificate for the site's actual name."
-msgstr "फ्रंटएंड में ``tls.crt`` रखने से Sibuna TLS एंडपॉइंट बनता है। ``default_backend`` से ``app`` नाम का पूल चुना जाता है। उसके लूपबैक पते के कारण HTTP अनुरोध इसी होस्ट पर रहता है। सार्वजनिक सेवा के लिए हम फ्रंटएंड को सार्वजनिक इंटरफ़ेस से बाँधते हैं और वेबसाइट के वास्तविक नाम का प्रमाणपत्र देते हैं।"
+msgstr ""
+"फ़्रंटएंड का ``tls.crt`` Sibuna को TLS एंडपॉइंट बना देता है। "
+"``default_backend`` ``app`` नाम का पूल चुनता है। उसका लूपबैक एड्रेस "
+"HTTP रिक्वेस्ट को इसी होस्ट पर रखता है। पब्लिक सर्विस के लिए हम "
+"फ़्रंटएंड को पब्लिक इंटरफ़ेस पर बाइंड करते हैं और साइट के असली नाम का "
+"सर्टिफ़िकेट लगाते हैं।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:57
 msgid ""
@@ -241,15 +306,25 @@ msgstr ""
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:65
 msgid "An organisation with an HTTPS origin"
-msgstr "HTTPS मूल सर्वर वाला संगठन"
+msgstr "HTTPS ऑरिजिन वाला संगठन"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:68
 msgid "We save this file as ``secure-origin.jlv``. The origin serves HTTPS on port 29443. Its certificate names ``origin.example.test``, and ``ca.pem`` contains the issuing CA certificate. Sibuna verifies the origin and negotiates a separate key exchange. An older origin can use X25519 while the public connection uses the hybrid group. Once the origin supports the hybrid group, the same configuration can protect both connections."
-msgstr "हम इस फ़ाइल को ``secure-origin.jlv`` नाम से सहेजते हैं। मूल सर्वर पोर्ट 29443 पर HTTPS देता है। उसके प्रमाणपत्र में ``origin.example.test`` नाम है और ``ca.pem`` में जारीकर्ता CA का प्रमाणपत्र है। Sibuna मूल सर्वर को सत्यापित करता है और अलग कुंजी विनिमय तय करता है। सार्वजनिक कनेक्शन हाइब्रिड समूह चुन सकता है और पुराना मूल सर्वर X25519। जब मूल सर्वर भी हाइब्रिड समूह स्वीकार करने लगे, तो इसी सेटिंग से दोनों कनेक्शन सुरक्षित हो सकते हैं।"
+msgstr ""
+"हम इस फ़ाइल को ``secure-origin.jlv`` नाम से सेव करते हैं। ऑरिजिन पोर्ट "
+"29443 पर HTTPS सर्व करता है। उसके सर्टिफ़िकेट में "
+"``origin.example.test`` नाम है, और ``ca.pem`` में जारी करने वाले CA का "
+"सर्टिफ़िकेट है। Sibuna ऑरिजिन को वेरिफ़ाई करता है और अलग की एक्सचेंज "
+"नेगोशिएट करता है। पब्लिक कनेक्शन हाइब्रिड ग्रुप इस्तेमाल कर सकता है "
+"जबकि पुराना ऑरिजिन X25519 पर चल सकता है। जब ऑरिजिन भी हाइब्रिड ग्रुप "
+"सपोर्ट करने लगे, तो यही कॉन्फ़िगरेशन दोनों कनेक्शन सुरक्षित कर सकता है।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:71
 msgid "After the browser connects, Sibuna negotiates TLS with the website and verifies its identity before forwarding the request. The two connections can negotiate different groups."
-msgstr "ब्राउज़र के जुड़ने के बाद Sibuna वेबसाइट के साथ TLS तय करता है और अनुरोध आगे भेजने से पहले उसकी पहचान जाँचता है। दोनों कनेक्शन अलग-अलग समूह चुन सकते हैं।"
+msgstr ""
+"ब्राउज़र के कनेक्ट होने के बाद Sibuna वेबसाइट के साथ TLS नेगोशिएट करता "
+"है और रिक्वेस्ट आगे भेजने से पहले उसकी पहचान वेरिफ़ाई करता है। दोनों "
+"कनेक्शन अलग-अलग ग्रुप चुन सकते हैं।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:71
 msgid ""
@@ -280,26 +355,32 @@ msgstr ""
 "  (actor(\"c\", \"ग्राहक का ब्राउज़र\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
 "   actor(\"w\", \"वेबसाइट\", kind: \"party\")),\n"
 "  (\n"
-"    msg(\"c\", \"s\", \"हाइब्रिड TLS का प्रस्ताव\", accent: true),\n"
+"    msg(\"c\", \"s\", \"हाइब्रिड TLS ऑफ़र\", accent: true),\n"
 "    msg(\"s\", \"c\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
 "    msg(\"c\", \"s\", \"`GET /status`\"),\n"
-"    msg(\"s\", \"w\", \"मूल सर्वर को TLS का प्रस्ताव\", accent: true),\n"
-"    msg(\"w\", \"s\", \"मूल सर्वर का प्रमाणपत्र और चयनित समूह\", reply: true),\n"
-"    act(\"s\", \"मूल सर्वर का नाम और जारीकर्ता जाँचें\"),\n"
+"    msg(\"s\", \"w\", \"ऑरिजिन को TLS ऑफ़र\", accent: true),\n"
+"    msg(\"w\", \"s\", \"ऑरिजिन सर्टिफ़िकेट और चुना गया ग्रुप\", reply: true),\n"
+"    act(\"s\", \"ऑरिजिन का नाम और इश्यूअर वेरिफ़ाई करें\"),\n"
 "    msg(\"s\", \"w\", \"`GET /status`\", accent: true),\n"
 "    msg(\"w\", \"s\", \"`200 OK`\", reply: true),\n"
-"    msg(\"s\", \"c\", \"एन्क्रिप्टेड जवाब\", reply: true),\n"
+"    msg(\"s\", \"c\", \"एन्क्रिप्टेड रिस्पॉन्स\", reply: true),\n"
 "  ),\n"
 "  spacing: 45,\n"
 ")\n"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:71
 msgid "Sibuna accepts the customer's TLS connection and opens another to the website."
-msgstr "Sibuna ग्राहक का TLS कनेक्शन स्वीकार करता है और वेबसाइट तक दूसरा कनेक्शन खोलता है।"
+msgstr ""
+"Sibuna ग्राहक का TLS कनेक्शन लेता है और वेबसाइट के लिए एक दूसरा कनेक्शन "
+"खोलता है।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:74
 msgid "In the backend, ``servers`` gives the address to dial, ``tls.sni`` gives the name to authenticate and ``tls.ca_file`` supplies the trust anchor. These settings let us route to an IP address while verifying the certificate against a DNS name."
-msgstr "बैकएंड में ``servers`` कनेक्शन का पता देता है, ``tls.sni`` जाँचा जाने वाला नाम देता है और ``tls.ca_file`` विश्वास का आधार देता है। इससे हम IP पते पर जुड़कर DNS नाम के आधार पर प्रमाणपत्र जाँच सकते हैं।"
+msgstr ""
+"बैकएंड में ``servers`` डायल करने का एड्रेस देता है, ``tls.sni`` "
+"ऑथेंटिकेट करने का नाम देता है, और ``tls.ca_file`` ट्रस्ट एंकर देता है। "
+"इन सेटिंग्स से हम किसी IP एड्रेस पर रूट करते हुए भी सर्टिफ़िकेट को DNS "
+"नाम के विरुद्ध वेरिफ़ाई कर सकते हैं।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:76
 msgid ""
@@ -345,15 +426,25 @@ msgstr ""
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:79
 msgid "An older device that makes requests"
-msgstr "अनुरोध भेजने वाला पुराना उपकरण"
+msgstr "रिक्वेस्ट भेजने वाला पुराना डिवाइस"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:82
 msgid "Here the device is the client. We save the file as ``device-gateway.jlv`` and run Sibuna beside it. The device sends HTTP to the loopback listener. Sibuna opens authenticated TLS to the central service. Only that outgoing connection can negotiate the hybrid group. The listener must stay reachable only by the intended client. If the device already supports classical HTTPS, the preceding configuration also accepts it on the client side."
-msgstr "यहाँ उपकरण क्लाइंट है। हम फ़ाइल को ``device-gateway.jlv`` नाम से सहेजकर Sibuna को उपकरण के साथ चलाते हैं। उपकरण लूपबैक लिसनर को HTTP अनुरोध भेजता है। Sibuna केंद्रीय सेवा से प्रमाणित TLS कनेक्शन खोलता है। हाइब्रिड समूह केवल उस बाहर जाने वाले कनेक्शन पर चुना जा सकता है। लिसनर तक केवल निर्धारित क्लाइंट की पहुँच होनी चाहिए। यदि उपकरण पारंपरिक HTTPS स्वीकार करता है, तो पिछले उदाहरण की सेटिंग भी इसे क्लाइंट के रूप में स्वीकार करती है।"
+msgstr ""
+"यहाँ डिवाइस ही क्लाइंट है। हम फ़ाइल को ``device-gateway.jlv`` के नाम से "
+"सेव करके Sibuna को डिवाइस के साथ ही चलाते हैं। डिवाइस लूपबैक लिसनर पर "
+"HTTP भेजता है। Sibuna सेंट्रल सर्विस के साथ ऑथेंटिकेटेड TLS खोलता है। "
+"हाइब्रिड ग्रुप सिर्फ़ उस आउटगोइंग कनेक्शन पर नेगोशिएट हो सकता है। लिसनर "
+"तक सिर्फ़ तय क्लाइंट का ही एक्सेस होना चाहिए। अगर डिवाइस पहले से "
+"क्लासिकल HTTPS सपोर्ट करता है, तो पिछला कॉन्फ़िगरेशन भी क्लाइंट साइड पर "
+"उसे स्वीकार करता है।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:85
 msgid "The device sends local HTTP to Sibuna. Sibuna verifies the central service and uses a hybrid connection for the network leg. The reply returns to the device over local HTTP."
-msgstr "उपकरण स्थानीय HTTP से Sibuna को अनुरोध भेजता है। Sibuna केंद्रीय सेवा की पहचान जाँचता है और नेटवर्क वाले हिस्से में हाइब्रिड कनेक्शन इस्तेमाल करता है। उत्तर स्थानीय HTTP पर उपकरण तक वापस आता है।"
+msgstr ""
+"डिवाइस लोकल HTTP से Sibuna को रिक्वेस्ट भेजता है। Sibuna सेंट्रल सर्विस "
+"को वेरिफ़ाई करता है और नेटवर्क वाले हिस्से के लिए हाइब्रिड कनेक्शन "
+"इस्तेमाल करता है। जवाब लोकल HTTP पर डिवाइस तक वापस आता है।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:85
 msgid ""
@@ -379,23 +470,23 @@ msgstr ""
 "#show: figure-frame.with(lang: \"hi\")\n"
 "\n"
 "#sequence(\n"
-"  (actor(\"c\", \"पुराना उपकरण\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
-"   actor(\"w\", \"केंद्रीय सेवा\", kind: \"party\")),\n"
+"  (actor(\"c\", \"पुराना डिवाइस\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
+"   actor(\"w\", \"सेंट्रल सर्विस\", kind: \"party\")),\n"
 "  (\n"
 "    msg(\"c\", \"s\", \"लूपबैक पर HTTP\"),\n"
-"    msg(\"s\", \"w\", \"हाइब्रिड TLS का प्रस्ताव\", accent: true),\n"
+"    msg(\"s\", \"w\", \"हाइब्रिड TLS ऑफ़र\", accent: true),\n"
 "    msg(\"w\", \"s\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
-"    act(\"s\", \"सेवा का नाम और जारीकर्ता जाँचें\"),\n"
+"    act(\"s\", \"सर्विस का नाम और इश्यूअर वेरिफ़ाई करें\"),\n"
 "    msg(\"s\", \"w\", \"`GET /status`\", accent: true),\n"
-"    msg(\"w\", \"s\", \"एन्क्रिप्टेड जवाब\", reply: true),\n"
-"    msg(\"s\", \"c\", \"स्थानीय HTTP जवाब\", reply: true),\n"
+"    msg(\"w\", \"s\", \"एन्क्रिप्टेड रिस्पॉन्स\", reply: true),\n"
+"    msg(\"s\", \"c\", \"लोकल HTTP रिस्पॉन्स\", reply: true),\n"
 "  ),\n"
 "  spacing: 45,\n"
 ")\n"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:85
 msgid "A device uses its local gateway to call a central service."
-msgstr "उपकरण अपने स्थानीय गेटवे से केंद्रीय सेवा को अनुरोध भेजता है।"
+msgstr "एक डिवाइस अपने लोकल गेटवे के ज़रिए सेंट्रल सर्विस को कॉल करता है।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:88
 msgid ""
@@ -439,11 +530,16 @@ msgstr ""
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:91
 msgid "Verify the negotiated group"
-msgstr "चुने गए समूह की जाँच"
+msgstr "नेगोशिएट हुए ग्रुप को वेरिफ़ाई करें"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:94
 msgid "We use OpenSSL 3.5 or later to make a fresh connection to the website. Here ``ca.pem`` also trusts the issuer of the public test certificate. Restricting the probe to one group makes the result unambiguous. We check the certificate verification, the negotiated group and the HTTP response."
-msgstr "हम OpenSSL 3.5 या बाद के संस्करण से वेबसाइट का नया कनेक्शन खोलते हैं। यहाँ ``ca.pem`` में सार्वजनिक परीक्षण प्रमाणपत्र का जारीकर्ता भी विश्वसनीय है। जाँच को एक समूह तक सीमित रखने से परिणाम स्पष्ट रहता है। हम प्रमाणपत्र सत्यापन, चुने गए समूह और HTTP उत्तर को जाँचते हैं।"
+msgstr ""
+"हम वेबसाइट पर नया कनेक्शन बनाने के लिए OpenSSL 3.5 या उसके बाद का "
+"वर्ज़न इस्तेमाल करते हैं। यहाँ ``ca.pem`` पब्लिक टेस्ट सर्टिफ़िकेट के "
+"इश्यूअर पर भी भरोसा करता है। प्रोब को एक ही ग्रुप तक सीमित रखने से "
+"नतीजा साफ़ रहता है। हम सर्टिफ़िकेट वेरिफ़िकेशन, नेगोशिएट हुए ग्रुप और "
+"HTTP रिस्पॉन्स को जाँचते हैं।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:96
 msgid ""
@@ -459,15 +555,25 @@ msgstr ""
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:103
 msgid "Certificate verification checks the frontend's identity. The negotiated group tells us which key exchange protected this session. We check the response body for the application's expected status. To collect equivalent evidence for the backend, we observe the connection made by Sibuna at the origin. An independent probe to the origin only shows what that probe could negotiate."
-msgstr "प्रमाणपत्र सत्यापन से फ्रंटएंड की पहचान जाँचते हैं। सहमति से चुना समूह बताता है कि इस सत्र को किस कुंजी विनिमय ने सुरक्षित किया। हम देखते हैं कि जवाब की सामग्री में अनुप्रयोग की अपेक्षित स्थिति है या नहीं। बैकएंड के लिए ऐसा ही प्रमाण जुटाने के लिए हम मूल सर्वर पर Sibuna का बनाया कनेक्शन देखते हैं। मूल सर्वर को अलग से परखने पर केवल वही पता चलता है जिस पर जाँच करने वाला क्लाइंट सहमत हो सका।"
+msgstr ""
+"सर्टिफ़िकेट वेरिफ़िकेशन फ़्रंटएंड की पहचान जाँचता है। नेगोशिएट हुआ "
+"ग्रुप बताता है कि इस सेशन को किस की एक्सचेंज ने सुरक्षित किया। हम "
+"रिस्पॉन्स बॉडी में एप्लिकेशन का अपेक्षित स्टेटस जाँचते हैं। बैकएंड के "
+"लिए ऐसा ही सबूत जुटाने के लिए हम ऑरिजिन पर Sibuna का बनाया कनेक्शन "
+"देखते हैं। ऑरिजिन पर अलग से किया गया प्रोब सिर्फ़ यही दिखाता है कि वह "
+"प्रोब क्या नेगोशिएट कर सका।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:105
 msgid "With RC6 and OpenSSL 3.5.7, we restricted the test origin to one group at a time. The table records the results. A classical client or origin can complete a request even when only the other connection uses hybrid keys."
-msgstr "RC6 और OpenSSL 3.5.7 के साथ हमने हर परीक्षण में मूल सर्वर को एक समूह तक सीमित रखा। तालिका नतीजे दिखाती है। पारंपरिक कुंजी विनिमय वाला क्लाइंट या मूल सर्वर अनुरोध पूरा कर सकता है, भले ही केवल दूसरा कनेक्शन हाइब्रिड कुंजियाँ इस्तेमाल करता हो।"
+msgstr ""
+"RC6 और OpenSSL 3.5.7 के साथ हमने हर टेस्ट में ऑरिजिन को एक बार में एक "
+"ही ग्रुप तक सीमित रखा। टेबल इसके नतीजे दिखाती है। एक क्लासिकल क्लाइंट "
+"या ऑरिजिन रिक्वेस्ट पूरी कर सकता है, भले ही सिर्फ़ दूसरा कनेक्शन "
+"हाइब्रिड कीज़ इस्तेमाल कर रहा हो।"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:107
 msgid "Observations for one request to ``/status``"
-msgstr "``/status`` के एक अनुरोध से मिले परिणाम"
+msgstr "``/status`` की एक रिक्वेस्ट के नतीजे"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:111
 msgid "Client to Sibuna"
@@ -475,11 +581,11 @@ msgstr "क्लाइंट से Sibuna"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:112
 msgid "Sibuna to application"
-msgstr "Sibuna से अनुप्रयोग"
+msgstr "Sibuna से एप्लिकेशन"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:113
 msgid "HTTP result"
-msgstr "HTTP परिणाम"
+msgstr "HTTP नतीजा"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:114
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:117
@@ -511,7 +617,7 @@ msgstr "``X25519``"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:130
 msgid "Origin name mismatch"
-msgstr "मूल सर्वर का नाम मेल नहीं खाता"
+msgstr "ऑरिजिन का नाम मेल नहीं खाता"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:131
 msgid "``502``"
@@ -519,4 +625,11 @@ msgstr "``502``"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:133
 msgid "We record the date, endpoints, certificate identities, negotiated groups and any plaintext segments for each service. Offering the group permits classical fallback. A policy that requires hybrid-only sessions needs enforcement and evidence on every covered connection. Post-quantum signatures, FIPS 140 module validation and SQLx database TLS each need separate evidence. An edge handshake establishes one item in that inventory."
-msgstr "हम प्रत्येक सेवा की तारीख, कनेक्शन के दोनों छोर, प्रमाणपत्रों की पहचान, चुने गए समूह और सादे पाठ वाले हिस्से दर्ज करते हैं। समूह प्रस्तुत करने पर भी पारंपरिक विकल्प उपलब्ध रहता है। केवल हाइब्रिड सत्र की नीति के लिए प्रत्येक संबंधित कनेक्शन पर उसे लागू करने का तरीका और प्रमाण चाहिए। क्वांटम-प्रतिरोधी हस्ताक्षर, FIPS 140 मॉड्यूल सत्यापन और SQLx डेटाबेस TLS के अलग-अलग प्रमाण चाहिए। एज का हैंडशेक उस सूची की एक प्रविष्टि की पुष्टि करता है।"
+msgstr ""
+"हम हर सर्विस की तारीख, एंडपॉइंट्स, सर्टिफ़िकेट पहचान, नेगोशिएट हुए "
+"ग्रुप और किसी भी प्लेनटेक्स्ट हिस्से को दर्ज करते हैं। हाइब्रिड ग्रुप "
+"ऑफ़र करने पर क्लासिकल फ़ॉलबैक भी चालू रहता है। सिर्फ़ हाइब्रिड सेशन "
+"माँगने वाली पॉलिसी के लिए हर कवर किए गए कनेक्शन पर एन्फ़ोर्समेंट और "
+"सबूत चाहिए। पोस्ट-क्वांटम सिग्नेचर, FIPS 140 मॉड्यूल वैलिडेशन और SQLx "
+"डेटाबेस TLS — हर एक के लिए अलग सबूत चाहिए। एज का हैंडशेक उस इन्वेंटरी "
+"की एक एंट्री पक्का करता है।"

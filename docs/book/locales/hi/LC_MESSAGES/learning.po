@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:1
 msgid "How to Read This Book"
-msgstr "यह पुस्तक कैसे पढ़ें"
+msgstr "यह बुक कैसे पढ़ें"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:4
 msgid ""
@@ -29,18 +29,19 @@ msgid ""
 "admission. Later chapters show how a single edge selects a server and how "
 "multiple edges cooperate."
 msgstr ""
-"समय-सारणी का उदाहरण डिज़ाइन के अध्यायों के लिए दो प्रश्न देता है। एज किन "
-"अनुरोधों को स्वीकार करता है और स्वीकृत अनुरोध किस सर्वर पर जाता है? "
-"शुरुआती अध्याय प्रवेश की लागत और शुद्धता समझाते हैं। बाद में हम देखेंगे "
-"कि एक एज सर्वर कैसे चुनता है और कई एज मिलकर कैसे काम करते हैं।"
+"टाइमटेबल का उदाहरण हमें डिज़ाइन वाले अध्यायों के लिए दो सवाल देता है। "
+"एज किन रिक्वेस्ट को एडमिट करता है, और एडमिट हुई रिक्वेस्ट किस सर्वर पर "
+"जाती है? शुरुआती अध्याय एडमिशन की लागत और सही होने की शर्तें समझाते "
+"हैं। बाद के अध्याय दिखाते हैं कि एक अकेला एज सर्वर कैसे चुनता है और कई "
+"एज मिलकर कैसे काम करते हैं।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:10
 msgid "Question"
-msgstr "प्रश्न"
+msgstr "सवाल"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:11
 msgid "Where the answer develops"
-msgstr "उत्तर किन भागों में मिलता है"
+msgstr "जवाब कहाँ मिलता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:12
 msgid "What does a puzzle buy?"
@@ -48,35 +49,35 @@ msgstr "पहेली से क्या मिलता है?"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:13
 msgid "Parts I to III: cost, probability, and the limits of proof."
-msgstr "भाग I से III: लागत, प्रायिकता और प्रमाण की सीमाएँ।"
+msgstr "भाग I से III: लागत, प्रोबैबिलिटी और प्रूफ़ की सीमाएँ।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:14
 msgid "How does Sibuna compare?"
-msgstr "Sibuna की तुलना कैसी है?"
+msgstr "बाक़ियों से Sibuna की तुलना कैसी है?"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:15
 msgid ""
 "Part II: lineage and the feature tables; Part X: measurements beside "
 "Anubis and HAProxy."
 msgstr ""
-"भाग II: परंपरा और सुविधाओं की तालिकाएँ; भाग X: Anubis और HAProxy के साथ "
-"मापन।"
+"भाग II: पृष्ठभूमि और फ़ीचर टेबल; भाग X: Anubis और HAProxy के साथ "
+"मेज़रमेंट।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:16
 msgid "What does a session mean?"
-msgstr "सत्र का क्या अर्थ है?"
+msgstr "सेशन का क्या मतलब है?"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:17
 msgid "Part IV: bindings, verification order, expiry, and replay."
-msgstr "भाग IV: बाइंडिंग, सत्यापन का क्रम, समाप्ति और रीप्ले।"
+msgstr "भाग IV: बाइंडिंग, वेरिफ़िकेशन का क्रम, एक्सपायरी और रीप्ले।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:18
 msgid "Where does the memory go?"
-msgstr "मेमोरी कहाँ जाती है?"
+msgstr "मेमोरी कहाँ खर्च होती है?"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:19
 msgid "Parts V and VI: buffers, threads, tables, automata, and publication."
-msgstr "भाग V और VI: बफ़र, थ्रेड, टेबल, ऑटोमेटा और प्रकाशन।"
+msgstr "भाग V और VI: बफ़र, थ्रेड, टेबल, ऑटोमेटा और पब्लिकेशन।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:20
 msgid "How does the browser solve?"
@@ -84,25 +85,25 @@ msgstr "ब्राउज़र पहेली कैसे हल करत�
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:21
 msgid "Part VII: worker messages, memory, and calibration."
-msgstr "भाग VII: वर्कर संदेश, मेमोरी और कैलिब्रेशन।"
+msgstr "भाग VII: वर्कर मैसेज, मेमोरी और कैलिब्रेशन।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:22
 msgid "How does one node balance load?"
-msgstr "एक नोड लोड को कैसे संतुलित करता है?"
+msgstr "एक नोड लोड बैलेंसिंग कैसे करता है?"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:23
 msgid ""
 "Part VIII: flows, workers, choosing a server, admission at the socket, "
 "hooks."
-msgstr "भाग VIII: फ़्लो, वर्कर, सर्वर चुनना, सॉकेट पर प्रवेश, हुक।"
+msgstr "भाग VIII: फ़्लो, वर्कर, सर्वर चुनना, सॉकेट पर एडमिशन, हुक्स।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:24
 msgid "How do several nodes act as one?"
-msgstr "कई नोड एक की तरह कैसे काम करते हैं?"
+msgstr "कई नोड एक सिस्टम की तरह कैसे काम करते हैं?"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:25
 msgid "Part IX: the mesh, shared affinity, fleet caps, forwarding, handoff."
-msgstr "भाग IX: मेश, साझा एफ़िनिटी, फ़्लीट सीमाएँ, फ़ॉरवर्डिंग, हैंडऑफ़।"
+msgstr "भाग IX: मेश, साझा अफ़िनिटी, फ़्लीट कैप्स, फ़ॉरवर्डिंग, हैंडऑफ़।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:26
 msgid "How do we know it works?"
@@ -110,7 +111,7 @@ msgstr "हम कैसे जानें कि यह काम करता
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:27
 msgid "Part X: three harnesses and what each excludes."
-msgstr "भाग X: तीन हार्नेस और हर एक किन बातों को बाहर रखता है।"
+msgstr "भाग X: तीन टेस्ट हार्नेस और हर एक क्या बाहर रखता है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:28
 msgid "How do we run it?"
@@ -121,16 +122,16 @@ msgid ""
 "Part XI: flags, the edge topology, certificates, policy, storage, "
 "clustering, packaging."
 msgstr ""
-"भाग XI: फ़्लैग, एज की टोपोलॉजी, सर्टिफ़िकेट, नीति, स्टोरेज, क्लस्टरिंग, "
-"पैकेजिंग।"
+"भाग XI: फ़्लैग्स, एज टोपोलॉजी, सर्टिफ़िकेट, पॉलिसी, स्टोरेज, "
+"क्लस्टरिंग, पैकेजिंग।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:30
 msgid "What was that error?"
-msgstr "वह त्रुटि क्या थी?"
+msgstr "वह एरर क्या थी?"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:31
 msgid "Part XII: endpoints, statuses, errors, schema; Part XIII: the card."
-msgstr "भाग XII: एंडपॉइंट, स्टेटस, त्रुटियाँ, स्कीमा; भाग XIII: कार्ड।"
+msgstr "भाग XII: एंडपॉइंट, स्टेटस, एरर्स, स्कीमा; भाग XIII: रेफ़रेंस कार्ड।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:33
 msgid "Three Reading Paths"
@@ -144,11 +145,11 @@ msgid ""
 "exercises; compare with the solutions at the back only afterwards. Return "
 "to Part V when a trace reaches a shared table or a borrowed slice."
 msgstr ""
-"*डिज़ाइन सीखना।* भाग I से IV क्रम से, फिर भाग VI में हल किया गया ट्रेस, "
-"फिर भाग VII। लोड बैलेंसर के लिए भाग VIII और फिर भाग IX; इनके लिए केवल भाग "
-"I और भाग V के ओनरशिप संबंधी विचार चाहिए। अभ्यास हल करें; पुस्तक के अंत "
-"में दिए समाधानों से तुलना उसके बाद ही करें। जब कोई ट्रेस किसी साझा टेबल "
-"या उधार ली गई स्लाइस तक पहुँचे, तो भाग V पर लौटें।"
+"*डिज़ाइन सीखना।* भाग I से IV क्रम से पढ़ें, फिर भाग VI का वर्क्ड ट्रेस, "
+"फिर भाग VII। लोड बैलेंसर के लिए भाग VIII और फिर भाग IX; इनके लिए बस भाग "
+"I और भाग V के ओनरशिप कॉन्सेप्ट चाहिए। अभ्यास खुद हल करें; बुक के अंत "
+"में दिए गए हल से मिलान बाद में ही करें। जब कोई ट्रेस किसी साझा टेबल या "
+"उधार ली गई स्लाइस तक पहुँचे, तो भाग V पर लौटें।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:37
 msgid ""
@@ -157,10 +158,10 @@ msgid ""
 "how to install, observe and reload the running system. Parts XII and XIII "
 "provide the reference and the command summary."
 msgstr ""
-"पहली तैनाती के लिए :doc:`introduction` में फ्रंटएंड, रूट और पूल को समझने "
-"के बाद हम :doc:`jlavi` पढ़ते हैं। भाग XI में चलती प्रणाली की स्थापना, "
-"निगरानी और कॉन्फ़िगरेशन को फिर से लोड करना समझाया गया है। भाग XII और XIII "
-"में संदर्भ सामग्री और कमांड का सार है।"
+"पहले डिप्लॉयमेंट के लिए :doc:`introduction` में फ़्रंटएंड, रूट और पूल "
+"समझने के बाद हम :doc:`jlavi` से आगे बढ़ते हैं। इसके बाद भाग XI बताता है "
+"कि चल रहे सिस्टम को कैसे इंस्टॉल, मॉनिटर और रीलोड करें। भाग XII और XIII "
+"में रेफ़रेंस और कमांड सारांश है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:38
 msgid ""
@@ -169,14 +170,14 @@ msgid ""
 "regression in what we touched; Part II lists the constraints a change "
 "must keep."
 msgstr ""
-"*कोड बदलना।* भाग V और VI, हर अध्याय के स्रोत-संदर्भ, और वे SID रिकॉर्ड "
-"जिनका वे हवाला देते हैं। भाग X बताता है कि जो कुछ हमने बदला है उसमें "
-"रिग्रेशन कौन-सा हार्नेस पकड़ेगा; भाग II उन शर्तों की सूची देता है जिन्हें "
-"किसी बदलाव को बनाए रखना चाहिए।"
+"*कोड में बदलाव करना।* भाग V और VI, हर अध्याय के सोर्स एंकर, और उनके "
+"बताए SID रिकॉर्ड पढ़ें। भाग X बताता है कि आपने जो बदला है उसमें "
+"रिग्रेशन कौन-सा हार्नेस पकड़ेगा; भाग II वे शर्तें गिनाता है जिन्हें "
+"किसी भी बदलाव को बनाए रखना ज़रूरी है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:40
 msgid "Conventions"
-msgstr "परिपाटियाँ"
+msgstr "बुक के कन्वेंशन"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:43
 msgid ""
@@ -188,14 +189,14 @@ msgid ""
 "disagree. Boxes headed \"Implementation\" name a function and its file; "
 "boxes headed \"Explain the invariant\" ask us to teach the idea back."
 msgstr ""
-"*हल किया गया उदाहरण* केवल उत्तर नहीं, बीच की अवस्थाएँ भी दिखाता है। "
-"*अभ्यास* हमसे एक धारणा बदलने को कहता है। संकेत पहला कदम सुझाते हैं; "
-"पुस्तक के अंत में चुनिंदा समाधान तर्क को जाँचने योग्य बनाते हैं। चित्र "
-"अनुरोध पाथ को बैकग्राउंड कार्य से अलग दिखाते हैं। स्रोत-संदर्भ उस "
-"इम्प्लीमेंटेशन का नाम देता है जिसे तब देखना चाहिए जब पाठ और कोड में "
-"असहमति लगे। \"इम्प्लीमेंटेशन\" शीर्षक वाले बॉक्स एक फ़ंक्शन और उसकी फ़ाइल "
-"का नाम देते हैं; \"अपरिवर्तनीय नियम समझाएँ\" शीर्षक वाले बॉक्स हमसे विचार "
-"को वापस समझाने को कहते हैं।"
+"*हल किया गया उदाहरण* सिर्फ़ जवाब नहीं, बीच की स्टेट भी दिखाता है। "
+"*अभ्यास* हमसे एक धारणा बदलने को कहता है। संकेत पहला कदम सुझाते हैं; बुक "
+"के अंत में चुनिंदा हल से आप अपना तर्क जाँच सकते हैं। डायग्राम रिक्वेस्ट "
+"पाथ को बैकग्राउंड काम से अलग दिखाते हैं। सोर्स एंकर उस इम्प्लीमेंटेशन "
+"का नाम देता है जिसे तब देखना चाहिए जब टेक्स्ट और कोड में फ़र्क लगे। "
+"\"इम्प्लीमेंटेशन\" शीर्षक वाले बॉक्स किसी फ़ंक्शन और उसकी फ़ाइल का नाम "
+"बताते हैं; \"इनवैरिएंट समझाएँ\" शीर्षक वाले बॉक्स हमसे उस कॉन्सेप्ट को "
+"वापस समझाने को कहते हैं।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:45
 msgid ""
@@ -211,13 +212,13 @@ msgid ""
 "claims. Statistical models state their assumptions before drawing "
 "conclusions."
 msgstr ""
-"समीकरणों में :math:`b` बिट में Hashcash की कठिनाई है, :math:`n` अनुक्रमिक "
-"कार्य की गहराई है, :math:`t` ओपनिंग की संख्या है, :math:`p` प्रति प्रयास "
-"सफलता की प्रायिकता है, :math:`K` प्रयासों की संख्या है, :math:`T` रेट "
-"लिमिटर का उत्सर्जन अंतराल (emission interval) है, :math:`\\tau` उसका "
-"बर्स्ट टॉलरेंस है, और :math:`Q` कतार की क्षमता है। भाग VIII और IX में "
-":math:`n` सर्वरों या नोडों की संख्या है और :math:`c` सीमित लोड (bounded "
-"load) की सीमा है। जब तक अन्यथा न कहा जाए, कोई प्रतीक अपने अनुभाग तक सीमित "
-"है। भाग X में नैनोसेकंड और प्रति सेकंड अनुरोध किसी नामित रन के मापन हैं। "
-"हल किए गए उदाहरणों की संख्याएँ चुने हुए इनपुट हैं, बेंचमार्क के दावे "
-"नहीं। सांख्यिकीय मॉडल निष्कर्ष निकालने से पहले अपनी धारणाएँ बताते हैं।"
+"समीकरणों में :math:`b` बिट्स में Hashcash की कठिनाई है, :math:`n` "
+"सीक्वेंशियल वर्क की गहराई है, :math:`t` ओपनिंग की संख्या है, :math:`p` "
+"हर कोशिश में सफलता की प्रोबैबिलिटी है, :math:`K` कोशिशों की संख्या है, "
+":math:`T` रेट लिमिटर का एमिशन इंटरवल है, :math:`\\tau` उसका बर्स्ट "
+"टॉलरेंस है, और :math:`Q` क्यू की क्षमता है। भाग VIII और IX में "
+":math:`n` सर्वर या नोड्स की संख्या है और :math:`c` बाउंडेड लोड की सीमा "
+"है। जब तक अलग से न कहा जाए, हर सिंबल अपने सेक्शन तक ही सीमित है। भाग X "
+"में नैनोसेकंड और रिक्वेस्ट प्रति सेकंड किसी तय रन के मेज़रमेंट हैं। हल "
+"किए गए उदाहरणों की संख्याएँ चुने गए इनपुट हैं, बेंचमार्क दावे नहीं। "
+"स्टैटिस्टिकल मॉडल निष्कर्ष निकालने से पहले अपनी धारणाएँ साफ़ बताते हैं।"

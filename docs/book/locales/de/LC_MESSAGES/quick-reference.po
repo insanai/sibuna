@@ -310,9 +310,7 @@ msgstr ""
 msgid ""
 "``\"http\": {\"surface\": \"off\"}`` gives a load balancer with no "
 "firewall. TCP and UDP frontends never use the firewall."
-msgstr ""
-"``\"http\": {\"surface\": \"off\"}`` ergibt einen Load Balancer ohne "
-"Firewall. TCP- und UDP-Frontends verwenden die Firewall nie."
+msgstr "``\"http\": {\"surface\": \"off\"}`` ergibt einen Load-Balancer ohne Firewall. TCP- und UDP-Frontends verwenden die Firewall nie."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:113
 msgid ""
@@ -881,9 +879,7 @@ msgstr "*Challenge-Antwort*: ``X-Sibuna-Status: CHALLENGE``."
 msgid ""
 "*Cookie*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
-msgstr ""
-"*Cookie*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
-"Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
+msgstr "*Cookie*: ``__sibuna_token=<75 Zeichen, 139 mit Ed25519>; Path=/; Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:276
 msgid "Policy File Skeleton"

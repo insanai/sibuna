@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:1
 msgid "Part VI: Automata, Tries, and the Semantic Firewall"
-msgstr "Parte VI: Autómatas, tries y el cortafuegos semántico"
+msgstr "Parte VI: Autómatas, tries y el firewall semántico"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:4
 msgid ""
@@ -403,7 +403,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:79
 msgid "The Semantic Firewall"
-msgstr "El cortafuegos semántico"
+msgstr "El firewall semántico"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:84
 msgid ""
@@ -587,9 +587,7 @@ msgstr ""
 msgid ""
 "*Path traversal.* Signatures (``../``, ``..%2f``, ``/etc/passwd``, "
 "``id_rsa``, ...) plus NUL and ``%00``."
-msgstr ""
-"*Recorrido de rutas.* Firmas (``../``, ``..%2f``, ``/etc/passwd``, "
-"``id_rsa``, ...) además de NUL y ``%00``."
+msgstr "*Path traversal.* Firmas (``../``, ``..%2f``, ``/etc/passwd``, ``id_rsa``, ...) además de NUL y ``%00``."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:131
 msgid ""
@@ -787,14 +785,7 @@ msgid ""
 "decision. The storage hook copies a bounded incident record; SQL runs "
 "later. The response path need not hold the engine snapshot while an "
 "origin connection is idle."
-msgstr ""
-"El analizador ve ahora una comilla, la palabra clave ``OR`` y operandos "
-"literales iguales. Una denegación es un resultado terminal de la "
-"política. La sesión válida no la convierte en un permiso: la comprobación "
-"de sesión solo resuelve una decisión de desafío. El gancho de "
-"almacenamiento copia un registro de incidente acotado; el SQL se ejecuta "
-"más tarde. El camino de la respuesta no necesita retener la instantánea "
-"del motor mientras una conexión con el origen está inactiva."
+msgstr "El analizador ve ahora una comilla, la palabra clave ``OR`` y operandos literales iguales. Una denegación es un resultado terminal de la política. La sesión válida no la convierte en un permiso: la comprobación de sesión solo resuelve una decisión de desafío. El hook de almacenamiento copia un registro de incidente acotado; el SQL se ejecuta más tarde. El camino de la respuesta no necesita retener la instantánea del motor mientras una conexión con el origen está inactiva."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:181
 msgid "Exercise 6.1"

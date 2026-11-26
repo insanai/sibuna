@@ -2318,7 +2318,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:652
 msgid "The directory of ``global.acme.storage`` cannot be read or written"
-msgstr "``global.acme.storage``\\ のディレクトリーを読み書きできない"
+msgstr "``global.acme.storage``\\ のディレクトリを読み書きできない"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:653
 msgid "``ACME002``"
@@ -2447,7 +2447,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:682
 msgid "The authority wants an external account binding, or refused ours"
-msgstr "認証局が外部アカウントの結び付けを求めている、または私たちのものを拒否した"
+msgstr "認証局が外部アカウントバインディング（EAB）を要求している、または指定された資格情報を拒否した"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:683
 msgid "``ACME013``"

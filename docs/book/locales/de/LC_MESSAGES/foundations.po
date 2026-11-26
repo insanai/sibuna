@@ -347,11 +347,7 @@ msgid ""
 "A queue holds 512 records. Arrival rate is 1,000/s and drain rate is "
 "600/s. How long can an initially empty queue absorb the excess? Why is "
 "the answer only an approximation?"
-msgstr ""
-"Eine Warteschlange fasst 512 Datensätze. Die Ankunftsrate beträgt 1.000/s "
-"und die Abflussrate 600/s. Wie lange kann eine anfangs leere "
-"Warteschlange den Überschuss aufnehmen? Warum ist die Antwort nur eine "
-"Näherung?"
+msgstr "Eine Warteschlange fasst 512 Datensätze. Die Ankunftsrate beträgt 1.000/s und die Drain-Rate 600/s. Wie lange kann eine anfangs leere Warteschlange den Überschuss aufnehmen? Warum ist die Antwort nur eine Näherung?"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:83
 msgid ""
@@ -378,9 +374,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:90
 msgid "A buffer remains alive for every slice borrowed from it."
-msgstr ""
-"Ein Puffer bleibt am Leben, solange ein von ihm geliehener Slice "
-"existiert."
+msgstr "Ein Puffer bleibt so lange gültig, wie ein daraus entlehnter Slice existiert."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:91
 msgid ""
@@ -393,9 +387,7 @@ msgstr ""
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
-msgstr ""
-"Ein veröffentlichter Richtlinienschnappschuss bleibt unveränderlich, bis "
-"sein letzter Leser ihn freigibt."
+msgstr "Ein veröffentlichter Richtlinien-Snapshot bleibt unveränderlich, bis sein letzter Leser ihn freigibt."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:94
 msgid ""

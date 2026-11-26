@@ -32,8 +32,7 @@ msgid ""
 "which each table names with its generation time, or from a design record. "
 "A functional pass and a performance measurement answer different "
 "questions, and a measurement on one host is not a ranking on another."
-msgstr ""
-"コミット済みのハーネスで記録したSibunaの測定を示します。プリミティブのレイテンシー、外部の負荷生成器の下でCPUとメモリを計上した製品全体、オープンループの生成器による同じ負荷を与えたときのレイテンシー、そして広くデプロイされている作業証明のゲートであるAnubisとの比較です。ライブのダッシュボードを八つ動かしたコンソールの実行で記録を締めくくります。この部のすべての数値は、コミット済みの結果ファイル（各表がその生成時刻とともに示します）か、設計の記録から得たものです。機能の合格と性能の測定は別の問いに答えるもので、一つのホストでの測定は別のホストでの順位ではありません。"
+msgstr "コミット済みのハーネスで記録したSibunaの測定を示します。プリミティブのレイテンシー、外部の負荷生成器の下でCPUとメモリを計上した製品全体、オープンループの生成器による同じ負荷を与えたときのレイテンシー、そして広くデプロイされているProof of WorkゲートであるAnubisとの比較です。ライブのダッシュボードを八つ動かしたコンソールの実行で記録を締めくくります。この部のすべての数値は、コミット済みの結果ファイル（各表がその生成時刻とともに示します）か、設計の記録から得たものです。機能の合格と性能の測定は別の問いに答えるもので、一つのホストでの測定は別のホストでの順位ではありません。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:6
 msgid "Methodology"
@@ -419,9 +418,7 @@ msgid ""
 "CPU sets on the AMD Ryzen 9 5950X. CPUs 0 to 7 are the eight cores of the "
 "first CCD, 8 to 15 those of the second, and 16 to 31 their SMT siblings. "
 "Daemon and load generator never share a core."
-msgstr ""
-"AMD Ryzen 9 5950XでのCPUセット。CPU "
-"0から7は一つ目のCCDの8コア、8から15は二つ目のCCDの8コア、16から31はそれらのSMTの兄弟です。デーモンと負荷生成器がコアを共有することはありません。"
+msgstr "AMD Ryzen 9 5950XでのCPUセット。CPU 0から7は一つ目のCCDの8コア、8から15は二つ目のCCDの8コア、16から31はそれらのSMT兄弟スレッドです。デーモンと負荷生成器がコアを共有することはありません。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:84
 msgid ""
@@ -811,10 +808,7 @@ msgid ""
 "the request path. The rate limiter rows are the fastest, at 6.2 to 13.1 "
 "ns; Ed25519 token verification is the slowest, at 40.6 us. The sequential "
 "signature search, an open dot for comparison, takes 763 ns."
-msgstr ""
-"上の表を1 nsから100 "
-"usまでの対数目盛で示したドットプロットで、行は作業証明、照合、トークン、状態、リクエストの経路のグループに分けています。最も速いのはレートリミッターの行で6.2から13.1 "
-"ns、最も遅いのはEd25519のトークンの検証で40.6 usです。比較用に白抜きの点で示した逐次的なシグネチャ探索は763 nsかかります。"
+msgstr "上の表を1 nsから100 usまでの対数目盛で示したドットプロットで、行はProof of Work、照合、トークン、状態、リクエストの経路のグループに分けています。最も速いのはレートリミッターの行で6.2から13.1 ns、最も遅いのはEd25519のトークンの検証で40.6 usです。比較用に白抜きの点で示した逐次的なシグネチャ探索は763 nsかかります。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:181
 msgid ""
@@ -838,7 +832,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:184
 msgid "Proof-of-Work Verification"
-msgstr "作業証明の検証"
+msgstr "Proof of Workの検証"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:187
 msgid ""
@@ -918,11 +912,7 @@ msgid ""
 "The secret key keeps anyone from computing addresses that share a "
 "victim's probe window (SID 0010 and the ``sibuna-store`` documentation). "
 "These rows take 12.8 and 13.1 ns."
-msgstr ""
-"レートリミッターの行には注意が必要です。クライアントのバイト列の二つの行（\\ ``gcra_check``\\ と\\ "
-"``gcra_four_rule_scopes``\\ "
-"）は、バイト列のAPIを呼び出します。各確認はクライアントのアドレスをバイト列として受け取り、まずOSの乱数から引いた秘密の下で、その鍵付きSipHash-1-3を計算します。秘密鍵があるので、誰も被害者の探査窓を共有するアドレスを計算できません（SID "
-"0010と\\ ``sibuna-store``\\ の文書）。これらの行は12.8 nsと13.1 nsです。"
+msgstr "レートリミッターの行には注意が必要です。クライアントのバイト列の二つの行（\\ ``gcra_check``\\ と\\ ``gcra_four_rule_scopes``\\ ）は、バイト列のAPIを呼び出します。各確認はクライアントのアドレスをバイト列として受け取り、まずOSの乱数から引いた秘密の下で、その鍵付きSipHash-1-3を計算します。秘密鍵があるので、誰も被害者の探索ウィンドウを共有するアドレスを計算できません（SID 0010と\\ ``sibuna-store``\\ の文書）。これらの行は12.8 nsと13.1 nsです。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:206
 msgid ""
@@ -1729,7 +1719,7 @@ msgstr "p99.9"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:451
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:510
 msgid "max"
-msgstr "max"
+msgstr "最大"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:452
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:511
@@ -2200,10 +2190,7 @@ msgid ""
 "release binary of Anubis v1.27.0 (``anubis-1.27.0-linux-amd64``, "
 "40,001,698 bytes) beside Sibuna on the same host, on the same CPUs, with "
 "the same workloads. The two result files were recorded with:"
-msgstr ""
-"TecharoのAnubisは、SibunaのGateと同じようにWebサイトの前に置く、広くデプロイされている作業証明のゲートです。Anubis "
-"v1.27.0の公式リリースバイナリ（\\ ``anubis-1.27.0-linux-amd64``\\ "
-"、40,001,698バイト）を、同じホスト、同じCPU、同じワークロードでSibunaと並べて測定しました。二つの結果ファイルは次のコマンドで記録しました。"
+msgstr "TecharoのAnubisは、SibunaのGateと同じようにWebサイトの前に置く、広くデプロイされているProof of Workゲートです。Anubis v1.27.0の公式リリースバイナリ（\\ ``anubis-1.27.0-linux-amd64``\\ 、40,001,698バイト）を、同じホスト、同じCPU、同じワークロードでSibunaと並べて測定しました。二つの結果ファイルは次のコマンドで記録しました。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:589
 msgid ""

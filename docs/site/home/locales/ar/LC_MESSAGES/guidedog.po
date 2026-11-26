@@ -34,10 +34,10 @@ msgid "A cluster of edge nodes"
 msgstr "عنقود من العقد الطرفية"
 
 msgid "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it."
-msgstr "يمكن لمتصفح متوافق الاتفاق مع Sibuna على مفتاح مقاوم للهجمات الكمومية. يفتح Sibuna اتصالا مستقلا بخادم الويب، فيبقى الجهاز القديم في الخدمة أثناء ترقيته."
+msgstr "يمكن لمتصفح متوافق الاتفاق مع Sibuna على مفتاح مقاوم للهجمات الكمومية. ويفتح Sibuna اتصالًا مستقلًا بخادم الويب، فيبقى الجهاز القديم في الخدمة أثناء ترقيته."
 
 msgid "A configured rule refuses this request, even with a valid session."
-msgstr "ترفض قاعدة مضبوطة هذا الطلب، حتى مع جلسة صالحة."
+msgstr "ترفض قاعدة مُعدّة هذا الطلب، حتى مع وجود جلسة صالحة."
 
 msgid "A deny rule matches"
 msgstr "تنطبق قاعدة رفض"
@@ -115,7 +115,7 @@ msgid "Check access again"
 msgstr "إعادة فحص الوصول"
 
 msgid "Check the proof. Issue a session."
-msgstr "التحقق من الإثبات، ثم إصدار جلسة."
+msgstr "تحقّق من الإثبات، ثم أصدر جلسة."
 
 msgid "Checking the proof is designed to take less computation than creating it."
 msgstr "صُمّم التحقق من الإثبات ليحتاج إلى حساب أقل مما يحتاجه إنشاؤه."
@@ -139,7 +139,7 @@ msgid "Configuring Sibuna with Jlavi"
 msgstr "إعداد Sibuna بلغة Jlavi"
 
 msgid "Connections and datagrams."
-msgstr "الاتصالات ورزم البيانات."
+msgstr "الاتصالات وحزم البيانات."
 
 msgid "Console contract"
 msgstr "مواصفات وحدة التحكم (بالإنجليزية)"
@@ -169,7 +169,7 @@ msgid "Digital signatures follow for the same federal systems."
 msgstr "يلي ذلك انتقال التوقيعات الرقمية في الأنظمة الفدرالية نفسها."
 
 msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
-msgstr "نوزع إعدادات التوجيه بعد التحقق منها على الشبكة. يمكن للعقد تبادل قرارات الحظر وارتباطات العملاء بالخوادم، بينما تمرر كل عقدة الحركة إلى مجموعات خوادمها الخلفية."
+msgstr "وزّع إعدادات التوجيه بعد التحقق منها على الشبكة المترابطة (mesh). يمكن للعقد تبادل قرارات الحظر وارتباطات العملاء بالخوادم، بينما تمرر كل عقدة الحركة إلى مجموعات خوادمها الخلفية."
 
 msgid "Distributed edge load balancer and web application firewall"
 msgstr "موازن أحمال موزّع عند حافة الشبكة وجدار حماية لتطبيقات الويب"
@@ -226,7 +226,7 @@ msgid "Home"
 msgstr "الرئيسية"
 
 msgid "Hooks run at the connection and at the request: compiled in, as WebAssembly with a budget, or in a separate process. Metrics, access logs and a console show servers, flows and the reason for each refusal."
-msgstr "تعمل الخطافات عند الاتصال وعند الطلب: مصرَّفة داخل البرنامج، أو بصيغة WebAssembly بميزانية محددة، أو في عملية منفصلة. وتعرض المقاييس وسجلات الوصول ووحدة التحكم الخوادم والتدفقات وسبب كل رفض."
+msgstr "تعمل نقاط التوسعة (hooks) عند الاتصال وعند الطلب: مُضمَّنة داخل البرنامج، أو بصيغة WebAssembly بميزانية محددة، أو في عملية منفصلة. وتعرض المقاييس وسجلات الوصول ووحدة التحكم الخوادمَ والتدفقات وسبب كل رفض."
 
 msgid "How to try it"
 msgstr "كيف تجرّبه"
@@ -241,7 +241,7 @@ msgid "Internal gRPC services"
 msgstr "خدمات gRPC الداخلية"
 
 msgid "Issue certificates for internal names with the local CA. Clients trust its root and call the service over TLS. An HTTP/2 backend carries gRPC messages and trailers."
-msgstr "نصدر شهادات للأسماء الداخلية من سلطة التصديق المحلية. تثق التطبيقات العميلة بشهادتها الجذرية وتستدعي الخدمة عبر TLS. وتنقل الخدمة الخلفية عبر HTTP/2 رسائل gRPC وترويساتها الختامية."
+msgstr "أصدر شهادات للأسماء الداخلية عبر سلطة التصديق المحلية (local CA). تثق التطبيقات العميلة بشهادتها الجذرية وتستدعي الخدمة عبر TLS، وينقل الخادم الخلفي عبر HTTP/2 رسائل gRPC وترويساتها الختامية."
 
 msgid "Know the boundary"
 msgstr "اعرف الحدود"
@@ -265,7 +265,7 @@ msgid "Main"
 msgstr "التنقل الرئيسي"
 
 msgid "Measured, with the losses"
-msgstr "قياسات، مع الخسائر"
+msgstr "قياسات، بما فيها الخسائر"
 
 msgid "Member States begin the transition."
 msgstr "تبدأ الدول الأعضاء الانتقال."
@@ -277,7 +277,7 @@ msgid "Next step"
 msgstr "الخطوة التالية"
 
 msgid "Nodes of a mesh share the sticky table and the limits of a server, and forward a client to the node that owns it. A PostgreSQL database can publish one configuration to every node and roll it back."
-msgstr "تتشارك عقد الشبكة المتداخلة جدول تثبيت الجلسات وحدود الخادم، وتمرر العميل إلى العقدة التي تملكه. ويمكن لقاعدة بيانات PostgreSQL أن تنشر إعدادات واحدة على كل عقدة وأن تتراجع عنها."
+msgstr "تتشارك عقد الشبكة المترابطة (mesh) جدول تثبيت الجلسات وحدود الخادم، وتمرر العميل إلى العقدة التي تملكه. ويمكن لقاعدة بيانات PostgreSQL نشر إعدادات موحّدة على كل عقدة والتراجع عنها."
 
 msgid "November 2026"
 msgstr "نوفمبر 2026"
@@ -355,7 +355,7 @@ msgid "Release status"
 msgstr "حالة الإصدار"
 
 msgid "Releases hold binaries for Linux, macOS and Windows, Debian, RPM and Arch packages, CLI packages for FreeBSD 15.1 and OpenBSD 7.9 x86-64, a Helm chart and a container image. Verify the checksums before installation."
-msgstr "تتضمن الإصدارات الملفات التنفيذية لأنظمة Linux وmacOS وWindows، وحزم Debian وRPM وArch، وحزم سطر الأوامر لنظامي FreeBSD 15.1 وOpenBSD 7.9 على x86-64، ومخطط Helm وصورة حاوية. تحقّق من المجاميع الاختبارية قبل التثبيت."
+msgstr "تتضمن الإصدارات الملفات التنفيذية لأنظمة Linux وmacOS وWindows، وحزم Debian وRPM وArch، وحزم سطر الأوامر لنظامي FreeBSD 15.1 وOpenBSD 7.9 على x86-64، ومخطط Helm وصورة حاوية. تحقّق من بصمات التحقق (checksums) قبل التثبيت."
 
 msgid "Requests in a second. More is better."
 msgstr "الطلبات في الثانية. الأكثر أفضل."
@@ -388,7 +388,7 @@ msgid "Sequential work happens in the browser. Later steps depend on earlier res
 msgstr "يجري العمل المتسلسل في المتصفح، وتعتمد كل خطوة لاحقة على نتائج ما سبقها."
 
 msgid "Serve browsers over HTTP/2 or HTTP/3, renew public certificates with Let's Encrypt and inspect requests before forwarding them to HTTP/1.1 replicas."
-msgstr "نخدم المتصفحات عبر HTTP/2 أو HTTP/3، ونجدد الشهادات العامة من خلال Let's Encrypt، ونفحص الطلبات قبل تمريرها إلى نُسخ الخدمة عبر HTTP/1.1."
+msgstr "اخدِم المتصفحات عبر HTTP/2 أو HTTP/3، وجدّد الشهادات العامة عبر Let's Encrypt، وافحص الطلبات قبل تمريرها إلى نُسخ الخدمة عبر HTTP/1.1."
 
 msgid "Several nodes, one behaviour."
 msgstr "عقد عدة، وسلوك واحد."
@@ -418,7 +418,7 @@ msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or 
 msgstr "يوجّه Sibuna حركة TCP وUDP وHTTP إلى خوادم سليمة من عقدة طرفية واحدة أو شبكة من العقد المترابطة. ويمكنه إنهاء TLS وفحص مسارات HTTP محددة والمساعدة في حماية الخوادم الخلفية من هجمات حجب الخدمة الموزعة (DDoS)."
 
 msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name, by a wildcard such as *.example.org, and by path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
-msgstr "ينهي Sibuna اتصالات TLS ويخدم HTTP/1.1 وHTTP/2 وHTTP/3 وWebSocket. ويوجّه كل طلب بحسب اسم المضيف، وبحسب حرف بدل مثل *.example.org، وبحسب المسار. وتأتي الشهادات من Let's Encrypt أو من سلطة ACME أخرى، وتغطي سلطة محلية الأسماء الداخلية."
+msgstr "ينهي Sibuna اتصالات TLS ويخدم HTTP/1.1 وHTTP/2 وHTTP/3 وWebSocket. ويوجّه كل طلب حسب اسم المضيف، أو نطاق بدل (wildcard) مثل *.example.org، وحسب المسار. وتأتي الشهادات من Let's Encrypt أو من سلطة ACME أخرى، بينما تغطي سلطة محلية الأسماء الداخلية."
 
 msgid "Singapore"
 msgstr "سنغافورة"
@@ -436,7 +436,7 @@ msgid "TCP forwarding"
 msgstr "تمرير TCP"
 
 msgid "TCP streams and UDP mappings go to a pool of servers. A TLS connection can pass through undecrypted, routed by its server name. QUIC can pass through too. The PROXY protocol carries the address of the client."
-msgstr "تذهب تدفقات TCP وتعيينات UDP إلى مجمّع خوادم. ويمكن لاتصال TLS أن يمر دون فك تشفيره، موجَّهًا بحسب اسم خادمه. ويمكن أن يمر QUIC أيضًا. ويحمل بروتوكول PROXY عنوان العميل."
+msgstr "تُوجَّه تدفقات TCP وتعيينات UDP إلى مجمّع خوادم (pool). ويمكن لاتصال TLS أن يمر دون فك تشفيره، موجَّهًا حسب اسم الخادم (SNI)، وكذلك QUIC. ويحمل بروتوكول PROXY عنوان العميل."
 
 msgid "The admitted request is forwarded to the application."
 msgstr "يُمرَّر الطلب المقبول إلى التطبيق."
@@ -451,7 +451,7 @@ msgid "The browser sends a request through your HTTPS ingress."
 msgstr "يرسل المتصفح طلبًا عبر وكيل دخول HTTPS لديك."
 
 msgid "The built-in inspector checks the first 8 KiB of supported bodies. WebSocket messages are relayed without inspection. Sibuna does not provide volumetric network mitigation. A challenge adds work. It does not establish that a visitor is human."
-msgstr "يفحص الفاحص المدمج أول 8 KiB من أجسام الطلبات المدعومة. وتُمرَّر رسائل WebSocket دون فحص. ولا يوفر Sibuna حماية من هجمات الشبكة الحجمية. يضيف التحدي عملًا. وهو لا يثبت أن الزائر إنسان."
+msgstr "يفحص الفاحص المدمج أول 8 KiB من أجسام الطلبات المدعومة، وتُمرَّر رسائل WebSocket دون فحص. ولا يوفر Sibuna حماية من هجمات الشبكة الحجمية (volumetric). يفرض التحدي جهدًا حسابيًا، لكنه لا يثبت أن الزائر إنسان."
 
 msgid "The checks still apply"
 msgstr "تظل الفحوص سارية"
@@ -466,7 +466,7 @@ msgid "The client submits its proof to Sibuna."
 msgstr "يقدّم العميل إثباته إلى Sibuna."
 
 msgid "The console is opt-in. Its strict performance isolation target has not formally passed. Published measurements identify the code revision and uncertainty."
-msgstr "وحدة التحكم لا تعمل إلا إذا فُعّلت صراحةً. ولم يُستوفَ بعدُ رسميًا هدفها الصارم لعزل الأداء. وتذكر القياسات المنشورة مراجعة الشيفرة ومقدار عدم اليقين."
+msgstr "وحدة التحكم اختيارية ولا تعمل إلا عند تفعيلها. ولم يجتز هدفها الصارم لعزل الأداء الاختبار الرسمي بعد. وتذكر القياسات المنشورة مراجعة الشيفرة ومقدار التفاوت."
 
 msgid "The proof returns"
 msgstr "يعود الإثبات"
@@ -514,7 +514,7 @@ msgid "We state the limits beside the features. Linux requires kernel 5.10 or la
 msgstr "نذكر الحدود إلى جانب الميزات. يتطلب Linux نواة 5.10 أو أحدث، ويتطلب macOS الإصدار 12 أو أحدث، ويتطلب Windows نظام Windows 10 أو Server 2016 أو أحدث. والعمال المدفوعون بالأحداث واستبدال الملف التنفيذي دون فقدان اتصالات موجودان في Linux فقط."
 
 msgid "We tested the cluster on three hosts. Qualification under production traffic remains open. Replacing the executable ends QUIC connections."
-msgstr "اختبرنا العنقود على ثلاثة مضيفين. وما زال التحقق تحت حمل الإنتاج مطلوبا. يؤدي استبدال الملف التنفيذي إلى إنهاء اتصالات QUIC."
+msgstr "اختبرنا العنقود على ثلاثة مضيفين. وما زال التأهيل تحت حركة مرور الإنتاج مفتوحًا. ويؤدي استبدال الملف التنفيذي إلى إنهاء اتصالات QUIC."
 
 msgid "What is Sibuna?"
 msgstr "ما هو Sibuna؟"

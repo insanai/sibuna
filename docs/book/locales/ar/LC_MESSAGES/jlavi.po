@@ -444,11 +444,7 @@ msgid ""
 "This module uses a typed helper to name an origin. The public portal uses "
 "the shield. Calls under ``/orders.Orders/`` use an HTTP/2 pool and skip "
 "the browser firewall. The RPC service must authenticate its callers."
-msgstr ""
-"تسمّي هذه الوحدة خادم الأصل بدالة مساعدة محددة الأنواع. تستخدم البوابة "
-"العامة الدرع. تستخدم الاستدعاءات تحت ``/orders.Orders/`` مجموعة HTTP/2 "
-"وتتجاوز الجدار الناري الخاص بالمتصفح. على خدمة RPC التحقق من هوية "
-"مستدعيها."
+msgstr "تسمّي هذه الوحدة خادم الأصل بدالة مساعدة محددة الأنواع. تستخدم البوابة العامة وضع Shield. تستخدم الاستدعاءات تحت ``/orders.Orders/`` مجموعة HTTP/2 وتتجاوز الجدار الناري الخاص بالمتصفح. على خدمة RPC التحقق من هوية مستدعيها."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:153
 msgid ""

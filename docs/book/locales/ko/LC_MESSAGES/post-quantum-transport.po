@@ -512,4 +512,4 @@ msgstr "``502``"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:133
 msgid "We record the date, endpoints, certificate identities, negotiated groups and any plaintext segments for each service. Offering the group permits classical fallback. A policy that requires hybrid-only sessions needs enforcement and evidence on every covered connection. Post-quantum signatures, FIPS 140 module validation and SQLx database TLS each need separate evidence. An edge handshake establishes one item in that inventory."
-msgstr "각 서비스에 대해 날짜, 양 끝점, 인증서로 확인한 신원, 협상한 그룹, 평문이 오가는 구간을 기록합니다. 하이브리드 그룹을 제안해도 기존 방식으로의 폴백은 허용됩니다. 하이브리드 세션만 허용하는 정책이라면 대상 연결마다 이를 강제하고 증거를 남겨야 합니다. 양자내성 서명, FIPS 140 모듈 검증, SQLx의 데이터베이스 TLS도 각각 별도의 증거가 필요합니다. 에지 핸드셰이크 한 번으로 확인되는 것은 이 목록의 한 항목입니다."
+msgstr "각 서비스에 대해 날짜, 양 끝점, 인증서로 확인한 신원, 협상한 그룹, 평문이 오가는 구간을 기록합니다. 하이브리드 그룹을 제안해도 기존 방식으로의 폴백은 허용됩니다. 하이브리드 세션만 허용하는 정책이라면 대상 연결마다 이를 강제하고 증거를 남겨야 합니다. 양자내성 서명, FIPS 140 모듈 검증, SQLx의 데이터베이스 TLS도 각각 별도의 증거가 필요합니다. 엣지 핸드셰이크 한 번으로 확인되는 것은 이 목록의 한 항목입니다."

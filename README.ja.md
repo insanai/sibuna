@@ -1,6 +1,6 @@
-<!-- English source SHA-256: 4c67703ca6d3304b7b577e9000320ec59884185b2ef46b6fcc2b14a811cf150f -->
+<!-- English source SHA-256: 042dfd1f971e2a895223216b56e2eaa8b0119c40748dfe2230db4fc208e2d004 -->
 <h1 align="center">sibuna</h1>
-<p align="center">分散型エッジロードバランサーと Web アプリケーションファイアウォール</p>
+<p align="center">分散型エッジロードバランサーおよび Web アプリケーションファイアウォール</p>
 <p align="center">
   <a href="#features">機能</a> ·
   <a href="#load-balancing">負荷分散</a> ·
@@ -19,19 +19,19 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-Sibuna は、単一のエッジノードでもメッシュ構成でも、TCP、UDP、HTTP のトラフィックを正常なサーバーに振り分けます。エッジで TLS を終端し、指定した HTTP ルートを検査して、DDoS による大量のトラフィックからバックエンドを保護できます。
+Sibuna は、単一のエッジノードでもメッシュ構成でも、TCP、UDP、HTTP のトラフィックを正常なサーバーに振り分けます。エッジで TLS を終端し、指定した HTTP ルートを検査して、DDoS フラッドからバックエンドを保護できます。
 
-## Sibunaの利用例
+## Sibuna の利用例
 
-- **公開ウェブサイト**
+- **公開 Web サイト**
 
-  ブラウザーからの接続をHTTP/2またはHTTP/3で受け、Let's Encryptで公開証明書を更新します。リクエストを検査してからHTTP/1.1のレプリカに転送します。
-- **内部gRPCサービス**
+  ブラウザからの接続を HTTP/2 または HTTP/3 で受け、Let's Encrypt で公開証明書を自動更新します。リクエストを検査したうえで HTTP/1.1 レプリカに転送します。
+- **内部 gRPC サービス**
 
-  ローカルCAで内部名の証明書を発行します。クライアントはそのルート証明書を信頼し、TLS経由でサービスを呼び出します。HTTP/2バックエンドがgRPCメッセージとトレーラーを運びます。
-- **エッジノードのクラスタ**
+  ローカル CA で内部ホスト名の証明書を発行します。クライアントはそのルート証明書を信頼し、TLS 経由でサービスを呼び出します。HTTP/2 バックエンドが gRPC メッセージとトレーラーを転送します。
+- **エッジノードのクラスター**
 
-  検証済みのルーティング設定をメッシュに配布します。各ノードは自身のバックエンドプールに通信を転送しながら、拒否情報や学習済みの振り分け先を共有できます。
+  検証済みのルーティング設定をメッシュ全体に配布します。各ノードは自身のバックエンドプールにトラフィックを転送しながら、アクセス禁止（BAN）や学習済みのアフィニティを共有できます。
 
 [Sibuna とは何か](https://insanai.github.io/sibuna/ja/book/introduction.html)
 
@@ -39,23 +39,23 @@ Sibuna は、単一のエッジノードでもメッシュ構成でも、TCP、U
 
 ## 機能
 
-- **実行ファイルは1つ：** エンジン、組み込みのSQLiteストレージ、ブラウザーのソルバー、コンソールのリソースを含みます。
-- **ネイティブパッケージ：** Linux、macOS、Windows、FreeBSD、OpenBSDに対応します。ブラウザーのソルバーはWebAssemblyを使います。
-- **ブラウザーチャレンジ：** 逐次作業証明（標準）またはHashcashを使い、完了すると署名付きセッションを発行します。
-- **アクセスポリシー：** アドレス、パス、ヘッダー、User-Agentに応じて、リクエストを許可、チャレンジ、重み付け、拒否します。
-- **負荷分散：** 複数のサーバーの前でTCP、UDP、HTTPを扱います。TLS終端、証明書の自動取得、クラスターモードに対応します。[負荷分散](#load-balancing)を参照してください。
-- **[エッジでの DDoS 対策](https://insanai.github.io/sibuna/ja/book/operations.html#edge-admission-under-attack)** クライアント IP ごと、フロントエンドごとに同時フロー数を制限できます。高負荷時には新しいアドレスの受け入れを制限し、確認済みのフロー用に UDP の処理枠を確保できます。回線を飽和させる規模の攻撃には、上流でのフィルタリングが必要です。
-- **TLSフィンガープリント：** 信頼できるイングレスが転送するJA4フィンガープリントを、完全一致または前方一致で照合します。
-- **アプリケーション検査：** SQLインジェクション、XSS、パストラバーサル、コマンドインジェクションの検査を内蔵しています。
-- **ローカルのレート制限：** 突発的なトラフィックと継続的なトラフィックを制御します。ルールごとの制限も設定できます。
-- **運用コンソール：** トラフィック、サンプリングされた国別の活動、記録済みインシデント、ポリシーの編集。
-- **クラスター対応：** 別のビルドで、PostgreSQLを通じてポリシーとレピュテーションを共有します。
+- **単一バイナリ：** エンジン、組み込み SQLite ストレージ、ブラウザソルバー、コンソールアセットを 1 つの実行ファイルに収録。
+- **ネイティブパッケージ：** Linux、macOS、Windows、FreeBSD、OpenBSD に対応。ブラウザソルバーには WebAssembly を使用。
+- **ブラウザチャレンジ：** 逐次プルーフ・オブ・ワーク（デフォルト）または Hashcash を用い、完了後に署名付きセッションを発行。
+- **アクセスポリシー：** アドレス、パス、ヘッダー、User-Agent に応じて、リクエストを許可・チャレンジ・重み付け・拒否。
+- **負荷分散：** 複数サーバーの前段で TCP、UDP、HTTP を処理。TLS 終端、証明書の自動取得、クラスターモードに対応。詳細は[負荷分散](#load-balancing)を参照。
+- **[エッジでの DDoS 対策](https://insanai.github.io/sibuna/ja/book/operations.html#edge-admission-under-attack)** クライアント IP ごと・フロントエンドごとに同時フロー数を制限できます。高負荷時には新規アドレスの受け入れを制限し、確認済みフロー向けに UDP の処理枠を確保できます。回線を飽和させる規模のフラッド攻撃には上流でのフィルタリングが必要です。
+- **TLS フィンガープリント：** 信頼できるイングレスが転送する JA4 フィンガープリントを完全一致または前方一致で照合。
+- **アプリケーション検査：** SQL インジェクション、XSS、パストラバーサル、コマンドインジェクションの検査を内蔵。
+- **ローカルレートリミット：** バーストトラフィックと継続トラフィックを制御し、ルールごとの上限も設定可能。
+- **運用コンソール：** トラフィック状況、サンプリングされた国別アクティビティ、記録済みインシデントの確認、およびポリシー編集。
+- **クラスター対応：** 別ビルドにより、PostgreSQL を通じてポリシーとレピュテーションを共有。
 
 <a id="load-balancing"></a>
 
 ## 負荷分散
 
-Sibuna 1.0.0-rc.7 にはエッジモードが含まれます。リリース候補を[ソースからビルド](#build-from-source)することもできます。
+Sibuna 1.0.0-rc.7 にはエッジモードが含まれています。リリース候補を[ソースからビルド](#build-from-source)することもできます。
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -65,43 +65,43 @@ sibuna check -f edge.jlv
 sibuna --config-file edge.jlv
 ```
 
-[JlaviでSibunaを設定する](https://insanai.github.io/sibuna/ja/book/jlavi.html)
+[Jlavi で Sibuna を設定する](https://insanai.github.io/sibuna/ja/book/jlavi.html)
 
-- **転送：** TCPとUDP、サーバー名（完全一致またはワイルドカード）でルーティングするTLSパススルー、QUICパススルー、PROXYプロトコル。
-- **攻撃を受けたとき:** クライアントアドレスごと・フロントエンドごとのフロー上限、接続の受け付け時に確認されメッシュで共有される禁止、自動禁止、リセットまたはターピットによる拒否、既知のクライアントを先に受け入れる圧力モード、複数のコアで動く受け付けスレッド、確認済みクライアントのために予備を残す UDP パケット予算。
-- **HTTP：** HAProxy形式のPEMバンドルでTLSを終端し、耐量子鍵交換（X25519MLKEM768）を使います。HTTP/1.1、HTTP/2、HTTP/3、WebSocketに対応し、ホスト名（完全一致または `*.example.org` のようなワイルドカード）とパスでHTTP/1.1、HTTP/2、HTTP/3のサーバーへルーティングします。Linuxでは、イベント駆動のワーカーが接続を処理します。ワーカーはプロセッサーごとに1つです。
-- **証明書：** ACMEによる自動取得と更新、フォールバック認証局、外部アカウントバインディング。フックプログラム、RFC 2136更新、Cloudflare APIを使ったDNS経由のワイルドカード証明書。OCSPステープリング。ガードの背後でのオンデマンド証明書。`localhost`、内部の名前、IPアドレス向けのローカル認証局。ローカル認証局は失効リストと独自のACMEサーバーを備えます。
-- **サーバー：** ヘルスチェック、スロースタート、ドレイン、重み、スティッキーセッション、サーバーごとのフロー数の上限。
-- **動かしたままの変更：** 設定の再読み込みに成功すると、確立済みのTCP接続は維持されます。管理ソケットで、サーバーのドレイン、重み付け、追加、削除ができます（`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`）。Linuxでは、新しい実行ファイルが古い実行ファイルからリスニングソケットとUDPマッピングを引き継ぎます。QUIC接続は終了します。
-- **クラスター：** メッシュのノードはスティッキーテーブルとサーバーのフロー数の上限を共有し、クライアントをそれを所有するノードへ転送します。PostgreSQLデータベースは1つの設定をすべてのノードに配布し、ロールバックすることもできます。マップしたファイルが、再起動後もアフィニティのヒントを保持します。
-- **フック：** 接続時とリクエスト時に実行されます。組み込みでコンパイルするか、予算付きのWebAssemblyとして動かすか、Unixソケット上のエージェントとして動かします。
-- **観測：** メトリクス、アクセスログ、サーバー、フロー、拒否を表示するコンソール画面。
+- **転送：** TCP / UDP、サーバー名（完全一致またはワイルドカード）でルーティングする TLS パススルー、QUIC パススルー、PROXY プロトコル。
+- **攻撃時の防御：** クライアントアドレスごと・フロントエンドごとのフロー上限、接続受け付け時に評価されメッシュ全体で共有されるアクセス禁止（BAN）、自動 BAN、TCP リセットまたはターピットによる拒否、既知クライアントを優先的に受け入れる高負荷保護モード、複数コアで動作するアクセプトスレッド、確認済みクライアント向けに予備枠を確保する UDP パケットバジェット。
+- **HTTP：** HAProxy 形式の PEM バンドルによる TLS 終端と耐量子鍵交換（X25519MLKEM768）。HTTP/1.1、HTTP/2、HTTP/3、WebSocket に対応し、ホスト名（完全一致または `*.example.org` のようなワイルドカード）とパスで HTTP/1.1、HTTP/2、HTTP/3 サーバーへルーティング。Linux では CPU コアごとに 1 つのイベント駆動ワーカーが接続を処理。
+- **証明書：** ACME による自動取得・更新、フォールバック認証局、外部アカウントバインディング（EAB）。フックプログラム、RFC 2136 更新、Cloudflare API を用いた DNS 経由のワイルドカード証明書。OCSP ステープリング。ガード経由のオンデマンド証明書発行。`localhost`、内部ホスト名、IP アドレス向けのローカル認証局（失効リストおよび独自 ACME サーバー付き）。
+- **サーバー：** ヘルスチェック、スロースタート、ドレイン、重み付け、スティッキーセッション、サーバーごとのフロー上限。
+- **無停止での運用変更：** 設定のリロードが受理されると、確立済みの TCP ストリームはそのまま維持されます。管理ソケットからサーバーのドレイン、重み変更、追加、削除を実行できます（`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`）。Linux では新しい実行ファイルが旧プロセスからリスニングソケットと UDP マッピングを引き継ぎます（QUIC 接続は終了します）。
+- **クラスター：** メッシュ内のノードがスティッキーテーブルとサーバーのフロー上限を共有し、クライアントを担当ノードへ転送します。PostgreSQL データベースから 1 つの設定を全ノードに配信・ロールバックでき、メモリマップファイルで再起動後もアフィニティのヒントを保持します。
+- **フック：** 接続時およびリクエスト時に実行。組み込みでのコンパイル、実行時間上限付きの WebAssembly、または Unix ソケット経由のエージェントとして動作。
+- **オブザーバビリティ：** メトリクス、アクセスログ、およびサーバー・フロー・拒否状況を表示するコンソール画面。
 
-GateまたはShieldは、必要な名前だけに適用することも、どこにも適用しないこともできます。設定ファイルが常に正となります。実行中の変更は、次の再読み込みまで有効です。
+Gate や Shield は必要なホスト名だけに適用することも、一切適用しないこともできます。設定ファイルが常に正となり、実行時の変更は次のリロードまで有効です。
 
-本番トラフィックでの検証は今後の課題です。クラスター機能は3台のホストでテストしました。各[設計議論](https://insanai.github.io/sibuna/sid/)に、実装済みの内容と既知の課題を記載しています。
+本番トラフィックでの実運用検証はまだ完了していません。クラスター機能は 3 台のホストでテスト済みです。各[設計議論](https://insanai.github.io/sibuna/sid/)に、実装済みの内容と既知の課題を記載しています。
 
 <a id="quickstart"></a>
 
 ## クイックスタート
 
-プラットフォームに合った[リリースをダウンロード](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.7)してください。標準パッケージにはストレージとコンソールのサポートが含まれます。コンソールは`--console`で起動します。
+プラットフォームに合った[リリースをダウンロード](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.7)してください。標準パッケージにはストレージとコンソールのサポートが含まれます。コンソールは `--console` で起動します。
 
 | プラットフォーム | パッケージ | 動作要件 |
 | --- | --- | --- |
-| Linux x86-64 | `sibuna-linux-amd64.tar.gz` | Linux 5.10以降、muslを静的リンク |
-| Linux ARM64 | `sibuna-linux-arm64.tar.gz` | Linux 5.10以降、muslを静的リンク |
-| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12以降 |
-| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12以降 |
-| Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016以降、ネイティブの`sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-rc.7-freebsd-15.1-amd64.pkg` | FreeBSD 15.1、CLIパッケージ |
-| OpenBSD x86-64 | `sibuna-1.0.0-rc.7.tgz` | OpenBSD 7.9、CLIパッケージ |
+| Linux x86-64 | `sibuna-linux-amd64.tar.gz` | Linux 5.10 以降、musl 静的リンク |
+| Linux ARM64 | `sibuna-linux-arm64.tar.gz` | Linux 5.10 以降、musl 静的リンク |
+| macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 以降 |
+| macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 以降 |
+| Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 以降、ネイティブの `sibuna.exe` |
+| FreeBSD x86-64 | `sibuna-1.0.0-rc.7-freebsd-15.1-amd64.pkg` | FreeBSD 15.1、CLI パッケージ |
+| OpenBSD x86-64 | `sibuna-1.0.0-rc.7.tgz` | OpenBSD 7.9、CLI パッケージ |
 
-macOS向けビルドは未署名です。各パッケージにはライセンス、ソースへのリンク、ビルドマニフェストが含まれます。使用する前に、`SHA256SUMS`と照合してアーカイブを検証してください。
+macOS 向けビルドは未署名です。各パッケージにはライセンス、ソースへのリンク、ビルドマニフェストが含まれます。使用する前に、`SHA256SUMS` と照合してアーカイブを検証してください。
 
-Debian/RPMパッケージはLinux x86-64とARM64に、Archの`sibuna-bin`はx86-64に対応します。FreeBSD 15.1とOpenBSD 7.9のパッケージはx86-64に対応し、CLIをインストールします。Linuxパッケージには、任意で使える無効状態のsystemdサービスが含まれます。BSDパッケージはサービス、アカウント、状態を作成しません。これらは上流の配布物で、コミュニティのアーカイブへの採用は別の手続きです。リリースにはHelm chartとコンテナーイメージ`ghcr.io/insanai/sibuna`も含まれます。インストール、検証、非公開の状態、アップグレード、Kubernetesの設定は[パッケージ運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)を参照してください。
+Debian/RPM パッケージは Linux x86-64 と ARM64 に、Arch の `sibuna-bin` は x86-64 に対応します。FreeBSD 15.1 と OpenBSD 7.9 のパッケージは x86-64 に対応し、CLI をインストールします。Linux パッケージには、任意で有効化できる無効状態の systemd サービスが含まれます。BSD パッケージはサービス・アカウント・状態ファイルを作成しません。これらは上流の配布物であり、コミュニティリポジトリへの採録とは別です。リリースには Helm チャートとコンテナイメージ `ghcr.io/insanai/sibuna` も含まれます。インストール、検証、プライベートな状態ファイル、アップグレード、Kubernetes 構成については[パッケージ運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)を参照してください。
 
-[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna)は、検証済みのリリースアーカイブをインストールするCLI formulaを提供します。対応するのはmacOSとLinux（Apple Silicon、ARM64、x86-64）です。tapは公開済みの最新リリースに追従します。インストールしてもサービスは起動しません：
+[Sibuna Homebrew tap](https://github.com/insanai/homebrew-sibuna) は、検証済みのリリースアーカイブをインストールする CLI 用 Formula を提供しています。macOS と Linux（Apple Silicon、ARM64、x86-64）に対応し、公開済みの最新リリースに追従します。インストールしてもサービスは起動しません：
 
 ```sh
 brew tap insanai/sibuna
@@ -109,7 +109,7 @@ brew install insanai/sibuna/sibuna
 sibuna --version
 ```
 
-Linux x86-64で、アプリがポート3000で待ち受けている場合：
+Linux x86-64 で、アプリがポート 3000 で待ち受けている場合：
 
 ```sh
 curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.7/sibuna-linux-amd64.tar.gz
@@ -120,17 +120,17 @@ tar -xzf sibuna-linux-amd64.tar.gz
 ./sibuna --host 127.0.0.1 --port 8080 --upstream-port 3000 --secret-file ./sibuna.seed
 ```
 
-`http://127.0.0.1:8080`を開くとローカルで試せます。公開サイトでは、信頼できるイングレスでHTTPSを終端し、Sibunaのリスナーは非公開にしてください。Caddyまたはnginxでの構成は[デプロイガイド](https://insanai.github.io/sibuna/ja/book/operations.html)に従ってください。
+`http://127.0.0.1:8080` を開くとローカルで試せます。公開サイトでは、信頼できるイングレスで HTTPS を終端し、Sibuna のリスナーは非公開にしてください。Caddy または nginx での構成は[デプロイガイド](https://insanai.github.io/sibuna/ja/book/operations.html)に従ってください。
 
-標準モードは`reverse_proxy`です。イングレスがリクエストを転送し、Sibunaにアクセス判断を問い合わせる構成では`--mode forward_auth`を使います。ガイドには両方の設定が載っています。Shieldの内蔵検査は標準で有効です。この検査器を使わずにアクセスの許可だけを行う場合は`--gate`を使います。アクセスルールは`--policy-file <file>`で選びます。ブラウザーチャレンジを実行できないAPIクライアントやヘルスチェック向けのルールも含められます。`./sibuna --help`はすべてのオプションを一覧表示します。
+デフォルトのモードは `reverse_proxy` です。イングレスがリクエストを転送し、Sibuna にアクセス判定を問い合わせる構成では `--mode forward_auth` を使用します。ガイドには両方の設定例を掲載しています。Shield の内蔵検査はデフォルトで有効です。内蔵検査を使わずにアクセス制御のみを行う場合は `--gate` を指定します。アクセスルールは `--policy-file <file>` で指定でき、ブラウザチャレンジを実行できない API クライアントやヘルスチェック向けのルールも含められます。`./sibuna --help` で全オプションを確認できます。
 
-WindowsではZIPを展開し、PowerShellで`.\sibuna.exe --help`を実行します。停止するにはCtrl+Cを押します。シード、認証情報、データファイルへのアクセスはWindows ACLで制限してください。
+Windows では ZIP を展開し、PowerShell で `.\sibuna.exe --help` を実行します。停止するには Ctrl+C を押します。シード、認証情報、データファイルへのアクセスは Windows ACL で制限してください。
 
 <a id="build-from-source"></a>
 
 ### ソースからビルドする
 
-ビルドとテストには**Rust 1.100**を使っています。標準のJLVコンパイラーがこのバージョンを必要とするためです。JSONのみのデーモンは、Rust 1.100で`--no-default-features`を指定してビルドでき、必要に応じて`sqlite,console`を選べます。ブラウザーのソルバーとコンソールのインターフェースは、WebAssemblyにコンパイルしたRustです。ビルドにNodeやnpmは必要ありません。
+すべての機能セットのビルドに **Rust 1.100** が必要です。JSON のみのデーモンは `--no-default-features` でビルドし、必要に応じて `sqlite,console` を選択します。ブラウザソルバーとコンソール UI は WebAssembly にコンパイルされた Rust であり、ビルドに Node や npm は不要です。
 
 ```sh
 git clone https://github.com/insanai/sibuna.git
@@ -139,13 +139,13 @@ rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unkno
 cargo +1.100.0 build --release -p sibuna
 ```
 
-実行ファイルは`target/release/sibuna`です。`--data-dir`を指定すると、状態をSQLiteに保存します。クラスター版は`--features postgres-tls`でビルドし、`--database-url-file`と`--cluster-node`を使って1つのPostgreSQLデータベースを共有します。テスト、lint、サイズの検査は[CONTRIBUTING.md](CONTRIBUTING.md)を参照してください。
+実行ファイルは `target/release/sibuna` に出力されます。`--data-dir` を指定すると状態を SQLite に保存します。クラスター版は `--features postgres-tls` でビルドし、`--database-url-file` と `--cluster-node` で 1 つの PostgreSQL データベースを共有します。テスト、lint、バイナリサイズ検査については [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
 
 <a id="console"></a>
 
 ## コンソール
 
-コンソールは同じ実行ファイルで動作します。デーモンを停止した状態で、管理者を初期設定してください：
+コンソールは同じ実行ファイル内で動作します。デーモンを停止した状態で管理者を初期設定してください：
 
 ```sh
 ./sibuna init-admin admin --data-dir ./data
@@ -153,66 +153,66 @@ cargo +1.100.0 build --release -p sibuna
   --data-dir ./data --console 127.0.0.1:19446
 ```
 
-`http://127.0.0.1:19446/console/`を開き、一時パスワードを変更してください。[運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)では、HTTPSでのアクセス、GeoIPのインポート、ユーザー、APIトークン、ウォールディスプレイについて説明しています。
+`http://127.0.0.1:19446/console/` を開き、一時パスワードを変更してください。[運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)では、HTTPS アクセス、GeoIP のインポート、ユーザー管理、API トークン、ウォールディスプレイについて説明しています。
 
-![ナビゲーション、国別活動の地球儀、リクエストの結果、観測範囲、国別サンプルを表示したSibunaコンソール](docs/readme/images/console-globe-93225dc9.png)
+![ナビゲーション、国別アクティビティの地球儀、リクエスト結果、観測範囲、国別サンプルを表示した Sibuna コンソール](docs/readme/images/console-globe-93225dc9.png)
 
-地球儀は、直近1分間のサンプリングされた国別の活動を示します。マーカーは国のおおよその位置を示します。矢印は、設定したサーバーの位置へ向かいます。個々のライブ接続を示すものではありません。GeoIPには、別途インポートしたデータセットが必要です。地球儀上にサーバーを配置するには、`--console-location <latitude,longitude>`を設定してください。
+地球儀ビューは直近 1 分間にサンプリングされた国別アクティビティを表示します。マーカーはおおよその国の位置を示し、矢印は設定されたサーバー位置へ向かいます。個々のライブ接続を表すものではありません。GeoIP には別途インポートしたデータセットが必要です。地球儀上にサーバーを配置するには `--console-location <latitude,longitude>` を設定してください。
 
 <details>
-<summary>トラフィックの概要、セキュリティの概要、ポリシー、インシデント調査</summary>
+<summary>トラフィック概要、セキュリティ概要、ポリシー、インシデント調査</summary>
 
-**トラフィックの概要** - ライブのリクエスト結果、許可とチャレンジのカウンター、ノードの稼働状態、スパークライン。
+**トラフィック概要** - ライブのリクエスト結果、許可・チャレンジカウンター、ノード稼働状態、スパークライン。
 
-![リクエスト、許可、チャレンジ、拒否のカウンターを表示したSibunaコンソールのトラフィック概要](docs/readme/images/console-traffic-fba02476.png)
+![リクエスト、許可、チャレンジ、拒否のカウンターを表示した Sibuna コンソールのトラフィック概要](docs/readme/images/console-traffic-fba02476.png)
 
-**セキュリティの概要** - 記録された検出結果、チャレンジ、アクセス禁止、ライブのイベントフィード。
+**セキュリティ概要** - 記録された検出結果、チャレンジ、アクセス禁止（BAN）、ライブのイベントフィード。
 
-![検査、チャレンジ、アクセス禁止、ハニーポットの検出結果を表示したSibunaコンソールのセキュリティ概要](docs/readme/images/console-security.png)
+![検査、チャレンジ、アクセス禁止、ハニーポットの検出結果を表示した Sibuna コンソールのセキュリティ概要](docs/readme/images/console-security.png)
 
-**ポリシー** - ノードが順に適用するルールと、記録されたヒット数。
+**ポリシー** - ノードが順に適用するルールと記録されたヒット数。
 
-![適用中の設定と許可ルールを表示したSibunaコンソールのポリシーページ](docs/readme/images/console-policies.png)
+![適用中の設定と許可ルールを表示した Sibuna コンソールのポリシーページ](docs/readme/images/console-policies.png)
 
-**イベント** - 記録されたインシデント。モジュール、国、アドレス、パス、時間で絞り込めます。
+**イベント** - 記録されたインシデント。モジュール、国、アドレス、パス、時刻で絞り込めます。
 
-![インシデントのフィルターと記録されたSQLインジェクションの検出結果を表示したSibunaコンソールのイベントページ](docs/readme/images/console-events.png)
+![インシデントのフィルターと記録された SQL インジェクション検出結果を表示した Sibuna コンソールのイベントページ](docs/readme/images/console-events.png)
 
 </details>
 
-地球儀とトラフィック概要は、v1.0.0-beta.2を実行し、通常のChromeウィンドウで撮影しました。他の画面はv1.0.0-beta.1のものです。すべての画像は、生成したトラフィックとテスト用GeoIPマッピングを使用したローカルのテストノードで撮影しています。表示された数値はベンチマーク結果ではありません。
+地球儀とトラフィック概要は、v1.0.0-beta.2 を実行して通常の Chrome ウィンドウでキャプチャしたものです。その他の画面は v1.0.0-beta.1 のものです。すべての画像は生成トラフィックとテスト用 GeoIP マッピングを用いたローカルテストノードで撮影しており、表示されている数値はベンチマーク結果ではありません。
 
 <a id="how-it-works"></a>
 
 ## 仕組み
 
-フロントエンドが接続を受け付けます。TCP や UDP ではフローごとにサーバーを選びます。HTTP ではリクエストごとにホストとパスを照合し、ルートのファイアウォールポリシーを適用して、許可したリクエストを該当プールの正常なサーバーに転送します。各エッジがこの判断を行い、ノード間ではサーバーへの割り当てやブロック情報の更新を共有します。
+フロントエンドが接続を受け付けます。TCP や UDP ではフローごとにサーバーを選択します。HTTP ではリクエストごとにホストとパスを照合し、ルートのファイアウォールポリシーを適用して、許可したトラフィックを該当プールの正常なサーバーに転送します。各エッジノードが自律的にこの判定を行いながら、ピア間でアフィニティや BAN 情報の更新を共有します。
 
-リクエストは許可される場合も、チャレンジを要求される場合も、拒否される場合もあります。チャレンジを解いた訪問者は署名付きセッションを受け取ります。その後のリクエストも、適用されるポリシーとレートの検査を通ります。
+リクエストは許可、チャレンジ要求、拒否のいずれかに判定されます。チャレンジを解いた訪問者には署名付きセッションが発行されます。その後のリクエストも、適用対象のポリシーおよびレートリミット検査を通過する必要があります。
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/admission-session-dark.svg">
   <img src="docs/readme/images/admission-session.svg" alt="パズルを解いて署名付きセッションを受け取り、その後のリクエストでもルールを確認する">
 </picture>
 
-Gateはアクセスルール、セッション、ローカルのレート制限を確認します。Shieldは内蔵の攻撃検査器を追加します。標準はShieldで、起動時に`--gate`を指定するとGateになります。
+Gate はアクセスルール、セッション、ローカルレートリミットを評価します。Shield はそこに内蔵の攻撃検査エンジンを追加します。デフォルトは Shield で、起動時に `--gate` を指定すると Gate が有効になります。
 
 <details>
-<summary>Gate、Shield、Sibuna内部のクレート</summary>
+<summary>Gate、Shield、および Sibuna 内部のクレート構成</summary>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/protection-surfaces-dark.svg">
-  <img src="docs/readme/images/protection-surfaces.svg" alt="GateとShieldのリクエスト判断：許可、チャレンジ、ブロック">
+  <img src="docs/readme/images/protection-surfaces.svg" alt="Gate と Shield のリクエスト判定：許可、チャレンジ、ブロック">
 </picture>
 
-図はGateとShieldの内蔵検査を示しています。有効なセッションがあっても、適用される攻撃検査やリクエスト制限は省略されません。
+図は Gate と Shield の内蔵検査を示しています。有効なセッションを持っていても、適用対象の攻撃検査やレートリミットはバイパスされません。
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/subsystems-dark.svg">
-  <img src="docs/readme/images/subsystems.svg" alt="Sibuna内部のクレートの役割">
+  <img src="docs/readme/images/subsystems.svg" alt="Sibuna 内部のクレートの役割">
 </picture>
 
-クレートは、ネットワーク、証明、ポリシー、ローカル状態、ストレージ、管理の責務を分けています。[技術ガイド](https://insanai.github.io/sibuna/ja/book/)でそれぞれの役割を説明しています。
+クレートはネットワーク、証明、ポリシー、ローカル状態、ストレージ、管理の各責務に分離されています。それぞれの役割は[技術ガイド](https://insanai.github.io/sibuna/ja/book/)で詳しく解説しています。
 
 </details>
 
@@ -220,99 +220,99 @@ Gateはアクセスルール、セッション、ローカルのレート制限�
 
 ### デプロイ時の制約
 
-非公開リスナーは、外部のイングレスの背後でHTTP/1.1を使います。エッジモードでは、TLS、HTTP/2、HTTP/3をSibunaで終端し、HTTP/1.1、HTTP/2、HTTP/3のサーバープールへ転送できます。Forward-authはイングレスから渡されたメタデータを検査します。リバースプロキシモードでは、内蔵検査器はボディーの先頭8 KiBを対象とします。アップロードはストリーミングでアプリへ転送します。WebSocketメッセージは検査せずに中継します。検査器はヒューリスティックであり、完全な言語パーサーではありません。
+非公開リスナーは外部イングレスの背後で HTTP/1.1 を使用します。エッジモードでは TLS、HTTP/2、HTTP/3 を Sibuna で終端し、HTTP/1.1、HTTP/2、HTTP/3 のサーバープールへ転送できます。Forward-auth はイングレスから渡されたメタデータを検査します。リバースプロキシモードでは、内蔵検査エンジンはボディの先頭 8 KiB を対象とし、アップロードはアプリへストリーミング転送します。WebSocket メッセージは検査せずに中継します。検査エンジンはヒューリスティックベースであり、完全な言語パーサーではありません。
 
-レート制限はノードごとにローカルで適用されます。Sibunaは大規模なネットワークトラフィック攻撃の緩和機能を提供しません。接続を失わない実行ファイルの置き換えと、イベント駆動のワーカーは、Linuxにのみあります。チャレンジは、それを発行したノードに結び付けられます。チャレンジとその解答は同じノードへルーティングしてください。コンソールの厳格な性能目標は、まだ正式には通過していません。本番アプリと一緒にコンソールを有効にする前に、[デプロイ時の制約と測定結果](https://insanai.github.io/sibuna/ja/book/operations.html)を確認してください。
+レートリミットはノードごとにローカルで適用されます。Sibuna はボリュメトリック（大容量）ネットワーク攻撃の緩和機能は提供しません。無停止のバイナリ入れ替えとイベント駆動ワーカーは Linux のみ対応しています。チャレンジは発行元ノードに紐付くため、チャレンジとその解答は同じノードへルーティングしてください。コンソールの厳格な性能目標はまだ正式な検証を通過していません。本番アプリと並べてコンソールを有効化する前に、[デプロイ時の制約と測定結果](https://insanai.github.io/sibuna/ja/book/operations.html)を確認してください。
 
 <a id="benchmarks"></a>
 
 ## ベンチマーク
 
-技術ガイドでは、各実行のソースリビジョン、設定、ホストを記録しています。これらの測定は、1台のマシン上のいくつかのワークロードにおけるリクエストのコストを示します。同等の防御性能やボット識別の精度を測るものではありません。
+技術ガイドには各測定のソースリビジョン、設定、ホスト情報を記録しています。これらの測定は 1 台のマシン上でいくつかのワークロードを実行した際のリクエスト処理コストを示すものであり、防御性能やボット識別精度の同等性を測るものではありません。
 
 <a id="sibuna-on-one-host"></a>
 
-### 1台のホスト上のSibuna
+### 1 台のホスト上の Sibuna
 
-これらの実行ではAMD Ryzen 9 5950Xを使いました。デーモンには4つのCPUを割り当て、メモリ上で動かしました。負荷生成器とスタブのオリジンは、別の8つのCPUで動かしました。`wrk`はループバック経由で64接続を使いました。数値は3回の実行の中央値です。
+これらの測定には AMD Ryzen 9 5950X を使用しました。デーモンに 4 CPU を割り当ててインメモリで動作させ、負荷生成器とスタブオリジンを別の 8 CPU で動かしています。`wrk` はループバック経由で 64 接続を使用しました。数値は 3 回実行の中央値です。
 
-- forward-authモードでは、すべてのワークロードが毎秒197,532から211,636リクエストで動作し、p99は305から327マイクロ秒、リクエストあたりのCPU時間は11.7から13.8マイクロ秒でした。上限を決めていたのは負荷生成器です。
-- プロキシしたリクエストは毎秒138,965から147,303件でした。最大メモリは約16 MiBでした。
-- 毎秒100,000件の許可済みリクエストという同じ負荷では、p99.9レイテンシーはforward-authモードで62マイクロ秒、リバースプロキシモードで150マイクロ秒でした。
+- forward-auth モードでは、全ワークロードで毎秒 197,532〜211,636 リクエストを処理し、p99 レイテンシは 305〜327 μs、リクエストあたり CPU 時間は 11.7〜13.8 μs でした。上限は負荷生成器側で律速していました。
+- プロキシしたリクエストは毎秒 138,965〜147,303 件、ピークメモリ使用量は約 16 MiB でした。
+- 毎秒 100,000 件の許可済みリクエストという同一負荷条件で、p99.9 レイテンシは forward-auth モードで 62 μs、リバースプロキシモードで 150 μs でした。
 
 <a id="beside-haproxy-and-envoy"></a>
 
-### HAProxy、Envoyと並べて
+### HAProxy・Envoy との比較
 
-2026年11月25日に、同じホストで Sibuna、HAProxy 3.0.11、BoringSSL を使う Envoy 1.40.2 を測定しました。各プロキシに CPU 8 個とワーカースレッド 8 本を割り当てました。同じオリジン、証明書、負荷生成器を使い、ループバックの 256 接続で 2 バイトの応答を返しました。最初の 3 行は 8 秒間の測定を 3 回行ったときの毎秒リクエスト数の中央値です。最後の 3 行は測定終了時の常駐メモリです。処理量のばらつきは最大 4% で、すべてのリクエストが完了しました。
+2026 年 11 月 25 日に、同一ホスト上で Sibuna、HAProxy 3.0.11、および BoringSSL 版 Envoy 1.40.2 を測定しました。各プロキシに 8 CPU と 8 ワーカースレッドを割り当て、同じオリジン、証明書、負荷生成器を用い、ループバック経由の 256 接続で 2 バイトのレスポンスを返しています。最初の 3 行は 8 秒間の測定を 3 回行った際の毎秒リクエスト数の中央値、最後の 3 行は測定終了時の常駐メモリです。各ケースの処理量のばらつきは最大 4% 以内で、すべてのリクエストが正常に完了しました。
 
 | ケース | Sibuna | HAProxy | Envoy |
 | --- | ---: | ---: | ---: |
 | HTTP/1.1 | 220,040 | 220,323 | 70,909 |
-| TLS上のHTTP/1.1 | 174,611 | 165,199 | 63,399 |
+| TLS 上の HTTP/1.1 | 174,611 | 165,199 | 63,399 |
 | HTTP/2 | 104,132 | 153,899 | 68,972 |
-| 常駐メモリ、HTTP/1.1 | 14 MiB | 48 MiB | 58 MiB |
-| 常駐メモリ、TLS上のHTTP/1.1 | 21 MiB | 61 MiB | 61 MiB |
-| 常駐メモリ、HTTP/2 | 116 MiB | 112 MiB | 140 MiB |
+| 常駐メモリ（HTTP/1.1） | 14 MiB | 48 MiB | 58 MiB |
+| 常駐メモリ（TLS 上の HTTP/1.1） | 21 MiB | 61 MiB | 61 MiB |
+| 常駐メモリ（HTTP/2） | 116 MiB | 112 MiB | 140 MiB |
 
-平文 HTTP では Sibuna と HAProxy はほぼ同じ結果でした。HTTP/2 では HAProxy が Sibuna より約 48% 多くのリクエストを処理し、メモリ使用量もわずかに少なくなりました。Envoy は静的な設定でルーターフィルターを使いました。設定や負荷によって結果は変わり得ます。短い測定からは動的設定、アプリケーションの遅延、実際のネットワークでの性能についてほとんど判断できません。 [ベンチマーク](https://insanai.github.io/sibuna/ja/book/benchmarks.html#sibuna-haproxy-and-envoy)
+平文 HTTP では Sibuna と HAProxy はほぼ互角でした。HTTP/2 では HAProxy が Sibuna より約 48% 多くのリクエストを処理し、メモリ使用量もわずかに少なくなりました。Envoy は静的な設定でルーターフィルターを使用しています。設定やワークロード次第で結果は変わり得ます。こうした短時間の測定だけでは、動的設定、アプリケーション遅延、実ネットワーク上の性能は十分に判断できません。[測定手法と結果](https://insanai.github.io/sibuna/ja/book/benchmarks.html#sibuna-haproxy-and-envoy)
 
 <a id="beside-anubis"></a>
 
-### Anubisと並べて
+### Anubis との比較
 
-公式のAnubis 1.27.0リリースバイナリを、同じワークロード、CPU、負荷生成器で測定しました。Hashcashの作業量はそろえました。Sibunaはゼロビット8個、Anubisは16進数のゼロ2桁です。オリジンは`caddy respond`でした。表は、セッションを持つ許可済みリクエストの結果です。
+公式の Anubis 1.27.0 リリースバイナリを、同一のワークロード・CPU・負荷生成器で測定しました。Hashcash の計算量は揃えています（Sibuna は先頭ゼロ 8 ビット、Anubis は 16 進数先頭ゼロ 2 桁）。オリジンには `caddy respond` を使用しました。表はセッションを持つ許可済みリクエストの結果です。
 
 | 許可済みリクエスト | Sibuna Gate | Sibuna Shield | Anubis 1.27.0 |
 | --- | ---: | ---: | ---: |
 | Forward auth、req/s | 210,682 | 208,635 | 36,509 |
-| Forward auth、p99 | 305マイクロ秒 | 308マイクロ秒 | 7,477マイクロ秒 |
-| Forward auth、リクエストあたりのCPU時間 | 12.1マイクロ秒 | 13.2マイクロ秒 | 106.3マイクロ秒 |
+| Forward auth、p99 | 305 μs | 308 μs | 7,477 μs |
+| Forward auth、リクエストあたり CPU 時間 | 12.1 μs | 13.2 μs | 106.3 μs |
 | リバースプロキシ、req/s | 106,376 | 103,298 | 19,398 |
-| リバースプロキシ、p99 | 3,331マイクロ秒 | 3,321マイクロ秒 | 11,062マイクロ秒 |
+| リバースプロキシ、p99 | 3,331 μs | 3,321 μs | 11,062 μs |
 
-2回目の実行では、各製品に2つのCPUを割り当て、許可処理の各操作を計測しました。Anubisは、標準のEd25519トークンで1回、HS512トークンで1回実行しました。
+2 回目の測定では、各製品に 2 CPU を割り当ててアドミッション処理の各操作を計測しました。Anubis はデフォルトの Ed25519 トークンと HS512 トークンでそれぞれ 1 回ずつ実行しています。
 
-| 毎秒の操作数 | Sibuna（鍵付きBLAKE3） | Anubis（Ed25519） | Anubis（HS512） |
+| 毎秒の操作数 | Sibuna（鍵付き BLAKE3） | Anubis（Ed25519） | Anubis（HS512） |
 | --- | ---: | ---: | ---: |
 | 有効なセッションの確認 | 88,104 | 10,951 | 16,976 |
 | 未認証の確認 | 78,997 | 28,619 | 27,785 |
 | チャレンジの初期化 | 42,664 | 7,893 | 7,952 |
 | 証明の検証 | 57,924 | 12,668 | 19,261 |
 
-Sibunaの最大メモリは16 MiB前後にとどまりました。Anubisはforward-authモードで約33 MiB、リバースプロキシモードで最大約600 MiBを使いました。Anubisは広く使われている有能なツールであり、これらの行は順位付けではありません。いくつかの行は同じ条件での比較ではありません。forward-authモードのAnubisは一部のパスに自ら応答し、ペイロード検査を行わず、チャレンジページも異なります。実行はループバックで行い、TLS、実際のブラウザー、ストレージは使っていません。
+Sibuna のピークメモリは 16 MiB 前後にとどまりました。Anubis は forward-auth モードで約 33 MiB、リバースプロキシモードで最大約 600 MiB を使用しました。Anubis は広く使われている優れたツールであり、これらの数値は順位付けではありません。また、いくつかの項目は同一条件の比較ではありません（forward-auth モードの Anubis は一部パスに自ら応答し、ペイロード検査を行わず、チャレンジページも異なります）。測定はループバック上で実施し、TLS、実ブラウザ、ストレージは使用していません。
 
-手法、範囲、再実行コマンドは[ベンチマーク記録](benchmarks/results/README.md)を参照してください：[product-latest.md](benchmarks/results/product-latest.md)、[latency-latest.md](benchmarks/results/latency-latest.md)、[comparison-latest.md](benchmarks/results/comparison-latest.md)、[admission-latest.md](benchmarks/results/admission-latest.md)。技術ガイドの第X部で、それぞれの違いを説明しています。
+手法、ばらつき、再実行コマンドは[ベンチマーク記録](benchmarks/results/README.md)を参照してください：[product-latest.md](benchmarks/results/product-latest.md)、[latency-latest.md](benchmarks/results/latency-latest.md)、[comparison-latest.md](benchmarks/results/comparison-latest.md)、[admission-latest.md](benchmarks/results/admission-latest.md)。各差異の詳細は技術ガイドの第 X 部で解説しています。
 
 <a id="documentation"></a>
 
 ## ドキュメント
 
-- [技術ガイド](https://insanai.github.io/sibuna/ja/book/)：概念、アルゴリズム、例、測定結果。
+- [技術ガイド](https://insanai.github.io/sibuna/ja/book/)：概念、アルゴリズム、実例、測定結果。
 - [ホワイトペーパー](https://insanai.github.io/sibuna/ja/whitepaper/)：アーキテクチャ、証明、設計の詳細。
 - [運用ガイド](https://insanai.github.io/sibuna/ja/book/operations.html)：インストールとデプロイ。
-- [リファレンス](https://insanai.github.io/sibuna/ja/book/reference.html)：CLIとプロトコルの詳細。
-- [設計議論](https://insanai.github.io/sibuna/sid/)：設計上の決定とエンジニアリング上の契約。
-- [貢献ガイド](CONTRIBUTING.md)：ソースからのビルドと検査。
+- [リファレンス](https://insanai.github.io/sibuna/ja/book/reference.html)：CLI とプロトコルの詳細。
+- [設計議論](https://insanai.github.io/sibuna/sid/)：設計判断とエンジニアリング仕様。
+- [貢献ガイド](CONTRIBUTING.md)：ソースビルドと各種チェック。
 
 <a id="other-software-to-consider"></a>
 
 ## あわせて検討できるソフトウェア
 
-- [Anubis](https://github.com/TecharoHQ/anubis)：クローラーのトラフィックを減らすためのブラウザーチャレンジ。
+- [Anubis](https://github.com/TecharoHQ/anubis)：クローラートラフィックを抑えるためのブラウザチャレンジ。
 - [BunkerWeb](https://github.com/bunkerity/bunkerweb)：nginx、ModSecurity、CRS、ボットチャレンジ。
-- [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity)：コネクターを通じて利用するWAFエンジン。
-- [Coraza](https://github.com/corazawaf/coraza)：ModSecurityのルールとCRSに対応したGoのWAFライブラリ。
-- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset)：WAFエンジン向けの攻撃検出ルール。
+- [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity)：コネクター経由で利用する WAF エンジン。
+- [Coraza](https://github.com/corazawaf/coraza)：ModSecurity ルールと CRS に対応した Go 製 WAF ライブラリ。
+- [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset)：WAF エンジン向けの攻撃検出ルールセット。
 
-これらのプロジェクトは、Web保護の異なる領域を扱っています。Sibunaの検査器は内蔵のもので、CRSやその他のModSecurityルールセットは実行しません。より広いルールの適用範囲が必要なアプリでは、Sibunaを本格的なWAFと組み合わせてください。
+これらのプロジェクトは Web 防御の異なる領域をカバーしています。Sibuna の検査エンジンは内蔵型であり、CRS やその他の ModSecurity ルールセットは実行しません。より幅広いルール網羅性が必要なアプリでは、Sibuna を本格的な WAF と組み合わせて運用してください。
 
 <a id="license"></a>
 
 ## ライセンス
 
-Sibunaのライセンスは**LGPL 3.0以降**です。このライセンスは、エンジン、ライブラリ、ブラウザーのソルバー、そしてWebAssemblyインターフェースを含むコンソールを対象とします。
+Sibuna のライセンスは **LGPL 3.0 以降**です。このライセンスはエンジン、ライブラリ、ブラウザソルバー、および WebAssembly インターフェースを含むコンソールを対象とします。
 
-[LICENSE](LICENSE)は適用範囲を説明しています。[LICENSES](LICENSES)には条文全文があります。[NOTICE](NOTICE)には依存関係を記載しています。各リリースタグで、ソースとビルドスクリプトを入手できます。
+適用範囲は [LICENSE](LICENSE)、条文全文は [LICENSES](LICENSES)、依存関係一覧は [NOTICE](NOTICE) を参照してください。各リリースタグでソースとビルドスクリプトを入手できます。
 
-SibunaはVikrant Rathoreが作成し、Ronak RathoreとKanak Rathoreが協力しています。別のライセンス条件を希望する企業は、Vikrant Rathoreにお問い合わせください。第三者のライブラリや資料には、それぞれのライセンスが適用されます。
+Sibuna は Vikrant Rathore が作成し、Ronak Rathore と Kanak Rathore が協力しています。別のライセンス条件を希望する企業は Vikrant Rathore までお問い合わせください。サードパーティ製ライブラリおよび資料には、それぞれのライセンスが適用されます。

@@ -7,7 +7,7 @@ msgid "If RSA breaks, what happens to an older device?"
 msgstr "ماذا يحدث لجهاز قديم إذا أمكن كسر RSA؟"
 
 msgid "An industrial controller can outlive the software that connects it to the network. Putting its web interface behind Sibuna can protect new traffic while the controller stays in service. Whether that helps depends on what the device uses RSA for."
-msgstr "قد يستمر المتحكم الصناعي في العمل مدة أطول من البرمجيات التي تربطه بالشبكة. يمكن لوضع واجهة الويب خلف Sibuna أن يحمي الاتصالات الجديدة مع إبقاء المتحكم في الخدمة. وتتوقف فائدة ذلك على الوظيفة التي يؤديها RSA في الجهاز."
+msgstr "قد يستمر المتحكم الصناعي في العمل مدة أطول من البرمجيات التي تربطه بالشبكة. ويمكن لوضع واجهته على الويب خلف Sibuna أن يحمي حركة المرور الجديدة مع إبقاء المتحكم في الخدمة. وتتوقف فائدة ذلك على الدور الذي يؤديه RSA في الجهاز."
 
 msgid "Pencil drawing of an industrial controller connected by cable to a small network gateway."
 msgstr "رسم بالقلم الرصاص لمتحكم صناعي متصل بكابل ببوابة شبكة صغيرة."
@@ -16,49 +16,49 @@ msgid "One algorithm, three different jobs"
 msgstr "خوارزمية واحدة وثلاث وظائف مختلفة"
 
 msgid "**Keeping a session secret.** Some older TLS configurations used RSA to transport the session secret. If a future quantum computer can recover the RSA private key, a recording of such a handshake and its traffic could become readable. The useful life of the data matters as much as the age of the device. See `NIST`_."
-msgstr "**حفظ سر الجلسة.** استخدمت بعض إعدادات TLS القديمة خوارزمية RSA لنقل سر الجلسة. إذا تمكّن حاسوب كمومي في المستقبل من استرداد المفتاح الخاص، فقد يصبح من الممكن قراءة تسجيل للمصافحة والبيانات المتبادلة. والمدة المطلوبة لسرية البيانات مهمة بقدر عمر الجهاز. انظر `NIST`_."
+msgstr "**حفظ سر الجلسة.** استخدمت بعض إعدادات TLS القديمة خوارزمية RSA لنقل سر الجلسة. فإذا تمكّن حاسوب كمومي في المستقبل من استرداد مفتاح RSA الخاص، فقد يصبح من الممكن قراءة تسجيل لتلك المصافحة وحركة المرور المرتبطة بها. والعمر المفيد للبيانات مهم بقدر عمر الجهاز نفسه. انظر `NIST`_."
 
 msgid "**Proving a server's identity.** TLS 1.3 can use an RSA certificate with an ephemeral key exchange. Recovering the signing key would make impersonation possible in new connections. That key alone cannot decrypt earlier ephemeral sessions. A quantum computer capable of breaking classical elliptic-curve key exchange would pose a separate threat to those recordings. See `RFC 8446`_."
-msgstr "**إثبات هوية الخادم.** يمكن لـ TLS 1.3 استخدام شهادة RSA مع تبادل مفاتيح مؤقتة. واسترداد مفتاح التوقيع يتيح انتحال الهوية عند إنشاء اتصالات جديدة. ولا يكفي ذلك المفتاح وحده لفك تشفير جلسات مؤقتة سابقة. وقدرة حاسوب كمومي على كسر تبادل المفاتيح التقليدي بالمنحنيات الإهليلجية تمثل خطرا مستقلا على تلك التسجيلات. انظر `RFC 8446`_."
+msgstr "**إثبات هوية الخادم.** يمكن لـ TLS 1.3 استخدام شهادة RSA مع تبادل مفاتيح مؤقتة (ephemeral). واسترداد مفتاح التوقيع يتيح انتحال الهوية في الاتصالات الجديدة، لكنه لا يكفي وحده لفك تشفير جلسات مؤقتة سابقة. أما قدرة حاسوب كمومي على كسر تبادل المفاتيح التقليدي بالمنحنيات الإهليلجية فتمثل خطرًا مستقلًا على تلك التسجيلات. انظر `RFC 8446`_."
 
 msgid "**Deciding what may boot.** On supported ESP32 revisions, Espressif's Secure Boot v2 can use RSA-PSS with a 3072-bit key to verify the bootloader and application. A forged signature would undermine that decision. The manufacturer's update path and the device's hardware trust anchor determine how this risk can be addressed. See `Espressif Secure Boot v2`_ and `NIST IR 8259r1`_."
-msgstr "**تحديد ما يجوز إقلاعه.** يمكن لـ Secure Boot v2 من Espressif على إصدارات ESP32 المدعومة استخدام RSA-PSS بمفتاح طوله 3072 بت للتحقق من محمل الإقلاع والتطبيق. وتزوير التوقيع يقوّض الثقة بهذا القرار. وتعتمد معالجة الخطر على وسيلة التحديث التي يتيحها المصنّع ومرساة الثقة العتادية في الجهاز. انظر `Espressif Secure Boot v2`_ و `NIST IR 8259r1`_."
+msgstr "**تحديد ما يجوز إقلاعه.** يمكن لـ Secure Boot v2 من Espressif على إصدارات ESP32 المدعومة استخدام RSA-PSS بمفتاح طوله 3072 بت للتحقق من محمّل الإقلاع والتطبيق. وتزوير التوقيع يقوّض هذا القرار. وتحدد وسيلة التحديث التي يتيحها المصنّع ومرساة الثقة العتادية في الجهاز كيفية معالجة هذا الخطر. انظر `Espressif Secure Boot v2`_ و `NIST IR 8259r1`_."
 
 msgid "Pencil detail of a microcontroller and the traces on its circuit board."
 msgstr "رسم تفصيلي بالقلم الرصاص لمتحكم دقيق ومسارات التوصيل على لوحته."
 
 msgid "Move the exposed connection first"
-msgstr "ننقل الاتصال المكشوف أولا"
+msgstr "انقل الاتصال المكشوف أولًا"
 
 msgid "Consider a customer opening the device's website. We put Sibuna at its public HTTPS address. A compatible browser and Sibuna can negotiate X25519MLKEM768. This combines classical X25519 with ML-KEM-768 for new session keys. After decryption the HTTP firewall can admit, challenge or deny the request. When the policy admits it, Sibuna selects a healthy backend and connects to it separately. See `RFC 10024`_."
-msgstr "لنفترض أن عميلا يفتح موقع الجهاز. نضع Sibuna على عنوان HTTPS العام. يستطيع المتصفح المتوافق وSibuna التفاوض على X25519MLKEM768 الذي يجمع X25519 التقليدي وML-KEM-768 لإنشاء مفاتيح جلسة جديدة. بعد فك التشفير يمكن لجدار حماية HTTP قبول الطلب أو طلب إثبات أو رفضه. وعند القبول يختار Sibuna خادما خلفيا سليما ويتصل به اتصالا منفصلا. انظر `RFC 10024`_."
+msgstr "لنفترض أن عميلًا يفتح موقع الجهاز. نضع Sibuna على عنوان HTTPS العام، فيستطيع المتصفح المتوافق وSibuna التفاوض على X25519MLKEM768، الذي يجمع بين X25519 التقليدي وML-KEM-768 لإنشاء مفاتيح جلسة جديدة. وبعد فك التشفير، يمكن لجدار حماية HTTP قبول الطلب أو عرض تحدٍّ له أو رفضه. وعندما تقبله السياسة، يختار Sibuna خادمًا خلفيًا (backend) سليمًا ويتصل به عبر اتصال منفصل. انظر `RFC 10024`_."
 
 msgid "The browser establishes hybrid TLS with Sibuna. The firewall inspects HTTP before Sibuna forwards an admitted request on a separate connection to the device."
-msgstr "ينشئ المتصفح اتصال TLS هجينا مع Sibuna. ويفحص جدار الحماية طلب HTTP قبل أن يمرره Sibuna إلى الجهاز عبر اتصال منفصل."
+msgstr "ينشئ المتصفح اتصال TLS هجينًا مع Sibuna. ويفحص جدار الحماية طلب HTTP قبل أن يمرر Sibuna الطلب المقبول إلى الجهاز عبر اتصال منفصل."
 
 msgid "The browser, Sibuna and the device participate in two independent connections."
 msgstr "يشترك المتصفح وSibuna والجهاز في اتصالين مستقلين."
 
 msgid "In this jlavi configuration the public certificate chain and private key are in ``edge.pem``. The backend's ``ca_file`` and ``sni`` tell Sibuna which CA and name to trust. We use loopback addresses for this test. If the device offers only a classical group, its connection remains classical. Running the gateway beside the device can shorten that leg."
-msgstr "في إعداد jlavi هذا، يحتوي ``edge.pem `` على سلسلة الشهادات العامة والمفتاح الخاص. ويحدّد `` ca_file `` و`` sni`` في إعداد الخادم الخلفي جهة التصديق الموثوقة والاسم المطلوب التحقق منه. نستخدم عناوين الحلقة المحلية في الاختبار. إذا كان الجهاز لا يتيح سوى مجموعة تقليدية يظل اتصاله تقليديا. ويمكن تقصير هذا الجزء بوضع البوابة بجوار الجهاز."
+msgstr "في إعداد jlavi هذا، يحتوي ``edge.pem`` على سلسلة الشهادات العامة والمفتاح الخاص. ويحدّد ``ca_file`` و ``sni`` في إعداد الخادم الخلفي (backend) جهة التصديق الموثوقة والاسم المطلوب التحقق منه. نستخدم عناوين الاسترجاع المحلي (loopback) في هذا الاختبار. وإذا لم يدعم الجهاز سوى مجموعة تشفير تقليدية، يظل اتصاله تقليديًا. ويمكن تقصير هذه الوصلة بتشغيل البوابة بجوار الجهاز."
 
 msgid "Record what changed on each connection"
-msgstr "نسجل ما تغير في كل اتصال"
+msgstr "سجّل ما تغيّر في كل اتصال"
 
 msgid "In our test, the public connection negotiated hybrid TLS even when the origin accepted only X25519. The request returned HTTP 200. Giving Sibuna the wrong origin certificate name returned HTTP 502. The TLS groups, certificate identities and HTTP result belong in the service inventory. Firmware verification needs its own inventory entry and migration plan."
-msgstr "في اختبارنا نجح الاتصال العام في التفاوض على TLS هجين حتى عندما قبل خادم الأصل X25519 فقط. أعاد الطلب HTTP 200. وعندما أعطينا Sibuna اسما خاطئا لشهادة الأصل حصلنا على HTTP 502. نسجل مجموعات TLS والهويات الواردة في الشهادات ونتيجة HTTP في جرد الخدمة. أما التحقق من البرامج الثابتة فيتطلب بندا مستقلا وخطة انتقال خاصة به."
+msgstr "في اختبارنا، تفاوض الاتصال العام على TLS هجين حتى عندما لم يقبل خادم الأصل سوى X25519، وأعاد الطلب HTTP 200. وعندما أعطينا Sibuna اسمًا خاطئًا لشهادة الأصل، أعاد HTTP 502. وتندرج مجموعات TLS وهويات الشهادات ونتيجة HTTP ضمن جرد الخدمة. أما التحقق من البرامج الثابتة (firmware) فيتطلب بندًا مستقلًا وخطة انتقال خاصة به."
 
 msgid "A hybrid frontend returned HTTP 200 with either a hybrid or a classical backend. A backend certificate name mismatch returned HTTP 502."
-msgstr "أعادت الواجهة الأمامية الهجينة HTTP 200 مع خادم خلفي هجين وكذلك مع خادم تقليدي. وأعاد عدم تطابق اسم شهادة الخادم الخلفي HTTP 502."
+msgstr "أعادت الواجهة الأمامية (frontend) الهجينة HTTP 200 مع خادم خلفي هجين أو تقليدي. وأعاد عدم تطابق اسم شهادة الخادم الخلفي HTTP 502."
 
 msgid "Observed results with one frontend and three origin configurations."
 msgstr "النتائج التي رصدناها لواجهة أمامية واحدة وثلاثة إعدادات لخادم الأصل."
 
 msgid "The `migration guide <../book/post-quantum-transport.html>`_ gives the test policy, verification command and regional timelines. It also shows how an older device that initiates requests can use a local gateway for its outgoing connection."
-msgstr "يقدم `دليل الانتقال <../book/post-quantum-transport.html>`_ سياسة الاختبار وأمر التحقق والجداول الزمنية الإقليمية. ويبيّن أيضا كيف يستخدم الجهاز القديم الذي يبدأ الطلبات بوابة محلية لاتصاله الصادر."
+msgstr "يقدّم `دليل الانتقال <../book/post-quantum-transport.html>`_ سياسة الاختبار وأمر التحقق والجداول الزمنية الإقليمية. ويبيّن أيضًا كيف يمكن لجهاز قديم يبدأ الطلبات بنفسه استخدام بوابة محلية لاتصاله الصادر."
 
 msgid "digraph transport {\n  graph [rankdir=LR, bgcolor=\"transparent\", pad=\"0.18\", nodesep=\"0.2\", ranksep=\"0.32\"];\n  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", fontsize=13, color=\"#426858\", fillcolor=\"#edf4ec\", fontcolor=\"#18392c\"];\n  edge [fontname=\"Helvetica\", fontsize=10, color=\"#386d55\", arrowsize=0.7];\n  browser [label=\"Customer browser\"];\n  subgraph cluster_edge {\n    label=\"Sibuna\"; fontname=\"Helvetica\"; color=\"#a1b5a8\"; style=rounded;\n    tls [label=\"TLS\"]; waf [label=\"HTTP firewall\"];\n  }\n  device [label=\"Device website\"];\n  browser -> tls [label=\"X25519MLKEM768\"]; tls -> waf; waf -> device [label=\"TLS\"];\n}"
 msgstr "digraph transport {\n  graph [rankdir=LR, bgcolor=\"transparent\", pad=\"0.18\", nodesep=\"0.2\", ranksep=\"0.32\"];\n  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", fontsize=13, color=\"#426858\", fillcolor=\"#edf4ec\", fontcolor=\"#18392c\"];\n  edge [fontname=\"Helvetica\", fontsize=10, color=\"#386d55\", arrowsize=0.7];\n  browser [label=\"متصفح العميل\"];\n  subgraph cluster_edge {\n    label=\"Sibuna\"; fontname=\"Helvetica\"; color=\"#a1b5a8\"; style=rounded;\n    tls [label=\"TLS\"]; waf [label=\"جدار حماية HTTP\"];\n  }\n  device [label=\"موقع الجهاز\"];\n  browser -> tls [label=\"X25519MLKEM768\"]; tls -> waf; waf -> device [label=\"TLS\"];\n}"
 
 msgid "AMD documents RSA-4096 in the hardware root of trust of the Zynq UltraScale+ MPSoC. For each device family we record the chip revision and the boot mode actually enabled. See `AMD UG1085`_."
-msgstr "توثّق AMD استخدام RSA-4096 في جذر الثقة العتادي لمعالج Zynq UltraScale+ MPSoC. ولكل عائلة أجهزة نسجل مراجعة الشريحة ووضع الإقلاع المفعّل فعلا. انظر `AMD UG1085`_."
+msgstr "توثّق AMD استخدام RSA-4096 في جذر الثقة العتادي لمعالج Zynq UltraScale+ MPSoC. ولكل عائلة أجهزة، نسجّل مراجعة الشريحة ووضع الإقلاع المفعّل فعلًا. انظر `AMD UG1085`_."

@@ -30,7 +30,7 @@ msgid ""
 "Rathore. Insan AI. Whitepaper, November 2026, for Sibuna 1.0.0-beta.3."
 msgstr ""
 "**Vikrant Rathore** 著，Ronak Rathore 与 Kanak Rathore 协助。Insan AI。白皮书，2026 "
-"年 10 月，对应 Sibuna 1.0.0-beta.3。"
+"年 11 月，对应 Sibuna 1.0.0-beta.3。"
 
 #: ../../index.rst:8
 msgid ""
@@ -39,7 +39,7 @@ msgid ""
 "routing. The Sibuna Book covers the configuration and measurements for "
 "the edge."
 msgstr ""
-"本文测量的是 Beta 版防火墙。候选版本还提供集群负载均衡、证书管理和 gRPC 路由。《Sibuna 手册》介绍边缘节点的配置和测量结果。"
+"本文测量的是 Beta 版防火墙。候选版本还提供集群负载均衡、证书管理和 gRPC 路由。《Sibuna 之书》介绍边缘节点的配置和测量结果。"
 
 #: ../../index.rst:10
 msgid "Abstract"
@@ -85,11 +85,11 @@ msgstr ""
 "是我们为解决这些问题所做的尝试：它把少量朴素的机制放进一个自包含的可执行文件，本文逐一说明每种机制背后的道理。(i) "
 "*工作量准入*：浏览器通过求解 Hashcash 谜题或 Cohen-Pietrzak "
 "顺序工作量证明（按规则选择）来换取会话，服务器根据一个从未存储过的挑战，在 70.2 ns 或 22.3 us 内验证解答。(ii) "
-"*有界且无分配的请求路径*：字节类 Aho-Corasick 自动机在 55.7 ns 内匹配 40 条机器人签名，比顺序搜索快 13.7 "
+"*有界且无分配的请求路径*：字节类 Aho-Corasick 自动机在 55.7 ns 内匹配 40 条 Bot 签名，比顺序搜索快 13.7 "
 "倍；GCRA 限制器在 6.2 ns 内作出决定，每个客户端只占 16 字节状态；Robin Hood 已用集合在 21.0 ns "
 "内记录一个解答。SQL 注入、跨站脚本、命令注入和路径遍历的检查在同一遍处理中完成，耗时与输入长度成线性关系。(iii) "
 "*无需自研共识协议的共享状态*：单个节点使用一个嵌入式 SQLite 文件，集群共享一个 PostgreSQL "
-"数据库，由一个存储线程读取，请求从不等待它。在一台 AMD Ryzen 9 5950X 上，守护进程使用四个 CPU 时，Sibuna 每秒应答约 "
+"数据库，由一个存储线程读取，请求从不等待它。在一台 AMD Ryzen 9 5950X 上，守护进程使用四个 CPU 时，Sibuna 每秒可处理约 "
 "200,000 个 forward-auth 请求（各工作负载为 197,532 到 211,636 个），p99 为 305 到 327 "
 "us；在每秒 100,000 个请求的开环负载下，p99.9 保持在 62 us；常驻内存峰值约为 16 "
 "MiB。我们说明每个数字是如何得到的，并列出尚未测量的内容。"
@@ -112,7 +112,7 @@ msgstr ""
 "月 15 日：benchmarks/results/primitives-latest.md 和 "
 "product-latest.md；测量方法见“评估”一节。],\n"
 "  (\"6.2 ns\", \"GCRA 速率检查\", \"客户端哈希 | 16 个分片\"),\n"
-"  (\"55.7 ns\", \"机器人匹配器\", \"Aho-Corasick | 40 条签名\"),\n"
+"  (\"55.7 ns\", \"Bot 匹配器\", \"Aho-Corasick | 40 条签名\"),\n"
 "  ([22.3 #(sym.mu)s], \"PoSW 验证\", \"深度 13 | 16 次揭示\"),\n"
 "  (\"16 MiB\", \"守护进程峰值 RSS\", \"wrk 负载下 | 4 个 CPU\"),\n"
 ")"
@@ -133,7 +133,7 @@ msgstr "**6.2 ns**：对哈希后的客户端做一次 GCRA 速率检查，16 �
 
 #: ../../index.rst:31
 msgid "**55.7 ns**: the bot matcher, Aho-Corasick over 40 signatures."
-msgstr "**55.7 ns**：机器人匹配器，在 40 条签名上运行 Aho-Corasick。"
+msgstr "**55.7 ns**：Bot 匹配器，在 40 条签名上运行 Aho-Corasick。"
 
 #: ../../index.rst:32
 msgid ""
@@ -207,7 +207,7 @@ msgid ""
 msgstr ""
 "自动化发送方发出每个请求的成本都很低。请求到达传统防火墙时，防御方可能要完成一次 TLS "
 "握手，分配内存来复制和拆分请求，在请求上运行一串正则表达式，还要通过网络往返一次共享存储来更新计数器。我们不给这种不对称性赋予一个通用的比例，因为这样的比例并不存在：它取决于源站、缓存和攻击本身。不过，一个简单的模型就能让这一决策变得清晰可见。令 "
-":math:`c_o` 表示源站处理每个获准请求的工作，:math:`c_g` 表示网关处理每个请求的工作，:math:`a` "
+":math:`c_o` 表示源站处理每个获准请求的开销，:math:`c_g` 表示网关处理每个请求的开销，:math:`a` "
 "表示网关准入的请求比例。只有当"
 
 #: ../../index.rst:48
@@ -221,7 +221,7 @@ msgid ""
 "must be small and bounded whatever the input, and the decision to admit "
 "must be expensive for the sender rather than for the server."
 msgstr ""
-"即网关为源站节省的工作超过网关自身的成本时，网关才值得部署 [#cost-model]_。由此得出两个推论。网关自身的成本 :math:`c_g` "
+"即网关为源站节省的开销超过网关自身的成本时，网关才值得部署 [#cost-model]_。由此得出两个推论。网关自身的成本 :math:`c_g` "
 "必须很小，并且无论输入如何都有上界；准入的决定必须让发送方而不是服务器付出代价。"
 
 #: ../../index.rst:54
@@ -236,7 +236,7 @@ msgid ""
 msgstr ""
 "Sibuna 以工作量证明作为准入的条件，从而扭转了这种不对称。为了换取会话，浏览器要找到一个 nonce，使其 SHA-256 摘要具有 "
 ":math:`b` 个前导零比特，或者计算一个顺序工作量证明。期望的搜索量为 :math:`2^b` 次哈希尝试，:math:`b = 16` "
-"时为 65,536 次；服务器只检查一个候选解。服务器的检查也是无状态的：签发挑战不写入任何内容，只有付出了工作的解答才会占用内存。"
+"时为 65,536 次；服务器只检查一个候选解。服务器的检查也是无状态的：签发挑战不写入任何内容，只有经过有效计算的解答才会占用内存。"
 
 #: ../../index.rst:57
 msgid ""
@@ -349,7 +349,7 @@ msgid ""
 "WEIGH; bot signatures; reputation"
 msgstr ""
 "声明式规则（路径、User-Agent、请求头、IPv4 和 IPv6 CIDR、来自受信任入口代理的 JA4 TLS 指纹），动作为 "
-"ALLOW、DENY、CHALLENGE 和 WEIGH；机器人签名；信誉"
+"ALLOW、DENY、CHALLENGE 和 WEIGH；Bot 签名；信誉"
 
 #: ../../index.rst:80
 msgid "Flood controls"
@@ -408,7 +408,7 @@ msgid ""
 "it leaves when the challenge expires (:ref:`algorithms`)."
 msgstr ""
 "*签发挑战不花服务器任何成本。* "
-"挑战是一条用带密钥哈希封装的自认证记录，因此签发挑战不写入任何状态；只有付出了工作的解答才会占用内存，并在挑战过期时释放（:ref:`algorithms`）。"
+"挑战是一条用带密钥哈希封装的自认证记录，因此签发挑战不写入任何状态；只有经过有效计算的解答才会占用内存，并在挑战过期时释放（:ref:`algorithms`）。"
 
 #: ../../index.rst:96
 msgid ""
@@ -427,7 +427,7 @@ msgid ""
 "*Sessions that remember the work paid.* A session token records the "
 "mechanism and the work bits its holder solved. It admits only routes that "
 "demand no more, so a cheap session cannot open an expensive route."
-msgstr "*会话记住付出的工作。* 会话令牌记录其持有者所求解的机制和工作比特。它只能用于要求不高于此的路由，因此廉价的会话打不开昂贵的路由。"
+msgstr "*会话记录已完成的工作量。* 会话令牌记录其持有者所求解的机制和工作比特。它只能用于要求不高于该级别的路由，因此低成本会话无法打开高要求路由。"
 
 #: ../../index.rst:98
 msgid ""
@@ -494,7 +494,7 @@ msgstr "*从事件中发现攻击活动。* 被拒绝的请求连同一个小型
 
 #: ../../index.rst:108
 msgid "Mechanical Sympathy: Zero Allocation and Bounded State"
-msgstr "机械同理心：零分配与有界状态"
+msgstr "机械亲和性：零分配与有界状态"
 
 #: ../../index.rst:111
 msgid "Knuth on Mechanical Precision: Cache Lines and Concrete Mathematics"
@@ -512,7 +512,7 @@ msgid ""
 "every byte it needs has a known home before the first socket is opened, "
 "and when each loop does exactly the work its mathematics requires."
 msgstr ""
-"在实时系统的内层循环里调用通用分配器的程序员，等于把一部分设计交给了陌生人。分配器平均来看也许很快，但它的成本取决于堆的历史，而这段历史是由发送请求的人书写的。在优化任何东西之前，我们应当先计数：每一步触及多少字节，多少缓存行，多少次相互依赖的加载。然后还要测量，因为计数也可能出错。一个程序是优雅的，当且仅当它需要的每个字节在第一个套接字打开之前就有了确定的位置，并且每个循环所做的工作恰好是其数学所要求的。"
+"在实时系统的内层循环里调用通用分配器的程序员，等于把一部分设计交给了陌生人。分配器平均来看也许很快，但它的成本取决于堆的历史，而这段历史是由发送请求的人书写的。在优化任何东西之前，我们应当先计数：每一步触及多少字节，多少缓存行，多少次数据依赖的内存加载。然后还要测量，因为计数也可能出错。一个程序是优雅的，当且仅当它需要的每个字节在第一个套接字打开之前就有了确定的位置，并且每个循环所做的工作恰好是其数学所要求的。"
 
 #: ../../index.rst:115
 msgid "The Zero-Allocation Invariant"
@@ -536,7 +536,7 @@ msgstr ""
 "请求路径上的每一次动态分配，都是拒绝服务攻击的一根杠杆：日积月累的碎片化、分配器锁上的争用，以及专门构造出来诱发分配的请求所造成的放大。Sibuna "
 "的规则是：分类、验证和移交给代理的过程都不进行堆分配。连接在其套接字的整个生命周期内拥有一块 64 KiB 的读缓冲区和一块 16 KiB "
 "的写缓冲区，以及在连接开始时一次性分配的 40 KiB "
-"代理工作区。其他一切都是指向这些缓冲区的切片：解析器在读缓冲区中定位请求的方法、路径、查询、请求头和 Cookie，一个都不复制 "
+"代理工作区。其他一切都是指向这些缓冲区的切片：解析器在读缓冲区中定位请求的方法、路径、查询、请求头和 Cookie，不进行任何复制 "
 "[#zero-alloc]_。实现语言的类型系统保证，已解析的请求不能比它所描述的字节活得更久，因此只要还有请求在读取缓冲区，缓冲区就不能被重新填充。"
 
 #: ../../index.rst:120
@@ -567,7 +567,7 @@ msgid ""
 "hold at most 64 connections by default, and an IPv6 peer is counted with "
 "its /64 network."
 msgstr ""
-"每个接受的连接都由一个专属线程服务，因此慢速客户端只会拖慢自己，请求路径也保持同步。我们考虑过事件循环，最终保留了线程模型：请求路径的速度来自零拷贝解析器、每个连接固定的缓冲区和无分配的决策，而事件循环对这几点都没有改进 "
+"每个接入的连接都由一个专属线程服务，因此慢速客户端只会拖慢自己，请求路径也保持同步。我们考虑过事件循环，最终保留了线程模型：请求路径的速度来自零拷贝解析器、每个连接固定的缓冲区和无分配的决策，而事件循环对这几点都没有改进 "
 "[#threads]_。连接线程的数量受 ``--max-connections`` 限制（默认 1,024）；超出时，accept 循环直接应答 "
 "``503``，不创建任何线程。默认情况下，一个套接字对端地址最多持有 64 个连接，IPv6 对端按其所在的 /64 网络计数。"
 
@@ -581,8 +581,8 @@ msgid ""
 ":ref:`what-measurement-changed` tells how a measurement taught us to add "
 "that last rule."
 msgstr ""
-"线程来自一张由可 join 的槽组成的固定表。结束的线程在被 join 之前一直保留着它的栈，因此新任务会 join 并占用 *编号最小* "
-"的已结束槽，而不是推进游标；这样，常驻内存跟随的是当前打开的连接数，而不是已服务的连接数。完成连接的线程会停驻下来，接手下一个连接。:ref:`what-measurement-changed` "
+"线程来自一张由可回收（joinable）槽位组成的固定表。结束的线程在被 join 之前一直保留着它的栈，因此新任务会 join 并占用 *编号最小* "
+"的已结束槽位，而不是推进游标；这样，常驻内存跟随的是当前打开的连接数，而不是已服务的连接数。完成连接的线程会停驻下来，接手下一个连接。:ref:`what-measurement-changed` "
 "一节讲述了一次测量如何让我们加上了最后这条规则。"
 
 #: ../../index.rst:129
@@ -609,10 +609,10 @@ msgid ""
 "with a forward-auth verdict. Banned, rate-limited and denied requests end "
 "early."
 msgstr ""
-"一条流水线。接受连接并读入 64 KiB 缓冲区，然后依次是零拷贝解析（132.5 ns）、封禁表、用于挑战和验证的内部路由、GCRA "
+"一条流水线。接收连接并读入 64 KiB 缓冲区，然后依次是零拷贝解析（132.5 ns）、封禁表、用于挑战和验证的内部路由、GCRA "
 "限制器（6.2 ns），接着是策略快照：Shield 对 8 KiB 请求体的检查（12.8 us）、信誉字典树（IPv4 为 32.0 "
-"ns）、有序规则和 WEIGH 评分，以及机器人自动机（55.7 ns）。挑战决策检查会话令牌（155.8 "
-"ns）：会话有效则准入请求，没有会话则返回验证中间页。获准的请求经连接池代理到源站，或者得到一个 forward-auth "
+"ns）、有序规则和 WEIGH 评分，以及 Bot 自动机（55.7 ns）。挑战决策检查会话令牌（155.8 "
+"ns）：会话有效则准入请求，没有会话则返回验证中间页。获准的请求经连接池代理到源站，或返回 forward-auth "
 "判定。被封禁、被限速和被拒绝的请求提前结束。"
 
 #: ../../index.rst:135
@@ -693,7 +693,7 @@ msgstr ""
 "\n"
 "#flow(\n"
 "  spacing: (4mm, 8mm),\n"
-"  data((0, 0), \"接受连接，读取头部\", \"读入 64 KiB 缓冲区\", name: <accept>),\n"
+"  data((0, 0), \"接收连接，读取头部\", \"读入 64 KiB 缓冲区\", name: <accept>),\n"
 "  stage((0, 1), \"1. 零拷贝解析\", \"132.5 ns\", <parse>),\n"
 "  stage((1, 1), \"2. 封禁表\", \"读者无锁\", <ban>),\n"
 "  stage((2, 1), \"3. 内部路由\", \"挑战、验证\", <routes>),\n"
@@ -703,7 +703,7 @@ msgstr ""
 "  stage((2, 2), \"6. 信誉字典树\", \"IPv4：32.0 ns\", <trie>, kind: "
 "\"accent\"),\n"
 "  stage((1, 2), \"7. 有序规则\", \"`WEIGH` 评分\", <rules>, kind: \"accent\"),\n"
-"  stage((0, 2), \"8. 机器人自动机\", \"55.7 ns\", <bots>, kind: \"accent\"),\n"
+"  stage((0, 2), \"8. Bot 自动机\", \"55.7 ns\", <bots>, kind: \"accent\"),\n"
 "  decision((0, 3.2), \"9. 会话令牌\", \"带密钥 BLAKE3：155.8 ns\", name: "
 "<session>),\n"
 "  outcome((0, 4.4), \"挑战\", \"验证中间页 (200)\\n或 JSON (401)\", kind: "
@@ -779,7 +779,7 @@ msgid ""
 msgstr ""
 "策略变化时，策略引擎在请求路径之外重建，请求绝不能看到构建了一半的引擎。存储线程构建一个完整的引擎，并以引用计数的形式把它发布到一个带代次计数器的槽中。每个连接都保留一个缓存：它用一次 "
 "acquire "
-"加载读取代次，只有在发生发布之后才获取新的引用。旧引擎在最后一个持有它的缓存放手时被释放，写者从不需要等待读者退出。在争用下，缓存读取比获取读写锁便宜 "
+"加载读取代次，只有在发生发布之后才获取新的引用。旧引擎在最后一个持有它的缓存释放引用后自动回收，写者从不需要等待读者退出。在争用下，缓存读取比获取读写锁便宜 "
 "400 多倍。引擎本身约有 200 KiB 的紧凑表（209,052 字节），可容纳 128 条规则和 8,192 个字典树节点。"
 
 #: ../../index.rst:145
@@ -953,7 +953,7 @@ msgid ""
 msgstr ""
 "设 :math:`\\mathcal{P}` 是总长度为 :math:`m` 的模式集合，其字节分为 :math:`c \\le 256` "
 "个类，文本长度为 :math:`M`。Sibuna 以 :math:`O(mc)` 的时间和空间构建自动机，并在 :math:`O(M)` "
-"时间内报告文本中是否出现任一模式；每个输入字节只需一次相互依赖的表读取，与模式数量无关。任何输入都无法使它回溯。"
+"时间内报告文本中是否出现任一模式；每个输入字节只需一次数据依赖的表读取，与模式数量无关。任何输入都无法使它回溯。"
 
 #: ../../index.rst:198
 msgid ""
@@ -977,8 +977,8 @@ msgid ""
 "any-match semantics, 13.7 times faster. With byte classes the whole bot "
 "signature table takes 42,244 bytes [#automaton]_."
 msgstr ""
-"*测量。* 在 40 条机器人签名上，自动机耗时 55.7 ns；使用相同模式、同样采用任一匹配语义的顺序子串搜索耗时 763.0 ns，自动机快 "
-"13.7 倍。借助字节类，整张机器人签名表只占 42,244 字节 [#automaton]_。"
+"*测量。* 在 40 条 Bot 签名上，自动机耗时 55.7 ns；使用相同模式、同样采用任一匹配语义的顺序子串搜索耗时 763.0 ns，自动机快 "
+"13.7 倍。借助字节类，整张 Bot 签名表只占 42,244 字节 [#automaton]_。"
 
 #: ../../index.rst:202
 msgid "Theorem 2 (The GCRA interval bound)"
@@ -1077,7 +1077,7 @@ msgid ""
 "take 21.0 ns [#spent]_."
 msgstr ""
 "*实现。* 已用集合由 16 个采用 Robin Hood "
-"开放寻址的分片组成。一个过期条目只能被距其原位槽至少同样远的键就地覆盖，否则后续查找可能提前停止而漏掉仍然有效的标签；有了这条规则，就不需要清扫线程，而且被拒绝的插入从不驱逐有效标签。一次花费加一次查找共耗时 "
+"开放寻址的分片组成。一个过期条目只能被距其原位槽至少同样远的键就地覆盖，否则后续查找可能提前停止而漏掉仍然有效的标签；有了这条规则，就不需要清扫线程，而且被拒绝的插入从不驱逐有效标签。一次消费写入与一次查找共耗时 "
 "21.0 ns [#spent]_。"
 
 #: ../../index.rst:218
@@ -1278,7 +1278,7 @@ msgid ""
 "cookie; the daemon tries up to eight, so a cookie planted by a sibling "
 "domain cannot keep a visitor in a challenge loop."
 msgstr ""
-"*Cookie 投掷。* 一个请求可以携带会话 Cookie 的多个值；守护进程最多尝试八个，因此兄弟域名植入的 Cookie "
+"*Cookie 覆盖（Cookie Tossing）。* 一个请求可以携带会话 Cookie 的多个值；守护进程最多尝试八个，因此兄弟域名植入的 Cookie "
 "无法让访问者陷入挑战循环。"
 
 #: ../../index.rst:253
@@ -1333,7 +1333,7 @@ msgstr ""
 "第一层是比特粒度的 Hashcash。对于挑战字符串 :math:`C` 和难度 :math:`b`，客户端寻找一个 nonce "
 ":math:`N`，使 :math:`\\text{SHA-256}(C \\parallel \\texttt{\":\"} "
 "\\parallel \\mathrm{dec}(N))` 具有 :math:`b` 个前导零比特。nonce 以十进制表示，使 "
-"WebAssembly 求解器、JavaScript 后备实现和原生验证器之间的线路格式完全一致。对于理想的摘要，尝试次数 :math:`K` "
+"WebAssembly 求解器、JavaScript 后备实现和原生验证器之间的传输格式完全一致。对于理想的摘要，尝试次数 :math:`K` "
 "服从 :math:`p = 2^{-b}` 的几何分布："
 
 #: ../../index.rst:268
@@ -1374,10 +1374,10 @@ msgid ""
 "computations in a fixed workspace."
 msgstr ""
 "第二层采用 Cohen 和 Pietrzak 的顺序工作量证明（EUROCRYPT 2018）。它的标签构成一棵深度为 :math:`n` "
-"的完全二叉树。内部节点对其两个子节点做哈希。叶子则在其通往根的路径每次向右转的地方，对 *祖先的左兄弟* "
-"做哈希。正是这些左兄弟边使计算成为顺序的：一个叶子必须等它左边的每棵子树都完成之后才能计算标签，因此根标签按顺序依赖于全部 "
-":math:`2^{n+1} - 1` 个标签。算出根 :math:`\\varphi` 之后，证明者用 Fiat-Shamir 推导出 "
-":math:`t` 个叶子，并为每个叶子发送叶子标签及其路径上的 :math:`n` 个兄弟标签。验证者重新计算每个被揭示的叶子，再逐层哈希直到 "
+"的完全二叉树。内部节点对其两个子节点做哈希。叶节点则在其通往根的路径每次向右转的地方，对 *祖先的左兄弟节点* "
+"做哈希。正是这些左兄弟边使计算成为顺序的：一个叶节点必须等其左侧的每棵子树都完成之后才能计算标签，因此根标签按顺序依赖于全部 "
+":math:`2^{n+1} - 1` 个标签。算出根 :math:`\\varphi` 之后，证明者通过 Fiat-Shamir 推导出 "
+":math:`t` 个叶节点，并为每个叶节点发送其标签及路径上的 :math:`n` 个兄弟节点标签。验证者重新计算每个被揭示的叶节点，再逐层哈希直到 "
 ":math:`\\varphi`，代价为在固定工作区内计算 :math:`O(tn)` 个标签。"
 
 #: ../../index.rst:280
@@ -1388,8 +1388,8 @@ msgid ""
 "3.4 sent in its opening are slate, and dashed gold arrows run from 1.0 "
 "and 3.4 into leaf 3.5."
 msgstr ""
-"上图：四个核心各自尝试互不相交的一部分 nonce，核心 3 在 nonce 18 处找到解，随后所有核心都停止。下图：一棵深度为三的二叉树。叶子 "
-"3.5 的路径为绿色，它的揭示中发送的兄弟节点 1.0、2.3 和 3.4 为青灰色，金色虚线箭头从 1.0 和 3.4 指向叶子 3.5。"
+"上图：四个核心各自尝试互不相交的一部分 nonce，核心 3 在 nonce 18 处找到解，随后所有核心都停止。下图：一棵深度为三的二叉树。叶节点 "
+"3.5 的路径为绿色，它的揭示中发送的兄弟节点 1.0、2.3 和 3.4 为青灰色，金色虚线箭头从 1.0 和 3.4 指向叶节点 3.5。"
 
 #: ../../index.rst:280
 msgid ""
@@ -1412,7 +1412,7 @@ msgid ""
 "3.5 sends its label and the three slate siblings (after book Part III)."
 msgstr ""
 "并行搜索与顺序工作的对比。上图为 Hashcash：各次 nonce 尝试相互独立，因此 :math:`M` 个核心大约快 :math:`M` "
-"倍完成。下图为深度 3 的 Cohen-Pietrzak 树：虚线表示的左兄弟边使叶子 3.5 必须等待其左边的子树完成；揭示叶子 3.5 "
+"倍完成。下图为深度 3 的 Cohen-Pietrzak 树：虚线表示的左兄弟边使叶节点 3.5 必须等待其左侧的子树完成；揭示叶节点 3.5 "
 "时，发送它的标签和三个青灰色的兄弟节点（据《Sibuna 之书》第 III 部分）。"
 
 #: ../../index.rst:283
@@ -1732,7 +1732,7 @@ msgstr ""
 
 #: ../../index.rst:326
 msgid "Invariants of the storage layer (SID 0011)"
-msgstr "不变量：存储层（SID 0011）"
+msgstr "存储层的不变量（SID 0011）"
 
 #: ../../index.rst:328
 msgid ""
@@ -1753,7 +1753,7 @@ msgstr ""
 
 #: ../../index.rst:330
 msgid "A Typed Schema"
-msgstr "带类型的模式"
+msgstr "强类型数据库模式"
 
 #: ../../index.rst:333
 msgid ""
@@ -1825,7 +1825,7 @@ msgid ""
 "feature [#gave-up]_."
 msgstr ""
 "我们应当坦白地说明这一选择的局限。Sibuna 不包含自研的共识协议，集群的一致性由 PostgreSQL "
-"保证：失去数据库连接的节点会一直沿用最后的策略，直到重新连上。由于各节点共享同一个种子，而挑战密钥与签发节点绑定，在一个节点上签发的会话会被所有节点接受，而在一个节点上已花费的解答重放到另一个节点时会被拒绝；这两条性质都不需要数据库。SID "
+"保证：失去数据库连接的节点会一直沿用最后的策略，直到重新连上。由于各节点共享同一个种子，而挑战密钥与签发节点绑定，在一个节点上签发的会话会被所有节点接受，而在一个节点上已消耗的解答重放到另一个节点时会被拒绝；这两条性质都不需要数据库。SID "
 "0011 的状态为 Committed：一项在同一 PostgreSQL "
 "数据库上运行三个节点的功能测试表明，在一个节点上插入的策略会在一个节拍内被全部三个节点执行，一个节点上的蜜罐封禁会到达其他节点，事件标识符也从不冲突。目前还没有测量工具在负载下驱动多个节点共用一个 "
 "PostgreSQL 数据库，因此本文不报告任何集群测量结果。发布的可执行文件不含 PostgreSQL 支持；集群需要从源代码以 "
@@ -1984,7 +1984,7 @@ msgstr ""
 "SID 0007 规定了控制台的性能目标：启用控制台至多使数据平面吞吐量下降 1%，使 p99 延迟增加至多 "
 "10%。目前只有一项测量：无论控制台是编译进来但停用、只启用存储，还是启用但空闲，16 "
 "个完整产品工作负载与不含控制台的守护进程构建之间的差异都在约 1% "
-"以内，处于噪声范围。在负载下运行八个活动仪表板的正式门槛测试尚未进行，因此我们不声称已达到该目标。一次运行八个实时仪表板的功能测试已经通过。"
+"以内，处于噪声范围。在负载下运行八个活动仪表板的正式门禁测试尚未进行，因此我们不声称已达到该目标。一次运行八个实时仪表板的功能测试已经通过。"
 
 #: ../../index.rst:361
 msgid ""
@@ -2085,7 +2085,7 @@ msgid ""
 "daemon does, and times each request from when it was due, so that "
 "queueing in the daemon is charged to the daemon [#method-sources]_."
 msgstr ""
-"三个通过 ``cargo xtask bench`` 运行的测量工具测量 Sibuna。*原语* "
+"三个通过 ``cargo xtask bench`` 运行的基准测试套件用于测量 Sibuna。*原语* "
 "测试套件在一次不计时的预热之后，用七个计时批次为请求路径上的各项操作计时，在计时之外重建可变状态，并报告每次操作的批次中位数，旁边列出最快和最慢的批次。*完整产品* "
 "测量工具用 ``wrk``\\ （2 个线程，64 个连接，5 秒，重复 3 次）驱动守护进程，覆盖 forward-auth "
 "和反向代理两种模式、Gate 和 Shield 两种形态，以及四种工作负载：``admitted``\\ "
@@ -2181,7 +2181,7 @@ msgstr "22,257.0-22,316.4"
 
 #: ../../index.rst:413 ../../index.rst:417
 msgid "Bot matcher"
-msgstr "机器人匹配器"
+msgstr "Bot 匹配器"
 
 #: ../../index.rst:414
 msgid "Aho-Corasick, 40 signatures"
@@ -2269,7 +2269,7 @@ msgstr "已用集合"
 
 #: ../../index.rst:438
 msgid "Robin Hood spend and look up"
-msgstr "Robin Hood 花费与查找"
+msgstr "Robin Hood 写入与查找"
 
 #: ../../index.rst:439
 msgid "21.0"
@@ -2860,7 +2860,7 @@ msgstr "209,052 字节"
 
 #: ../../index.rst:646
 msgid "Bot signature table"
-msgstr "机器人签名表"
+msgstr "Bot 签名表"
 
 #: ../../index.rst:647
 msgid "42,244 bytes"
@@ -3387,7 +3387,7 @@ msgstr "JavaScript 挑战和验证码；不受工作量约束"
 
 #: ../../index.rst:816
 msgid "Managed challenge, JS challenge, Turnstile"
-msgstr "托管质询、JS 质询、Turnstile"
+msgstr "托管挑战、JS 挑战、Turnstile"
 
 #: ../../index.rst:817
 msgid "Challenge state on the server"
@@ -3562,7 +3562,7 @@ msgstr ""
 
 #: ../../index.rst:865
 msgid "Sibuna req/s"
-msgstr "Sibuna 请求/秒"
+msgstr "Sibuna req/s"
 
 #: ../../index.rst:866
 msgid "Sibuna p99"
@@ -3570,7 +3570,7 @@ msgstr "Sibuna p99"
 
 #: ../../index.rst:867
 msgid "Anubis req/s"
-msgstr "Anubis 请求/秒"
+msgstr "Anubis req/s"
 
 #: ../../index.rst:868
 msgid "Anubis p99"
@@ -3859,7 +3859,7 @@ msgstr ""
 msgid ""
 "*State.* It keeps its attack log in PostgreSQL within the stack, one "
 "stack per host."
-msgstr "*状态。* 它把攻击日志保存在栈内的 PostgreSQL 中，每台主机一个栈。"
+msgstr "*状态。* 它把攻击日志保存在组件栈内的 PostgreSQL 中，每台主机一套组件。"
 
 #: ../../index.rst:959
 msgid ""
@@ -3950,7 +3950,7 @@ msgid ""
 "operator. Sibuna's cluster deployment borrows their shape, a shared "
 "policy plane feeding local immutable snapshots, while staying self-hosted."
 msgstr ""
-"托管边缘网络把检查、速率限制和机器人评分放在众多的接入点中，并配有全局控制平面。它们能吸收任何单台服务器都无法承受的大流量攻击，也不需要运维人员提供硬件。Sibuna "
+"托管边缘网络把检查、速率限制和 Bot 评分部署在众多边缘节点（PoP）中，并配有全局控制平面。它们能吸收任何单台服务器都无法承受的大流量攻击，也不需要运维人员提供硬件。Sibuna "
 "的集群部署借鉴了它们的形态，即由共享的策略平面向各处本地的不可变快照供给策略，同时保持自托管。"
 
 #: ../../index.rst:976
@@ -3979,7 +3979,7 @@ msgid ""
 "network in front of it."
 msgstr ""
 "*Sibuna 的不同之处。* Sibuna 运行在运维人员自己的机器上，没有按请求计算的费用，它的策略变更会在下一个存储节拍（默认 500 "
-"ms）到达每个节点。它不缓解大流量网络攻击，不用训练好的模型给机器人打分，也不终止 "
+"ms）到达每个节点。它不缓解大流量网络攻击，不用训练好的模型对 Bot 评分，也不终止 "
 "TLS；需要这些功能的部署，仍然要在它前面放置入口代理或边缘网络。"
 
 #: ../../index.rst:980
@@ -4174,7 +4174,7 @@ msgstr ""
 "*规范与测试。* 一个函数体最多 70 个逻辑行，一个文件最多 1,408 "
 "行，由检查工具强制执行。库代码返回结构化的错误，从不打印输出；用户看到的每个错误都会指出其位置，展示一段摘录，并给出提示。1.0.0-beta.3 "
 "的工作区测试套件在 SQLite 上运行约 2,200 个测试，另有约 700 个针对 PostgreSQL 的测试；控制台界面有 298 "
-"个测试，其中包括黄金样例；浏览器检查驱动无头 Chromium 走过验证中间页和控制台的每个页面 [#tests]_。"
+"个测试，其中包括标准快照（golden fixtures）；浏览器检查驱动无头 Chromium 走过验证中间页和控制台的每个页面 [#tests]_。"
 
 #: ../../index.rst:995
 msgid "Limitations and Open Work"
@@ -4217,7 +4217,7 @@ msgstr ""
 msgid ""
 "*The console's isolation gate* with eight active dashboards under load "
 "has not been run (:ref:`console`)."
-msgstr "*控制台的隔离门槛测试*，即在负载下运行八个活动仪表板，尚未进行（:ref:`console`）。"
+msgstr "*控制台的隔离门禁测试*，即在负载下运行八个活动仪表板，尚未进行（:ref:`console`）。"
 
 #: ../../index.rst:1004
 msgid ""
@@ -4344,7 +4344,7 @@ msgstr ""
 "本文中的每个数字都来自 Sibuna 仓库中一个已提交的结果文件、一份 Sibuna 讨论（SID）记录或《Sibuna "
 "之书》，每张表或每个脚注都注明了其来源。结果文件由 ``cargo xtask bench primitives``、``cargo xtask "
 "bench product`` 和 ``cargo xtask bench latency`` "
-"生成，``benchmarks/results/README.md`` 给出了命令、CPU 集合和每个文件的来历。"
+"生成，``benchmarks/results/README.md`` 给出了命令、CPU 集合和每个文件的来源信息。"
 
 #: ../../index.rst:1028
 msgid ""
@@ -4466,7 +4466,7 @@ msgid ""
 "``benchmarks/results/primitives-latest.md`` "
 "(``robin_hood_spend_and_lookup``)."
 msgstr ""
-"《Sibuna 之书》第 III 部分（引理 3 和引理 4，线路格式）；第 V 部分，“Robin Hood 已用集合”；SID "
+"《Sibuna 之书》第 III 部分（引理 3 和引理 4，传输格式）；第 V 部分，“Robin Hood 已用集合”；SID "
 "0006，Part E（Lemma 28）；``benchmarks/results/primitives-latest.md``\\ "
 "（``robin_hood_spend_and_lookup``）。"
 
@@ -4732,7 +4732,7 @@ msgid ""
 "\"deny\"`` and Clippy's ``undocumented_unsafe_blocks = \"deny\"``."
 msgstr ""
 "SID 0010，审查历史（安全审查，2026-10-15）：标准库有界通道与 Vyukov "
-"环形缓冲区的对比，``tests/timing.rs``。按名称启用的模块是 ``crates/crypto/src/sha256/``\\ "
+"环形缓冲区的对比，``tests/timing.rs``。显式启用的模块包括 ``crates/crypto/src/sha256/``\\ "
 "（x86-64 和 "
 "AArch64）、``crates/crypto/src/ct.rs``、``cmd/sibuna/src/signals.rs``、``cmd/sibuna-pow-wasm/src/lib.rs``、``cmd/console-ui/src/abi.rs`` "
 "和 ``crates/store/src/ring.rs``；工作区设置了 ``unsafe_code = \"deny\"`` 和 Clippy "

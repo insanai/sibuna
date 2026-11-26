@@ -619,7 +619,7 @@ msgstr "来自对等控制台的流，要求来源在其条目的 ``allow_ips`` 
 msgid ""
 "A console without an edge answers ``404`` with ``CONSOLE404`` on the "
 "three ``edge`` routes."
-msgstr "没有边缘的控制台对这三个 ``edge`` 路由回答带 ``CONSOLE404`` 的 ``404``。"
+msgstr "没有边缘的控制台对这三个 ``edge`` 路由返回带 ``CONSOLE404`` 的 ``404``。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:178
 msgid "Metrics"
@@ -747,8 +747,7 @@ msgstr "``overloaded``"
 msgid ""
 "A connection beyond ``--max-connections`` or ``--max-connections-per-ip`` "
 "was answered ``503``"
-msgstr ""
-"超出 ``--max-connections`` 或 ``--max-connections-per-ip`` 的连接被回答 ``503``"
+msgstr "超出 ``--max-connections`` 或 ``--max-connections-per-ip`` 的连接返回了 ``503``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:213
 msgid "``bans_refused``"
@@ -922,11 +921,11 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:372
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:380
 msgid "gauge"
-msgstr ""
+msgstr "计量器（gauge）"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:254
 msgid "1 while readiness answers 200, 0 from the start of a shutdown"
-msgstr "就绪检查回答 200 时为 1，从开始关闭时起为 0"
+msgstr "就绪检查返回 200 时为 1，从开始关闭时起为 0"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:255
 msgid "``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``"
@@ -962,7 +961,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:364
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:376
 msgid "counter"
-msgstr ""
+msgstr "计数器（counter）"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:262
 msgid "Datagrams that the edge worker discarded and admissions it refused"
@@ -1073,7 +1072,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:296
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:316
 msgid "histogram"
-msgstr ""
+msgstr "直方图（histogram）"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:298
 msgid ""
@@ -2416,7 +2415,7 @@ msgstr ""
 msgid ""
 "The OCSP responder did not answer, or its answer cannot be stapled; the "
 "certificate is served without a staple"
-msgstr "OCSP 响应器没有应答，或者其应答无法装订；证书在没有装订的情况下提供服务"
+msgstr "OCSP 响应方没有应答，或者其应答无法装订；证书在没有装订的情况下提供服务"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:686
 msgid "``ACME014``"

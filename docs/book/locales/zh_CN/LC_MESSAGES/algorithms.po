@@ -65,11 +65,7 @@ msgid ""
 "Sibuna folds the failure links into the transition table at build time, "
 "so scanning is one table load per input byte with no branches on the "
 "pattern set. The automaton lives in the ``sibuna-patterns`` crate:"
-msgstr ""
-"Sibuna 有两个字面量模式集合：大约四十个机器人签名和大约一百个攻击签名。逐个地把一个字段与 :math:`N` 个模式比较，复杂度为 "
-":math:`O(NM)`；Aho 和 Corasick（1975）的自动机在构建带失败链接的字典树之后，只需以 :math:`O(M)` "
-"扫描一遍。Sibuna 在构建时把失败链接折叠进转移表，因此扫描时每个输入字节只需一次表读取，不需要针对模式集合进行分支。自动机位于 "
-"``sibuna-patterns`` crate 中："
+msgstr "Sibuna 有两个字面量模式集合：大约四十个 Bot 签名和大约一百个攻击签名。逐个地把一个字段与 :math:`N` 个模式比较，复杂度为 :math:`O(NM)`；Aho 和 Corasick（1975）的自动机在构建带失败链接的字典树之后，只需以 :math:`O(M)` 扫描一遍。Sibuna 在构建时把失败链接折叠进转移表，因此扫描时每个输入字节只需一次表读取，不需要针对模式集合进行分支。自动机位于 ``sibuna-patterns`` crate 中："
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:18
 msgid ""
@@ -611,7 +607,7 @@ msgstr ""
 msgid ""
 "Static bypass paths, then trie ``challenge`` verdicts, then the bot "
 "automaton."
-msgstr "静态绕过路径，然后是字典树的 ``challenge`` 判定，然后是机器人自动机。"
+msgstr "静态绕过路径，然后是字典树的 ``challenge`` 判定，然后是 Bot 自动机。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:152
 msgid "Default action, ``challenge`` unless the policy file says otherwise."

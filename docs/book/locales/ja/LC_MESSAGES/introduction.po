@@ -151,7 +151,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:26
 msgid "From one node to a cluster"
-msgstr "1台からクラスタへ"
+msgstr "1台からクラスターへ"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:29
 msgid ""
@@ -171,8 +171,7 @@ msgid ""
 "a client previously used. A passenger's next connection may reach a "
 "different edge. This is why the cluster chapters ask which decisions a "
 "node can make alone and which facts its peers need to know."
-msgstr ""
-"各ノードは自分が受けた通信を転送します。ノード同士はメッシュを通じてルートの設定、ブロック情報、クライアントが前に使ったオリジンの情報を交換できます。乗客の次の接続は別のエッジに届くかもしれません。そこでクラスタの章では、ノードが単独で決められることと、他のノードと共有すべき事実を考えます。"
+msgstr "各ノードは自分が受けた通信を転送します。ノード同士はメッシュを通じてルートの設定、ブロック情報、クライアントが前に使ったオリジンの情報を交換できます。乗客の次の接続は別のエッジに届くかもしれません。そこでクラスターの章では、ノードが単独で決められることと、他のノードと共有すべき事実を考えます。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:33
 msgid ""

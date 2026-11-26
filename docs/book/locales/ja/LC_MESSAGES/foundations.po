@@ -41,8 +41,7 @@ msgid ""
 "does and does not establish, derive the expectation and tail of hash "
 "search, explain how sessions amortise work, and list the five invariants "
 "the rest of the book maintains."
-msgstr ""
-"この章を読み終えると、ゲートが元を取るかどうかを決める不等式を書き、作業証明が何を示し何を示さないかを述べ、ハッシュ探索の期待値と裾を導き、セッションが作業を償却する仕組みを説明し、本書の残りで保つ五つの不変条件を挙げられるようになります。"
+msgstr "この章を読み終えると、ゲートが元を取るかどうかを決める不等式を書き、Proof of Workが何を示し何を示さないかを述べ、ハッシュ探索の期待値と裾を導き、セッションが作業を償却する仕組みを説明し、本書の残りで保つ五つの不変条件を挙げられるようになります。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:10
 msgid "Admission Is an Economic Decision"
@@ -102,7 +101,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:25
 msgid "What a Proof of Work Establishes"
-msgstr "作業証明が示すもの"
+msgstr "Proof of Workが示すもの"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:28
 msgid ""

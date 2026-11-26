@@ -247,11 +247,7 @@ msgid ""
 "terminates TLS, HTTP/2 and HTTP/3, and routes HTTP requests to server "
 "pools, with the firewall on the routes that ask for it. It is unrelated "
 "to the storage sense of *Edge* above."
-msgstr ""
-"El daemon arrancado con ``--config-file``. Reenvía TCP y UDP, termina "
-"TLS, HTTP/2 y HTTP/3, y enruta las peticiones HTTP a pools de servidores, "
-"con el cortafuegos en las rutas que lo piden. No tiene relación con el "
-"sentido de almacenamiento de *Edge* que aparece más arriba."
+msgstr "El daemon arrancado con ``--config-file``. Reenvía TCP y UDP, termina TLS, HTTP/2 y HTTP/3, y enruta las peticiones HTTP a pools de servidores, con el firewall en las rutas que lo piden. No tiene relación con el sentido de almacenamiento de *Edge* que aparece más arriba."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:51
 msgid "Engine slot"
@@ -768,10 +764,7 @@ msgstr "Ruta"
 msgid ""
 "A rule of an HTTP frontend that selects a backend by host name and path "
 "prefix, and may switch the firewall off or on for its requests."
-msgstr ""
-"Una regla de un frontend HTTP que selecciona un backend por nombre de "
-"host y prefijo de ruta, y puede desactivar o activar el cortafuegos para "
-"sus peticiones."
+msgstr "Una regla de un frontend HTTP que selecciona un backend por nombre de host y prefijo de ruta, y puede desactivar o activar el firewall para sus peticiones."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:159
 msgid "Rule hash"
@@ -812,9 +805,7 @@ msgstr "Shield"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:169
 msgid "The default surface: Gate plus the semantic firewall (``--shield``)."
-msgstr ""
-"El modo de protección por defecto: Gate más el cortafuegos semántico "
-"(``--shield``)."
+msgstr "El modo de protección por defecto: Gate más el firewall semántico (``--shield``)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:171
 msgid "SID"

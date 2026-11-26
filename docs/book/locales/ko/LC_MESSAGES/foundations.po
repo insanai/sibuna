@@ -117,10 +117,7 @@ msgid ""
 "its lifetime, or distribute work across machines. The puzzle changes the "
 "admission cost; policy and inspection still decide what admitted requests "
 "may do."
-msgstr ""
-"클라이언트 퍼즐은 누군가 공개된 검증 규칙을 만족하는 입력을 찾았다는 사실을 입증합니다. 상대가 사람이라는 사실, 신원, 선한 "
-"의도는 입증하지 않습니다. 요청자는 연산 자원을 빌리거나, 유효한 세션을 수명 안에서 재사용하거나, 작업을 여러 기계에 나눌 수 "
-"있습니다. 퍼즐은 요청 허용의 비용을 바꿉니다. 허용된 요청이 무엇을 할 수 있는지는 여전히 정책과 검사가 결정합니다."
+msgstr "클라이언트 퍼즐은 누군가 공개된 검증 규칙을 만족하는 입력을 찾았다는 사실을 입증합니다. 상대가 사람이라는 사실, 신원, 선한 의도는 입증하지 않습니다. 요청자는 연산 자원을 빌리거나, 유효한 세션을 수명 안에서 재사용하거나, 작업을 여러 머신에 분산할 수 있습니다. 퍼즐은 요청 허용의 비용을 바꿉니다. 허용된 요청이 무엇을 할 수 있는지는 여전히 정책과 검사가 결정합니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:30
 msgid ""
@@ -335,7 +332,7 @@ msgstr "영속 재시도도 인시던트나 그 평판 효과를 여러 번 반�
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
-msgstr "게시된 정책 스냅숏은 마지막으로 읽는 쪽이 놓아줄 때까지 바뀌지 않습니다."
+msgstr "게시된 정책 스냅샷은 마지막으로 읽는 쪽이 놓아줄 때까지 바뀌지 않습니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:94
 msgid ""

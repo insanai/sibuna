@@ -126,8 +126,7 @@ msgid ""
 "A trie from the root through G and GP to the GPTBot match state, and "
 "through C and Cl to the ClaudeBot match state; dashed failure edges lead "
 "from GP and Cl back to the root."
-msgstr ""
-"根からGとGPを経てGPTBotの一致状態へ、またCとClを経てClaudeBotの一致状態へ至るトライです。破線の失敗辺がGPとClから根へ戻ります。"
+msgstr "ルートからGとGPを経てGPTBotの一致状態へ、またCとClを経てClaudeBotの一致状態へ至るトライです。破線の失敗辺がGPとClからルートへ戻ります。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:40
 msgid ""
@@ -235,8 +234,7 @@ msgid ""
 "distinct pattern bytes plus one rather than 256. Exact engine sizes and "
 "the comparison with sequential substring search are recorded in Part X. "
 "The latter uses the same patterns and any-match semantics."
-msgstr ""
-"オートマトンの状態数の予算は実行時のオプションです。ポリシーエンジンは、根一つとすべてのシグネチャの長さの合計を上限として確保します。これはトライの状態数の安全な上限です。これにより、かつての大きすぎる固定サイズの表を避けつつ、すべてのバイトクラスについて密な遷移を保てます。各パターンは小さなカテゴリータグ（0から63なので、タグの集合は64ビットの語一つ）を持ちます。大文字小文字の同一視には、オートマトンとともに構築する256項目のバイトクラス表を使います。ある文字の大文字と小文字は同じクラスを共有し、どのパターンにも現れないバイトは一つのクラスを共有します。そのため表の1行の幅は256ではなく、パターン中の異なるバイトの数に1を足した値です。エンジンの正確なサイズと、逐次的な部分文字列探索との比較は第X部に記録しています。後者は同じパターンと、いずれかに一致すればよいという意味論を使います。"
+msgstr "オートマトンの状態数の予算は実行時のオプションです。ポリシーエンジンは、ルートノード一つとすべてのシグネチャの長さの合計を上限として確保します。これはトライの状態数の安全な上限です。これにより、かつての大きすぎる固定サイズの表を避けつつ、すべてのバイトクラスについて密な遷移を保てます。各パターンは小さなカテゴリータグ（0から63なので、タグの集合は64ビットの語一つ）を持ちます。大文字小文字の同一視には、オートマトンとともに構築する256項目のバイトクラス表を使います。ある文字の大文字と小文字は同じクラスを共有し、どのパターンにも現れないバイトは一つのクラスを共有します。そのため表の1行の幅は256ではなく、パターン中の異なるバイトの数に1を足した値です。エンジンの正確なサイズと、逐次的な部分文字列探索との比較は第X部に記録しています。後者は同じパターンと、いずれかに一致すればよいという意味論を使います。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:45
 msgid "Regular Expressions, SIMD Engines, and the Choice"
@@ -300,8 +298,7 @@ msgid ""
 "Trace a longest-prefix lookup through the 128-bit trie, explain the IPv4 "
 "root shortcut, and see how the trie doubles as the reputation store fed "
 "by the cluster."
-msgstr ""
-"128ビットのトライで最長接頭辞の検索をたどり、IPv4の根の近道を説明し、トライがクラスターから供給されるレピュテーションの格納場所を兼ねる仕組みを確かめます。"
+msgstr "128ビットのトライで最長接頭辞検索をたどり、IPv4ルートのショートカットを説明し、トライがクラスターから供給されるレピュテーションの格納場所を兼ねる仕組みを確かめます。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:63
 msgid ""
@@ -311,12 +308,7 @@ msgid ""
 "by ``u32`` with index zero as both root and \"no child\", so a lookup is "
 "at most 128 dependent loads with no pointer chasing. The trie is the "
 "``PrefixTrie`` of the ``sibuna-cidr`` crate."
-msgstr ""
-"128ビットのキーに対する一つの二分トライが両方のアドレス族に使われます。IPv6の接頭辞はそのまま挿入し、IPv4の接頭辞は\\ "
-"``::ffff:0:0/96``\\ に対応付けるので、\\ ``/24``\\ は深さ120の経路になります。ノードは\\ ``u32``\\ "
-"で添字付けた一つの平坦な\\ ``Vec``\\ "
-"に置き、添字0は根と「子なし」の両方を表します。そのため検索は高々128回の依存した読み込みで、ポインターをたどることはありません。このトライは\\ "
-"``sibuna-cidr``\\ クレートの\\ ``PrefixTrie``\\ です。"
+msgstr "128ビットのキーに対する一つの二分トライが両方のアドレス族に使われます。IPv6の接頭辞はそのまま挿入し、IPv4の接頭辞は\\ ``::ffff:0:0/96``\\ に対応付けるので、\\ ``/24``\\ は深さ120の経路になります。ノードは\\ ``u32``\\ で添字付けた一つの平坦な\\ ``Vec``\\ に置き、添字0はルートノードと「子なし」の両方を表します。そのため検索は高々128回の依存した読み込みで、ポインターをたどることはありません。このトライは\\ ``sibuna-cidr``\\ クレートの\\ ``PrefixTrie``\\ です。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:65
 msgid ""

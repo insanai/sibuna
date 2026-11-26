@@ -22,7 +22,7 @@ msgid "Danger"
 msgstr "ख़तरा"
 
 msgid "Error"
-msgstr "त्रुटि"
+msgstr "एरर"
 
 msgid "Hint"
 msgstr "संकेत"
@@ -31,7 +31,7 @@ msgid "Important"
 msgstr "महत्वपूर्ण"
 
 msgid "Note"
-msgstr "टिप्पणी"
+msgstr "नोट"
 
 msgid "Tip"
 msgstr "सुझाव"
@@ -49,25 +49,25 @@ msgid "Contents"
 msgstr "विषय-सूची"
 
 msgid "Added in version %s"
-msgstr "संस्करण %s में जोड़ा गया"
+msgstr "वर्ज़न %s में जोड़ा गया"
 
 msgid "Changed in version %s"
-msgstr "संस्करण %s में बदला गया"
+msgstr "वर्ज़न %s में बदला गया"
 
 msgid "Deprecated since version %s"
-msgstr "संस्करण %s से अप्रचलित"
+msgstr "वर्ज़न %s से अप्रचलित"
 
 msgid "Removed in version %s"
-msgstr "संस्करण %s में हटाया गया"
+msgstr "वर्ज़न %s में हटाया गया"
 
 msgid "Section author: "
-msgstr "अनुभाग के लेखक: "
+msgstr "सेक्शन लेखक: "
 
 msgid "Module author: "
-msgstr "मॉड्यूल के लेखक: "
+msgstr "मॉड्यूल लेखक: "
 
 msgid "Code author: "
-msgstr "कोड के लेखक: "
+msgstr "कोड लेखक: "
 
 msgid "Link to this heading"
 msgstr "इस शीर्षक का लिंक"
@@ -79,7 +79,7 @@ msgid "Link to this image"
 msgstr "इस चित्र का लिंक"
 
 msgid "Link to this table"
-msgstr "इस तालिका का लिंक"
+msgstr "इस टेबल का लिंक"
 
 msgid "Link to this code"
 msgstr "इस कोड का लिंक"
@@ -94,25 +94,25 @@ msgid "Parameters"
 msgstr "पैरामीटर"
 
 msgid "Variables"
-msgstr "चर"
+msgstr "वेरिएबल"
 
 msgid "Raises"
-msgstr "अपवाद"
+msgstr "एक्सेप्शन"
 
 msgid "Returns"
 msgstr "लौटाता है"
 
 msgid "Return type"
-msgstr "लौटाने का प्रकार"
+msgstr "रिटर्न टाइप"
 
 msgid "Return values"
-msgstr "लौटाए गए मान"
+msgstr "रिटर्न वैल्यू"
 
 msgid "Template Parameters"
 msgstr "टेम्पलेट पैरामीटर"
 
 msgid "Throws"
-msgstr "अपवाद"
+msgstr "एक्सेप्शन"
 
 msgid "Arguments"
 msgstr "आर्ग्युमेंट"
@@ -133,7 +133,7 @@ msgid "Next"
 msgstr "अगला"
 
 msgid "Index"
-msgstr "अनुक्रमणिका"
+msgstr "इंडेक्स"
 
 msgid "Symbols"
 msgstr "चिह्न"
@@ -151,76 +151,76 @@ msgid "Theme"
 msgstr "थीम"
 
 msgid "auto"
-msgstr "स्वचालित"
+msgstr "ऑटो"
 
 msgid "light"
-msgstr "हल्की"
+msgstr "लाइट"
 
 msgid "dark"
-msgstr "गहरी"
+msgstr "डार्क"
 
 msgid "No pages match."
-msgstr "कोई पृष्ठ मेल नहीं खाता।"
+msgstr "कोई पेज मेल नहीं खाता।"
 
 msgid "Previous and next"
 msgstr "पिछला और अगला"
 
 msgid "Documentation"
-msgstr "दस्तावेज़"
+msgstr "डॉक्यूमेंटेशन"
 
 msgid "On this page"
-msgstr "इस पृष्ठ पर"
+msgstr "इस पेज पर"
 
 msgid "Last updated on %s."
 msgstr "अंतिम अपडेट: %s।"
 
 msgid "Show source"
-msgstr "स्रोत देखें"
+msgstr "सोर्स देखें"
 
 msgid "Built with Guidedog."
 msgstr "Guidedog से बनाया गया।"
 
 msgid "%s %s documentation"
-msgstr "%s %s दस्तावेज़"
+msgstr "%s %s डॉक्यूमेंटेशन"
 
 msgid "%s documentation"
-msgstr "%s दस्तावेज़"
+msgstr "%s डॉक्यूमेंटेशन"
 
 msgid "Search needs JavaScript. Use the index instead."
-msgstr "खोज के लिए JavaScript चाहिए। इसके बजाय अनुक्रमणिका का उपयोग करें।"
+msgstr "खोज के लिए JavaScript चाहिए। इसके बजाय इंडेक्स का उपयोग करें।"
 
 msgid "Fig. %s"
 msgstr "चित्र %s"
 
 msgid "Table %s"
-msgstr "तालिका %s"
+msgstr "टेबल %s"
 
 msgid "Listing %s"
 msgstr "लिस्टिंग %s"
 
 msgid "Section %s"
-msgstr "अनुभाग %s"
+msgstr "सेक्शन %s"
 
 msgid "Version"
-msgstr "संस्करण"
+msgstr "वर्ज़न"
 
 msgid "General Index"
-msgstr "सामान्य अनुक्रमणिका"
+msgstr "सामान्य इंडेक्स"
 
 msgid "Python Module Index"
-msgstr "Python मॉड्यूल अनुक्रमणिका"
+msgstr "Python मॉड्यूल इंडेक्स"
 
 msgid "Module Index"
-msgstr "मॉड्यूल अनुक्रमणिका"
+msgstr "मॉड्यूल इंडेक्स"
 
 msgid "Search Page"
-msgstr "खोज पृष्ठ"
+msgstr "खोज पेज"
 
 msgid "Deprecated"
 msgstr "अप्रचलित"
 
 msgid "index"
-msgstr "अनुक्रमणिका"
+msgstr "इंडेक्स"
 
 msgid "next"
 msgstr "अगला"

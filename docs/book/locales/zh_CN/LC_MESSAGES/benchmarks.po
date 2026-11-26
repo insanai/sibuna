@@ -239,9 +239,7 @@ msgid ""
 "``admitted``: ``GET /private`` with a valid session cookie. In "
 "reverse-proxy mode the request reaches the origin and its answer is "
 "relayed; in forward-auth mode the daemon answers ``200`` itself."
-msgstr ""
-"``admitted``：带有效会话 Cookie 的 ``GET /private``。在反向代理模式下，请求到达源站，其应答被中继回来；在 "
-"forward-auth 模式下，由守护进程自己回答 ``200``。"
+msgstr "``admitted``：带有效会话 Cookie 的 ``GET /private``。在反向代理模式下，请求到达源站，其应答被中继回来；在 forward-auth 模式下，由守护进程直接返回 ``200``。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:56
 msgid ""
@@ -604,7 +602,7 @@ msgstr "22257.0-22316.4"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:129
 msgid "Bot signatures (40, Aho-Corasick)"
-msgstr "机器人签名（40 个，Aho-Corasick）"
+msgstr "Bot 签名（40 个，Aho-Corasick）"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:130
 msgid "55.7"
@@ -616,7 +614,7 @@ msgstr "55.3-57.2"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:132
 msgid "Bot signatures (40, sequential search)"
-msgstr "机器人签名（40 个，顺序搜索）"
+msgstr "Bot 签名（40 个，顺序搜索）"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:133
 msgid "763.0"
@@ -862,10 +860,7 @@ msgid ""
 "(SID 0006, Part F), which keeps the bot signature table at 42,244 bytes "
 "(the footprint table below). The CIDR classifiers take 32.0 ns (IPv4) and "
 "79.3 ns (IPv6)."
-msgstr ""
-"稠密 Aho-Corasick 自动机和顺序子串搜索使用相同的模式和“任一匹配”语义。在同样的 40 个签名上，自动机比顺序搜索快 13.7 "
-"倍（55.7 ns 对 763.0 ns）。它的表使用字节类，而不是每个状态 256 列（SID 0006，F 部分），这使机器人签名表保持在 "
-"42,244 字节（见下面的占用表）。CIDR 分类器耗时 32.0 ns（IPv4）和 79.3 ns（IPv6）。"
+msgstr "稠密 Aho-Corasick 自动机和顺序子串搜索使用相同的模式和“任一匹配”语义。在同样的 40 个签名上，自动机比顺序搜索快 13.7 倍（55.7 ns 对 763.0 ns）。它的表使用字节类，而不是每个状态 256 列（SID 0006，F 部分），这使 Bot 签名表保持在 42,244 字节（见下面的占用表）。CIDR 分类器耗时 32.0 ns（IPv4）和 79.3 ns（IPv6）。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:194
 msgid "Tokens"
@@ -1632,7 +1627,7 @@ msgstr "209,052 字节（堆）"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:423
 msgid "Bot signature table"
-msgstr "机器人签名表"
+msgstr "Bot 签名表"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:424
 msgid "42,244 bytes (heap)"
@@ -2708,9 +2703,7 @@ msgid ""
 "In forward-auth mode Anubis answers ``/robots.txt`` and the ``attack`` "
 "path itself with ``200``, without an origin; Sibuna answers them as it "
 "answers any request in that mode."
-msgstr ""
-"在 forward-auth 模式下，Anubis 自己以 ``200`` 回答 ``/robots.txt`` 和 ``attack`` "
-"路径，不经过源站；Sibuna 则像回答该模式下的任何请求一样回答它们。"
+msgstr "在 forward-auth 模式下，Anubis 直接对 ``/robots.txt`` 和 ``attack`` 路径返回 ``200``，不经过源站；Sibuna 则像处理该模式下的任何其他请求一样处理它们。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:788
 msgid ""
@@ -3571,10 +3564,7 @@ msgid ""
 "requests before its health check removed it. Killing a node, reloading a "
 "node and stopping a node failed no request through the other nodes, and "
 "every tunnel through a surviving node stayed open."
-msgstr ""
-"我们在三台主机上运行了三个组成网格的节点，并通过每个节点保持 300 个 WebSocket 隧道。停止一个源站时，在健康检查将其移除之前，约 "
-"114,000 个请求中有 10 "
-"个失败。杀死一个节点、重新加载一个节点和停止一个节点都没有让经过其他节点的任何请求失败，经过存活节点的每个隧道都保持打开。"
+msgstr "我们在三台主机上运行了三个组成网格的节点，并通过每个节点保持 300 个 WebSocket 隧道。停止一个源站时，在健康检查将其移除之前，约 114,000 个请求中有 10 个失败。强行终止一个节点、重新加载一个节点和停止一个节点都没有让经过其他节点的任何请求失败，经过存活节点的每个隧道都保持打开。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:1008
 msgid "Not Measured"
@@ -4371,9 +4361,7 @@ msgid ""
 "its CPU and needed 74 us for a request, where HAProxy needs 52 us with a "
 "multiplexer written for this one purpose. This line is bound by CPU, and "
 "only a cheaper HTTP/2 path will raise it."
-msgstr ""
-"对于 HTTP/2，整个交换都在协议运行时中进行，这是一个通用异步运行时加上一个通用 HTTP/2 库。它用尽了全部 CPU，每个请求需要 74 "
-"us，而 HAProxy 用为这一目的专门编写的多路复用器只需 52 us。这一行受 CPU 限制，只有更廉价的 HTTP/2 路径才能提高它。"
+msgstr "对于 HTTP/2，整个交换都在协议运行时中进行，这是一个通用异步运行时加上一个通用 HTTP/2 库。它用尽了全部 CPU，每个请求需要 74 us，而 HAProxy 用为这一目的专门编写的多路复用器只需 52 us。这一行受 CPU 限制，只有开销更低的 HTTP/2 路径才能提高它。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/benchmarks.rst:1266
 msgid ""

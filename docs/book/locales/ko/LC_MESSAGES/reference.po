@@ -211,14 +211,7 @@ msgid ""
 "under ``/console/api/``. Origin error counters are not observed in "
 "forward-auth mode. Part XI documents the console's workflows, HTTPS "
 "deployment and current SID 0007 limits."
-msgstr ""
-"별도로 켜는 관리 리스너는 ``/console/``\\ 을 제공합니다. 관리자 계정은 ``sibuna init-admin``\\ "
-"으로 로컬에서 초기화하고, 처음 로그인할 때 임시 비밀번호를 바꿉니다. ``/console/api/stats``\\ 와 "
-"``/console/ws``\\ 에는 인증된 세션(키오스크 세션 포함)이 필요합니다. WebSocket은 통계, 이벤트, 노드, "
-"정책, 챌린지, 감사 기록을 크기가 제한된 스냅숏, 변경분, 누락 복구와 함께 다중화합니다. 관리 피어는 "
-"``/console/peer``\\ 에 연결하며, 모든 API 경로는 ``/console/api/`` 아래에 있습니다. "
-"forward-auth 모드에서는 원본 서버 오류 카운터를 관찰하지 않습니다. 콘솔의 워크플로, HTTPS 배포, 현재 SID "
-"0007의 한계는 제XI부에서 설명합니다."
+msgstr "별도로 켜는 관리 리스너는 ``/console/``\\ 을 제공합니다. 관리자 계정은 ``sibuna init-admin``\\ 으로 로컬에서 초기화하고, 처음 로그인할 때 임시 비밀번호를 바꿉니다. ``/console/api/stats``\\ 와 ``/console/ws``\\ 에는 인증된 세션(키오스크 세션 포함)이 필요합니다. WebSocket은 통계, 이벤트, 노드, 정책, 챌린지, 감사 기록을 크기가 제한된 스냅샷, 변경분, 누락 복구와 함께 다중화합니다. 관리 피어는 ``/console/peer``\\ 에 연결하며, 모든 API 경로는 ``/console/api/`` 아래에 있습니다. forward-auth 모드에서는 원본 서버 오류 카운터를 관찰하지 않습니다. 콘솔의 워크플로우, HTTPS 배포, 현재 SID 0007의 한계는 제XI부에서 설명합니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:49
 msgid "Routes of the edge"
@@ -377,7 +370,7 @@ msgstr ""
 msgid ""
 "One line per server: pool, name, address, state, weight, flows, health, "
 "ejection, ramp, change"
-msgstr "서버마다 한 줄: 풀, 이름, 주소, 상태, 가중치, 플로, 헬스, 배제, 램프, 변경"
+msgstr "서버마다 한 줄: 풀, 이름, 주소, 상태, 가중치, 플로우, 헬스, 배제, 램프, 변경"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:99
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:108
@@ -398,9 +391,7 @@ msgstr ""
 msgid ""
 "``key: value`` lines: version, process, source, reloads, watcher, flows, "
 "drops, run-time changes, and the counters of the spill cache (SID 0027)"
-msgstr ""
-"``key: value`` 줄: 버전, 프로세스, 소스, 다시 불러오기, 감시자, 플로, 버림, 실행 중 변경, spill 캐시의 "
-"카운터(SID 0027)"
+msgstr "``key: value`` 줄: 버전, 프로세스, 소스, 다시 불러오기, 감시자, 플로우, 버림, 실행 중 변경, spill 캐시의 카운터(SID 0027)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:102
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:105
@@ -488,7 +479,7 @@ msgstr ""
 msgid ""
 "Admits a server, or stops new flows to it; ``maint`` is another word for "
 "``drain``"
-msgstr "서버를 허용하거나, 그 서버로 가는 새 플로를 멈춤; ``maint``\\ 는 ``drain``\\ 의 다른 이름"
+msgstr "서버를 허용하거나, 그 서버로 가는 새 플로우를 멈춤; ``maint``\\ 는 ``drain``\\ 의 다른 이름"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:127
 msgid "``set server POOL/NAME weight N [local]``"
@@ -530,7 +521,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:140
 msgid "Reloads this node, then sends the file to every peer (SID 0023)"
-msgstr "이 노드를 다시 불러온 뒤, 모든 동료에게 파일을 보냄(SID 0023)"
+msgstr "이 노드를 다시 불러온 뒤, 모든 피어에게 파일을 보냄(SID 0023)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:142
 msgid "``reopen log``"
@@ -619,7 +610,7 @@ msgstr ""
 msgid ""
 "The stream of a peer console, from the ``allow_ips`` of its entry, with "
 "the peer key"
-msgstr "동료 콘솔의 스트림. 그 항목의 ``allow_ips``\\ 에서, 동료 키와 함께"
+msgstr "피어 콘솔의 스트림. 그 항목의 ``allow_ips``\\ 에서, 피어 키와 함께"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:176
 msgid ""
@@ -936,7 +927,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:372
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:380
 msgid "gauge"
-msgstr ""
+msgstr "게이지"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:254
 msgid "1 while readiness answers 200, 0 from the start of a shutdown"
@@ -948,7 +939,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:258
 msgid "The flows in the flow table, and ``global.max_flows``"
-msgstr "플로 테이블의 플로, 그리고 ``global.max_flows``"
+msgstr "플로우 테이블의 플로우, 그리고 ``global.max_flows``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:259
 msgid "``sibuna_edge_drops_total``"
@@ -976,7 +967,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:364
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:376
 msgid "counter"
-msgstr ""
+msgstr "카운터"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:262
 msgid "Datagrams that the edge worker discarded and admissions it refused"
@@ -996,7 +987,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:270
 msgid "Lines of TCP and UDP flows that did not fit the queue of the log"
-msgstr "로그 큐에 들어가지 못한 TCP와 UDP 플로의 줄"
+msgstr "로그 큐에 들어가지 못한 TCP와 UDP 플로우의 줄"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:271
 msgid "``sibuna_edge_refused_total``"
@@ -1080,7 +1071,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:294
 msgid "Bytes from and to the clients, and flows of a frontend"
-msgstr "클라이언트에게서 받고 클라이언트로 보낸 바이트, 그리고 프런트엔드의 플로"
+msgstr "클라이언트에게서 받고 클라이언트로 보낸 바이트, 그리고 프런트엔드의 플로우"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:295
 msgid "``sibuna_edge_frontend_request_seconds``"
@@ -1089,7 +1080,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:296
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:316
 msgid "histogram"
-msgstr ""
+msgstr "히스토그램"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:298
 msgid ""
@@ -1181,7 +1172,7 @@ msgstr ""
 msgid ""
 "Peer forwarding (SID 0026): 1 while this node forwards, the peers that "
 "can take a flow, and the flows forwarded now"
-msgstr "동료 전달(SID 0026): 이 노드가 전달하는 동안 1, 플로를 받을 수 있는 동료, 지금 전달 중인 플로"
+msgstr "피어 전달(SID 0026): 이 노드가 전달하는 동안 1, 플로우를 받을 수 있는 피어, 지금 전달 중인 플로우"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:331
 msgid "``sibuna_edge_forward_streams_out_total``, ``_streams_in_total``"
@@ -1189,7 +1180,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:334
 msgid "Connections handed to an owner, and taken from peers"
-msgstr "소유 노드에 넘긴 연결과 동료에게서 받은 연결"
+msgstr "소유 노드에 넘긴 연결과 피어에게서 받은 연결"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:335
 msgid ""
@@ -1201,7 +1192,7 @@ msgstr ""
 msgid ""
 "Datagrams sent to an owner, taken from peers, and replies passed back to "
 "a client"
-msgstr "소유 노드에 보낸 데이터그램, 동료에게서 받은 데이터그램, 클라이언트에게 되돌려 준 응답"
+msgstr "소유 노드에 보낸 데이터그램, 피어에게서 받은 데이터그램, 클라이언트에게 되돌려 준 응답"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:339
 msgid "``sibuna_edge_forward_denied_total``"
@@ -1219,9 +1210,7 @@ msgstr ""
 msgid ""
 "Flows of another owner served here: ``declined``, ``connect_failed``, "
 "``timeout``, ``peer_limit``"
-msgstr ""
-"여기서 서비스한 다른 소유 노드의 플로: ``declined``, ``connect_failed``, ``timeout``, "
-"``peer_limit``"
+msgstr "여기서 서비스한 다른 소유 노드의 플로우: ``declined``, ``connect_failed``, ``timeout``, ``peer_limit``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:347
 msgid "``sibuna_edge_forward_rejected_total``"
@@ -1246,9 +1235,7 @@ msgid ""
 "Replicated bans (SID 0022): written into datagrams once for each peer and "
 "send, read from authentic datagrams, that added or extended a ban, and "
 "lost to a bound"
-msgstr ""
-"복제된 차단(SID 0022): 동료마다 그리고 전송마다 데이터그램에 한 번씩 기록한 것, 인증된 데이터그램에서 읽어 차단을 "
-"추가하거나 늘린 것, 상한 때문에 잃은 것"
+msgstr "복제된 차단(SID 0022): 피어마다 그리고 전송마다 데이터그램에 한 번씩 기록한 것, 인증된 데이터그램에서 읽어 차단을 추가하거나 늘린 것, 상한 때문에 잃은 것"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:355
 msgid "``sibuna_edge_mesh_bans_known``"
@@ -1336,10 +1323,7 @@ msgid ""
 "spill cache by ``show info`` (SID 0027), and the revision of the database "
 "by ``show authority`` (SID 0028). No series counts the commands, the "
 "lifted bans or the parked flows of the plugins."
-msgstr ""
-"엣지의 일부 상태에는 시계열이 없습니다. 스티키 테이블과 플릿 전체 한도의 몫은 ``show affinity``\\ 로만(SID "
-"0025), spill 캐시는 ``show info``\\ 로(SID 0027), 데이터베이스 리비전은 ``show "
-"authority``\\ 로(SID 0028) 보여 줍니다. 명령, 해제된 차단, 플러그인의 대기시킨 플로를 세는 시계열은 없습니다."
+msgstr "엣지의 일부 상태에는 시계열이 없습니다. 스티키 테이블과 플릿 전체 한도의 몫은 ``show affinity``\\ 로만(SID 0025), spill 캐시는 ``show info``\\ 로(SID 0027), 데이터베이스 리비전은 ``show authority``\\ 로(SID 0028) 보여 줍니다. 명령, 해제된 차단, 플러그인의 대기시킨 플로우를 세는 시계열은 없습니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:386
 msgid ""
@@ -1727,11 +1711,11 @@ msgstr "``InvalidProof``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:485
 msgid "The sequential-work proof does not open the committed labels"
-msgstr "순차 작업 증명이 커밋된 라벨을 개방하지 못함"
+msgstr "순차 작업 증명이 커밋된 라벨을 오프닝하지 못함"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:486
 msgid "Run the prover to completion for the issued depth and openings"
-msgstr "발급된 깊이와 개방 수로 증명자를 끝까지 실행하세요"
+msgstr "발급된 깊이와 오프닝 수로 증명자를 끝까지 실행하세요"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:487
 msgid "``WrongSolutionType``"
@@ -1936,10 +1920,7 @@ msgid ""
 "that the code tables hold, with its title as the daemon prints it. A code "
 "marked *log* is not a failure: it is the code of a line on standard error "
 "that reports an event."
-msgstr ""
-"엣지는 실패를 코드를 담은 제목 줄, 설명, ``Hint:``\\ 로 이루어진 진단으로 표시합니다. 표는 코드 표가 담은 모든 "
-"코드를 데몬이 출력하는 제목과 함께 나열합니다. *log*\\ 로 표시한 코드는 실패가 아닙니다. 사건을 보고하는 표준 오류 줄의 "
-"코드입니다."
+msgstr "엣지는 실패를 코드를 담은 제목 줄, 설명, ``Hint:``\\ 로 이루어진 진단으로 표시합니다. 표는 코드 표가 담은 모든 코드를 데몬이 출력하는 제목과 함께 나열합니다. *로그*\\ 로 표시한 코드는 실패가 아닙니다. 사건을 보고하는 표준 오류 줄의 코드입니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:548
 msgid ""
@@ -2023,7 +2004,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:795
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:798
 msgid "*log*"
-msgstr ""
+msgstr "*로그*"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:568
 msgid ""
@@ -2046,7 +2027,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:574
 msgid "A configuration file was received from a peer (SID 0023)"
-msgstr "동료에게서 설정 파일을 받음(SID 0023)"
+msgstr "피어에게서 설정 파일을 받음(SID 0023)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:575
 msgid "``EDGE012``"
@@ -2075,7 +2056,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:583
 msgid ""
 "A console peer is new or changed and is used after a restart (SID 0031)"
-msgstr "콘솔 동료가 새로 생겼거나 바뀌었으며, 재시작 뒤에 쓰임(SID 0031)"
+msgstr "콘솔 피어가 새로 생겼거나 바뀌었으며, 재시작 뒤에 쓰임(SID 0031)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:584
 msgid "``EDGE015``"
@@ -2260,7 +2241,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:635
 msgid "This node reloaded, and some peers did not take the file"
-msgstr "이 노드는 다시 불러왔지만, 일부 동료가 파일을 받지 않음"
+msgstr "이 노드는 다시 불러왔지만, 일부 피어가 파일을 받지 않음"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:636
 msgid "``ADM013``"
@@ -2862,7 +2843,7 @@ msgstr ""
 msgid ""
 "Another process holds the lock of the file; the daemon then runs with the "
 "sticky table in memory only"
-msgstr "다른 프로세스가 파일의 락을 쥐고 있음; 그러면 데몬은 스티키 테이블을 메모리에만 두고 실행함"
+msgstr "다른 프로세스가 파일의 락을 잡고 있음; 그러면 데몬은 스티키 테이블을 메모리에만 두고 실행함"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:817
 msgid "``SPILL004``"
@@ -3011,12 +2992,7 @@ msgid ""
 "without the console. The console's query routes answer with families of "
 "their own (``TRAFFIC``, ``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, "
 "``TIMELINE``, ``MINUTES``), whose hints the interface shows."
-msgstr ""
-"다시 불러오기에서 불러오지 못한 플러그인 집합은 서비스 중인 집합을 그대로 둡니다. 두 계열이 더 있지만, 엣지 운영자보다는 빌드와 "
-"콘솔에 관계됩니다. ``HTML001``\\ 부터 ``HTML008``\\ 까지는 페이지 템플릿의 빌드를 멈추고, "
-"``GEOIP001``\\ 은 콘솔이 없는 빌드에서 GeoIP 스냅숏을 거부합니다. 콘솔의 조회 경로는 자기 "
-"계열(``TRAFFIC``, ``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, "
-"``TIMELINE``, ``MINUTES``)로 답하며, 그 힌트는 인터페이스가 보여 줍니다."
+msgstr "다시 불러오기에서 불러오지 못한 플러그인 집합은 서비스 중인 집합을 그대로 둡니다. 두 계열이 더 있지만, 엣지 운영자보다는 빌드와 콘솔에 관계됩니다. ``HTML001``\\ 부터 ``HTML008``\\ 까지는 페이지 템플릿의 빌드를 멈추고, ``GEOIP001``\\ 은 콘솔이 없는 빌드에서 GeoIP 스냅샷을 거부합니다. 콘솔의 조회 경로는 자기 계열(``TRAFFIC``, ``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, ``TIMELINE``, ``MINUTES``)로 답하며, 그 힌트는 인터페이스가 보여 줍니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:860
 msgid "Policy Schema"
@@ -3387,7 +3363,7 @@ msgstr "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:952
 msgid "Validate country data and write an embeddable GeoIP snapshot"
-msgstr "국가 데이터를 검증하고 내장할 수 있는 GeoIP 스냅숏을 생성"
+msgstr "국가 데이터를 검증하고 내장할 수 있는 GeoIP 스냅샷을 생성"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:953
 msgid "``guidedog build`` / ``guidedog dsc``"
@@ -3406,13 +3382,7 @@ msgid ""
 "instead, for builds without the ``wasm32-unknown-unknown`` target. "
 "``SIBUNA_GEOIP_DATA`` names a GeoIP snapshot to embed; it is decoded at "
 "build time, and a build without the console refuses it (``GEOIP001``)."
-msgstr ""
-"데몬의 빌드 스크립트(``cmd/sibuna/build.rs``)는 두 WebAssembly 모듈을 ``wasm`` 프로파일로 "
-"워크스페이스의 대상 디렉터리에 빌드하며, 콘솔 인터페이스가 768 KiB를 넘으면 빌드를 실패시킵니다. "
-"``wasm32-unknown-unknown`` 대상이 없는 빌드에서는 ``SIBUNA_POW_WASM``\\ 과 "
-"``SIBUNA_CONSOLE_WASM``\\ 으로 미리 빌드한 모듈을 대신 지정합니다. ``SIBUNA_GEOIP_DATA``\\ "
-"는 내장할 GeoIP 스냅숏을 지정합니다. 이 스냅숏은 빌드할 때 디코딩되며, 콘솔이 없는 빌드는 이를 "
-"거부합니다(``GEOIP001``)."
+msgstr "데몬의 빌드 스크립트(``cmd/sibuna/build.rs``)는 두 WebAssembly 모듈을 ``wasm`` 프로파일로 워크스페이스의 대상 디렉터리에 빌드하며, 콘솔 인터페이스가 768 KiB를 넘으면 빌드를 실패시킵니다. ``wasm32-unknown-unknown`` 대상이 없는 빌드에서는 ``SIBUNA_POW_WASM``\\ 과 ``SIBUNA_CONSOLE_WASM``\\ 으로 미리 빌드한 모듈을 대신 지정합니다. ``SIBUNA_GEOIP_DATA``\\ 는 내장할 GeoIP 스냅샷을 지정합니다. 이 스냅샷은 빌드할 때 디코딩되며, 콘솔이 없는 빌드는 이를 거부합니다(``GEOIP001``)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:958
 msgid "Exercise 12.1"

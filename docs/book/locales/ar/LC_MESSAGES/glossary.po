@@ -459,9 +459,7 @@ msgstr "الحكم (Judge)"
 msgid ""
 "A thread that decides a parked connection whose chain of hooks names an "
 "agent, so that the edge worker never waits for the agent (SID 0030)."
-msgstr ""
-"خيط يقرر في اتصال مركون تسمي سلسلة خطافاته وكيلًا، كي لا ينتظر عامل "
-"الحافة الوكيل أبدًا (SID 0030)."
+msgstr "خيط يقرر في اتصال معلَّق (parked) تسمي سلسلة خطافاته (hooks) وكيلًا، كي لا ينتظر عامل الحافة الوكيل أبدًا (SID 0030)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:99
 msgid "Keyed BLAKE3"
@@ -572,9 +570,7 @@ msgid ""
 "In a sequential-work proof, one leaf label plus the sibling labels along "
 "its path to the root; the verifier recomputes the path and compares with "
 "the commitment."
-msgstr ""
-"في إثبات العمل المتسلسل، تسمية ورقة واحدة مع تسميات أشقاء العقد على "
-"مسارها إلى الجذر؛ يعيد المتحقق حساب المسار ويقارنه بالالتزام."
+msgstr "في إثبات العمل المتسلسل، تسمية ورقة واحدة مع تسميات العقد الشقيقة على مسارها إلى الجذر؛ يعيد المتحقق حساب المسار ويقارنه بالالتزام."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:123
 msgid "Owner"

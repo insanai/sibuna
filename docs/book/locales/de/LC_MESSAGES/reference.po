@@ -223,19 +223,7 @@ msgid ""
 "under ``/console/api/``. Origin error counters are not observed in "
 "forward-auth mode. Part XI documents the console's workflows, HTTPS "
 "deployment and current SID 0007 limits."
-msgstr ""
-"Der getrennte, optional aktivierte Verwaltungs-Listener bedient "
-"``/console/``. Sein Administrator wird lokal mit ``sibuna init-admin`` "
-"eingerichtet; danach wird das temporäre Passwort bei der ersten Anmeldung "
-"ersetzt. ``/console/api/stats`` und ``/console/ws`` erfordern eine "
-"authentifizierte Sitzung (eine Kiosk-Sitzung eingeschlossen). Der "
-"WebSocket bündelt Statistiken, Ereignisse, Knoten, Richtlinien, "
-"Challenges und Audit mit begrenzten Schnappschüssen, Deltas und "
-"Lückenwiederherstellung. Verwaltungs-Peers verbinden sich mit "
-"``/console/peer``, und jede API-Route liegt unter ``/console/api/``. "
-"Fehlerzähler des Ursprungsservers werden im Forward-Auth-Modus nicht "
-"beobachtet. Teil XI dokumentiert die Workflows der Konsole, den Einsatz "
-"mit HTTPS und die aktuellen Grenzen von SID 0007."
+msgstr "Der getrennte, optional aktivierte Verwaltungs-Listener bedient ``/console/``. Sein Administrator wird lokal mit ``sibuna init-admin`` eingerichtet; danach wird das temporäre Passwort bei der ersten Anmeldung ersetzt. ``/console/api/stats`` und ``/console/ws`` erfordern eine authentifizierte Sitzung (eine Kiosk-Sitzung eingeschlossen). Der WebSocket bündelt Statistiken, Ereignisse, Knoten, Richtlinien, Challenges und Audit mit begrenzten Snapshots, Deltas und Lückenwiederherstellung. Verwaltungs-Peers verbinden sich mit ``/console/peer``, und jede API-Route liegt unter ``/console/api/``. Fehlerzähler des Ursprungsservers werden im Forward-Auth-Modus nicht beobachtet. Teil XI dokumentiert die Workflows der Konsole, den Einsatz mit HTTPS und die aktuellen Grenzen von SID 0007."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:49
 msgid "Routes of the edge"
@@ -280,8 +268,7 @@ msgstr "``/__sibuna/health``, ``/__sibuna/metrics`` auf einem HTTP-Frontend"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:66
 msgid ""
 "As in the firewall. The metrics text adds the series of the edge (below)"
-msgstr ""
-"Wie in der Firewall. Der Metriktext ergänzt die Reihen des Edge (unten)"
+msgstr "Wie in der Firewall. Der Metriktext ergänzt die Metrikreihen des Edge (unten)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:67
 msgid "``/health``, ``/ready``, ``/metrics`` on ``observability.listen``"
@@ -455,9 +442,7 @@ msgstr ""
 msgid ""
 "The series of the edge in the Prometheus text format, as the metrics "
 "route prints them"
-msgstr ""
-"Die Reihen des Edge im Prometheus-Textformat, so wie die Metrikroute sie "
-"ausgibt"
+msgstr "Die Metrikreihen des Edge im Prometheus-Textformat, so wie die Metrikroute sie ausgibt"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:106
 msgid "``show certs``, ``show ca``"
@@ -491,9 +476,7 @@ msgstr ""
 msgid ""
 "The plugins with their calls, verdicts, failures and open breakers (SID "
 "0030)"
-msgstr ""
-"Die Plugins mit ihren Aufrufen, Urteilen, Fehlschlägen und offenen "
-"Breakern (SID 0030)"
+msgstr "Die Plugins mit ihren Aufrufen, Verdicts, Fehlschlägen und offenen Breakern (SID 0030)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:115
 msgid "``show cluster``"
@@ -976,7 +959,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:238
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:243
 msgid "Series of the edge"
-msgstr "Reihen des Edge"
+msgstr "Metrikreihen des Edge"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:241
 msgid ""
@@ -987,19 +970,11 @@ msgid ""
 "code that writes them is ``crates/lb/src/stats.rs``, "
 "``crates/lb/src/forward/counters.rs``, ``cmd/sibuna/src/access.rs``, "
 "``cmd/sibuna/src/plugins.rs`` and ``cmd/sibuna/src/acme.rs``."
-msgstr ""
-"Der Metriktext eines Edge enthält die obigen Zähler und danach diese "
-"Reihen. ``show stats`` auf dem Admin-Socket gibt denselben Text aus. Eine "
-"Reihe einer nicht konfigurierten Familie fehlt: Weiterleitung, Mesh, "
-"Plugins und automatisches HTTPS fügen ihre jeweils nur hinzu, wenn sie "
-"eingeschaltet sind. Der Code, der sie schreibt, ist "
-"``crates/lb/src/stats.rs``, ``crates/lb/src/forward/counters.rs``, "
-"``cmd/sibuna/src/access.rs``, ``cmd/sibuna/src/plugins.rs`` und "
-"``cmd/sibuna/src/acme.rs``."
+msgstr "Der Metriktext eines Edge enthält die obigen Zähler und danach diese Metrikreihen. ``show stats`` auf dem Admin-Socket gibt denselben Text aus. Eine Metrikreihe einer nicht konfigurierten Familie fehlt: Weiterleitung, Mesh, Plugins und automatisches HTTPS fügen ihre jeweils nur hinzu, wenn sie eingeschaltet sind. Der Code, der sie schreibt, ist ``crates/lb/src/stats.rs``, ``crates/lb/src/forward/counters.rs``, ``cmd/sibuna/src/access.rs``, ``cmd/sibuna/src/plugins.rs`` und ``cmd/sibuna/src/acme.rs``."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:247
 msgid "Series"
-msgstr "Reihe"
+msgstr "Metrikreihe"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:248
 msgid "Type"
@@ -1036,7 +1011,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:372
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:380
 msgid "gauge"
-msgstr ""
+msgstr "Gauge"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:254
 msgid "1 while readiness answers 200, 0 from the start of a shutdown"
@@ -1078,7 +1053,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:364
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:376
 msgid "counter"
-msgstr ""
+msgstr "Zähler"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:262
 msgid "Datagrams that the edge worker discarded and admissions it refused"
@@ -1200,7 +1175,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:296
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:316
 msgid "histogram"
-msgstr ""
+msgstr "Histogramm"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:298
 msgid ""
@@ -1496,7 +1471,7 @@ msgstr "Statuscodes"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:391
 msgid "Status codes of the data plane"
-msgstr "Statuscodes der Datenebene"
+msgstr "Statuscodes der Data Plane"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:395
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:432
@@ -2034,10 +2009,7 @@ msgid ""
 "The database did not answer within the request's wait of 10 seconds; the "
 "outcome is unknown, and the data plane continues from the last applied "
 "policy"
-msgstr ""
-"Die Datenbank hat nicht innerhalb der Wartezeit der Anfrage von 10 "
-"Sekunden geantwortet; das Ergebnis ist unbekannt, und die Datenebene "
-"arbeitet mit der zuletzt angewendeten Richtlinie weiter"
+msgstr "Die Datenbank hat nicht innerhalb der Wartezeit der Anfrage von 10 Sekunden geantwortet; das Ergebnis ist unbekannt, und die Data Plane arbeitet mit der zuletzt angewendeten Richtlinie weiter"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:524
 msgid "``CONSOLE004``"
@@ -3307,15 +3279,7 @@ msgid ""
 "without the console. The console's query routes answer with families of "
 "their own (``TRAFFIC``, ``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, "
 "``TIMELINE``, ``MINUTES``), whose hints the interface shows."
-msgstr ""
-"Eine Menge von Plugins, die sich bei einem Neuladen nicht laden lässt, "
-"lässt die bedienende Menge bestehen. Zwei weitere Familien betreffen den "
-"Build und die Konsole statt des Betreibers des Edge: ``HTML001`` bis "
-"``HTML008`` stoppen den Build einer Seitenvorlage, und ``GEOIP001`` lehnt "
-"einen GeoIP-Schnappschuss in einem Build ohne Konsole ab. Die "
-"Abfragerouten der Konsole antworten mit eigenen Familien (``TRAFFIC``, "
-"``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, ``TIMELINE``, "
-"``MINUTES``), deren Hinweise die Oberfläche anzeigt."
+msgstr "Eine Menge von Plugins, die sich bei einem Neuladen nicht laden lässt, lässt die bedienende Menge bestehen. Zwei weitere Familien betreffen den Build und die Konsole statt des Betreibers des Edge: ``HTML001`` bis ``HTML008`` stoppen den Build einer Seitenvorlage, und ``GEOIP001`` lehnt einen GeoIP-Snapshot in einem Build ohne Konsole ab. Die Abfragerouten der Konsole antworten mit eigenen Familien (``TRAFFIC``, ``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, ``TIMELINE``, ``MINUTES``), deren Hinweise die Oberfläche anzeigt."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:860
 msgid "Policy Schema"
@@ -3536,9 +3500,7 @@ msgstr ""
 msgid ""
 "The edge from a JSON or JLV topology; it takes no other option (*Edge "
 "Load Balancing*)"
-msgstr ""
-"Der Edge aus einer JSON- oder JLV-Topologie; er nimmt keine andere Option "
-"an (*Lastverteilung am Edge*)"
+msgstr "Der Edge aus einer JSON- oder JLV-Topologie; er nimmt keine andere Option an (*Edge-Load-Balancing*)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:913
 msgid "``sibuna check -f FILE``"
@@ -3722,9 +3684,7 @@ msgstr "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:952
 msgid "Validate country data and write an embeddable GeoIP snapshot"
-msgstr ""
-"Länderdaten validieren und einen einbettbaren GeoIP-Schnappschuss "
-"schreiben"
+msgstr "Länderdaten validieren und einen einbettbaren GeoIP-Snapshot schreiben"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:953
 msgid "``guidedog build`` / ``guidedog dsc``"
@@ -3743,15 +3703,7 @@ msgid ""
 "instead, for builds without the ``wasm32-unknown-unknown`` target. "
 "``SIBUNA_GEOIP_DATA`` names a GeoIP snapshot to embed; it is decoded at "
 "build time, and a build without the console refuses it (``GEOIP001``)."
-msgstr ""
-"Das Build-Skript des Daemons (``cmd/sibuna/build.rs``) baut beide "
-"WebAssembly-Module mit dem Profil ``wasm`` in das Zielverzeichnis des "
-"Workspace und lässt den Build scheitern, wenn die Konsolenoberfläche 768 "
-"KiB überschreitet. ``SIBUNA_POW_WASM`` und ``SIBUNA_CONSOLE_WASM`` "
-"benennen stattdessen vorgebaute Module, für Builds ohne das Ziel "
-"``wasm32-unknown-unknown``. ``SIBUNA_GEOIP_DATA`` benennt einen "
-"einzubettenden GeoIP-Schnappschuss; er wird zur Build-Zeit dekodiert, und "
-"ein Build ohne Konsole weist ihn ab (``GEOIP001``)."
+msgstr "Das Build-Skript des Daemons (``cmd/sibuna/build.rs``) baut beide WebAssembly-Module mit dem Profil ``wasm`` in das Zielverzeichnis des Workspace und lässt den Build scheitern, wenn die Konsolenoberfläche 768 KiB überschreitet. ``SIBUNA_POW_WASM`` und ``SIBUNA_CONSOLE_WASM`` benennen stattdessen vorgebaute Module, für Builds ohne das Ziel ``wasm32-unknown-unknown``. ``SIBUNA_GEOIP_DATA`` benennt einen einzubettenden GeoIP-Snapshot; er wird zur Build-Zeit dekodiert, und ein Build ohne Konsole weist ihn ab (``GEOIP001``)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:958
 msgid "Exercise 12.1"

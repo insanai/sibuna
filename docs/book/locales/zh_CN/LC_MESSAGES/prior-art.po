@@ -73,12 +73,7 @@ msgid ""
 "unsolved puzzle. All three share the shape Sibuna keeps: a server-chosen "
 "statement, a solution whose cost is tunable, and verification that is "
 "orders of magnitude cheaper than solving."
-msgstr ""
-"Dwork 和 Naor 的 “Pricing via Processing”（CRYPTO "
-"1992）提出：服务在为请求方工作之前，先要求对方完成一项难度适中、易于检查的计算。Back 的 Hashcash（1997 年提出，2002 "
-"年成文）把谜题变成部分哈希求逆，其难度由一个整数决定；Juels 和 Brainard 的客户端谜题（NDSS "
-"1999）把这一思想用于连接洪泛，此时服务器不能为未解出的谜题记住任何东西。三者共有 Sibuna "
-"保留的形态：由服务器选定的陈述，成本可调的解答，以及比求解便宜几个数量级的验证。"
+msgstr "Dwork 和 Naor 的 “Pricing via Processing”（CRYPTO 1992）提出：服务在为请求方工作之前，先要求对方完成一项难度适中、易于检查的计算。Back 的 Hashcash（1997 年提出，2002 年成文）把谜题变成部分哈希求逆，其难度由一个整数决定；Juels 和 Brainard 的客户端谜题（NDSS 1999）把这一思想用于连接洪泛，此时服务器不能为未解出的谜题记住任何东西。三者共有 Sibuna 保留的形态：由服务器选定的陈述，成本可调的解答，以及比求解开销低几个数量级的验证。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:18
 msgid ""
@@ -291,11 +286,7 @@ msgid ""
 "database the operator runs (a SQLite file on one node, one PostgreSQL "
 "database shared by a cluster) read by a storage thread off the request "
 "path, rather than a service call."
-msgstr ""
-"在规模的另一端，Cloudflare 这样的托管边缘网络把检查、速率限制和机器人评分部署在数百个接入点中，并由全局控制平面统一管理。Sibuna "
-"的 Edge "
-"部署借鉴了这种形态（由共享的策略和信誉平面向本地不可变快照供数），同时保持自托管。因此，它的存储层是运维人员自己运行的数据库（单个节点上的一个 "
-"SQLite 文件，或由集群共享的一个 PostgreSQL 数据库），由存储线程在请求路径之外读取，而不是一次服务调用。"
+msgstr "在规模的另一端，Cloudflare 这样的托管边缘网络把检查、速率限制和 Bot 评分部署在数百个接入点中，并由全局控制平面统一管理。Sibuna 的 Edge 部署借鉴了这种形态（由共享的策略和信誉平面向本地不可变快照供数），同时保持自托管。因此，它的存储层是运维人员自己运行的数据库（单个节点上的一个 SQLite 文件，或由集群共享的一个 PostgreSQL 数据库），由存储线程在请求路径之外读取，而不是一次服务调用。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:36
 msgid "Three Ideas in One Binary"
@@ -610,7 +601,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:123
 msgid "JavaScript anti-bot challenge and CAPTCHA; not work-bound"
-msgstr "JavaScript 反机器人挑战和验证码；不受工作量约束"
+msgstr "JavaScript 反 Bot 挑战与验证码；不受工作量约束"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:124
 msgid ""
@@ -694,7 +685,7 @@ msgstr ""
 msgid ""
 "YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH "
 "with thresholds"
-msgstr "YAML/JSON 机器人定义：对 UA、路径、请求头使用正则表达式；CIDR；CEL 表达式；带阈值的 WEIGH"
+msgstr "YAML/JSON Bot 定义：对 UA、路径、请求头使用正则表达式；CIDR；CEL 表达式；带阈值的 WEIGH"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:143
 msgid "Console-defined custom rules, ACLs, IP groups"
@@ -806,7 +797,7 @@ msgstr "IP 组和黑名单；威胁情报 *（Pro）*"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:175
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
-msgstr "IP 列表；托管列表和机器人评分 *（Enterprise）*"
+msgstr "IP 列表；托管列表与 Bot 评分 *（Enterprise）*"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:176
 msgid "Forensics"
@@ -983,14 +974,7 @@ msgid ""
 "passes its browser workflows (SID 0010). Its formal performance isolation "
 "gate, with eight active dashboards under load, is not yet measured; Part "
 "VIII records what is."
-msgstr ""
-"防火墙守护进程把 TLS 终止交给部署中的代理；边缘自己终止 TLS（第 VIII 部分）。Sibuna "
-"不用训练好的模型给机器人打分，也不发布付费签名。HTTP 防火墙匹配受信任的入口代理计算出的 JA4 指纹，自己无法计算 JA4（SID "
-"0014，第 XI 部分）；边缘只从检查 ClientHello 的 TCP 前端的 ClientHello 计算 JA4，用于其路由规则、钩子和 "
-"PROXY 头部（SID "
-"0015）。它可选启用的控制台提供需要认证的仪表板、国家信息补充、策略编辑、调查和集群管理。国家查询和存储工作在请求分类之外运行。SID 0007 "
-"的状态为 Committed，控制台也通过了浏览器工作流测试（SID "
-"0010）。它的正式性能隔离门槛，即在负载下运行八个活动仪表板，尚未测量；已经测得的内容见第 VIII 部分。"
+msgstr "防火墙守护进程把 TLS 终止交给部署中的代理；边缘自己终止 TLS（第 VIII 部分）。Sibuna 不用训练好的模型给 Bot 评分，也不发布付费签名。HTTP 防火墙匹配受信任的入口代理计算出的 JA4 指纹，自己无法计算 JA4（SID 0014，第 XI 部分）；边缘只从检查 ClientHello 的 TCP 前端的 ClientHello 计算 JA4，用于其路由规则、钩子和 PROXY 头部（SID 0015）。它可选启用的控制台提供需要认证的仪表板、国家信息补充、策略编辑、调查和集群管理。国家查询和存储工作在请求分类之外运行。SID 0007 的状态为 Committed，控制台也通过了浏览器工作流测试（SID 0010）。它的正式性能隔离门槛，即在负载下运行八个活动仪表板，尚未测量；已经测得的内容见第 VIII 部分。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:229
 msgid "Load Balancers"
@@ -1525,7 +1509,7 @@ msgstr "过滤器，其中包括 Lua、外部授权和外部处理；通过 Prox
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:312
 msgid "Built-in bot protection"
-msgstr "内置机器人防护"
+msgstr "内置 Bot 防护"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:313
 msgid ""

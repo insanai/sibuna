@@ -976,7 +976,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:372
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:380
 msgid "gauge"
-msgstr ""
+msgstr "مقياس (gauge)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:254
 msgid "1 while readiness answers 200, 0 from the start of a shutdown"
@@ -1016,7 +1016,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:364
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:376
 msgid "counter"
-msgstr ""
+msgstr "عداد (counter)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:262
 msgid "Datagrams that the edge worker discarded and admissions it refused"
@@ -1135,7 +1135,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:296
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:316
 msgid "histogram"
-msgstr ""
+msgstr "مدرج تكراري (histogram)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:298
 msgid ""
@@ -1226,7 +1226,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:326
 msgid "Entries waiting for the writer"
-msgstr "المدخلات المنتظرة للكاتب"
+msgstr "السجلات المنتظِرة لخيط الكتابة"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:327
 msgid "``sibuna_edge_forward_active``, ``_peers_eligible``, ``_flows_out``"
@@ -1405,12 +1405,7 @@ msgid ""
 "spill cache by ``show info`` (SID 0027), and the revision of the database "
 "by ``show authority`` (SID 0028). No series counts the commands, the "
 "lifted bans or the parked flows of the plugins."
-msgstr ""
-"بعض حالة الحافة ليس لها سلاسل. فجدول التثبيت وحصص الحدود على مستوى "
-"الأسطول لا يعرضها إلا ``show affinity`` (SID 0025)، وذاكرة الإفاضة "
-"المؤقتة يعرضها ``show info`` (SID 0027)، ومراجعة قاعدة البيانات يعرضها "
-"``show authority`` (SID 0028). ولا تعدّ أي سلسلة الأوامرَ، ولا رفع الحظر، "
-"ولا التدفقات المركونة للإضافات."
+msgstr "بعض حالة الحافة ليس لها سلاسل. فجدول التثبيت وحصص الحدود على مستوى الأسطول لا يعرضها إلا ``show affinity`` (SID 0025)، وذاكرة الإفاضة المؤقتة يعرضها ``show info`` (SID 0027)، ومراجعة قاعدة البيانات يعرضها ``show authority`` (SID 0028). ولا تعدّ أي سلسلة الأوامرَ، ولا رفع الحظر، ولا التدفقات المعلَّقة (parked) للإضافات."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:386
 msgid ""
@@ -1628,9 +1623,7 @@ msgstr ""
 msgid ""
 "A request hook denied the request, or a WebSocket upgrade carried an "
 "``Origin`` that the route does not list"
-msgstr ""
-"رفض خطاف طلب الطلبَ، أو حملت ترقية WebSocket قيمة ``Origin`` لا يسردها "
-"المسار"
+msgstr "رفض أحد خطافات الطلب (request hooks) الطلبَ، أو حملت ترقية WebSocket قيمة ``Origin`` لا يسردها المسار"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:439
 msgid ""
@@ -2800,9 +2793,7 @@ msgstr ""
 msgid ""
 "The cache is ignored or cannot be written, or the report to the database "
 "failed"
-msgstr ""
-"الذاكرة المؤقتة متجاهلة أو تتعذر الكتابة فيها، أو فشل التقرير إلى قاعدة "
-"البيانات"
+msgstr "تم تجاهل الذاكرة المؤقتة (cache) أو تعذرت الكتابة فيها، أو فشل التقرير إلى قاعدة البيانات"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:754
 msgid ""
@@ -3112,7 +3103,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:850
 msgid "The build has no native hook of this name"
-msgstr "ليس في البناء خطاف أصلي بهذا الاسم"
+msgstr "ليس في البناء خطاف أصلي (native hook) بهذا الاسم"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:851
 msgid "``HOOK008``"
@@ -3124,7 +3115,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:853
 msgid "A native hook refused the ``settings`` of the plugin"
-msgstr "رفض خطاف أصلي ``settings`` الخاصة بالإضافة"
+msgstr "رفض خطاف أصلي (native hook) إعدادات ``settings`` الخاصة بالإضافة"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:854
 msgid "``HOOK009``"

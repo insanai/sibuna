@@ -30,8 +30,7 @@ msgid ""
 "weigh against each other, feature by feature, and record which facts were "
 "checked. Last we place the edge load balancer of Part VIII beside HAProxy "
 "and Envoy."
-msgstr ""
-"Sibunaが学んだシステムの中にSibunaを位置付けます。暗号の文献に由来するクライアントパズルと逐次作業、シグネチャ型と意味解析型のアプリケーションファイアウォール、作業証明の中間ページ、ホスト型のエッジネットワークです。次に、運用者が比較検討する可能性の最も高い四つのツールを機能ごとに比べ、どの事実を確認したかを記録します。最後に、第VIII部のエッジのロードバランサーをHAProxyやEnvoyと並べます。"
+msgstr "Sibunaが学んだシステムの中にSibunaを位置付けます。暗号の文献に由来するクライアントパズルと逐次作業、シグネチャ型と意味解析型のアプリケーションファイアウォール、Proof of Workの中間ページ、ホスト型のエッジネットワークです。次に、運用者が比較検討する可能性の最も高い四つのツールを機能ごとに比べ、どの事実を確認したかを記録します。最後に、第VIII部のエッジのロードバランサーをHAProxyやEnvoyと並べます。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:6
 msgid "Where Sibuna Comes From"
@@ -269,8 +268,7 @@ msgid ""
 "surface solves the same problem with a stateless challenge, a symmetric "
 "token, and a second work tier; the comparison below records where the two "
 "differ."
-msgstr ""
-"Webサイトの前に置く作業証明の中間ページは2025年に一般的になりました。言語モデルの学習に供するスクレイパーのトラフィックによって、普通のオリジンの運用費用がまかなえなくなったからです。Anubis（Techaro）は最もよく知られたオープンな実装です。JavaScriptのパズルを配信し、セッショントークンに署名し、それ以外はトラフィックを通過させるGoのリバースプロキシです。SibunaのGate運用構成は同じ問題を、状態を持たないチャレンジ、対称鍵のトークン、第二の作業の層で解きます。両者の違いは以下の比較に記録しています。"
+msgstr "Webサイトの前に置くProof of Workの中間ページは2025年に一般的になりました。言語モデルの学習に供するスクレイパーのトラフィックによって、普通のオリジンの運用費用がまかなえなくなったからです。Anubis（Techaro）は最もよく知られたオープンな実装です。JavaScriptのパズルを配信し、セッショントークンに署名し、それ以外はトラフィックを通過させるGoのリバースプロキシです。SibunaのGate運用構成は同じ問題を、状態を持たないチャレンジ、対称鍵のトークン、第2のProof of Work層で解きます。両者の違いは以下の比較に記録しています。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:34
 msgid ""
@@ -575,7 +573,7 @@ msgstr "機能比較、その2：許可とセッション"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:120
 msgid "Proof-of-work admission"
-msgstr "作業証明による許可"
+msgstr "Proof of Workによる許可"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:121
 msgid ""
@@ -1534,9 +1532,7 @@ msgstr "組み込みのボット対策"
 msgid ""
 "Proof-of-work admission (Gate) and the semantic firewall (Shield), chosen "
 "per frontend and per route; off in ``sibuna lb`` unless asked"
-msgstr ""
-"作業証明による許可（Gate）と意味解析ファイアウォール（Shield）を、フロントエンドごと、ルートごとに選択。\\ ``sibuna "
-"lb``\\ では求めない限り無効"
+msgstr "Proof of Workによる許可（Gate）と意味解析ファイアウォール（Shield）を、フロントエンドごと、ルートごとに選択。\\ ``sibuna lb``\\ では求めない限り無効"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:314
 msgid "None in the Configuration Manual; stick-table rates and deny rules"
@@ -1565,10 +1561,7 @@ msgid ""
 "rule, and adds fleet-wide caps and peer forwarding, but only within one "
 "fixed roster of at most 64 nodes and only on a network that is trusted, "
 "because the mesh authenticates and does not encrypt (SID 0026)."
-msgstr ""
-"*クラスターが何を共有するか。*\\ "
-"HAProxyはピアの間でスティッキーテーブルを複製します。Sibunaのメッシュは、それぞれに併合の規則を持つより多くの種類の状態を複製し、フリート全体のキャップとピア転送を加えます。ただし、最大64ノードの一つの固定した名簿の中だけで、しかも信頼できるネットワーク上だけです。メッシュは認証しますが暗号化しないからです（SID "
-"0026）。"
+msgstr "*クラスターが何を共有するか。*\\ HAProxyはピアの間でスティッキーテーブルを複製します。Sibunaのメッシュは、それぞれに併合の規則を持つより多くの種類の状態を複製し、フリート全体のキャップとピア転送を加えます。ただし、最大64ノードの一つの固定のノードリストの中だけで、しかも信頼できるネットワーク上だけです。メッシュは認証しますが暗号化しないからです（SID 0026）。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:321
 msgid ""
@@ -1616,9 +1609,7 @@ msgid ""
 "Using only the comparison tables, write down the smallest deployment that "
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
 "inspection, and (c) a cluster-wide ban. Which rows forced each choice?"
-msgstr ""
-"比較表だけを使って、静的サイトに (a) 作業証明のゲート、(b) SQLインジェクションの検査、(c) "
-"クラスター全体での禁止を与える最小のデプロイ構成を書き出してください。それぞれの選択を決めたのはどの行でしょうか。"
+msgstr "比較表だけを使って、静的サイトに (a) Proof of Workゲート、(b) SQLインジェクションの検査、(c) クラスター全体での禁止を与える最小のデプロイ構成を書き出してください。それぞれの選択を決めたのはどの行でしょうか。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:336
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."

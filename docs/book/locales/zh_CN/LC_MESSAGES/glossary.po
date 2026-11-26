@@ -190,9 +190,7 @@ msgid ""
 "ones. ``set server POOL/NAME state drain`` sets it, a reload keeps it, "
 "and a restart ends it. A node drains as a whole at shutdown, while "
 "readiness answers 503."
-msgstr ""
-"服务器不接受新流、但保留已建立的流的状态。``set server POOL/NAME state drain`` "
-"设置这一状态，重新加载会保留它，重启会结束它。节点在关闭时整体排空，此时就绪检查回答 503。"
+msgstr "服务器不接受新流、但保留已建立的流的状态。``set server POOL/NAME state drain`` 设置这一状态，重新加载会保留它，重启会结束它。节点在关闭时整体排空，此时就绪检查返回 503。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:45
 msgid "Edge"
@@ -274,7 +272,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:63
 msgid "Forward auth"
-msgstr "Forward auth"
+msgstr "转发认证（Forward auth）"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:64
 msgid ""
@@ -517,7 +515,7 @@ msgid ""
 "In a sequential-work proof, one leaf label plus the sibling labels along "
 "its path to the root; the verifier recomputes the path and compares with "
 "the commitment."
-msgstr "在顺序工作量证明中，一个叶子标签加上它通往根的路径上的兄弟标签；验证者重新计算这条路径，并与承诺比较。"
+msgstr "在顺序工作量证明中，一个叶节点标签加上它通往根节点的路径上的兄弟节点标签；验证者重新计算这条路径，并与承诺比较。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:123
 msgid "Owner"
@@ -986,10 +984,4 @@ msgid ""
 "TLS on the workers, shared affinity and fleet caps, peer forwarding, the "
 "spill cache, the database authority, the upgrade handoff, plugin tiers, "
 "the operator console of the edge, and staged admission."
-msgstr ""
-"Sibuna 讨论 0001 至 "
-"0032，``docs/sid/records``，2026：流程、基础架构、声明式策略引擎、语义检查、Zaxonlite "
-"存储架构、数学基础、控制台管理界面、AI 机器人流量监控、分块请求体、Rust 移植、通过 sqlx 实现的存储、通过 rustls "
-"为控制台提供的出站 TLS、控制台存储、来自入口代理的受信任 JA4 指纹、分布式边缘负载均衡器、事件驱动的 HTTP "
-"worker、进程内交换、简单设置与运行时配置、流量策略、边缘可观测性、自动 HTTPS、复制的封禁、集群配置、worker 上的 "
-"TLS、共享的会话保持与集群上限、对等转发、溢出缓存、数据库权威、升级交接、插件层级、边缘的运维控制台，以及分阶段准入。"
+msgstr "Sibuna 讨论 0001 至 0032，``docs/sid/records``，2026：流程、基础架构、声明式策略引擎、语义检查、Zaxonlite 存储架构、数学基础、控制台管理界面、AI Bot 流量监控、分块请求体、Rust 移植、通过 sqlx 实现的存储、通过 rustls 为控制台提供的出站 TLS、控制台存储、来自入口代理的受信任 JA4 指纹、分布式边缘负载均衡器、事件驱动的 HTTP worker、进程内交换、简单设置与运行时配置、流量策略、边缘可观测性、自动 HTTPS、复制的封禁、集群配置、worker 上的 TLS、共享的会话保持与集群上限、对等转发、溢出缓存、数据库权威、升级交接、插件层级、边缘的运维控制台，以及分阶段准入。"

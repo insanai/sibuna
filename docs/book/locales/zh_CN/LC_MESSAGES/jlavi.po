@@ -417,9 +417,7 @@ msgid ""
 "This module uses a typed helper to name an origin. The public portal uses "
 "the shield. Calls under ``/orders.Orders/`` use an HTTP/2 pool and skip "
 "the browser firewall. The RPC service must authenticate its callers."
-msgstr ""
-"这个模块使用带类型的辅助函数为源服务器命名。公共门户使用盾牌模式。 ``/orders.Orders/`` 下的调用使用 HTTP/2 "
-"池并跳过浏览器防火墙。RPC 服务必须验证调用方身份。"
+msgstr "这个模块使用带类型的辅助函数为源服务器命名。公共门户使用 Shield 模式。 ``/orders.Orders/`` 下的调用使用 HTTP/2 池并跳过浏览器防火墙。RPC 服务必须验证调用方身份。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:153
 msgid ""
@@ -485,9 +483,7 @@ msgid ""
 "public name the ACME authority must be able to validate our domain. For "
 "``orders.internal`` Sibuna issues and renews the certificate locally. We "
 "install the local root certificate in each client's trust store."
-msgstr ""
-"部署前请替换示例中的名称和地址。对于公共名称，ACME 签发机构必须能够验证我们的域名。对于 ``orders.internal`` "
-"，Sibuna 在本地签发和续订证书。我们将本地根证书装入每个客户端的信任库。"
+msgstr "部署前请替换示例中的名称和地址。对于公共名称，ACME 签发机构必须能够验证我们的域名。对于 ``orders.internal``，Sibuna 在本地签发和续期证书。我们将本地根证书装入每个客户端的信任库。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:181
 msgid ""

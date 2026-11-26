@@ -310,17 +310,7 @@ msgid ""
 "until a measured workload justifies a change. A candidate must improve "
 "latency or resident memory while preserving erasure, bounded input "
 "handling and the allocation-free request path."
-msgstr ""
-"Conservamos el asignador global ``WipeOnFree`` del módulo WebAssembly de "
-"la consola en ``cmd/console-ui/src/abi.rs``. Borra los bloques liberados, "
-"incluido el bloque anterior tras una reasignación. Elegir ``System`` "
-"directamente para una colección omitiría ese borrado. El módulo "
-"WebAssembly de prueba de trabajo no tiene asignador de montón, y Argon2 "
-"ya usa un espacio de trabajo reutilizado que pertenece al llamador. Por "
-"tanto, conservamos los asignadores actuales hasta que una carga medida "
-"justifique un cambio. Un candidato debe mejorar la latencia o la memoria "
-"residente y conservar el borrado, el procesamiento acotado de la entrada "
-"y el recorrido de peticiones sin asignaciones."
+msgstr "Conservamos el asignador global ``WipeOnFree`` del módulo WebAssembly de la consola en ``cmd/console-ui/src/abi.rs``. Borra los bloques liberados, incluido el bloque anterior tras una reasignación. Elegir ``System`` directamente para una colección omitiría ese borrado. El módulo WebAssembly de prueba de trabajo no tiene asignador de heap, y Argon2 ya usa un espacio de trabajo reutilizado que pertenece al llamador. Por tanto, conservamos los asignadores actuales hasta que una carga medida justifique un cambio. Un candidato debe mejorar la latencia o la memoria residente y conservar el borrado, el procesamiento acotado de la entrada y el recorrido de peticiones sin asignaciones."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:79
 msgid "One Buffer per Connection"
@@ -1831,13 +1821,7 @@ msgid ""
 "*theoretical arrival time* (TAT). With emission interval :math:`T = "
 "\\max(1, \\lceil W / N \\rceil)` for a positive limit :math:`N` per "
 "window :math:`W`, and burst tolerance :math:`\\tau = (N - 1) T`:"
-msgstr ""
-"El Generic Cell Rate Algorithm (ATM Forum, 1996) es la forma de "
-"planificación virtual del cubo con fugas. Para cada cliente guarda un "
-"único *tiempo teórico de llegada* (TAT). Con el intervalo de emisión "
-":math:`T = \\max(1, \\lceil W / N \\rceil)` para un límite positivo "
-":math:`N` por ventana :math:`W`, y la tolerancia de ráfaga :math:`\\tau = "
-"(N - 1) T`:"
+msgstr "El Generic Cell Rate Algorithm (ATM Forum, 1996) es la forma de planificación virtual del leaky bucket. Para cada cliente guarda un único *tiempo teórico de llegada* (TAT). Con el intervalo de emisión :math:`T = \\max(1, \\lceil W / N \\rceil)` para un límite positivo :math:`N` por ventana :math:`W`, y la tolerancia de ráfaga :math:`\\tau = (N - 1) T`:"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:495
 msgid ""
@@ -1851,7 +1835,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:499
 msgid "Theorem (token-bucket bound)"
-msgstr "Teorema (cota del cubo de tokens)"
+msgstr "Teorema (cota del token bucket)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:501
 msgid ""

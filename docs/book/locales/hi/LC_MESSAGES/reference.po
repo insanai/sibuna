@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:1
 msgid "Part XII: Desk Reference and Diagnostics"
-msgstr "भाग XII: डेस्क संदर्भ और निदान"
+msgstr "भाग XII: डेस्क रेफ़रेंस और डायग्नॉस्टिक्स"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:4
 msgid ""
@@ -28,9 +28,9 @@ msgid ""
 "VIII, Part IX). The tables of the edge were read from the code, not from "
 "the SID records."
 msgstr ""
-"एंडपॉइंट, मेट्रिक्स, त्रुटि सूची, नीति स्कीमा और स्टोरेज तालिकाएँ एक ही "
+"एंडपॉइंट, मेट्रिक्स, एरर कैटलॉग, पॉलिसी स्कीमा और स्टोरेज टेबलें एक ही "
 "जगह, फ़ायरवॉल डेमन के लिए और एज लोड बैलेंसर के लिए (भाग VIII, भाग IX)। एज "
-"की तालिकाएँ कोड से पढ़ी गई हैं, SID रिकॉर्ड से नहीं।"
+"की टेबलें कोड से पढ़ी गई हैं, SID रिकॉर्ड से नहीं।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:6
 msgid "Endpoints"
@@ -42,12 +42,11 @@ msgstr "उद्देश्य"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:11
 msgid "Know every route under ``/__sibuna/`` and what each returns."
-msgstr ""
-"``/__sibuna/`` के अंतर्गत हर रूट जानें, और यह भी कि हर एक क्या लौटाता है।"
+msgstr "``/__sibuna/`` के नीचे के हर रूट और हर एक के रिस्पॉन्स को जानें।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:13
 msgid "Reserved routes"
-msgstr "आरक्षित रूट"
+msgstr "रिज़र्व्ड रूट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:17
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:58
@@ -65,7 +64,7 @@ msgstr "मेथड"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:60
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:162
 msgid "Function"
-msgstr "कार्य"
+msgstr "काम"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:20
 msgid "``/__sibuna/challenge``"
@@ -104,11 +103,11 @@ msgid ""
 "form (``414`` above 8 KiB, ``400`` for a path without a normal form). "
 "Returns ``{id, algorithm, difficulty, challenges, expires_at}``"
 msgstr ""
-"एक स्टेटलेस चैलेंज जारी करता है: चैलेंज वाले रिस्पॉन्स का आवश्यकता टिकट "
-"उसे तय करता है, अन्यथा रिपोर्ट किए गए URL का सामान्य रूप में मूल्यांकन "
-"होता है (8 KiB से ऊपर ``414``, सामान्य रूप न रखने वाले पाथ के लिए "
-"``400``)। ``{id, algorithm, difficulty, challenges, expires_at}`` लौटाता "
-"है"
+"एक स्टेटलेस चैलेंज जारी करता है: चैलेंज वाले रिस्पॉन्स का रिक्वायरमेंट "
+"टिकट इसे तय करता है, वरना रिपोर्ट किए गए URL को नॉर्मल फ़ॉर्म में "
+"इवैल्यूएट किया जाता है (8 KiB से ऊपर ``414``, नॉर्मल फ़ॉर्म न रखने वाले "
+"पाथ के लिए ``400``)। ``{id, algorithm, difficulty, challenges, "
+"expires_at}`` लौटाता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:26
 msgid "``/__sibuna/verify``"
@@ -127,7 +126,7 @@ msgid ""
 "``413`` for a body larger than the connection buffer"
 msgstr ""
 "``{\"challenge_id\", \"nonce\"}`` या ``{\"challenge_id\", \"proof\"}`` "
-"स्वीकार करता है; ``Set-Cookie`` के साथ ``200``, निदान के साथ ``400``, या "
+"लेता है; ``Set-Cookie`` के साथ ``200``, डायग्नॉस्टिक के साथ ``400``, या "
 "कनेक्शन बफ़र से बड़ी बॉडी के लिए ``413``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:29
@@ -141,7 +140,7 @@ msgid ""
 msgstr ""
 "सॉल्वर मॉड्यूल, 14,744 बाइट "
 "(``benchmarks/results/primitives-latest.json`` में ``wasm_bytes``), एक "
-"घंटे तक cache योग्य"
+"घंटे तक कैश किया जा सकता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:32
 msgid "``/__sibuna/worker.js``"
@@ -150,7 +149,7 @@ msgstr "``/__sibuna/worker.js``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:34
 msgid ""
 "The Web Worker with WASM and JavaScript provers, cacheable for one hour"
-msgstr "WASM और JavaScript प्रूवर वाला Web Worker, एक घंटे तक cache योग्य"
+msgstr "WASM और JavaScript प्रूवर वाला Web Worker, एक घंटे तक कैश किया जा सकता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:35
 msgid "``/__sibuna/honeypot``"
@@ -163,11 +162,11 @@ msgid ""
 "no cross-site ``Sec-Fetch-Site``); any other is answered ``404`` and "
 "counted"
 msgstr ""
-"कॉल करने वाले पर ``--ban-seconds`` के लिए प्रतिबंध लगाता है और एक घटना "
-"दर्ज करता है; ``403``। केवल शीर्ष-स्तर का अनुरोध प्रतिबंध लगवाता है "
+"कॉल करने वाले को ``--ban-seconds`` के लिए बैन करता है और एक इंसिडेंट दर्ज "
+"करता है; ``403``। सिर्फ़ टॉप-लेवल रिक्वेस्ट ही बैन करती है "
 "(``Sec-Fetch-Dest`` न हो या ``document`` हो, और cross-site "
-"``Sec-Fetch-Site`` न हो); किसी अन्य को ``404`` उत्तर मिलता है और उसे गिना "
-"जाता है"
+"``Sec-Fetch-Site`` न हो); किसी और को ``404`` रिस्पॉन्स मिलता है और उसे "
+"काउंट किया जाता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:38
 msgid "``/__sibuna/health``"
@@ -178,7 +177,7 @@ msgid ""
 "JSON liveness status with engine name, version, proxy mode and proof "
 "algorithm"
 msgstr ""
-"इंजन के नाम, संस्करण, प्रॉक्सी मोड और प्रमाण एल्गोरिदम के साथ JSON "
+"इंजन के नाम, वर्ज़न, प्रॉक्सी मोड और प्रूफ़ एल्गोरिदम के साथ JSON "
 "liveness स्टेटस"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:41
@@ -187,7 +186,7 @@ msgstr "``/__sibuna/metrics``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:43
 msgid "Prometheus text format (version 0.0.4)"
-msgstr "Prometheus टेक्स्ट प्रारूप (संस्करण 0.0.4)"
+msgstr "Prometheus टेक्स्ट फ़ॉर्मेट (वर्ज़न 0.0.4)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:45
 msgid ""
@@ -200,13 +199,13 @@ msgid ""
 "client that does not accept HTML receives ``401`` with "
 "``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}``."
 msgstr ""
-"``/__sibuna/`` के अंतर्गत किसी भी अन्य पाथ को ``404`` उत्तर मिलता है। "
-"जारी करना और सत्यापन अलग ``--challenge-rate-limit`` बजट खर्च करते हैं, और "
-"प्रतिबंधित पते को हर रूट पर ``403`` से अस्वीकार किया जाता है। चैलेंज "
-"रिस्पॉन्स ``X-Sibuna-Status: CHALLENGE`` ले जाते हैं; स्वीकृत अनुरोध "
-"अपस्ट्रीम की ओर ``X-Sibuna-Status: PASS`` और ``X-Sibuna-Rule`` ले जाते "
-"हैं (और forward-auth उत्तरों में हेक्साडेसिमल में "
-"``X-Sibuna-Rule-Hash``)। जो क्लाइंट HTML स्वीकार नहीं करता, उसे "
+"``/__sibuna/`` के नीचे किसी भी अन्य पाथ को ``404`` रिस्पॉन्स मिलता है। "
+"चैलेंज जारी करने और वेरिफ़िकेशन में अलग ``--challenge-rate-limit`` बजट "
+"खर्च होता है, और बैन किए गए एड्रेस को हर रूट पर ``403`` से रिजेक्ट किया "
+"जाता है। चैलेंज रिस्पॉन्स में ``X-Sibuna-Status: CHALLENGE`` होता है; "
+"एडमिटेड रिक्वेस्ट अपस्ट्रीम को ``X-Sibuna-Status: PASS`` और "
+"``X-Sibuna-Rule`` भेजती हैं (और forward-auth रिस्पॉन्स में हेक्साडेसिमल "
+"में ``X-Sibuna-Rule-Hash``)। जो क्लाइंट HTML स्वीकार नहीं करता, उसे "
 "``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}`` "
 "के साथ ``401`` मिलता है।"
 
@@ -223,15 +222,16 @@ msgid ""
 "forward-auth mode. Part XI documents the console's workflows, HTTPS "
 "deployment and current SID 0007 limits."
 msgstr ""
-"अलग, वैकल्पिक प्रबंधन listener ``/console/`` देता है। इसके एडमिनिस्ट्रेटर "
-"को ``sibuna init-admin`` से स्थानीय रूप से प्रारंभ करें, फिर पहले साइन-इन "
-"पर अस्थायी पासवर्ड बदलें। ``/console/api/stats`` और ``/console/ws`` के "
-"लिए प्रमाणित सत्र चाहिए (kiosk सत्र सहित)। WebSocket सीमित स्नैपशॉट, "
-"delta और gap recovery के साथ आँकड़े, इवेंट, नोड, नीति, चैलेंज और ऑडिट को "
-"मल्टीप्लेक्स करता है। प्रबंधन पीयर ``/console/peer`` से जुड़ते हैं, और हर "
-"API रूट ``/console/api/`` के अंतर्गत है। forward-auth मोड में ऑरिजिन "
-"त्रुटि काउंटर नहीं देखे जाते। भाग XI कंसोल के वर्कफ़्लो, HTTPS "
-"डिप्लॉयमेंट और SID 0007 की वर्तमान सीमाओं का दस्तावेज़ देता है।"
+"अलग, ऑप्ट-इन मैनेजमेंट लिसनर ``/console/`` सर्व करता है। इसके "
+"एडमिनिस्ट्रेटर को ``sibuna init-admin`` से लोकली इनिशियलाइज़ करें, फिर "
+"पहले साइन-इन पर टेम्पररी पासवर्ड बदलें। ``/console/api/stats`` और "
+"``/console/ws`` के लिए ऑथेंटिकेटेड सेशन चाहिए (kiosk सेशन सहित)। "
+"WebSocket बाउंडेड स्नैपशॉट, डेल्टा और गैप रिकवरी के साथ स्टैट्स, इवेंट, "
+"नोड, पॉलिसी, चैलेंज और ऑडिट को मल्टीप्लेक्स करता है। मैनेजमेंट पीयर "
+"``/console/peer`` से जुड़ते हैं, और हर API रूट ``/console/api/`` के नीचे "
+"है। forward-auth मोड में ऑरिजिन एरर काउंटर नहीं देखे जाते। भाग XI में "
+"कंसोल के वर्कफ़्लो, HTTPS डिप्लॉयमेंट और SID 0007 की मौजूदा सीमाएँ "
+"डॉक्यूमेंट की गई हैं।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:49
 msgid "Routes of the edge"
@@ -246,8 +246,8 @@ msgid ""
 "``crates/acme/src/server.rs`` hold them."
 msgstr ""
 "``--config-file`` या ``sibuna lb`` से शुरू किया गया एज उन HTTP फ़्रंटएंड "
-"पर फ़ायरवॉल के रूट सर्व करता है जिनकी सतह ``gate`` या ``shield`` है। यह "
-"नीचे दिए रूट जोड़ता है। ``cmd/sibuna/src/routes.rs``, "
+"पर फ़ायरवॉल के रूट सर्व करता है जिनका सरफ़ेस ``gate`` या ``shield`` है। "
+"यह नीचे दिए रूट जोड़ता है। ``cmd/sibuna/src/routes.rs``, "
 "``cmd/sibuna/src/edge/probe.rs``, ``cmd/sibuna/src/acme.rs`` और "
 "``crates/acme/src/server.rs`` में ये रूट हैं।"
 
@@ -264,7 +264,7 @@ msgid ""
 "``200`` with ``{\"status\":\"ready\"}``; ``503`` with "
 "``{\"status\":\"draining\"}`` from the start of a shutdown (SID 0020)"
 msgstr ""
-"``{\"status\":\"ready\"}`` के साथ ``200``; shutdown की शुरुआत से "
+"``{\"status\":\"ready\"}`` के साथ ``200``; शटडाउन की शुरुआत से "
 "``{\"status\":\"draining\"}`` के साथ ``503`` (SID 0020)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:64
@@ -274,8 +274,7 @@ msgstr "HTTP फ़्रंटएंड पर ``/__sibuna/health``, ``/__sibun
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:66
 msgid ""
 "As in the firewall. The metrics text adds the series of the edge (below)"
-msgstr ""
-"फ़ायरवॉल की तरह। मेट्रिक्स टेक्स्ट एज की श्रृंखलाएँ जोड़ता है (नीचे)"
+msgstr "फ़ायरवॉल की तरह। मेट्रिक्स टेक्स्ट में एज की सीरीज़ जुड़ जाती हैं (नीचे)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:67
 msgid "``/health``, ``/ready``, ``/metrics`` on ``observability.listen``"
@@ -287,8 +286,9 @@ msgid ""
 "``/__sibuna/`` spelling. It applies no address list: its address is its "
 "access control"
 msgstr ""
-"एक अलग लिसनर पर वही तीन उत्तर, जो ``/__sibuna/`` वर्तनी भी स्वीकार करता "
-"है। यह कोई पता सूची लागू नहीं करता: इसका पता ही इसका पहुँच नियंत्रण है"
+"एक अलग लिसनर पर वही तीन रिस्पॉन्स, जो ``/__sibuna/`` वाली स्पेलिंग भी "
+"लेता है। इस पर कोई एड्रेस लिस्ट लागू नहीं होती: इसका एड्रेस ही इसका "
+"एक्सेस कंट्रोल है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:70
 msgid "``/.well-known/acme-challenge/TOKEN``"
@@ -299,8 +299,8 @@ msgid ""
 "The HTTP-01 answer of automatic HTTPS, before the firewall and before a "
 "redirect (SID 0021)"
 msgstr ""
-"स्वचालित HTTPS का HTTP-01 उत्तर, फ़ायरवॉल से पहले और redirect से पहले "
-"(SID 0021)"
+"ऑटोमैटिक HTTPS का HTTP-01 रिस्पॉन्स, फ़ायरवॉल और रीडायरेक्ट से पहले (SID "
+"0021)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:73
 msgid "``URL/directory``, ``URL/new-nonce``"
@@ -315,7 +315,7 @@ msgid ""
 "The ACME server of the local authority, where ``URL`` is "
 "``global.acme.internal.server.url``; off by default"
 msgstr ""
-"स्थानीय अथॉरिटी का ACME सर्वर, जहाँ ``URL`` "
+"लोकल अथॉरिटी का ACME सर्वर, जहाँ ``URL`` "
 "``global.acme.internal.server.url`` है; डिफ़ॉल्ट रूप से बंद"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:76
@@ -329,7 +329,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:78
 msgid ""
 "Signed ACME requests of at most 32 KiB; HTTP-01 is the only challenge"
-msgstr "अधिकतम 32 KiB के हस्ताक्षरित ACME अनुरोध; HTTP-01 एकमात्र चैलेंज है"
+msgstr "अधिकतम 32 KiB की साइंड ACME रिक्वेस्ट; HTTP-01 एकमात्र चैलेंज है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:79
 msgid "``URL/crl``"
@@ -337,7 +337,7 @@ msgstr "``URL/crl``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:81
 msgid "The revocation list of the present intermediate, in DER"
-msgstr "वर्तमान intermediate की revocation list, DER में"
+msgstr "मौजूदा इंटरमीडिएट की रिवोकेशन लिस्ट, DER में"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:83
 msgid ""
@@ -348,10 +348,10 @@ msgid ""
 "``/__sibuna/ready`` exists on the edge only."
 msgstr ""
 "``/__sibuna/`` के तीनों रूट ``observability.internal_allow`` (डिफ़ॉल्ट "
-"रूप से loopback नेटवर्क) के भीतर के उस क्लाइंट को उत्तर देते हैं जिसके "
-"अनुरोध में कोई ``X-Forwarded-For``, ``X-Real-IP`` या ``Forwarded`` फ़ील्ड "
-"नहीं है। हर दूसरे क्लाइंट को अज्ञात रूट का ``404`` मिलता है। "
-"``/__sibuna/ready`` केवल एज पर है।"
+"रूप से loopback नेटवर्क) के भीतर के उस क्लाइंट को रिस्पॉन्स देते हैं "
+"जिसकी रिक्वेस्ट में कोई ``X-Forwarded-For``, ``X-Real-IP`` या "
+"``Forwarded`` फ़ील्ड नहीं है। हर दूसरे क्लाइंट को अनजान रूट का ``404`` "
+"मिलता है। ``/__sibuna/ready`` सिर्फ़ एज पर है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:85
 msgid "The admin socket"
@@ -368,10 +368,10 @@ msgid ""
 msgstr ""
 "``global.admin_socket`` (या ``sibuna lb --admin``) mode 0600 का एक Unix "
 "सॉकेट खोलता है। ``sibuna ctl SOCKET COMMAND`` अधिकतम 512 printable ASCII "
-"बाइट की एक पंक्ति भेजता है और उत्तर प्रिंट करता है। सॉकेट 20 कमांड का एक "
-"बर्स्ट और उसके बाद प्रति सेकंड 10 स्वीकार करता है। एज का कंसोल इन्हीं "
-"पंक्तियों का एक सूचीबद्ध उपसमूह उसी पार्सर से चलाता है। "
-"``cmd/sibuna/src/edge/control.rs`` में व्याकरण है।"
+"बाइट की एक लाइन भेजता है और रिस्पॉन्स प्रिंट करता है। सॉकेट 20 कमांड का "
+"बर्स्ट और उसके बाद प्रति सेकंड 10 कमांड लेता है। एज का कंसोल इन्हीं "
+"लाइनों का एक लिस्टेड सबसेट उसी पार्सर से चलाता है। "
+"``cmd/sibuna/src/edge/control.rs`` में इसका ग्रामर है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:90
 msgid "Commands of the admin socket"
@@ -385,7 +385,7 @@ msgstr "कमांड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:95
 msgid "Answer or effect"
-msgstr "उत्तर या प्रभाव"
+msgstr "रिस्पॉन्स या असर"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:96
 msgid "Console"
@@ -400,8 +400,8 @@ msgid ""
 "One line per server: pool, name, address, state, weight, flows, health, "
 "ejection, ramp, change"
 msgstr ""
-"हर सर्वर के लिए एक पंक्ति: पूल, नाम, पता, अवस्था, वेट, फ़्लो, हेल्थ, "
-"ejection, ramp, बदलाव"
+"हर सर्वर के लिए एक लाइन: पूल, नाम, एड्रेस, स्टेट, वेट, फ़्लो, हेल्थ, "
+"इजेक्शन, रैंप, बदलाव"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:99
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:108
@@ -423,8 +423,8 @@ msgid ""
 "``key: value`` lines: version, process, source, reloads, watcher, flows, "
 "drops, run-time changes, and the counters of the spill cache (SID 0027)"
 msgstr ""
-"``key: value`` पंक्तियाँ: संस्करण, प्रोसेस, स्रोत, रीलोड, watcher, फ़्लो, "
-"drops, रन-टाइम बदलाव, और spill cache के काउंटर (SID 0027)"
+"``key: value`` लाइनें: वर्ज़न, प्रोसेस, सोर्स, रीलोड, वॉचर, फ़्लो, "
+"ड्रॉप्स, रन-टाइम बदलाव, और spill cache के काउंटर (SID 0027)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:102
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:105
@@ -447,8 +447,8 @@ msgid ""
 "The series of the edge in the Prometheus text format, as the metrics "
 "route prints them"
 msgstr ""
-"Prometheus टेक्स्ट प्रारूप में एज की श्रृंखलाएँ, जैसे मेट्रिक्स रूट "
-"उन्हें प्रिंट करता है"
+"Prometheus टेक्स्ट फ़ॉर्मेट में एज की सीरीज़, बिल्कुल वैसे जैसे मेट्रिक्स "
+"रूट उन्हें प्रिंट करता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:106
 msgid "``show certs``, ``show ca``"
@@ -459,8 +459,8 @@ msgid ""
 "The names of automatic HTTPS with their state and staple; the root of the "
 "local authority as PEM (SID 0021)"
 msgstr ""
-"स्वचालित HTTPS के नाम उनकी अवस्था और staple के साथ; स्थानीय अथॉरिटी का "
-"root PEM के रूप में (SID 0021)"
+"ऑटोमैटिक HTTPS के नाम उनकी स्टेट और स्टेपल के साथ; लोकल अथॉरिटी का रूट CA "
+"PEM फ़ॉर्मेट में (SID 0021)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:109
 msgid "``revoke cert NAME|SERIAL``"
@@ -470,9 +470,7 @@ msgstr "``revoke cert NAME|SERIAL``"
 msgid ""
 "Revokes a certificate of the local authority and writes the revocation "
 "list"
-msgstr ""
-"स्थानीय अथॉरिटी का एक सर्टिफ़िकेट revoke करता है और revocation list लिखता "
-"है"
+msgstr "लोकल अथॉरिटी का सर्टिफ़िकेट रिवोक करता है और रिवोकेशन लिस्ट लिखता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:112
 msgid "``show hooks``"
@@ -482,8 +480,7 @@ msgstr "``show hooks``"
 msgid ""
 "The plugins with their calls, verdicts, failures and open breakers (SID "
 "0030)"
-msgstr ""
-"प्लगइन, उनकी कॉल, निर्णय, विफलताओं और खुले breaker के साथ (SID 0030)"
+msgstr "प्लगइन, उनकी कॉल, वर्डिक्ट, फ़ेलियर और खुले ब्रेकर के साथ (SID 0030)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:115
 msgid "``show cluster``"
@@ -494,8 +491,8 @@ msgid ""
 "Each node of the mesh with the digest of its file, or with the revision "
 "it serves in persistent mode (SID 0023, SID 0028)"
 msgstr ""
-"मेश का हर नोड, उसकी फ़ाइल के digest के साथ, या persistent मोड में उसके "
-"सर्व किए जा रहे revision के साथ (SID 0023, SID 0028)"
+"मेश का हर नोड, उसकी फ़ाइल के डाइजेस्ट के साथ, या पर्सिस्टेंट मोड में जो "
+"रिविज़न वह सर्व कर रहा है उसके साथ (SID 0023, SID 0028)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:118
 msgid "``show affinity``"
@@ -503,7 +500,7 @@ msgstr "``show affinity``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:119
 msgid "The sticky table and the shares of fleet-wide limits (SID 0025)"
-msgstr "स्टिकी टेबल और फ़्लीट-व्यापी सीमाओं के हिस्से (SID 0025)"
+msgstr "स्टिकी टेबल और फ़्लीट-वाइड लिमिट के हिस्से (SID 0025)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:121
 msgid "``show authority``"
@@ -511,7 +508,7 @@ msgstr "``show authority``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:122
 msgid "The revision of the database that this node serves (SID 0028)"
-msgstr "डेटाबेस का वह revision जिसे यह नोड सर्व करता है (SID 0028)"
+msgstr "डेटाबेस का वह रिविज़न जिसे यह नोड सर्व कर रहा है (SID 0028)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:124
 msgid "``set server POOL/NAME state ready|drain [local]``"
@@ -522,8 +519,8 @@ msgid ""
 "Admits a server, or stops new flows to it; ``maint`` is another word for "
 "``drain``"
 msgstr ""
-"सर्वर को प्रवेश देता है, या उस पर नए फ़्लो रोकता है; ``maint`` ``drain`` "
-"का दूसरा नाम है"
+"सर्वर को ट्रैफ़िक के लिए एडमिट करता है, या उस पर नए फ़्लो रोकता है; "
+"``maint`` ``drain`` का दूसरा नाम है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:127
 msgid "``set server POOL/NAME weight N [local]``"
@@ -551,7 +548,7 @@ msgstr "``del ban ADDRESS [local]``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:134
 msgid "Lifts the ban of one client (SID 0022)"
-msgstr "एक क्लाइंट का प्रतिबंध हटाता है (SID 0022)"
+msgstr "एक क्लाइंट का बैन हटाता है (SID 0022)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:136
 msgid "``reload``"
@@ -559,8 +556,7 @@ msgstr "``reload``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:137
 msgid "Loads the file as SIGHUP does and prints the result"
-msgstr ""
-"फ़ाइल को वैसे लोड करता है जैसे SIGHUP करता है और परिणाम प्रिंट करता है"
+msgstr "फ़ाइल को वैसे ही लोड करता है जैसे SIGHUP करता है और रिज़ल्ट प्रिंट करता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:139
 msgid "``reload cluster``"
@@ -584,7 +580,7 @@ msgstr "``help``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:146
 msgid "Lists the commands"
-msgstr "कमांड की सूची देता है"
+msgstr "सभी कमांड की लिस्ट दिखाता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:149
 msgid ""
@@ -593,10 +589,10 @@ msgid ""
 "diagnostic with a code of the families ``ADM`` or ``DBA`` below, and "
 "nothing has changed."
 msgstr ""
-"मेश के साथ, सर्वर में बदलाव और हटाया गया प्रतिबंध हर नोड तक पहुँचते हैं, "
-"जब तक अंतिम शब्द ``local`` न हो (SID 0022)। विफलता नीचे दिए ``ADM`` या "
-"``DBA`` परिवारों के कोड के साथ एक निदान प्रिंट करती है, और कुछ नहीं बदला "
-"होता।"
+"मेश के साथ, सर्वर में बदलाव और हटाया गया बैन हर नोड तक पहुँचते हैं, जब तक "
+"आखिरी शब्द ``local`` न हो (SID 0022)। फ़ेलियर पर नीचे दिए ``ADM`` या "
+"``DBA`` फ़ैमिली के कोड के साथ डायग्नॉस्टिक प्रिंट होता है, और कुछ नहीं "
+"बदलता।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:151
 msgid "The console of the edge"
@@ -609,8 +605,8 @@ msgid ""
 "routes concern the edge (``crates/console/src/routes.rs``, "
 "``crates/console/src/api/edge.rs``)."
 msgstr ""
-"``console`` अनुभाग के साथ एज SID 0031 का कंसोल अपने एक अलग लिसनर पर सर्व "
-"करता है। फ़ायरवॉल कंसोल के रूटों के अलावा तीन रूट एज से संबंधित हैं "
+"``console`` सेक्शन के साथ एज SID 0031 का कंसोल अपने अलग लिसनर पर सर्व "
+"करता है। फ़ायरवॉल कंसोल के रूट्स के अलावा तीन रूट एज से जुड़े हैं "
 "(``crates/console/src/routes.rs``, ``crates/console/src/api/edge.rs``)।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:156
@@ -626,8 +622,8 @@ msgid ""
 "The node, its refusals by reason, its frontends and its pools, at most "
 "256 servers. Needs a session, or a token with the scope ``stats_read``"
 msgstr ""
-"नोड, कारण के अनुसार उसकी अस्वीकृतियाँ, उसके फ़्रंटएंड और उसके पूल, अधिकतम "
-"256 सर्वर। सत्र चाहिए, या ``stats_read`` scope वाला token"
+"नोड, कारण के हिसाब से उसके रिफ़्यूज़ल, उसके फ़्रंटएंड और उसके पूल, अधिकतम "
+"256 सर्वर। इसके लिए सेशन चाहिए, या ``stats_read`` स्कोप वाला टोकन"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:166
 msgid "``/console/api/edge/fleet``"
@@ -638,8 +634,8 @@ msgid ""
 "One row for each member of the fleet, asked all at once, waiting at most "
 "five seconds"
 msgstr ""
-"फ़्लीट के हर सदस्य के लिए एक पंक्ति, सभी से एक साथ पूछा जाता है, अधिकतम "
-"पाँच सेकंड प्रतीक्षा"
+"फ़्लीट के हर मेंबर के लिए एक रो, सभी से एक साथ पूछा जाता है, अधिकतम पाँच "
+"सेकंड इंतज़ार"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:169
 msgid "``/console/api/edge/command``"
@@ -651,9 +647,9 @@ msgid ""
 "role operator or administrator, the ``Origin`` field, the CSRF token and "
 "the mutation allowance; a change is audited before and after it runs"
 msgstr ""
-"``{\"line\": \"...\"}``: एडमिन सॉकेट की एक सूचीबद्ध पंक्ति। operator या "
-"administrator role, ``Origin`` फ़ील्ड, CSRF token और mutation की अनुमति "
-"चाहिए; बदलाव चलने से पहले और बाद में ऑडिट किया जाता है"
+"``{\"line\": \"...\"}``: एडमिन सॉकेट की एक लिस्टेड लाइन। operator या "
+"administrator रोल, ``Origin`` फ़ील्ड, CSRF टोकन और म्यूटेशन अलाउंस चाहिए; "
+"बदलाव चलने से पहले और बाद में ऑडिट होता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:172
 msgid "``/console/peer``"
@@ -664,28 +660,28 @@ msgid ""
 "The stream of a peer console, from the ``allow_ips`` of its entry, with "
 "the peer key"
 msgstr ""
-"किसी पीयर कंसोल की स्ट्रीम, उसकी प्रविष्टि के ``allow_ips`` से, पीयर "
-"कुंजी के साथ"
+"किसी पीयर कंसोल की स्ट्रीम, उसकी एंट्री के ``allow_ips`` से, पीयर की के "
+"साथ"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:176
 msgid ""
 "A console without an edge answers ``404`` with ``CONSOLE404`` on the "
 "three ``edge`` routes."
 msgstr ""
-"एज के बिना कंसोल तीनों ``edge`` रूटों पर ``CONSOLE404`` के साथ ``404`` "
-"उत्तर देता है।"
+"एज के बिना कंसोल तीनों ``edge`` रूट्स पर ``CONSOLE404`` के साथ ``404`` "
+"रिस्पॉन्स देता है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:178
 msgid "Metrics"
-msgstr "मेट्रिक"
+msgstr "मेट्रिक्स"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:181
 msgid ""
 "Counters exposed as ``sibuna_<name>_total`` in Prometheus text format, in "
 "this order:"
 msgstr ""
-"Prometheus टेक्स्ट प्रारूप में ``sibuna_<name>_total`` के रूप में दिखाए "
-"जाने वाले काउंटर, इस क्रम में:"
+"Prometheus टेक्स्ट फ़ॉर्मेट में ``sibuna_<name>_total`` के रूप में मिलने "
+"वाले काउंटर, इस क्रम में:"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:183
 msgid "Counters"
@@ -715,8 +711,7 @@ msgstr "``incidents_dropped``, ``incident_write_failures``"
 msgid ""
 "Queue pushes rejected because the ring was full, and failed commit "
 "attempts"
-msgstr ""
-"रिंग भरी होने के कारण अस्वीकार किए गए कतार push, और कमिट के विफल प्रयास"
+msgstr "रिंग भरी होने के कारण रिजेक्ट किए गए क्यू पुश, और फ़ेल हुए कमिट प्रयास"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:193
 msgid "``requests``"
@@ -724,7 +719,7 @@ msgstr "``requests``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:194
 msgid "A parsed request reached dispatch (reserved routes included)"
-msgstr "पार्स किया गया अनुरोध डिस्पैच तक पहुँचा (आरक्षित रूट सहित)"
+msgstr "पार्स की गई रिक्वेस्ट डिस्पैच तक पहुँची (रिज़र्व्ड रूट सहित)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:195
 msgid "``allowed``, ``denied``, ``challenged``"
@@ -734,8 +729,7 @@ msgstr "``allowed``, ``denied``, ``challenged``"
 msgid ""
 "A policy decision was made (admitted, refused, challenge issued or "
 "reissued)"
-msgstr ""
-"नीति निर्णय लिया गया (स्वीकृत, अस्वीकृत, चैलेंज जारी या दोबारा जारी)"
+msgstr "पॉलिसी का फैसला हुआ (एडमिटेड, रिफ़्यूज़्ड, चैलेंज जारी या दोबारा जारी)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:197
 msgid "``challenges_issued``"
@@ -751,7 +745,7 @@ msgstr "``solutions_accepted``, ``solutions_rejected``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:200
 msgid "``/__sibuna/verify`` accepted or rejected a proof"
-msgstr "``/__sibuna/verify`` ने किसी प्रमाण को स्वीकार या अस्वीकार किया"
+msgstr "``/__sibuna/verify`` ने किसी प्रूफ़ को पास या रिजेक्ट किया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:201
 msgid "``rate_limited``"
@@ -762,8 +756,8 @@ msgid ""
 "GCRA refused a request (``429``): the request limit, the challenge budget "
 "or a rule's quota"
 msgstr ""
-"GCRA ने किसी अनुरोध को अस्वीकार किया (``429``): अनुरोध सीमा, चैलेंज बजट "
-"या किसी नियम का कोटा"
+"GCRA ने किसी रिक्वेस्ट को रिजेक्ट किया (``429``): रिक्वेस्ट लिमिट, चैलेंज "
+"बजट या किसी नियम का कोटा"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:203
 msgid "``banned``"
@@ -771,9 +765,7 @@ msgstr "``banned``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:204
 msgid "A banned address was refused, or the honeypot banned one"
-msgstr ""
-"किसी प्रतिबंधित पते को अस्वीकार किया गया, या हनीपॉट ने किसी पर प्रतिबंध "
-"लगाया"
+msgstr "किसी बैन किए गए एड्रेस को रिजेक्ट किया गया, या हनीपॉट ने किसी को बैन किया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:205
 msgid "``bans_issued``"
@@ -781,7 +773,7 @@ msgstr "``bans_issued``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:206
 msgid "A ban was recorded (honeypot or a rule quota's ban)"
-msgstr "एक प्रतिबंध दर्ज किया गया (हनीपॉट या किसी नियम कोटा का प्रतिबंध)"
+msgstr "एक बैन दर्ज किया गया (हनीपॉट या किसी नियम कोटा का बैन)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:207
 msgid "``proxied``, ``upstream_errors``"
@@ -789,7 +781,7 @@ msgstr "``proxied``, ``upstream_errors``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:208
 msgid "A request was relayed to the origin, or the origin failed (``502``)"
-msgstr "एक अनुरोध ऑरिजिन तक रिले किया गया, या ऑरिजिन विफल हुआ (``502``)"
+msgstr "एक रिक्वेस्ट ऑरिजिन को रिले की गई, या ऑरिजिन फ़ेल हुआ (``502``)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:209
 msgid "``parse_errors``"
@@ -800,8 +792,8 @@ msgid ""
 "A malformed head, a repeated ``Host``, a target without a normal form "
 "(``400``), or an unsupported transfer coding (``501``) was refused"
 msgstr ""
-"विकृत हेड, दोहराया गया ``Host``, सामान्य रूप न रखने वाला लक्ष्य "
-"(``400``), या असमर्थित transfer coding (``501``) अस्वीकार किया गया"
+"मैलफ़ॉर्म्ड हेड, दोहराया गया ``Host``, नॉर्मल फ़ॉर्म न रखने वाला टारगेट "
+"(``400``), या अनसपोर्टेड transfer coding (``501``) रिजेक्ट किया गया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:211
 msgid "``overloaded``"
@@ -812,8 +804,8 @@ msgid ""
 "A connection beyond ``--max-connections`` or ``--max-connections-per-ip`` "
 "was answered ``503``"
 msgstr ""
-"``--max-connections`` या ``--max-connections-per-ip`` से आगे के कनेक्शन "
-"को ``503`` उत्तर मिला"
+"``--max-connections`` या ``--max-connections-per-ip`` के पार जाने वाले "
+"कनेक्शन को ``503`` रिस्पॉन्स मिला"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:213
 msgid "``bans_refused``"
@@ -824,8 +816,8 @@ msgid ""
 "A ban was not recorded because every slot its key may take held a ban in "
 "effect"
 msgstr ""
-"प्रतिबंध दर्ज नहीं हुआ, क्योंकि उसकी कुंजी जो भी स्लॉट ले सकती थी उन सभी "
-"में एक प्रभावी प्रतिबंध था"
+"बैन दर्ज नहीं हुआ, क्योंकि उसकी की जिन-जिन स्लॉट में जा सकती थी उन सभी "
+"में पहले से एक एक्टिव बैन था"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:215
 msgid "``forwarded_invalid``"
@@ -836,7 +828,7 @@ msgid ""
 "A trusted forwarded client address did not parse; the request was judged "
 "by the socket peer"
 msgstr ""
-"विश्वसनीय फ़ॉरवर्ड किया गया क्लाइंट पता पार्स नहीं हुआ; अनुरोध का निर्णय "
+"ट्रस्टेड फ़ॉरवर्डेड क्लाइंट एड्रेस पार्स नहीं हुआ; रिक्वेस्ट पर फैसला "
 "सॉकेट पीयर से हुआ"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:217
@@ -847,8 +839,8 @@ msgstr "``honeypot_refused``"
 msgid ""
 "A honeypot hit banned nobody because a page, not a person, requested it"
 msgstr ""
-"हनीपॉट हिट से किसी पर प्रतिबंध नहीं लगा, क्योंकि उसे किसी व्यक्ति ने "
-"नहीं, एक पेज ने माँगा था"
+"हनीपॉट हिट से किसी पर बैन नहीं लगा, क्योंकि उसे किसी यूज़र ने नहीं, एक "
+"पेज ने रिक्वेस्ट किया था"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:219
 msgid "``rate_evictions``"
@@ -856,8 +848,7 @@ msgstr "``rate_evictions``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:220
 msgid "A limiter arrival evicted another active client's cell"
-msgstr ""
-"लिमिटर में किसी आगमन ने किसी दूसरे सक्रिय क्लाइंट की सेल को हटा दिया"
+msgstr "लिमिटर में नए अराइवल ने किसी दूसरे एक्टिव क्लाइंट की सेल को इविक्ट कर दिया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:221
 msgid "``ja4_present``"
@@ -868,7 +859,7 @@ msgid ""
 "With ``--ja4-header`` and trusted forwarding, the request carried exactly "
 "one header of that name with a JA4 fingerprint"
 msgstr ""
-"``--ja4-header`` और विश्वसनीय फ़ॉरवर्डिंग के साथ, अनुरोध में उस नाम का "
+"``--ja4-header`` और ट्रस्टेड फ़ॉरवर्डिंग के साथ, रिक्वेस्ट में उस नाम का "
 "ठीक एक हेडर JA4 फ़िंगरप्रिंट के साथ था"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:223
@@ -880,8 +871,8 @@ msgid ""
 "With ``--ja4-header`` and trusted forwarding, the header was malformed or "
 "repeated; the request was judged without a fingerprint"
 msgstr ""
-"``--ja4-header`` और विश्वसनीय फ़ॉरवर्डिंग के साथ, हेडर विकृत या दोहराया "
-"गया था; अनुरोध का मूल्यांकन बिना फ़िंगरप्रिंट के हुआ"
+"``--ja4-header`` और ट्रस्टेड फ़ॉरवर्डिंग के साथ, हेडर मैलफ़ॉर्म्ड या "
+"दोहराया गया था; रिक्वेस्ट को बिना फ़िंगरप्रिंट के इवैल्यूएट किया गया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:225
 msgid "``tunnels_opened``"
@@ -903,8 +894,8 @@ msgid ""
 "An exchange of a worker reused an idle server socket, or opened a server "
 "connection"
 msgstr ""
-"वर्कर के किसी आदान-प्रदान ने निष्क्रिय सर्वर सॉकेट का फिर से उपयोग किया, "
-"या सर्वर कनेक्शन खोला"
+"वर्कर के किसी एक्सचेंज ने आइडल सर्वर सॉकेट को फिर से इस्तेमाल किया, या "
+"नया सर्वर कनेक्शन खोला"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:229
 msgid "``origin_retries``"
@@ -912,8 +903,7 @@ msgstr "``origin_retries``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:230
 msgid "A request was sent again because an idle server socket had closed"
-msgstr ""
-"एक अनुरोध फिर से भेजा गया क्योंकि निष्क्रिय सर्वर सॉकेट बंद हो चुका था"
+msgstr "रिक्वेस्ट दोबारा भेजी गई क्योंकि आइडल सर्वर सॉकेट बंद हो चुका था"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:231
 msgid "``deadline_closes``, ``worker_faults``"
@@ -924,8 +914,8 @@ msgid ""
 "A worker closed a connection because a deadline passed, or after a fault "
 "in its own code"
 msgstr ""
-"वर्कर ने कनेक्शन बंद किया क्योंकि समय-सीमा बीत गई, या अपने ही कोड में "
-"ख़राबी के बाद"
+"वर्कर ने कनेक्शन बंद किया क्योंकि डेडलाइन बीत गई, या अपने ही कोड में "
+"बग/फ़ॉल्ट के बाद"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:233
 msgid "``tls_kept``, ``tls_passed``"
@@ -936,21 +926,21 @@ msgid ""
 "A worker ended a TLS connection itself, or gave it to the protocol "
 "runtime after its ClientHello (SID 0024)"
 msgstr ""
-"वर्कर ने TLS कनेक्शन स्वयं समाप्त किया, या उसके ClientHello के बाद उसे "
-"प्रोटोकॉल रनटाइम को दे दिया (SID 0024)"
+"वर्कर ने TLS कनेक्शन खुद टर्मिनेट किया, या उसके ClientHello के बाद उसे "
+"प्रोटोकॉल रनटाइम को सौंप दिया (SID 0024)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:236
 msgid ""
 "The last eight counters are written by the event-driven workers of the "
 "edge (SID 0016, SID 0024). ``crates/core/src/metrics.rs`` holds the list."
 msgstr ""
-"अंतिम आठ काउंटर एज के इवेंट-ड्रिवन वर्कर लिखते हैं (SID 0016, SID 0024)। "
-"``crates/core/src/metrics.rs`` में सूची है।"
+"आखिरी आठ काउंटर एज के इवेंट-ड्रिवन वर्कर लिखते हैं (SID 0016, SID 0024)। "
+"``crates/core/src/metrics.rs`` में इनकी लिस्ट है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:238
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:243
 msgid "Series of the edge"
-msgstr "एज की श्रृंखलाएँ"
+msgstr "एज की सीरीज़"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:241
 msgid ""
@@ -962,21 +952,21 @@ msgid ""
 "``crates/lb/src/forward/counters.rs``, ``cmd/sibuna/src/access.rs``, "
 "``cmd/sibuna/src/plugins.rs`` and ``cmd/sibuna/src/acme.rs``."
 msgstr ""
-"एज के मेट्रिक्स टेक्स्ट में ऊपर के काउंटर और फिर ये श्रृंखलाएँ होती हैं। "
-"एडमिन सॉकेट पर ``show stats`` वही टेक्स्ट प्रिंट करता है। जिस परिवार को "
-"कॉन्फ़िगर नहीं किया गया उसकी श्रृंखला अनुपस्थित रहती है: फ़ॉरवर्डिंग, "
-"मेश, प्लगइन और स्वचालित HTTPS अपनी श्रृंखलाएँ केवल तब जोड़ते हैं जब वे "
-"चालू हों। इन्हें लिखने वाला कोड ``crates/lb/src/stats.rs``, "
+"एज के मेट्रिक्स टेक्स्ट में ऊपर के काउंटर और फिर ये सीरीज़ होती हैं। "
+"एडमिन सॉकेट पर ``show stats`` यही टेक्स्ट प्रिंट करता है। जो फ़ैमिली "
+"कॉन्फ़िगर नहीं है, उसकी सीरीज़ नहीं आती: फ़ॉरवर्डिंग, मेश, प्लगइन और "
+"ऑटोमैटिक HTTPS अपनी सीरीज़ तभी जोड़ते हैं जब वे चालू हों। इन्हें लिखने "
+"वाला कोड ``crates/lb/src/stats.rs``, "
 "``crates/lb/src/forward/counters.rs``, ``cmd/sibuna/src/access.rs``, "
-"``cmd/sibuna/src/plugins.rs`` और ``cmd/sibuna/src/acme.rs`` है।"
+"``cmd/sibuna/src/plugins.rs`` और ``cmd/sibuna/src/acme.rs`` में है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:247
 msgid "Series"
-msgstr "श्रृंखला"
+msgstr "सीरीज़"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:248
 msgid "Type"
-msgstr "प्रकार"
+msgstr "टाइप"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:249
 msgid "Labels"
@@ -992,7 +982,7 @@ msgstr "लेबल"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:807
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:829
 msgid "Meaning"
-msgstr "अर्थ"
+msgstr "मतलब"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:251
 msgid "``sibuna_edge_ready``"
@@ -1009,11 +999,11 @@ msgstr "``sibuna_edge_ready``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:372
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:380
 msgid "gauge"
-msgstr "gauge"
+msgstr "गेज"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:254
 msgid "1 while readiness answers 200, 0 from the start of a shutdown"
-msgstr "जब तक readiness 200 उत्तर देता है तब तक 1, shutdown की शुरुआत से 0"
+msgstr "जब तक readiness 200 रिस्पॉन्स देता है तब तक 1, शटडाउन की शुरुआत से 0"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:255
 msgid "``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``"
@@ -1049,12 +1039,11 @@ msgstr "``sibuna_edge_drops_total``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:364
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:376
 msgid "counter"
-msgstr "counter"
+msgstr "काउंटर"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:262
 msgid "Datagrams that the edge worker discarded and admissions it refused"
-msgstr ""
-"एज वर्कर द्वारा छोड़े गए डेटाग्राम और उसके द्वारा अस्वीकार किए गए प्रवेश"
+msgstr "एज वर्कर द्वारा ड्रॉप किए गए डेटाग्राम और रिजेक्ट किए गए एडमिशन"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:263
 msgid "``sibuna_edge_proxy_protocol_accepted_total``, ``_rejected_total``"
@@ -1062,7 +1051,7 @@ msgstr "``sibuna_edge_proxy_protocol_accepted_total``, ``_rejected_total``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:266
 msgid "Connections whose PROXY header was accepted or refused"
-msgstr "वे कनेक्शन जिनका PROXY हेडर स्वीकार या अस्वीकार किया गया"
+msgstr "वे कनेक्शन जिनका PROXY हेडर स्वीकार या रिजेक्ट किया गया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:267
 msgid "``sibuna_edge_flow_log_dropped_total``"
@@ -1070,7 +1059,7 @@ msgstr "``sibuna_edge_flow_log_dropped_total``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:270
 msgid "Lines of TCP and UDP flows that did not fit the queue of the log"
-msgstr "TCP और UDP फ़्लो की वे पंक्तियाँ जो लॉग की कतार में नहीं समाईं"
+msgstr "TCP और UDP फ़्लो की वे लाइनें जो लॉग की क्यू में फिट नहीं हुईं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:271
 msgid "``sibuna_edge_refused_total``"
@@ -1092,7 +1081,7 @@ msgid ""
 "``udp_not_quic``, and from SID 0034 ``banned``, ``pressure``, "
 "``frontend_limit``, ``client_flow_limit`` and ``udp_total_limit``"
 msgstr ""
-"अस्वीकार किए गए कनेक्शन, अनुरोध और डेटाग्राम। कारण हैं ``rate_limit``, "
+"रिजेक्ट किए गए कनेक्शन, रिक्वेस्ट और डेटाग्राम। कारण हैं ``rate_limit``, "
 "``flow_limit``, ``draining``, ``connection_limit``, ``client_limit``, "
 "``task_limit``, ``exchange_limit``, ``bad_request``, ``no_server``, "
 "``udp_rate_limit``, ``udp_flow_limit``, ``udp_reply_limit``, "
@@ -1108,7 +1097,7 @@ msgstr ""
 msgid ""
 "1 while pressure mode admits known addresses first, 0 otherwise (SID 0034)"
 msgstr ""
-"जब तक दबाव मोड जाने-पहचाने पतों को पहले आने देता है तब तक 1, अन्यथा 0 "
+"जब तक प्रेशर मोड जाने-पहचाने एड्रेस को पहले एडमिट करता है तब तक 1, वरना 0 "
 "(SID 0034)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:279
@@ -1117,7 +1106,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:282
 msgid "Switches of pressure mode, on or off"
-msgstr "दबाव मोड के बदलाव, चालू या बंद"
+msgstr "प्रेशर मोड के स्विच, ऑन या ऑफ़"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:283
 msgid "``sibuna_edge_strikes_total``, ``sibuna_edge_auto_bans_total``"
@@ -1127,8 +1116,8 @@ msgstr ""
 msgid ""
 "Refusals that counted against ``auto_ban``, and the addresses they banned"
 msgstr ""
-"वे अस्वीकृतियाँ जो ``auto_ban`` में गिनी गईं, और वे पते जिन्हें उन्होंने "
-"प्रतिबंधित किया"
+"वे रिफ़्यूज़ल जो ``auto_ban`` में गिने गए, और वे एड्रेस जिन्हें उन्होंने "
+"बैन किया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:287
 msgid "``sibuna_edge_frontend_requests_total``"
@@ -1143,8 +1132,8 @@ msgid ""
 "HTTP requests by status class: ``1xx`` to ``5xx``, or ``none`` for an "
 "exchange that ended without a status"
 msgstr ""
-"स्टेटस वर्ग के अनुसार HTTP अनुरोध: ``1xx`` से ``5xx``, या बिना स्टेटस के "
-"समाप्त हुए आदान-प्रदान के लिए ``none``"
+"स्टेटस क्लास के हिसाब से HTTP रिक्वेस्ट: ``1xx`` से ``5xx``, या बिना "
+"स्टेटस के खत्म हुए एक्सचेंज के लिए ``none``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:291
 msgid ""
@@ -1161,7 +1150,7 @@ msgstr "``frontend``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:294
 msgid "Bytes from and to the clients, and flows of a frontend"
-msgstr "क्लाइंटों से और क्लाइंटों तक बाइट, और फ़्रंटएंड के फ़्लो"
+msgstr "क्लाइंट्स से और क्लाइंट्स तक बाइट, और फ़्रंटएंड के फ़्लो"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:295
 msgid "``sibuna_edge_frontend_request_seconds``"
@@ -1170,12 +1159,12 @@ msgstr "``sibuna_edge_frontend_request_seconds``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:296
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:316
 msgid "histogram"
-msgstr "histogram"
+msgstr "हिस्टोग्राम"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:298
 msgid ""
 "The duration of a request; buckets from 0.001 to 30 seconds (14 bounds)"
-msgstr "अनुरोध की अवधि; 0.001 से 30 सेकंड तक के buckets (14 सीमाएँ)"
+msgstr "रिक्वेस्ट का ड्यूरेशन; 0.001 से 30 सेकंड तक के बकेट (14 बाउंड)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:299
 msgid "``sibuna_edge_server_requests_total``"
@@ -1187,7 +1176,7 @@ msgstr "``backend``, ``server``, ``code``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:302
 msgid "Requests a server answered, by status class"
-msgstr "स्टेटस वर्ग के अनुसार वे अनुरोध जिनका उत्तर सर्वर ने दिया"
+msgstr "स्टेटस क्लास के हिसाब से वे रिक्वेस्ट जिनका रिस्पॉन्स सर्वर ने दिया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:303
 msgid ""
@@ -1209,8 +1198,8 @@ msgid ""
 "What a server did wrong, requests that left it for another server, and "
 "ejections by passive health (SID 0019)"
 msgstr ""
-"सर्वर ने क्या ग़लत किया, वे अनुरोध जो उसे छोड़कर दूसरे सर्वर पर गए, और "
-"निष्क्रिय हेल्थ द्वारा ejection (SID 0019)"
+"सर्वर ने क्या गड़बड़ी की, वे रिक्वेस्ट जो उसे छोड़कर दूसरे सर्वर पर गईं, "
+"और पैसिव हेल्थ चेक द्वारा इजेक्शन (SID 0019)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:307
 msgid "``sibuna_edge_server_client_closed_total``"
@@ -1221,8 +1210,8 @@ msgid ""
 "Clients that left before the server answered (logged as 499); not a "
 "failure of the server"
 msgstr ""
-"सर्वर के उत्तर देने से पहले चले गए क्लाइंट (499 के रूप में लॉग); सर्वर की "
-"विफलता नहीं"
+"सर्वर के रिस्पॉन्स से पहले चले गए क्लाइंट (499 के रूप में लॉग); सर्वर का "
+"फ़ेलियर नहीं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:311
 msgid "``sibuna_edge_server_up``, ``sibuna_edge_server_active_requests``"
@@ -1230,7 +1219,7 @@ msgstr "``sibuna_edge_server_up``, ``sibuna_edge_server_active_requests``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:314
 msgid "1 while the server is in service, and its requests in flight"
-msgstr "सर्वर के सेवा में रहते 1, और उसके चल रहे अनुरोध"
+msgstr "सर्वर के सर्विस में रहते 1, और उसकी इन-फ़्लाइट रिक्वेस्ट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:315
 msgid "``sibuna_edge_server_response_seconds``"
@@ -1238,7 +1227,7 @@ msgstr "``sibuna_edge_server_response_seconds``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:318
 msgid "The wait for the first byte of the server, with the buckets above"
-msgstr "सर्वर के पहले बाइट की प्रतीक्षा, ऊपर वाले buckets के साथ"
+msgstr "सर्वर के पहले बाइट का इंतज़ार, ऊपर वाले बकेट्स के साथ"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:319
 msgid ""
@@ -1253,8 +1242,8 @@ msgid ""
 "Lines of the access log written, dropped because the queue was full, and "
 "failed writes"
 msgstr ""
-"एक्सेस लॉग की लिखी गई पंक्तियाँ, कतार भरी होने के कारण छोड़ी गई "
-"पंक्तियाँ, और विफल write"
+"एक्सेस लॉग की लिखी गई लाइनें, क्यू भरी होने की वजह से ड्रॉप हुई लाइनें, "
+"और फ़ेल हुए राइट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:323
 msgid "``sibuna_edge_access_log_queue_length``"
@@ -1262,7 +1251,7 @@ msgstr "``sibuna_edge_access_log_queue_length``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:326
 msgid "Entries waiting for the writer"
-msgstr "writer की प्रतीक्षा कर रही प्रविष्टियाँ"
+msgstr "राइटर का इंतज़ार कर रही एंट्रीज़"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:327
 msgid "``sibuna_edge_forward_active``, ``_peers_eligible``, ``_flows_out``"
@@ -1282,7 +1271,7 @@ msgstr "``sibuna_edge_forward_streams_out_total``, ``_streams_in_total``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:334
 msgid "Connections handed to an owner, and taken from peers"
-msgstr "मालिक को सौंपे गए कनेक्शन, और पीयर से लिए गए कनेक्शन"
+msgstr "ओनर को सौंपे गए कनेक्शन, और पीयर से लिए गए कनेक्शन"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:335
 msgid ""
@@ -1297,8 +1286,8 @@ msgid ""
 "Datagrams sent to an owner, taken from peers, and replies passed back to "
 "a client"
 msgstr ""
-"मालिक को भेजे गए डेटाग्राम, पीयर से लिए गए डेटाग्राम, और क्लाइंट को लौटाए "
-"गए उत्तर"
+"ओनर को भेजे गए डेटाग्राम, पीयर से लिए गए डेटाग्राम, और क्लाइंट को वापस "
+"भेजे गए रिस्पॉन्स"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:339
 msgid "``sibuna_edge_forward_denied_total``"
@@ -1307,8 +1296,8 @@ msgstr "``sibuna_edge_forward_denied_total``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:342
 msgid "Connections closed because the owner's rate limit denied the client"
 msgstr ""
-"वे कनेक्शन जो इसलिए बंद किए गए क्योंकि मालिक की रेट लिमिट ने क्लाइंट को "
-"अस्वीकार किया"
+"वे कनेक्शन जो इसलिए बंद किए गए क्योंकि ओनर की रेट लिमिट ने क्लाइंट को "
+"डिनाई किया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:343
 msgid "``sibuna_edge_forward_local_total``"
@@ -1319,7 +1308,7 @@ msgid ""
 "Flows of another owner served here: ``declined``, ``connect_failed``, "
 "``timeout``, ``peer_limit``"
 msgstr ""
-"किसी दूसरे मालिक के फ़्लो जो यहाँ सर्व किए गए: ``declined``, "
+"किसी दूसरे ओनर के फ़्लो जो यहाँ सर्व हुए: ``declined``, "
 "``connect_failed``, ``timeout``, ``peer_limit``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:347
@@ -1331,7 +1320,7 @@ msgid ""
 "What the forwarding port refused: ``stranger``, ``bad_tag``, ``stale``, "
 "``malformed``, ``unknown``"
 msgstr ""
-"फ़ॉरवर्डिंग पोर्ट ने क्या अस्वीकार किया: ``stranger``, ``bad_tag``, "
+"फ़ॉरवर्डिंग पोर्ट ने क्या रिजेक्ट किया: ``stranger``, ``bad_tag``, "
 "``stale``, ``malformed``, ``unknown``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:351
@@ -1348,9 +1337,9 @@ msgid ""
 "send, read from authentic datagrams, that added or extended a ban, and "
 "lost to a bound"
 msgstr ""
-"प्रतिकृत प्रतिबंध (SID 0022): हर पीयर और प्रेषण के लिए एक बार डेटाग्राम "
-"में लिखे गए, प्रमाणित डेटाग्राम से पढ़े गए, जिन्होंने कोई प्रतिबंध जोड़ा "
-"या बढ़ाया, और किसी सीमा के कारण खोए गए"
+"रिप्लिकेटेड बैन (SID 0022): हर पीयर और सेंड के लिए एक बार डेटाग्राम में "
+"लिखे गए, ऑथेंटिक डेटाग्राम से पढ़े गए, जिन्होंने कोई बैन जोड़ा या बढ़ाया, "
+"और किसी लिमिट की वजह से ड्रॉप हुए"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:355
 msgid "``sibuna_edge_mesh_bans_known``"
@@ -1358,7 +1347,7 @@ msgstr "``sibuna_edge_mesh_bans_known``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:358
 msgid "The bans this node remembers now"
-msgstr "वे प्रतिबंध जो यह नोड अभी याद रखता है"
+msgstr "वे बैन जो इस नोड को अभी याद हैं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:359
 msgid "``sibuna_edge_hook_calls_total``"
@@ -1396,8 +1385,8 @@ msgid ""
 "Telemetry samples dropped, and request fields that the plugin tried to "
 "add and that were refused"
 msgstr ""
-"छोड़े गए telemetry नमूने, और वे अनुरोध फ़ील्ड जिन्हें प्लगइन ने जोड़ने की "
-"कोशिश की और जो अस्वीकार किए गए"
+"ड्रॉप हुए टेलीमेट्री सैंपल, और वे रिक्वेस्ट फ़ील्ड जिन्हें प्लगइन ने "
+"जोड़ने की कोशिश की और जो रिजेक्ट हो गए"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:367
 msgid "``sibuna_edge_hook_breakers_open``"
@@ -1405,7 +1394,7 @@ msgstr "``sibuna_edge_hook_breakers_open``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:370
 msgid "Open breakers of an agent plugin"
-msgstr "किसी agent प्लगइन के खुले breaker"
+msgstr "किसी एजेंट प्लगइन के खुले ब्रेकर"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:371
 msgid "``sibuna_edge_acme_certificates_managed``, ``_served``"
@@ -1415,8 +1404,7 @@ msgstr "``sibuna_edge_acme_certificates_managed``, ``_served``"
 msgid ""
 "Names of automatic HTTPS, and those with a certificate in service (SID "
 "0021)"
-msgstr ""
-"स्वचालित HTTPS के नाम, और वे जिनका सर्टिफ़िकेट सेवा में है (SID 0021)"
+msgstr "ऑटोमैटिक HTTPS के नाम, और वे जिनका सर्टिफ़िकेट सर्विस में है (SID 0021)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:375
 msgid "``sibuna_edge_acme_failures_total``"
@@ -1424,7 +1412,7 @@ msgstr "``sibuna_edge_acme_failures_total``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:378
 msgid "Failed attempts to obtain or renew a certificate"
-msgstr "सर्टिफ़िकेट प्राप्त करने या नवीनीकृत करने के विफल प्रयास"
+msgstr "सर्टिफ़िकेट लेने या रिन्यू करने की फ़ेल कोशिशें"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:379
 msgid "``sibuna_edge_acme_nearest_expiry_seconds``"
@@ -1435,8 +1423,8 @@ msgid ""
 "Seconds until the first served certificate expires; absent while none is "
 "served"
 msgstr ""
-"पहले सर्व किए गए सर्टिफ़िकेट की समाप्ति तक के सेकंड; जब कोई सर्व नहीं हो "
-"रहा तब अनुपस्थित"
+"सबसे पहले एक्सपायर होने वाले सर्व्ड सर्टिफ़िकेट तक के सेकंड; जब कोई "
+"सर्टिफ़िकेट सर्व नहीं हो रहा हो तब अनुपस्थित"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:384
 msgid ""
@@ -1446,11 +1434,11 @@ msgid ""
 "by ``show authority`` (SID 0028). No series counts the commands, the "
 "lifted bans or the parked flows of the plugins."
 msgstr ""
-"एज की कुछ अवस्था की कोई श्रृंखला नहीं है। स्टिकी टेबल और फ़्लीट-व्यापी "
-"सीमाओं के हिस्से केवल ``show affinity`` दिखाता है (SID 0025), spill cache "
-"``show info`` (SID 0027), और डेटाबेस का revision ``show authority`` (SID "
-"0028)। कोई श्रृंखला कमांड, हटाए गए प्रतिबंध या प्लगइन के park किए गए "
-"फ़्लो नहीं गिनती।"
+"एज की कुछ स्टेट की कोई सीरीज़ नहीं है। स्टिकी टेबल और फ़्लीट-वाइड लिमिट "
+"के हिस्से सिर्फ़ ``show affinity`` दिखाता है (SID 0025), spill cache "
+"``show info`` (SID 0027), और डेटाबेस का रिविज़न ``show authority`` (SID "
+"0028)। कोई सीरीज़ कमांड, हटाए गए बैन या प्लगइन के पार्क किए गए फ़्लो नहीं "
+"गिनती।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:386
 msgid ""
@@ -1459,8 +1447,8 @@ msgid ""
 "interval; totals alone are not a queue depth."
 msgstr ""
 "एक रीट्राई रिकॉर्ड खोए बिना ``incident_write_failures`` बढ़ा सकता है, "
-"क्योंकि लंबित बैच रखा जाता है। किसी अंतराल में हुई बढ़ोतरी की निगरानी "
-"करें; केवल कुल योग कतार की गहराई नहीं बताते।"
+"क्योंकि पेंडिंग बैच रखा जाता है। किसी टाइम विंडो में हुई बढ़ोतरी को "
+"मॉनिटर करें; सिर्फ़ कुल टोटल क्यू की डेप्थ नहीं बताते।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:388
 msgid "Status Codes"
@@ -1468,7 +1456,7 @@ msgstr "स्टेटस कोड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:391
 msgid "Status codes of the data plane"
-msgstr "डेटा plane के स्टेटस कोड"
+msgstr "डेटा प्लेन के स्टेटस कोड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:395
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:432
@@ -1497,8 +1485,8 @@ msgid ""
 "Admitted (forward-auth), interstitial (HTML navigation needing a "
 "challenge), internal routes"
 msgstr ""
-"स्वीकृत (forward-auth), इंटरस्टिशियल (चैलेंज की ज़रूरत वाला HTML "
-"नेविगेशन), आंतरिक रूट"
+"एडमिटेड (forward-auth), इंटरस्टिशियल (चैलेंज की ज़रूरत वाला HTML "
+"नेविगेशन), इंटरनल रूट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:399
 msgid "302"
@@ -1509,8 +1497,8 @@ msgid ""
 "Not used by the current protocol; verification answers ``200`` and the "
 "page reloads"
 msgstr ""
-"वर्तमान प्रोटोकॉल में उपयोग नहीं होता; सत्यापन ``200`` उत्तर देता है और "
-"पेज दोबारा लोड होता है"
+"मौजूदा प्रोटोकॉल में इस्तेमाल नहीं होता; वेरिफ़िकेशन ``200`` रिस्पॉन्स "
+"देता है और पेज रीलोड होता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:401
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:516
@@ -1523,9 +1511,9 @@ msgid ""
 "form, invalid forwarded metadata, a malformed body, or a rejected "
 "solution with an Elm-style diagnostic"
 msgstr ""
-"विकृत अनुरोध, दोहराया गया ``Host`` फ़ील्ड, सामान्य रूप न रखने वाला "
-"लक्ष्य, अमान्य फ़ॉरवर्ड किया गया मेटाडेटा, विकृत बॉडी, या Elm-शैली के "
-"निदान के साथ अस्वीकृत समाधान"
+"मैलफ़ॉर्म्ड रिक्वेस्ट, दोहराया गया ``Host`` फ़ील्ड, नॉर्मल फ़ॉर्म न रखने "
+"वाला टारगेट, अमान्य फ़ॉरवर्डेड मेटाडेटा, मैलफ़ॉर्म्ड बॉडी, या Elm-स्टाइल "
+"डायग्नॉस्टिक के साथ रिजेक्टेड सॉल्यूशन"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:403
 msgid "401"
@@ -1537,7 +1525,7 @@ msgid ""
 "forward-auth mode"
 msgstr ""
 "HTML स्वीकार न करने वाले क्लाइंट के लिए, या forward-auth मोड में, चैलेंज "
-"आवश्यक"
+"ज़रूरी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:405
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:436
@@ -1546,7 +1534,7 @@ msgstr "403"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:406
 msgid "Policy or WAF denial, banned address, honeypot"
-msgstr "नीति या WAF द्वारा अस्वीकृति, प्रतिबंधित पता, हनीपॉट"
+msgstr "पॉलिसी या WAF डिनायल, बैन एड्रेस, हनीपॉट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:407
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:438
@@ -1559,8 +1547,8 @@ msgid ""
 "An unknown path under ``/__sibuna/``, or a honeypot hit that is not a "
 "top-level request"
 msgstr ""
-"``/__sibuna/`` के अंतर्गत अज्ञात पाथ, या ऐसा हनीपॉट हिट जो शीर्ष-स्तर का "
-"अनुरोध नहीं है"
+"``/__sibuna/`` के नीचे अनजान पाथ, या ऐसा हनीपॉट हिट जो टॉप-लेवल रिक्वेस्ट "
+"नहीं है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:409
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:440
@@ -1569,7 +1557,7 @@ msgstr "413"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:410
 msgid "Solution body larger than the 64 KB connection buffer"
-msgstr "समाधान की बॉडी 64 KB कनेक्शन बफ़र से बड़ी"
+msgstr "सॉल्यूशन की बॉडी 64 KB कनेक्शन बफ़र से बड़ी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:411
 msgid "414"
@@ -1585,9 +1573,7 @@ msgstr "417"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:414
 msgid "Unsupported request expectation; ``100-continue`` is handled locally"
-msgstr ""
-"असमर्थित अनुरोध अपेक्षा (expectation); ``100-continue`` स्थानीय रूप से "
-"संभाला जाता है"
+msgstr "अनसपोर्टेड रिक्वेस्ट एक्सपेक्टेशन; ``100-continue`` लोकली हैंडल होता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:415
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:531
@@ -1597,7 +1583,7 @@ msgstr "429"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:416
 msgid "GCRA limit exceeded; ``Retry-After`` in seconds"
-msgstr "GCRA सीमा पार; ``Retry-After`` सेकंड में"
+msgstr "GCRA लिमिट पार; ``Retry-After`` सेकंड में"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:417
 msgid "431"
@@ -1605,7 +1591,7 @@ msgstr "431"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:418
 msgid "Request head over 16 KB"
-msgstr "अनुरोध हेड 16 KB से बड़ा"
+msgstr "रिक्वेस्ट हेड 16 KB से बड़ा"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:419
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:444
@@ -1614,7 +1600,7 @@ msgstr "501"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:420
 msgid "``Transfer-Encoding`` with a coding other than chunked"
-msgstr "chunked के अलावा किसी अन्य coding वाला ``Transfer-Encoding``"
+msgstr "chunked के अलावा किसी और coding वाला ``Transfer-Encoding``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:421
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:446
@@ -1625,8 +1611,7 @@ msgstr "502"
 msgid ""
 "Origin unreachable, or its response head was malformed or larger than 16 "
 "KB"
-msgstr ""
-"ऑरिजिन तक पहुँच नहीं, या उसका रिस्पॉन्स हेड विकृत था या 16 KB से बड़ा था"
+msgstr "ऑरिजिन अनरीचेबल, या उसका रिस्पॉन्स हेड मैलफ़ॉर्म्ड या 16 KB से बड़ा था"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:423
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:448
@@ -1640,8 +1625,8 @@ msgid ""
 "Connection limit (``--max-connections`` or ``--max-connections-per-ip``) "
 "reached, or the node is draining; the socket is closed after the reply"
 msgstr ""
-"कनेक्शन सीमा (``--max-connections`` या ``--max-connections-per-ip``) "
-"पूरी, या नोड ड्रेन हो रहा है; उत्तर के बाद सॉकेट बंद कर दिया जाता है"
+"कनेक्शन लिमिट (``--max-connections`` या ``--max-connections-per-ip``) "
+"पूरी, या नोड ड्रेन हो रहा है; रिस्पॉन्स के बाद सॉकेट बंद कर दिया जाता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:426
 msgid ""
@@ -1649,8 +1634,9 @@ msgid ""
 "firewall decides, and adds these of its own (SID 0019, SID 0020, SID "
 "0030)."
 msgstr ""
-"एज का HTTP फ़्रंटएंड, जहाँ उसका फ़ायरवॉल निर्णय लेता है वहाँ ऊपर के कोड "
-"से उत्तर देता है, और अपने ये कोड जोड़ता है (SID 0019, SID 0020, SID 0030)।"
+"एज का HTTP फ़्रंटएंड, जहाँ उसका फ़ायरवॉल फैसला लेता है वहाँ ऊपर के कोड से "
+"रिस्पॉन्स देता है, और अपने ये कोड जोड़ता है (SID 0019, SID 0020, SID "
+"0030)।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:428
 msgid "Status codes that the edge adds"
@@ -1665,16 +1651,16 @@ msgid ""
 "``redirect_https`` on a cleartext frontend or route, or the automatic "
 "redirect of a managed name (308)"
 msgstr ""
-"cleartext फ़्रंटएंड या रूट पर ``redirect_https``, या प्रबंधित नाम का "
-"स्वचालित redirect (308)"
+"cleartext फ़्रंटएंड या रूट पर ``redirect_https``, या मैनेज्ड नाम का "
+"ऑटोमैटिक रीडायरेक्ट (308)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:437
 msgid ""
 "A request hook denied the request, or a WebSocket upgrade carried an "
 "``Origin`` that the route does not list"
 msgstr ""
-"किसी अनुरोध हुक ने अनुरोध अस्वीकार किया, या WebSocket upgrade में ऐसा "
-"``Origin`` था जो रूट की सूची में नहीं है"
+"किसी रिक्वेस्ट हुक ने रिक्वेस्ट डिनाई की, या WebSocket upgrade में ऐसा "
+"``Origin`` था जो रूट की लिस्ट में नहीं है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:439
 msgid ""
@@ -1686,7 +1672,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:441
 msgid "A request body above ``max_body``"
-msgstr "``max_body`` से बड़ी अनुरोध बॉडी"
+msgstr "``max_body`` से बड़ी रिक्वेस्ट बॉडी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:442
 msgid "499"
@@ -1697,8 +1683,8 @@ msgid ""
 "Written to the access log only: the client closed or reset before any "
 "response; no client receives it"
 msgstr ""
-"केवल एक्सेस लॉग में लिखा जाता है: क्लाइंट ने किसी रिस्पॉन्स से पहले बंद "
-"या reset किया; कोई क्लाइंट इसे नहीं पाता"
+"सिर्फ़ एक्सेस लॉग में लिखा जाता है: क्लाइंट ने किसी रिस्पॉन्स से पहले "
+"कनेक्शन बंद या रीसेट कर दिया; किसी क्लाइंट को यह नहीं मिलता"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:445
 msgid "A WebSocket upgrade to a pool with ``http_version`` 2 or 3"
@@ -1709,7 +1695,7 @@ msgid ""
 "No server could be reached, or a request that is not safe to repeat lost "
 "its server connection after it was sent"
 msgstr ""
-"किसी सर्वर तक पहुँचा नहीं जा सका, या जिस अनुरोध को दोहराना सुरक्षित नहीं "
+"किसी सर्वर तक पहुँचा नहीं जा सका, या जिस रिक्वेस्ट को दोहराना सेफ़ नहीं "
 "है उसने भेजे जाने के बाद अपना सर्वर कनेक्शन खो दिया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:449
@@ -1717,8 +1703,8 @@ msgid ""
 "Readiness during a shutdown, an HTTP/2 or HTTP/3 request above the "
 "request bound, or a console stream over its quota"
 msgstr ""
-"shutdown के दौरान readiness, अनुरोध सीमा से बड़ा HTTP/2 या HTTP/3 अनुरोध, "
-"या अपने कोटा से अधिक कंसोल स्ट्रीम"
+"शटडाउन के दौरान readiness, रिक्वेस्ट लिमिट से बड़ी HTTP/2 या HTTP/3 "
+"रिक्वेस्ट, या अपने कोटा से ज़्यादा कंसोल स्ट्रीम"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:450
 msgid "504"
@@ -1726,11 +1712,11 @@ msgstr "504"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:451
 msgid "A server stayed silent longer than ``response_timeout``"
-msgstr "सर्वर ``response_timeout`` से अधिक समय तक चुप रहा"
+msgstr "सर्वर ``response_timeout`` से ज़्यादा समय तक चुप रहा"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:453
 msgid "Error Catalog"
-msgstr "त्रुटि सूची"
+msgstr "एरर कैटलॉग"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:456
 msgid ""
@@ -1753,25 +1739,24 @@ msgid ""
 "a malformed or repeated console option, and ``CONSOLE001`` a console "
 "configuration that breaks a rule (``StorageRequired`` without storage)."
 msgstr ""
-"``INVALID COMMAND LINE`` हर उस विकल्प के लिए स्टार्टअप रोक देता है जिसे "
-"डेमन नहीं पहचानता, अपनी दस्तावेज़ित सीमा से बाहर के हर मान के लिए, और "
-"अमान्य, अनुपस्थित या दोहराए गए मोड चयन के लिए। ब्लॉक विकल्प, दिया गया "
-"मान, अपेक्षित सीमा और त्रुटि (``UnknownOption``, ``MissingValue``, "
+"``INVALID COMMAND LINE`` किसी भी ऐसे ऑप्शन पर स्टार्टअप रोक देता है जिसे "
+"डेमन नहीं पहचानता, डॉक्यूमेंटेड रेंज से बाहर की किसी वैल्यू पर, या "
+"अमान्य, मिसिंग या डुप्लीकेट मोड सिलेक्शन पर। ब्लॉक में ऑप्शन, दी गई "
+"वैल्यू, अपेक्षित रेंज और एरर (``UnknownOption``, ``MissingValue``, "
 "``InvalidValue``, ``InvalidMode``, ``MissingMode``, ``DuplicateMode``, "
-"Zaxonlite क्लस्टर विकल्प के लिए ``RemovedOption``, एक-दूसरे को बाहर करने "
-"वाले दो स्टोरेज विकल्पों के लिए ``ConflictingOptions``, "
-"``--cluster-node`` के बिना डेटाबेस URL के लिए ``MissingOption``) का नाम "
-"देता है, और एक संकेत के साथ समाप्त होता है। डेटाबेस URL ``[redacted]`` के "
-"रूप में दिखाया जाता है। ``--mode reverse_proxy`` या ``--mode "
-"forward_auth`` एक बार दें; ``-m`` समतुल्य छोटा विकल्प है। अस्वीकृत नीति "
-"फ़ाइल अपनी त्रुटि के शीर्षक वाला एक ब्लॉक छापती है (उदाहरण के लिए "
-"``INVALID POLICY ACTION``), जिसमें फ़ाइल, त्रुटि का नाम, नियम, फ़ील्ड और "
-"मान होते हैं। ऐसा ``ja4`` पैटर्न जिससे कोई फ़िंगरप्रिंट मेल नहीं खा सकता, "
-"``INVALID POLICY JA4`` (``InvalidJa4``) छापता है; ऐसे पैटर्न वाला कंसोल "
-"प्रबंधन दस्तावेज़ उसी त्रुटि नाम के साथ अस्वीकार होता है। कंसोल विकल्पों "
-"की जाँच अलग से होती है: ``CONSOLE002`` विकृत या दोहराए गए कंसोल विकल्प का "
-"नाम देता है, और ``CONSOLE001`` किसी नियम को तोड़ने वाले कंसोल "
-"कॉन्फ़िगरेशन का (स्टोरेज के बिना ``StorageRequired``)।"
+"Zaxonlite क्लस्टर ऑप्शन के लिए ``RemovedOption``, आपस में टकराने वाले दो "
+"स्टोरेज ऑप्शन के लिए ``ConflictingOptions``, ``--cluster-node`` के बिना "
+"डेटाबेस URL के लिए ``MissingOption``) का नाम होता है, और अंत में एक हिंट "
+"होता है। डेटाबेस URL ``[redacted]`` के रूप में दिखता है। ``--mode "
+"reverse_proxy`` या ``--mode forward_auth`` एक बार दें; ``-m`` इसका शॉर्ट "
+"ऑप्शन है। रिजेक्ट हुई पॉलिसी फ़ाइल अपनी एरर के टाइटल वाला ब्लॉक प्रिंट "
+"करती है (जैसे ``INVALID POLICY ACTION``), जिसमें फ़ाइल, एरर का नाम, नियम, "
+"फ़ील्ड और वैल्यू होते हैं। ऐसा ``ja4`` पैटर्न जिससे कोई फ़िंगरप्रिंट मैच "
+"न हो सके, ``INVALID POLICY JA4`` (``InvalidJa4``) प्रिंट करता है; ऐसे "
+"पैटर्न वाला कंसोल मैनेजमेंट डॉक्यूमेंट इसी एरर नाम से रिजेक्ट होता है। "
+"कंसोल ऑप्शन अलग से चेक होते हैं: ``CONSOLE002`` मैलफ़ॉर्म्ड या दोहराए गए "
+"कंसोल ऑप्शन के लिए है, और ``CONSOLE001`` नियम तोड़ने वाले कंसोल "
+"कॉन्फ़िगरेशन के लिए (स्टोरेज के बिना ``StorageRequired``)।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:458
 msgid "Implementation: ``ErrorKind::explain``"
@@ -1782,16 +1767,16 @@ msgid ""
 "Maps every domain error to a boundary line, an explanation, and a "
 "``Hint:``. In ``crates/core/src/errors.rs`` (crate ``sibuna-core``)."
 msgstr ""
-"हर डोमेन त्रुटि को एक सीमा पंक्ति, एक व्याख्या और एक ``Hint:`` से जोड़ता "
+"हर डोमेन एरर को एक बाउंड्री लाइन, एक व्याख्या और एक ``Hint:`` से जोड़ता "
 "है। ``crates/core/src/errors.rs`` में (क्रेट ``sibuna-core``)।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:462
 msgid "Challenge and session errors"
-msgstr "चैलेंज और सत्र की त्रुटियाँ"
+msgstr "चैलेंज और सेशन एरर"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:466
 msgid "Error"
-msgstr "त्रुटि"
+msgstr "एरर"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:467
 msgid "Cause"
@@ -1799,7 +1784,7 @@ msgstr "कारण"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:468
 msgid "Hint"
-msgstr "संकेत"
+msgstr "हिंट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:469
 msgid "``MalformedChallenge``"
@@ -1807,7 +1792,7 @@ msgstr "``MalformedChallenge``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:470
 msgid "The identifier is not a well-formed challenge record"
-msgstr "पहचानकर्ता एक सही रूप वाला चैलेंज रिकॉर्ड नहीं है"
+msgstr "आइडेंटिफ़ायर सही फ़ॉर्मेट वाला चैलेंज रिकॉर्ड नहीं है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:471
 msgid "Fetch a fresh challenge and submit it unchanged"
@@ -1820,7 +1805,8 @@ msgstr "``InvalidChallengeTag``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:473
 msgid "The tag does not authenticate; not issued by this cluster or edited"
 msgstr ""
-"टैग प्रमाणित नहीं होता; इस क्लस्टर ने जारी नहीं किया या संपादित किया गया"
+"टैग ऑथेंटिकेट नहीं होता; इस क्लस्टर ने जारी नहीं किया या इसे एडिट किया "
+"गया है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:474
 msgid "Challenges cannot be forged; request a new one"
@@ -1832,7 +1818,7 @@ msgstr "``ChallengeExpired``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:476
 msgid "Older than the challenge TTL, or minted in the future"
-msgstr "चैलेंज TTL से पुराना, या भविष्य में जारी किया गया"
+msgstr "चैलेंज TTL से पुराना, या भविष्य के टाइमस्टैम्प से जारी किया गया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:477
 msgid "Request a new challenge"
@@ -1844,7 +1830,7 @@ msgstr "``FingerprintMismatch``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:479
 msgid "Submitted from a different address or User-Agent"
-msgstr "किसी दूसरे पते या User-Agent से सबमिट किया गया"
+msgstr "किसी दूसरे एड्रेस या User-Agent से सबमिट किया गया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:480
 msgid "Submit from the client that fetched it"
@@ -1856,7 +1842,7 @@ msgstr "``DifficultyNotMet``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:482
 msgid "Hashcash nonce lacks the required zero bits"
-msgstr "Hashcash नॉनस में आवश्यक शून्य बिट नहीं हैं"
+msgstr "Hashcash नॉनस में ज़रूरी ज़ीरो बिट नहीं हैं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:483
 msgid "Keep searching nonces"
@@ -1868,11 +1854,11 @@ msgstr "``InvalidProof``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:485
 msgid "The sequential-work proof does not open the committed labels"
-msgstr "अनुक्रमिक कार्य का प्रमाण कमिट किए गए लेबल नहीं खोलता"
+msgstr "सीक्वेंशियल-वर्क प्रूफ़ कमिट किए गए लेबल नहीं खोलता"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:486
 msgid "Run the prover to completion for the issued depth and openings"
-msgstr "जारी की गई गहराई और ओपनिंग के लिए प्रूवर को पूरा चलाएँ"
+msgstr "जारी की गई डेप्थ और ओपनिंग के लिए प्रूवर को पूरा चलाएँ"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:487
 msgid "``WrongSolutionType``"
@@ -1880,11 +1866,11 @@ msgstr "``WrongSolutionType``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:488
 msgid "A nonce for a PoSW challenge or a proof for Hashcash"
-msgstr "PoSW चैलेंज के लिए नॉनस या Hashcash के लिए प्रमाण"
+msgstr "PoSW चैलेंज के लिए नॉनस या Hashcash के लिए प्रूफ़"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:489
 msgid "Match the solution field to the algorithm"
-msgstr "समाधान के फ़ील्ड को एल्गोरिदम से मिलाएँ"
+msgstr "सॉल्यूशन के फ़ील्ड को एल्गोरिदम से मैच करें"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:490
 msgid "``DoubleSpendAttempt``"
@@ -1896,7 +1882,7 @@ msgstr "चैलेंज पहले ही खर्च हो चुका 
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:492
 msgid "Challenges are single use"
-msgstr "चैलेंज एक बार ही उपयोग होते हैं"
+msgstr "चैलेंज सिर्फ़ एक बार इस्तेमाल होते हैं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:493
 msgid "``StoreFull``"
@@ -1916,11 +1902,11 @@ msgstr "``InvalidTokenSignature``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:497
 msgid "Cookie tag or signature fails"
-msgstr "कुकी का टैग या हस्ताक्षर विफल"
+msgstr "कुकी का टैग या सिग्नेचर फ़ेल हुआ"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:498
 msgid "Re-authenticate through the interstitial"
-msgstr "इंटरस्टिशियल के ज़रिए दोबारा प्रमाणित हों"
+msgstr "इंटरस्टिशियल के ज़रिए दोबारा ऑथेंटिकेट करें"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:499
 msgid "``TokenExpired``"
@@ -1928,11 +1914,11 @@ msgstr "``TokenExpired``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:500
 msgid "Cookie past its expiry"
-msgstr "कुकी अपनी समाप्ति से आगे"
+msgstr "कुकी एक्सपायर हो चुकी है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:501
 msgid "Re-authenticate"
-msgstr "दोबारा प्रमाणित हों"
+msgstr "दोबारा ऑथेंटिकेट करें"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:502
 msgid "``TokenBoundAddressMismatch``"
@@ -1940,11 +1926,11 @@ msgstr "``TokenBoundAddressMismatch``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:503
 msgid "Cookie presented from a different client identity"
-msgstr "कुकी किसी दूसरी क्लाइंट पहचान से प्रस्तुत की गई"
+msgstr "कुकी किसी दूसरी क्लाइंट आइडेंटिटी से भेजी गई"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:504
 msgid "Cookies cannot be shared"
-msgstr "कुकी साझा नहीं की जा सकतीं"
+msgstr "कुकी शेयर नहीं की जा सकतीं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:506
 msgid ""
@@ -1952,13 +1938,14 @@ msgid ""
 "``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}``; the hint is the text "
 "the interface shows (``crates/console/src/http/reply.rs``)."
 msgstr ""
-"कंसोल का API विफलता का उत्तर "
-"``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}`` से देता है; hint वह "
-"टेक्स्ट है जो इंटरफ़ेस दिखाता है (``crates/console/src/http/reply.rs``)।"
+"कंसोल का API फ़ेलियर पर "
+"``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}`` रिस्पॉन्स देता है; "
+"hint वही टेक्स्ट है जो इंटरफ़ेस दिखाता है "
+"(``crates/console/src/http/reply.rs``)।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:508
 msgid "Console failure codes that concern operators"
-msgstr "ऑपरेटर से संबंधित कंसोल विफलता कोड"
+msgstr "ऑपरेटर से जुड़े कंसोल फ़ेलियर कोड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:513
 msgid "Status"
@@ -1970,7 +1957,7 @@ msgstr "``CONSOLE002``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:517
 msgid "The request is malformed, too large or not allowed in its form"
-msgstr "अनुरोध विकृत है, बहुत बड़ा है, या अपने रूप में अनुमत नहीं है"
+msgstr "रिक्वेस्ट मैलफ़ॉर्म्ड है, बहुत बड़ी है, या इस रूप में अलाउड नहीं है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:518
 msgid "``CONSOLE003``"
@@ -1983,7 +1970,7 @@ msgstr "503 / 429"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:520
 msgid ""
 "The storage job queue is full (32 jobs), or the password verifier is busy"
-msgstr "स्टोरेज जॉब कतार भरी है (32 जॉब), या पासवर्ड सत्यापनकर्ता व्यस्त है"
+msgstr "स्टोरेज जॉब क्यू भरी है (32 जॉब), या पासवर्ड वेरिफ़ायर व्यस्त है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:521
 msgid "``CONSOLEQUORUM``"
@@ -1995,8 +1982,8 @@ msgid ""
 "outcome is unknown, and the data plane continues from the last applied "
 "policy"
 msgstr ""
-"डेटाबेस ने अनुरोध की 10 सेकंड की प्रतीक्षा के भीतर उत्तर नहीं दिया; "
-"परिणाम अज्ञात है, और डेटा plane अंतिम लागू नीति से चलता रहता है"
+"डेटाबेस ने रिक्वेस्ट के 10 सेकंड के इंतज़ार में रिस्पॉन्स नहीं दिया; "
+"रिज़ल्ट अनजान है, और डेटा प्लेन आखिरी लागू पॉलिसी पर चलता रहता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:524
 msgid "``CONSOLE004``"
@@ -2007,8 +1994,8 @@ msgid ""
 "The service cannot answer: not available in this build, stopping, or an "
 "internal failure"
 msgstr ""
-"सेवा उत्तर नहीं दे सकती: इस बिल्ड में उपलब्ध नहीं, रुक रही है, या आंतरिक "
-"विफलता"
+"सर्विस रिस्पॉन्स नहीं दे सकती: इस बिल्ड में उपलब्ध नहीं, बंद हो रही है, "
+"या इंटरनल फ़ेलियर"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:527
 msgid "``CONSOLENODE``"
@@ -2025,10 +2012,10 @@ msgid ""
 "completion could not be recorded (503); inspect the operation receipt "
 "before retrying"
 msgstr ""
-"नोड कमांड अस्वीकार हुई: वह किसी दूसरे नोड का नाम देती है (400), पुराना "
-"boot या control revision (409), या वह तब आई जब कोई दूसरी कमांड चल रही थी "
-"या किसी पूर्णता को दर्ज नहीं किया जा सका (503); रीट्राई से पहले operation "
-"receipt की जाँच करें"
+"नोड कमांड रिजेक्ट हुई: यह किसी दूसरे नोड का नाम देती है (400), पुराना "
+"boot या control रिविज़न (409), या यह तब आई जब कोई दूसरी कमांड चल रही थी "
+"या कम्प्लीशन दर्ज नहीं हो सका (503); रीट्राई से पहले operation receipt "
+"चेक करें"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:530
 msgid "``CONSOLEMUTATION``"
@@ -2036,7 +2023,7 @@ msgstr "``CONSOLEMUTATION``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:532
 msgid "More than sixty management mutations in a minute from one session"
-msgstr "एक सत्र से एक मिनट में साठ से अधिक प्रबंधन परिवर्तन (mutation)"
+msgstr "एक सेशन से एक मिनट में साठ से ज़्यादा मैनेजमेंट म्यूटेशन"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:533
 msgid "``CONSOLEEDGE``"
@@ -2052,8 +2039,9 @@ msgid ""
 "(400), or the edge worker did not answer or the audit row could not be "
 "written (503)"
 msgstr ""
-"*Edge* पेज पर कोई पंक्ति विकृत है या कंसोल की सूची में नहीं है (400), या "
-"एज वर्कर ने उत्तर नहीं दिया या ऑडिट row नहीं लिखी जा सकी (503)"
+"*Edge* पेज पर कोई लाइन मैलफ़ॉर्म्ड है या कंसोल की लिस्ट में नहीं है "
+"(400), या एज वर्कर ने रिस्पॉन्स नहीं दिया या ऑडिट रो नहीं लिखी जा सकी "
+"(503)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:536
 msgid "``CONSOLEQUERY``"
@@ -2061,7 +2049,7 @@ msgstr "``CONSOLEQUERY``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:538
 msgid "A read of the page *Edge* past the query allowance of the session"
-msgstr "सत्र की query अनुमति से अधिक *Edge* पेज का रीड"
+msgstr "सेशन के क्वेरी अलाउंस से ज़्यादा *Edge* पेज की रीड रिक्वेस्ट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:539
 msgid "``CONSOLE404``"
@@ -2083,11 +2071,11 @@ msgid ""
 "marked *log* is not a failure: it is the code of a line on standard error "
 "that reports an event."
 msgstr ""
-"एज विफलता को एक निदान के रूप में दिखाता है, जिसमें कोड वाली शीर्षक रेखा, "
-"व्याख्या और एक ``Hint:`` होता है। तालिकाएँ हर वह कोड सूचीबद्ध करती हैं जो "
-"कोड तालिकाओं में है, उसके शीर्षक के साथ जैसा डेमन उसे प्रिंट करता है। "
-"*log* से चिह्नित कोड विफलता नहीं है: यह standard error पर किसी घटना की "
-"सूचना देने वाली पंक्ति का कोड है।"
+"एज किसी फ़ेलियर को डायग्नॉस्टिक के रूप में दिखाता है, जिसमें कोड वाली "
+"टाइटल लाइन, व्याख्या और एक ``Hint:`` होता है। टेबलें हर वह कोड लिस्ट करती "
+"हैं जो कोड टेबल में है, ठीक उसी टाइटल के साथ जैसा डेमन प्रिंट करता है। "
+"जिस कोड पर *लॉग* लिखा है, वह कोई फ़ेलियर नहीं है: वह stderr पर किसी इवेंट "
+"की सूचना देने वाली लाइन का कोड है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:548
 msgid ""
@@ -2114,7 +2102,7 @@ msgid ""
 "``EDGE``: start, reload and notes of the edge "
 "(``cmd/sibuna/src/edge/failure.rs``, ``cmd/sibuna/src/edge.rs``)"
 msgstr ""
-"``EDGE``: एज की शुरुआत, रीलोड और टिप्पणियाँ "
+"``EDGE``: एज का स्टार्ट, रीलोड और नोट्स "
 "(``cmd/sibuna/src/edge/failure.rs``, ``cmd/sibuna/src/edge.rs``)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:561
@@ -2125,7 +2113,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:806
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:828
 msgid "Title"
-msgstr "शीर्षक"
+msgstr "टाइटल"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:563
 msgid "``EDGE001``"
@@ -2151,11 +2139,11 @@ msgid ""
 "a failure of the database authority carries the title of its ``DBA`` code "
 "under ``EDGE001``"
 msgstr ""
-"एज शुरू नहीं हुआ, या ``sibuna check`` ने फ़ाइल अस्वीकार की। स्वचालित "
-"HTTPS ``NAME NOT PUBLIC``, ``NAME OUTSIDE CONSTRAINTS``, ``UPDATE NOT "
-"SIGNED``, ``WILDCARD NEEDS DNS`` और ``ON DEMAND NEEDS A GUARD`` जोड़ता "
-"है, और डेटाबेस अथॉरिटी की विफलता ``EDGE001`` के तहत अपने ``DBA`` कोड का "
-"शीर्षक ले जाती है"
+"एज शुरू नहीं हुआ, या ``sibuna check`` ने फ़ाइल रिजेक्ट कर दी। ऑटोमैटिक "
+"HTTPS इसमें ``NAME NOT PUBLIC``, ``NAME OUTSIDE CONSTRAINTS``, ``UPDATE "
+"NOT SIGNED``, ``WILDCARD NEEDS DNS`` और ``ON DEMAND NEEDS A GUARD`` "
+"जोड़ता है, और डेटाबेस अथॉरिटी का फ़ेलियर ``EDGE001`` के तहत अपने ``DBA`` "
+"कोड का टाइटल दिखाता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:566
 msgid "``EDGE002``"
@@ -2184,13 +2172,12 @@ msgstr "``EDGE002``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:795
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:798
 msgid "*log*"
-msgstr "*log*"
+msgstr "*लॉग*"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:568
 msgid ""
 "A reload was rejected; the serving routes stay, and the line says why"
-msgstr ""
-"रीलोड अस्वीकार हुआ; सर्व कर रहे रूट बने रहते हैं, और पंक्ति कारण बताती है"
+msgstr "रीलोड रिजेक्ट हुआ; चल रहे रूट बने रहते हैं, और लाइन कारण बताती है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:569
 msgid "``EDGE010``"
@@ -2201,8 +2188,8 @@ msgid ""
 "A command changed state: from the admin socket, from the mesh, or from "
 "the console; also a failed write of the access log"
 msgstr ""
-"किसी कमांड ने अवस्था बदली: एडमिन सॉकेट से, मेश से, या कंसोल से; एक्सेस "
-"लॉग का विफल write भी"
+"किसी कमांड ने स्टेट बदली: एडमिन सॉकेट से, मेश से, या कंसोल से; एक्सेस लॉग "
+"का फ़ेल हुआ राइट भी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:572
 msgid "``EDGE011``"
@@ -2210,7 +2197,7 @@ msgstr "``EDGE011``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:574
 msgid "A configuration file was received from a peer (SID 0023)"
-msgstr "किसी पीयर से कॉन्फ़िगरेशन फ़ाइल प्राप्त हुई (SID 0023)"
+msgstr "किसी पीयर से कॉन्फ़िगरेशन फ़ाइल मिली (SID 0023)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:575
 msgid "``EDGE012``"
@@ -2221,8 +2208,8 @@ msgid ""
 "The mesh address cannot serve ``show cluster``; the node serves without "
 "that answer"
 msgstr ""
-"मेश पता ``show cluster`` सर्व नहीं कर सकता; नोड उस उत्तर के बिना सर्व "
-"करता है"
+"मेश एड्रेस ``show cluster`` सर्व नहीं कर सकता; नोड उस रिस्पॉन्स के बिना "
+"सर्व करता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:578
 msgid "``EDGE013``"
@@ -2233,8 +2220,8 @@ msgid ""
 "The kernel refused a listener option such as ``defer_accept``; the "
 "frontend serves without it (SID 0032)"
 msgstr ""
-"कर्नेल ने ``defer_accept`` जैसा लिसनर विकल्प अस्वीकार किया; फ़्रंटएंड "
-"उसके बिना सर्व करता है (SID 0032)"
+"कर्नेल ने ``defer_accept`` जैसा लिसनर ऑप्शन रिजेक्ट किया; फ़्रंटएंड उसके "
+"बिना सर्व करता है (SID 0032)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:581
 msgid "``EDGE014``"
@@ -2244,7 +2231,7 @@ msgstr "``EDGE014``"
 msgid ""
 "A console peer is new or changed and is used after a restart (SID 0031)"
 msgstr ""
-"कोई कंसोल पीयर नया है या बदला है और restart के बाद उपयोग होता है (SID "
+"कोई कंसोल पीयर नया है या बदला है और रीस्टार्ट के बाद इस्तेमाल होगा (SID "
 "0031)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:584
@@ -2256,8 +2243,8 @@ msgid ""
 "The spill cache at start: created, reused, discarded, or in use by "
 "another process, with its size (SID 0027)"
 msgstr ""
-"शुरुआत पर spill cache: बनाया गया, फिर से उपयोग किया गया, छोड़ा गया, या "
-"किसी दूसरी प्रोसेस के उपयोग में, अपने आकार के साथ (SID 0027)"
+"स्टार्ट पर spill cache: बनाया गया, फिर से इस्तेमाल किया गया, छोड़ा गया, "
+"या किसी दूसरी प्रोसेस के इस्तेमाल में, अपने साइज़ के साथ (SID 0027)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:587
 msgid "``EDGE016``"
@@ -2265,7 +2252,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:589
 msgid "Pressure mode switched on or off (SID 0034)"
-msgstr "दबाव मोड चालू या बंद हुआ (SID 0034)"
+msgstr "प्रेशर मोड ऑन या ऑफ़ हुआ (SID 0034)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:591
 msgid "The code holds no ``EDGE003`` to ``EDGE009``."
@@ -2292,8 +2279,8 @@ msgid ""
 "The line holds a byte outside printable ASCII, is longer than 512 bytes, "
 "or did not arrive within two seconds"
 msgstr ""
-"पंक्ति में printable ASCII के बाहर का कोई बाइट है, वह 512 बाइट से लंबी "
-"है, या दो सेकंड के भीतर नहीं आई"
+"लाइन में printable ASCII के बाहर का कोई बाइट है, यह 512 बाइट से लंबी है, "
+"या दो सेकंड के अंदर नहीं आई"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:603
 msgid "``ADM002``"
@@ -2329,9 +2316,7 @@ msgstr "``UNKNOWN SERVER``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:611
 msgid "The pool has no server of this name; the hint names a near one"
-msgstr ""
-"पूल में इस नाम का कोई सर्वर नहीं है; संकेत किसी मिलते-जुलते नाम को बताता "
-"है"
+msgstr "पूल में इस नाम का कोई सर्वर नहीं है; हिंट कोई मिलता-जुलता नाम बताता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:612
 msgid "``ADM005``"
@@ -2345,7 +2330,7 @@ msgstr "``INVALID VALUE``"
 msgid ""
 "A weight, an address, a state, a server name or a client address is not "
 "valid"
-msgstr "कोई वेट, पता, अवस्था, सर्वर नाम या क्लाइंट पता वैध नहीं है"
+msgstr "कोई वेट, एड्रेस, स्टेट, सर्वर नाम या क्लाइंट एड्रेस वैध नहीं है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:615
 msgid "``ADM006``"
@@ -2357,7 +2342,7 @@ msgstr "``DUPLICATE SERVER``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:617
 msgid "The pool already has a server with this name or this address"
-msgstr "पूल में इस नाम या इस पते वाला सर्वर पहले से है"
+msgstr "पूल में इस नाम या एड्रेस वाला सर्वर पहले से है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:618
 msgid "``ADM007``"
@@ -2372,8 +2357,8 @@ msgid ""
 "The pool changes only by reload (a Maglev table or protocol adapters), is "
 "full, or would lose its last server"
 msgstr ""
-"पूल केवल रीलोड से बदलता है (Maglev टेबल या protocol adapters), भरा है, या "
-"अपना अंतिम सर्वर खो देगा"
+"पूल सिर्फ़ रीलोड से बदलता है (Maglev टेबल या प्रोटोकॉल अडैप्टर), भरा है, "
+"या अपना आखिरी सर्वर खो देगा"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:621
 msgid "``ADM008``"
@@ -2388,8 +2373,8 @@ msgid ""
 "The file does not check, or the daemon was started by ``sibuna lb`` and "
 "has no file"
 msgstr ""
-"फ़ाइल जाँच में पास नहीं होती, या डेमन ``sibuna lb`` से शुरू हुआ था और "
-"उसके पास कोई फ़ाइल नहीं है"
+"फ़ाइल चेक में पास नहीं हुई, या डेमन ``sibuna lb`` से शुरू हुआ था और उसके "
+"पास कोई फ़ाइल नहीं है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:624
 msgid "``ADM009``"
@@ -2402,7 +2387,7 @@ msgstr "``TOO MANY COMMANDS``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:626
 msgid ""
 "More than a burst of 20 commands, or more than 10 per second after it"
-msgstr "20 कमांड के बर्स्ट से अधिक, या उसके बाद प्रति सेकंड 10 से अधिक"
+msgstr "20 कमांड के बर्स्ट से ज़्यादा, या उसके बाद प्रति सेकंड 10 से ज़्यादा"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:627
 msgid "``ADM010``"
@@ -2414,7 +2399,7 @@ msgstr "``NO ANSWER``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:629
 msgid "The edge worker did not answer within five seconds"
-msgstr "एज वर्कर ने पाँच सेकंड के भीतर उत्तर नहीं दिया"
+msgstr "एज वर्कर ने पाँच सेकंड के अंदर रिस्पॉन्स नहीं दिया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:630
 msgid "``ADM011``"
@@ -2456,7 +2441,7 @@ msgid ""
 "``revoke cert`` named nothing that the local authority issued, or the "
 "build has no TLS"
 msgstr ""
-"``revoke cert`` ने ऐसा कुछ नहीं बताया जिसे स्थानीय अथॉरिटी ने जारी किया "
+"``revoke cert`` ने ऐसा कोई नाम नहीं दिया जिसे लोकल अथॉरिटी ने जारी किया "
 "हो, या बिल्ड में TLS नहीं है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:640
@@ -2464,7 +2449,7 @@ msgid ""
 "``ACME``: automatic HTTPS (``crates/acme/src/error.rs``, "
 "``cmd/sibuna/src/acme.rs``)"
 msgstr ""
-"``ACME``: स्वचालित HTTPS (``crates/acme/src/error.rs``, "
+"``ACME``: ऑटोमैटिक HTTPS (``crates/acme/src/error.rs``, "
 "``cmd/sibuna/src/acme.rs``)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:647
@@ -2476,8 +2461,8 @@ msgid ""
 "An event of a certificate: obtained, renewed, loaded, stapled, held or "
 "released on demand, or validated and issued by the ACME server"
 msgstr ""
-"किसी सर्टिफ़िकेट की घटना: प्राप्त, नवीनीकृत, लोड, staple किया गया, मांग "
-"पर रोका या छोड़ा गया, या ACME सर्वर द्वारा सत्यापित और जारी किया गया"
+"किसी सर्टिफ़िकेट का इवेंट: जारी हुआ, रिन्यू हुआ, लोड हुआ, स्टेपल हुआ, "
+"ऑन-डिमांड होल्ड या रिलीज़ हुआ, या ACME सर्वर ने वेरिफ़ाई करके जारी किया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:650
 msgid "``ACME001``"
@@ -2502,8 +2487,7 @@ msgstr "``AUTHORITY UNREACHABLE``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:655
 msgid ""
 "The ACME authority could not be reached, or no trust root could be loaded"
-msgstr ""
-"ACME अथॉरिटी तक पहुँचा नहीं जा सका, या कोई trust root लोड नहीं हो सका"
+msgstr "ACME अथॉरिटी तक पहुँचा नहीं जा सका, या कोई ट्रस्ट रूट लोड नहीं हो सका"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:656
 msgid "``ACME003``"
@@ -2516,8 +2500,8 @@ msgstr "``AUTHORITY REFUSED``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:658
 msgid "The authority answered with a problem; the daemon tries again later"
 msgstr ""
-"अथॉरिटी ने किसी समस्या के साथ उत्तर दिया; डेमन बाद में फिर से प्रयास करता "
-"है"
+"अथॉरिटी ने किसी समस्या के साथ रिस्पॉन्स दिया; डेमन बाद में फिर से कोशिश "
+"करता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:659
 msgid "``ACME004``"
@@ -2530,8 +2514,8 @@ msgstr "``RATE LIMITED``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:661
 msgid "The authority limits our requests; the daemon waits as it was told"
 msgstr ""
-"अथॉरिटी हमारे अनुरोधों को सीमित करती है; डेमन उतनी प्रतीक्षा करता है "
-"जितना उसे बताया गया"
+"अथॉरिटी हमारी रिक्वेस्ट को रेट-लिमिट कर रही है; डेमन बताए गए समय तक "
+"इंतज़ार करता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:662
 msgid "``ACME005``"
@@ -2545,8 +2529,7 @@ msgstr "``VALIDATION FAILED``"
 msgid ""
 "The authority could not validate the name over HTTP-01, TLS-ALPN-01 or "
 "DNS-01"
-msgstr ""
-"अथॉरिटी HTTP-01, TLS-ALPN-01 या DNS-01 पर नाम को सत्यापित नहीं कर सकी"
+msgstr "अथॉरिटी HTTP-01, TLS-ALPN-01 या DNS-01 पर नाम को वेरिफ़ाई नहीं कर सकी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:665
 msgid "``ACME006``"
@@ -2558,7 +2541,7 @@ msgstr "``UNEXPECTED ANSWER``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:667
 msgid "An answer broke the protocol or a bound"
-msgstr "किसी उत्तर ने प्रोटोकॉल या कोई सीमा तोड़ी"
+msgstr "किसी रिस्पॉन्स ने प्रोटोकॉल या कोई लिमिट तोड़ी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:668
 msgid "``ACME008``"
@@ -2585,8 +2568,8 @@ msgid ""
 "The DNS provider (hook, RFC 2136 or Cloudflare) could not write or remove "
 "the record, or its key or roots could not be read"
 msgstr ""
-"DNS provider (हुक, RFC 2136 या Cloudflare) रिकॉर्ड लिख या हटा नहीं सका, "
-"या उसकी कुंजी या roots पढ़े नहीं जा सके"
+"DNS प्रोवाइडर (हुक, RFC 2136 या Cloudflare) रिकॉर्ड लिख या हटा नहीं सका, "
+"या उसकी की या रूट्स पढ़े नहीं जा सके"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:674
 msgid "``ACME010``"
@@ -2613,8 +2596,8 @@ msgid ""
 "The local authority could not be created, read or used, or its root has "
 "other name constraints than the file lists"
 msgstr ""
-"स्थानीय अथॉरिटी बनाई, पढ़ी या उपयोग नहीं की जा सकी, या उसके root की name "
-"constraints फ़ाइल में सूचीबद्ध से अलग हैं"
+"लोकल अथॉरिटी बनाई, पढ़ी या इस्तेमाल नहीं की जा सकी, या उसके रूट की name "
+"constraints फ़ाइल में लिस्टेड से अलग हैं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:680
 msgid "``ACME012``"
@@ -2627,8 +2610,8 @@ msgstr "``ACCOUNT NOT BOUND``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:682
 msgid "The authority wants an external account binding, or refused ours"
 msgstr ""
-"अथॉरिटी एक external account binding चाहती है, या उसने हमारी binding "
-"अस्वीकार की"
+"अथॉरिटी को external account binding चाहिए, या उसने हमारी binding रिजेक्ट "
+"कर दी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:683
 msgid "``ACME013``"
@@ -2643,8 +2626,8 @@ msgid ""
 "The OCSP responder did not answer, or its answer cannot be stapled; the "
 "certificate is served without a staple"
 msgstr ""
-"OCSP responder ने उत्तर नहीं दिया, या उसका उत्तर staple नहीं किया जा "
-"सकता; सर्टिफ़िकेट बिना staple के सर्व किया जाता है"
+"OCSP रेस्पॉन्डर ने रिस्पॉन्स नहीं दिया, या उसका रिस्पॉन्स स्टेपल नहीं "
+"किया जा सकता; सर्टिफ़िकेट बिना स्टेपल के सर्व होता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:686
 msgid "``ACME014``"
@@ -2655,8 +2638,8 @@ msgid ""
 "The certificate thread stopped on a defect and starts again; the served "
 "certificates stay"
 msgstr ""
-"सर्टिफ़िकेट थ्रेड किसी दोष पर रुका और फिर से शुरू होता है; सर्व किए जा "
-"रहे सर्टिफ़िकेट बने रहते हैं"
+"सर्टिफ़िकेट थ्रेड किसी बग पर रुका और दोबारा शुरू होता है; सर्व हो रहे "
+"सर्टिफ़िकेट बने रहते हैं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:689
 msgid "``ACME015``"
@@ -2671,8 +2654,8 @@ msgid ""
 "The program ``openssl`` that makes RSA keys could not be run, or wrote no "
 "key"
 msgstr ""
-"RSA कुंजियाँ बनाने वाला प्रोग्राम ``openssl`` चलाया नहीं जा सका, या उसने "
-"कोई कुंजी नहीं लिखी"
+"RSA की बनाने वाला प्रोग्राम ``openssl`` चलाया नहीं जा सका, या उसने कोई की "
+"नहीं लिखी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:692
 msgid "``ACME016``"
@@ -2687,8 +2670,8 @@ msgid ""
 "The revoked certificates or the revocation list of the local authority "
 "could not be read or written, or the list is full"
 msgstr ""
-"स्थानीय अथॉरिटी के revoke किए गए सर्टिफ़िकेट या revocation list पढ़े या "
-"लिखे नहीं जा सके, या सूची भरी है"
+"लोकल अथॉरिटी के रिवोक किए गए सर्टिफ़िकेट या रिवोकेशन लिस्ट पढ़ी या लिखी "
+"नहीं जा सकी, या लिस्ट भरी है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:696
 msgid "The code holds no ``ACME007``."
@@ -2713,7 +2696,7 @@ msgstr "``SOURCE REJECTED``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:707
 msgid "A source or a stored document does not evaluate or does not check"
 msgstr ""
-"कोई स्रोत या संग्रहीत दस्तावेज़ मूल्यांकित नहीं होता या जाँच में पास नहीं "
+"कोई सोर्स या स्टोर्ड डॉक्यूमेंट इवैल्यूएट नहीं होता या चेक में पास नहीं "
 "होता"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:708
@@ -2726,7 +2709,7 @@ msgstr "``REVISION CONFLICT``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:710
 msgid "The head is not the revision that the commit expected"
-msgstr "head वह revision नहीं है जिसकी commit ने अपेक्षा की थी"
+msgstr "head वह रिविज़न नहीं है जिसकी कमिट को उम्मीद थी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:711
 msgid "``DBA003``"
@@ -2741,8 +2724,8 @@ msgid ""
 "The database cannot be reached, or it refused the statement (also for a "
 "role that lacks a right)"
 msgstr ""
-"डेटाबेस तक पहुँचा नहीं जा सकता, या उसने statement अस्वीकार किया (आवश्यक "
-"अधिकार न रखने वाली role के लिए भी)"
+"डेटाबेस तक पहुँचा नहीं जा सकता, या उसने स्टेटमेंट रिजेक्ट कर दिया (ज़रूरी "
+"परमिशन न रखने वाले रोल के लिए भी)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:714
 msgid "``DBA004``"
@@ -2754,7 +2737,7 @@ msgstr "``NO REVISION``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:716
 msgid "Nothing is published yet, or no revision has this number"
-msgstr "अभी कुछ प्रकाशित नहीं है, या इस संख्या का कोई revision नहीं है"
+msgstr "अभी कुछ पब्लिश नहीं हुआ है, या इस नंबर का कोई रिविज़न नहीं है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:717
 msgid "``DBA005``"
@@ -2768,8 +2751,7 @@ msgstr "``INVALID AUTHORITY``"
 msgid ""
 "The ``authority`` section or its file is wrong, or the build has no "
 "storage"
-msgstr ""
-"``authority`` अनुभाग या उसकी फ़ाइल ग़लत है, या बिल्ड में स्टोरेज नहीं है"
+msgstr "``authority`` सेक्शन या उसकी फ़ाइल गलत है, या बिल्ड में स्टोरेज नहीं है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:720
 msgid "``DBA006``"
@@ -2793,8 +2775,7 @@ msgstr "``MISSING COMMAND``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:725
 msgid "``sibuna authority`` without a known command, or with a bad option"
-msgstr ""
-"बिना किसी ज्ञात कमांड के, या ग़लत विकल्प के साथ ``sibuna authority``"
+msgstr "बिना किसी ज्ञात कमांड के, या गलत ऑप्शन के साथ ``sibuna authority``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:726
 msgid "``DBA008``"
@@ -2806,7 +2787,7 @@ msgstr "``REVISION DAMAGED``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:728
 msgid "A stored revision is not what its row says"
-msgstr "संग्रहीत revision वह नहीं है जो उसकी row बताती है"
+msgstr "स्टोर्ड रिविज़न वह नहीं है जो उसकी रो बताती है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:729
 msgid "``DBA009``"
@@ -2818,7 +2799,7 @@ msgstr "``FILE IS LOCAL``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:731
 msgid "``reload cluster`` on a node that follows a database"
-msgstr "डेटाबेस का अनुसरण करने वाले नोड पर ``reload cluster``"
+msgstr "डेटाबेस को फ़ॉलो करने वाले नोड पर ``reload cluster``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:732
 msgid "``DBA010``"
@@ -2826,7 +2807,7 @@ msgstr "``DBA010``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:734
 msgid "A revision was applied"
-msgstr "एक revision लागू हुआ"
+msgstr "एक रिविज़न लागू हुआ"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:735
 msgid "``DBA011``"
@@ -2834,7 +2815,7 @@ msgstr "``DBA011``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:737
 msgid "A revision was refused; the node keeps the one it serves"
-msgstr "एक revision अस्वीकार हुआ; नोड वही रखता है जिसे वह सर्व कर रहा है"
+msgstr "एक रिविज़न रिजेक्ट हुआ; नोड वही रखता है जिसे वह सर्व कर रहा है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:738
 msgid "``DBA012``"
@@ -2845,8 +2826,8 @@ msgid ""
 "The database cannot be reached; the node keeps its revision and asks "
 "again every two seconds"
 msgstr ""
-"डेटाबेस तक पहुँचा नहीं जा सकता; नोड अपना revision रखता है और हर दो सेकंड "
-"फिर पूछता है"
+"डेटाबेस तक पहुँचा नहीं जा सकता; नोड अपना रिविज़न रखता है और हर दो सेकंड "
+"फिर चेक करता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:741
 msgid "``DBA013``"
@@ -2854,7 +2835,7 @@ msgstr "``DBA013``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:743
 msgid "The database answers again"
-msgstr "डेटाबेस फिर से उत्तर देता है"
+msgstr "डेटाबेस फिर से रिस्पॉन्स दे रहा है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:744
 msgid "``DBA014``"
@@ -2872,8 +2853,8 @@ msgstr "``DBA015``"
 msgid ""
 "``authority.binds`` names a frontend that the revision does not publish"
 msgstr ""
-"``authority.binds`` ऐसे फ़्रंटएंड का नाम देता है जिसे revision प्रकाशित "
-"नहीं करता"
+"``authority.binds`` ऐसे फ़्रंटएंड का नाम देता है जिसे रिविज़न पब्लिश नहीं "
+"करता"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:750
 msgid "``DBA016``"
@@ -2883,8 +2864,7 @@ msgstr "``DBA016``"
 msgid ""
 "The cache is ignored or cannot be written, or the report to the database "
 "failed"
-msgstr ""
-"cache अनदेखा किया गया या लिखा नहीं जा सकता, या डेटाबेस को रिपोर्ट विफल हुई"
+msgstr "कैश अनदेखा किया गया या लिखा नहीं जा सकता, या डेटाबेस को रिपोर्ट फ़ेल हुई"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:754
 msgid ""
@@ -2904,7 +2884,7 @@ msgstr "``UPGRADE PEER REFUSED``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:763
 msgid "The replacement runs as another user than the running daemon"
-msgstr "प्रतिस्थापन चल रहे डेमन से अलग user के रूप में चलता है"
+msgstr "नई बाइनरी चल रहे डेमन से अलग यूज़र से चलती है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:764
 msgid "``UPG002``"
@@ -2916,7 +2896,7 @@ msgstr "``UPGRADE VERSION NOT SHARED``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:766
 msgid "The two binaries share no version of the handoff protocol"
-msgstr "दोनों बाइनरी हैंडऑफ़ प्रोटोकॉल का कोई साझा संस्करण नहीं रखतीं"
+msgstr "दोनों बाइनरी में हैंडऑफ़ प्रोटोकॉल का कोई कॉमन वर्ज़न नहीं है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:767
 msgid "``UPG003``"
@@ -2931,8 +2911,8 @@ msgid ""
 "A malformed, oversized or unexpected frame, or a descriptor that is not "
 "what the frame says"
 msgstr ""
-"विकृत, बहुत बड़ा या अनपेक्षित frame, या ऐसा descriptor जो frame के कथन से "
-"मेल नहीं खाता"
+"मैलफ़ॉर्म्ड, ओवरसाइज़्ड या अनपेक्षित फ़्रेम, या ऐसा डिस्क्रिप्टर जो "
+"फ़्रेम की बात से मेल नहीं खाता"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:770
 msgid "``UPG004``"
@@ -2944,7 +2924,7 @@ msgstr "``UPGRADE TIMED OUT``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:772
 msgid "The running daemon did not answer in time; it keeps serving"
-msgstr "चल रहे डेमन ने समय पर उत्तर नहीं दिया; वह सर्व करता रहता है"
+msgstr "चल रहे डेमन ने समय पर रिस्पॉन्स नहीं दिया; वह सर्व करता रहता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:773
 msgid "``UPG005``"
@@ -2956,7 +2936,7 @@ msgstr "``UPGRADE CONNECTION CLOSED``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:775
 msgid "The running daemon ended the handoff; its log says why"
-msgstr "चल रहे डेमन ने हैंडऑफ़ समाप्त किया; उसका लॉग कारण बताता है"
+msgstr "चल रहे डेमन ने हैंडऑफ़ खत्म कर दिया; उसका लॉग कारण बताता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:776
 msgid "``UPG006``"
@@ -2969,7 +2949,7 @@ msgstr "``UPGRADE NOT POSSIBLE NOW``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:778
 msgid ""
 "Another replacement is in progress, or the running daemon is stopping"
-msgstr "कोई दूसरा प्रतिस्थापन चल रहा है, या चल रहा डेमन रुक रहा है"
+msgstr "कोई दूसरा रिप्लेसमेंट चल रहा है, या चल रहा डेमन बंद हो रहा है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:779
 msgid "``UPG007``"
@@ -2981,7 +2961,7 @@ msgstr "``UPGRADE SOCKET NOT SUPPORTED``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:781
 msgid "The platform cannot pass descriptors (Linux only)"
-msgstr "प्लेटफ़ॉर्म descriptor नहीं सौंप सकता (केवल Linux)"
+msgstr "प्लेटफ़ॉर्म डिस्क्रिप्टर पास नहीं कर सकता (सिर्फ़ Linux)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:782
 msgid "``UPG008``"
@@ -2995,8 +2975,7 @@ msgstr "``UPGRADE SOCKET OF ANOTHER DAEMON``"
 msgid ""
 "The daemon at ``global.upgrade_socket`` listens on none of the addresses "
 "of this file"
-msgstr ""
-"``global.upgrade_socket`` पर डेमन इस फ़ाइल के किसी भी पते पर नहीं सुनता"
+msgstr "``global.upgrade_socket`` पर डेमन इस फ़ाइल के किसी भी एड्रेस पर नहीं सुनता"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:785
 msgid "``UPG010``"
@@ -3005,7 +2984,7 @@ msgstr "``UPG010``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:787
 msgid ""
 "The old process handed its listeners and UDP mappings to the replacement"
-msgstr "पुरानी प्रोसेस ने अपने लिसनर और UDP मैपिंग प्रतिस्थापन को सौंप दीं"
+msgstr "पुरानी प्रोसेस ने अपने लिसनर और UDP मैपिंग नई बाइनरी को सौंप दीं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:788
 msgid "``UPG011``"
@@ -3013,8 +2992,7 @@ msgstr "``UPG011``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:790
 msgid "The replacement failed before the cutover; the old process serves on"
-msgstr ""
-"प्रतिस्थापन cutover से पहले विफल हुआ; पुरानी प्रोसेस सर्व करती रहती है"
+msgstr "रिप्लेसमेंट कटओवर से पहले फ़ेल हुआ; पुरानी प्रोसेस सर्व करती रहती है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:791
 msgid "``UPG012``"
@@ -3022,7 +3000,7 @@ msgstr "``UPG012``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:793
 msgid "The old process refused an upgrade peer"
-msgstr "पुरानी प्रोसेस ने एक upgrade पीयर को अस्वीकार किया"
+msgstr "पुरानी प्रोसेस ने एक अपग्रेड पीयर को रिजेक्ट किया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:794
 msgid "``UPG013``"
@@ -3030,9 +3008,7 @@ msgstr "``UPG013``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:796
 msgid "The replacement cannot be ended; UDP stays unread until it is gone"
-msgstr ""
-"प्रतिस्थापन को समाप्त नहीं किया जा सकता; उसके जाने तक UDP बिना पढ़ा रहता "
-"है"
+msgstr "रिप्लेसमेंट को बंद नहीं किया जा सका; उसके हटने तक UDP अनरीड रहता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:797
 msgid "``UPG020``"
@@ -3040,7 +3016,7 @@ msgstr "``UPG020``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:799
 msgid "The replacement took the listeners and UDP mappings"
-msgstr "प्रतिस्थापन ने लिसनर और UDP मैपिंग ले लीं"
+msgstr "रिप्लेसमेंट ने लिसनर और UDP मैपिंग ले लीं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:801
 msgid "``SPILL``: the spill cache (``crates/spill/src/error.rs``)"
@@ -3056,7 +3032,7 @@ msgstr "``SPILL CACHE SIZE OUT OF RANGE``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:810
 msgid "The size lies outside 64 KiB to 64 GiB"
-msgstr "आकार 64 KiB से 64 GiB की सीमा के बाहर है"
+msgstr "साइज़ 64 KiB से 64 GiB की रेंज के बाहर है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:811
 msgid "``SPILL002``"
@@ -3068,7 +3044,7 @@ msgstr "``NOT A SPILL CACHE``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:813
 msgid "The file at the path exists and is not a cache; it is left alone"
-msgstr "पाथ पर फ़ाइल मौजूद है और cache नहीं है; उसे छुआ नहीं जाता"
+msgstr "पाथ पर फ़ाइल मौजूद है और कैश नहीं है; उसे छुआ नहीं जाता"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:814
 msgid "``SPILL003``"
@@ -3083,7 +3059,7 @@ msgid ""
 "Another process holds the lock of the file; the daemon then runs with the "
 "sticky table in memory only"
 msgstr ""
-"किसी दूसरी प्रोसेस के पास फ़ाइल का lock है; तब डेमन स्टिकी टेबल को केवल "
+"किसी दूसरी प्रोसेस के पास फ़ाइल का लॉक है; तब डेमन स्टिकी टेबल को सिर्फ़ "
 "मेमोरी में रखकर चलता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:817
@@ -3096,7 +3072,7 @@ msgstr "``SPILL CACHE UNAVAILABLE``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:819
 msgid "The system refused an operation on the file"
-msgstr "सिस्टम ने फ़ाइल पर एक ऑपरेशन अस्वीकार किया"
+msgstr "सिस्टम ने फ़ाइल पर एक ऑपरेशन रिजेक्ट किया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:821
 msgid ""
@@ -3104,9 +3080,9 @@ msgid ""
 "``EDGE001`` with the title ``SPILL CACHE NOT USABLE``, and the message "
 "carries the ``SPILL`` code."
 msgstr ""
-"``SPILL003`` के अलावा कोई ``SPILL`` विफलता ``EDGE001`` के तहत ``SPILL "
-"CACHE NOT USABLE`` शीर्षक के साथ शुरुआत रोक देती है, और संदेश ``SPILL`` "
-"कोड ले जाता है।"
+"``SPILL003`` के अलावा कोई भी ``SPILL`` फ़ेलियर ``EDGE001`` के तहत ``SPILL "
+"CACHE NOT USABLE`` टाइटल के साथ स्टार्ट रोक देता है, और मैसेज में "
+"``SPILL`` कोड होता है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:823
 msgid "``HOOK``: plugins (``crates/plugin/src/spec.rs``)"
@@ -3123,8 +3099,8 @@ msgstr "``UNKNOWN PLUGIN``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:832
 msgid "A frontend lists a plugin that ``plugins`` does not define"
 msgstr ""
-"कोई फ़्रंटएंड ऐसे प्लगइन को सूचीबद्ध करता है जिसे ``plugins`` परिभाषित "
-"नहीं करता"
+"कोई फ़्रंटएंड ऐसे प्लगइन को लिस्ट करता है जिसे ``plugins`` डिफ़ाइन नहीं "
+"करता"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:833
 msgid "``HOOK002``"
@@ -3136,7 +3112,7 @@ msgstr "``INVALID PLUGIN SETTINGS``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:835
 msgid "A key of a plugin is missing, unknown or out of range"
-msgstr "किसी प्लगइन की कोई कुंजी अनुपस्थित, अज्ञात या सीमा से बाहर है"
+msgstr "किसी प्लगइन की कोई की मिसिंग, अनजान या रेंज से बाहर है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:836
 msgid "``HOOK003``"
@@ -3162,7 +3138,8 @@ msgstr "``MODULE NOT LOADED``"
 msgid ""
 "The module does not validate, or its memory does not fit ``memory_pages``"
 msgstr ""
-"मॉड्यूल सत्यापित नहीं होता, या उसकी मेमोरी ``memory_pages`` में नहीं समाती"
+"मॉड्यूल वेरिफ़ाई नहीं होता, या उसकी मेमोरी ``memory_pages`` में फिट नहीं "
+"होती"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:842
 msgid "``HOOK005``"
@@ -3193,7 +3170,7 @@ msgid ""
 "The module lacks an export of the interface, or ``sibuna_abi`` does not "
 "return 1"
 msgstr ""
-"मॉड्यूल में इंटरफ़ेस का कोई export नहीं है, या ``sibuna_abi`` 1 नहीं "
+"मॉड्यूल में इंटरफ़ेस का कोई एक्सपोर्ट नहीं है, या ``sibuna_abi`` 1 नहीं "
 "लौटाता"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:848
@@ -3218,7 +3195,7 @@ msgstr "``NATIVE HOOK REFUSED ITS SETTINGS``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:853
 msgid "A native hook refused the ``settings`` of the plugin"
-msgstr "किसी native हुक ने प्लगइन की ``settings`` अस्वीकार कीं"
+msgstr "किसी native हुक ने प्लगइन की ``settings`` रिजेक्ट कर दीं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:854
 msgid "``HOOK009``"
@@ -3242,17 +3219,17 @@ msgid ""
 "their own (``TRAFFIC``, ``COMPARISON``, ``RANKHISTORY``, ``RULEHITS``, "
 "``TIMELINE``, ``MINUTES``), whose hints the interface shows."
 msgstr ""
-"रीलोड पर लोड न होने वाला प्लगइन समूह सर्व कर रहे समूह को अपनी जगह छोड़ "
-"देता है। दो और परिवार एज के ऑपरेटर के बजाय बिल्ड और कंसोल से संबंधित हैं: "
-"``HTML001`` से ``HTML008`` किसी पेज template का बिल्ड रोकते हैं, और "
-"``GEOIP001`` कंसोल के बिना वाले बिल्ड में GeoIP snapshot अस्वीकार करता "
-"है। कंसोल के query रूट अपने परिवारों (``TRAFFIC``, ``COMPARISON``, "
-"``RANKHISTORY``, ``RULEHITS``, ``TIMELINE``, ``MINUTES``) के साथ उत्तर "
-"देते हैं, जिनके संकेत इंटरफ़ेस दिखाता है।"
+"रीलोड पर जो प्लगइन सेट लोड न हो सके, वह चल रहे सेट को वैसा ही छोड़ देता "
+"है। दो और फ़ैमिली एज के ऑपरेटर के बजाय बिल्ड और कंसोल से जुड़ी हैं: "
+"``HTML001`` से ``HTML008`` किसी पेज टेम्पलेट का बिल्ड रोकते हैं, और "
+"``GEOIP001`` बिना कंसोल वाले बिल्ड में GeoIP स्नैपशॉट रिजेक्ट करता है। "
+"कंसोल के क्वेरी रूट अपनी फ़ैमिली (``TRAFFIC``, ``COMPARISON``, "
+"``RANKHISTORY``, ``RULEHITS``, ``TIMELINE``, ``MINUTES``) के साथ "
+"रिस्पॉन्स देते हैं, जिनके हिंट इंटरफ़ेस दिखाता है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:860
 msgid "Policy Schema"
-msgstr "नीति स्कीमा"
+msgstr "पॉलिसी स्कीमा"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:863
 msgid ""
@@ -3293,33 +3270,21 @@ msgstr ""
 "{\n"
 "  \"default_action\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\",\n"
 "  \"waf\": true | false,\n"
-"  \"inspection\": { \"path_traversal\" | \"sqli\" | \"xss\" | \"rce\": "
-"\"disabled\" | \"audit\" | \"enforce\" },\n"
-"  \"thresholds\": { \"challenge_at\": int, \"deny_at\": int, "
-"\"bits_step\": int },\n"
-"  \"ip_rules\": { \"<cidr>\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\", ... "
-"},\n"
-"  \"rules\": [                                                    // "
-"अधिकतम 128\n"
+"  \"inspection\": { \"path_traversal\" | \"sqli\" | \"xss\" | \"rce\": \"disabled\" | \"audit\" | \"enforce\" },\n"
+"  \"thresholds\": { \"challenge_at\": int, \"deny_at\": int, \"bits_step\": int },\n"
+"  \"ip_rules\": { \"<cidr>\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\", ... },\n"
+"  \"rules\": [                                                    // अधिकतम 128\n"
 "    {\n"
-"      \"name\": \"<kebab-case>\",                                   // 1 "
-"से 128 printable बाइट\n"
-"      \"path\" | \"path_regex\": \"<pattern>\",                       // "
-"अधिकतम 512 बाइट\n"
+"      \"name\": \"<kebab-case>\",                                   // 1 से 128 printable बाइट\n"
+"      \"path\" | \"path_regex\": \"<pattern>\",                       // अधिकतम 512 बाइट\n"
 "      \"user_agent\" | \"user_agent_regex\": \"<pattern>\",\n"
-"      \"headers\" | \"headers_regex\": { \"<Header>\": \"<pattern>\" }, "
-"// अधिकतम 4\n"
-"      \"remote_addresses\" | \"cidrs\": [\"<cidr>\", ...],            // "
-"अधिकतम 8, IPv4 या IPv6\n"
+"      \"headers\" | \"headers_regex\": { \"<Header>\": \"<pattern>\" }, // अधिकतम 4\n"
+"      \"remote_addresses\" | \"cidrs\": [\"<cidr>\", ...],            // अधिकतम 8, IPv4 या IPv6\n"
 "      \"action\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\" | \"WEIGH\",\n"
-"      \"weight\": int,                                            // केवल "
-"WEIGH, -1000..1000\n"
-"      \"challenge\": { \"difficulty\": <work bits>, \"algorithm\": "
-"\"hashcash\" | \"posw\" },\n"
-"      \"limits\": { \"rate\": int, \"window_seconds\": int, "
-"\"ban_seconds\": int },\n"
-"      \"ja4\": \"<fingerprint>\" | \"<prefix>*\"                      // "
-"36 बाइट, या प्रीफ़िक्स और *\n"
+"      \"weight\": int,                                            // सिर्फ़ WEIGH, -1000..1000\n"
+"      \"challenge\": { \"difficulty\": <work bits>, \"algorithm\": \"hashcash\" | \"posw\" },\n"
+"      \"limits\": { \"rate\": int, \"window_seconds\": int, \"ban_seconds\": int },\n"
+"      \"ja4\": \"<fingerprint>\" | \"<prefix>*\"                      // 36 बाइट, या प्रीफ़िक्स और *\n"
 "    }\n"
 "  ]\n"
 "}"
@@ -3340,20 +3305,20 @@ msgid ""
 "holds at most 8,192 nodes. Each rule may use one spelling of each "
 "criterion."
 msgstr ""
-"``challenge_at`` और ``deny_at`` -1000 से 1000 के बीच होते हैं, "
-"``deny_at`` का मान ``challenge_at`` के बराबर या उससे ऊपर होता है, और "
-"``bits_step`` 1 से 1000 के बीच। ``challenge`` ब्लॉक केवल ``CHALLENGE`` "
-"नियमों का होता है, 1 से 64 वर्क बिट्स के साथ। ``limits`` किसी नियम को "
+"``challenge_at`` और ``deny_at`` -1000 से 1000 के बीच होते हैं, जहाँ "
+"``deny_at`` की वैल्यू ``challenge_at`` के बराबर या उससे ऊपर होती है, और "
+"``bits_step`` 1 से 1000 के बीच। ``challenge`` ब्लॉक सिर्फ़ ``CHALLENGE`` "
+"नियमों के लिए होता है, 1 से 64 वर्क बिट्स के साथ। ``limits`` किसी नियम को "
 "उसका अपना कोटा देता है: ``rate`` 1 से 1,000,000 और ``window_seconds`` 1 "
-"से 86,400 आवश्यक हैं, ``ban_seconds`` (अधिकतम 86,400) वैकल्पिक है, और "
-"``WEIGH`` नियम सीमाएँ नहीं रख सकते। ``ja4`` या तो एक पूरा JA4 "
-"फ़िंगरप्रिंट है, जिसके बराबर फ़िंगरप्रिंट होना चाहिए, या ऐसा प्रीफ़िक्स "
-"जिसके बाद ``*`` हो, और फ़िंगरप्रिंट उसी से शुरू होना चाहिए; अकेला ``*`` "
-"किसी भी फ़िंगरप्रिंट से मेल खाता है, और फ़िंगरप्रिंट रहित अनुरोध किसी "
-"``ja4`` नियम से मेल नहीं खाता। ऐसा पैटर्न जिससे कोई फ़िंगरप्रिंट मेल नहीं "
-"खा सकता, ``InvalidJa4`` के साथ अस्वीकार होता है (भाग XI, इनग्रेस से JA4 "
-"फ़िंगरप्रिंट)। ``ip_rules`` का प्रतिष्ठा trie अधिकतम 8,192 नोड रखता है। "
-"हर नियम हर मानदंड की एक ही वर्तनी का उपयोग कर सकता है।"
+"से 86,400 ज़रूरी हैं, ``ban_seconds`` (अधिकतम 86,400) ऑप्शनल है, और "
+"``WEIGH`` नियमों में लिमिट नहीं हो सकती। ``ja4`` या तो पूरा JA4 "
+"फ़िंगरप्रिंट है, जो ठीक बराबर होना चाहिए, या ऐसा प्रीफ़िक्स जिसके बाद "
+"``*`` हो, जिससे फ़िंगरप्रिंट शुरू होना चाहिए; अकेला ``*`` किसी भी "
+"फ़िंगरप्रिंट से मैच होता है, और बिना फ़िंगरप्रिंट वाली रिक्वेस्ट किसी "
+"``ja4`` नियम से मैच नहीं होती। ऐसा पैटर्न जिससे कोई फ़िंगरप्रिंट मैच न हो "
+"सके, ``InvalidJa4`` के साथ रिजेक्ट होता है (भाग XI, इनग्रेस से JA4 "
+"फ़िंगरप्रिंट)। ``ip_rules`` का रेप्युटेशन trie अधिकतम 8,192 नोड रखता है। "
+"हर नियम हर क्राइटेरिया की एक ही स्पेलिंग इस्तेमाल कर सकता है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:889
 msgid ""
@@ -3366,14 +3331,14 @@ msgid ""
 "``%5C`` or ``\\`` matches nothing, and path matching is case-sensitive "
 "(SID 0003)."
 msgstr ""
-"पैटर्न का व्याकरण: ``.*`` या ``*`` किसी भी चीज़ से मेल खाते हैं; "
-"``^...$`` एक सटीक पाथ को बाँधता है; अंत में ``*``, ``/*`` या ``.*`` "
-"प्रीफ़िक्स है; ``/`` से शुरू होने वाला पैटर्न सटीक पाथ है; बाकी सब "
-"केस-असंवेदी सबस्ट्रिंग है। पाथ पैटर्न सामान्य रूप वाले पाथ से मेल खाते "
-"हैं (खंडों के बीच एक स्लैश, कोई dot खंड नहीं, unreserved अक्षर unescaped, "
-"अन्य escape बड़े अक्षरों वाले हेक्साडेसिमल अंकों के साथ), इसलिए ``;``, "
-"``%2F``, ``%5C`` या ``\\`` रखने वाला पैटर्न किसी से मेल नहीं खाता, और पाथ "
-"मिलान केस-संवेदी है (SID 0003)।"
+"पैटर्न ग्रामर: ``.*`` या ``*`` किसी भी चीज़ से मैच होते हैं; ``^...$`` "
+"एग्ज़ैक्ट पाथ को एंकर करता है; अंत में ``*``, ``/*`` या ``.*`` प्रीफ़िक्स "
+"है; ``/`` से शुरू होने वाला पैटर्न एग्ज़ैक्ट पाथ है; बाकी सब "
+"केस-इनसेंसिटिव सबस्ट्रिंग है। पाथ पैटर्न नॉर्मल फ़ॉर्म वाले पाथ से मैच "
+"होते हैं (सेगमेंट्स के बीच एक स्लैश, कोई dot सेगमेंट नहीं, unreserved "
+"कैरेक्टर unescaped, बाकी escape अपर-केस हेक्साडेसिमल डिजिट्स में), इसलिए "
+"``;``, ``%2F``, ``%5C`` या ``\\`` वाला पैटर्न किसी से मैच नहीं होता, और "
+"पाथ मैचिंग केस-सेंसिटिव है (SID 0003)।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:891
 msgid "Storage Tables"
@@ -3393,15 +3358,15 @@ msgid ""
 "coordination; node ids run from 1 to 8,388,607."
 msgstr ""
 "``policy_revision``, ``policies`` (अधिकतम 37 बाइट के nullable "
-"``ja4_pattern`` मानदंड के साथ), ``policy_inspection``, ``ip_reputation``, "
-"``incident_receipts``, ``security_incidents`` (256-बाइट एम्बेडिंग और "
-"nullable 36-बाइट ``ja4`` फ़िंगरप्रिंट के साथ), full-text इंडेक्स (SQLite "
-"पर ``incidents_fts``, canonical टोकन पर FTS5; PostgreSQL पर GIN इंडेक्स "
-"के साथ ``tsvector`` कॉलम ``search``) और ``sibuna_schema``; कंसोल 33 "
-"``console_*`` टेबल जोड़ता है। संग्रहीत एक्शन, एल्गोरिदम और मोड के नाम "
-"छोटे अक्षरों में हैं। घटना id ``node_id << 40 | sequence`` हैं, जो बिना "
-"समन्वय के पूरे क्लस्टर में अद्वितीय हैं; नोड id 1 से 8,388,607 तक होते "
-"हैं।"
+"``ja4_pattern`` क्राइटेरिया के साथ), ``policy_inspection``, "
+"``ip_reputation``, ``incident_receipts``, ``security_incidents`` "
+"(256-बाइट एम्बेडिंग और nullable 36-बाइट ``ja4`` फ़िंगरप्रिंट के साथ), "
+"full-text इंडेक्स (SQLite पर ``incidents_fts``, canonical टोकन पर FTS5; "
+"PostgreSQL पर GIN इंडेक्स के साथ ``tsvector`` कॉलम ``search``) और "
+"``sibuna_schema``; कंसोल 33 ``console_*`` टेबल जोड़ता है। स्टोर्ड एक्शन, "
+"एल्गोरिदम और मोड के नाम लोअरकेस में हैं। इंसिडेंट id ``node_id << 40 | "
+"sequence`` हैं, जो बिना कोऑर्डिनेशन के पूरे क्लस्टर में यूनिक हैं; नोड id "
+"1 से 8,388,607 तक होते हैं।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:896
 msgid ""
@@ -3417,17 +3382,17 @@ msgid ""
 "channel ``sibuna_edge``. The history is never pruned. "
 "``crates/authority/src/sql.rs`` holds the schema."
 msgstr ""
-"एज की डेटाबेस अथॉरिटी (SID 0028) ``sibuna_schema`` के घटक ``authority`` "
-"के रूप में तीन तालिकाएँ जोड़ती है, फ़ायरवॉल के डेटाबेस में या किसी दूसरे "
-"में: ``edge_head`` (head की संख्या वाली एक row), ``edge_revisions`` (हर "
-"revision के लिए एक row: ``origin`` ``apply`` या ``rollback``, "
-"``restored``, अधिकतम 256 KiB का जाँचा हुआ ``document`` अपने 64-अंकीय "
-"``digest`` के साथ, ``source`` अपने नाम और digest के साथ, ``author``, "
-"``note`` और ``committed_at``) और ``edge_nodes`` (हर नोड के लिए एक row: "
+"एज की डेटाबेस अथॉरिटी (SID 0028) ``sibuna_schema`` के ``authority`` "
+"कॉम्पोनेंट के रूप में तीन टेबलें जोड़ती है, फ़ायरवॉल के डेटाबेस में या "
+"किसी दूसरे में: ``edge_head`` (head नंबर वाली एक रो), ``edge_revisions`` "
+"(हर रिविज़न के लिए एक रो: ``origin`` ``apply`` या ``rollback``, "
+"``restored``, अधिकतम 256 KiB का चेक किया गया ``document`` अपने 64-डिजिट "
+"``digest`` के साथ, ``source`` अपने नाम और डाइजेस्ट के साथ, ``author``, "
+"``note`` और ``committed_at``) और ``edge_nodes`` (हर नोड के लिए एक रो: "
 "``applied``, ``digest``, ``refused``, ``detail`` और ``seen_at``)। "
-"PostgreSQL पर ``edge_head`` का अपडेट चैनल ``sibuna_edge`` को सूचित करता "
-"है। इतिहास कभी छाँटा नहीं जाता। ``crates/authority/src/sql.rs`` में "
-"स्कीमा है।"
+"PostgreSQL पर ``edge_head`` का अपडेट ``sibuna_edge`` चैनल को नोटिफ़ाई "
+"करता है। हिस्ट्री कभी प्रून नहीं की जाती। ``crates/authority/src/sql.rs`` "
+"में स्कीमा है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:898
 msgid "Commands of the Binary"
@@ -3438,8 +3403,8 @@ msgid ""
 "One binary holds the firewall daemon, the edge and their tools. Part XI "
 "describes each command; this table says where."
 msgstr ""
-"एक बाइनरी में फ़ायरवॉल डेमन, एज और उनके उपकरण हैं। भाग XI हर कमांड का "
-"वर्णन करता है; यह तालिका बताती है कि कहाँ।"
+"एक ही बाइनरी में फ़ायरवॉल डेमन, एज और उनके टूल हैं। भाग XI में हर कमांड "
+"का ब्योरा है; यह टेबल बताती है कि कहाँ।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:903
 msgid "Commands of ``sibuna``"
@@ -3447,7 +3412,7 @@ msgstr "``sibuna`` की कमांड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:908
 msgid "Purpose, and where Part XI describes it"
-msgstr "उद्देश्य, और भाग XI में इसका वर्णन कहाँ है"
+msgstr "उद्देश्य, और भाग XI में कहाँ बताया गया है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:909
 msgid "``sibuna [options]``"
@@ -3455,7 +3420,7 @@ msgstr "``sibuna [options]``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:910
 msgid "The firewall daemon (*Command-Line Reference*)"
-msgstr "फ़ायरवॉल डेमन (*कमांड-लाइन संदर्भ*)"
+msgstr "फ़ायरवॉल डेमन (*कमांड-लाइन रेफ़रेंस*)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:911
 msgid "``sibuna --config-file FILE``"
@@ -3465,9 +3430,7 @@ msgstr "``sibuna --config-file FILE``"
 msgid ""
 "The edge from a JSON or JLV topology; it takes no other option (*Edge "
 "Load Balancing*)"
-msgstr ""
-"JSON या JLV टोपोलॉजी से एज; यह कोई दूसरा विकल्प नहीं लेता (*एज लोड "
-"बैलेंसिंग*)"
+msgstr "JSON या JLV टोपोलॉजी से एज; यह कोई और ऑप्शन नहीं लेता (*एज लोड बैलेंसिंग*)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:913
 msgid "``sibuna check -f FILE``"
@@ -3477,8 +3440,8 @@ msgstr "``sibuna check -f FILE``"
 msgid ""
 "Checks a topology offline, with its certificates and CA files, and exits"
 msgstr ""
-"किसी टोपोलॉजी को उसके सर्टिफ़िकेट और CA फ़ाइलों के साथ offline जाँचता है, "
-"और बाहर निकलता है"
+"किसी टोपोलॉजी को उसके सर्टिफ़िकेट और CA फ़ाइलों के साथ ऑफ़लाइन चेक करता "
+"है, और बाहर निकलता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:915
 msgid "``sibuna lb --bind IP:PORT --server IP:PORT ...``"
@@ -3489,7 +3452,7 @@ msgid ""
 "The edge from a few options, without a file; ``--print-config`` writes "
 "the file (*Starting with one command*)"
 msgstr ""
-"बिना फ़ाइल के, कुछ विकल्पों से एज; ``--print-config`` फ़ाइल लिखता है (*एक "
+"बिना फ़ाइल के, कुछ ऑप्शन से एज; ``--print-config`` फ़ाइल लिखता है (*एक "
 "कमांड से शुरुआत*)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:917
@@ -3500,7 +3463,7 @@ msgstr "``sibuna ctl SOCKET COMMAND``"
 msgid ""
 "One command of the admin socket (*Changing servers at run time*, and the "
 "table above)"
-msgstr "एडमिन सॉकेट की एक कमांड (*चलते समय सर्वर बदलना*, और ऊपर की तालिका)"
+msgstr "एडमिन सॉकेट की एक कमांड (*चलते समय सर्वर बदलना*, और ऊपर की टेबल)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:919
 msgid ""
@@ -3513,8 +3476,8 @@ msgid ""
 "Publishes and inspects the topology in a database (*A database for the "
 "topology*)"
 msgstr ""
-"डेटाबेस में टोपोलॉजी प्रकाशित करता है और उसका निरीक्षण करता है (*टोपोलॉजी "
-"के लिए डेटाबेस*)"
+"डेटाबेस में टोपोलॉजी पब्लिश और इंस्पेक्ट करता है (*टोपोलॉजी के लिए "
+"डेटाबेस*)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:921
 msgid "``sibuna init-admin``, ``sibuna console ...``"
@@ -3524,7 +3487,7 @@ msgstr "``sibuna init-admin``, ``sibuna console ...``"
 msgid ""
 "The accounts, tokens, policies and GeoIP data of the console (*Console "
 "Preview*)"
-msgstr "कंसोल के खाते, token, नीतियाँ और GeoIP डेटा (*कंसोल प्रीव्यू*)"
+msgstr "कंसोल के अकाउंट, टोकन, पॉलिसी और GeoIP डेटा (*कंसोल प्रीव्यू*)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:924
 msgid "Build Targets"
@@ -3536,7 +3499,7 @@ msgstr "बिल्ड और रिपॉज़िटरी कमांड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:932
 msgid "Result"
-msgstr "परिणाम"
+msgstr "रिज़ल्ट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:933
 msgid "``cargo build --release -p sibuna``"
@@ -3547,7 +3510,7 @@ msgid ""
 "Daemon with SQLite storage, the console, JLV and automatic HTTPS (the "
 "default features ``sqlite``, ``console``, ``jlv`` and ``https``)"
 msgstr ""
-"SQLite स्टोरेज, कंसोल, JLV और स्वचालित HTTPS वाला डेमन (डिफ़ॉल्ट features "
+"SQLite स्टोरेज, कंसोल, JLV और ऑटोमैटिक HTTPS वाला डेमन (डिफ़ॉल्ट फ़ीचर "
 "``sqlite``, ``console``, ``jlv`` और ``https``)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:935
@@ -3557,9 +3520,7 @@ msgstr "``cargo build --release -p sibuna --no-default-features``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:936
 msgid ""
 "In-memory daemon without storage or console and without any external crate"
-msgstr ""
-"मेमोरी में चलने वाला डेमन, स्टोरेज या कंसोल के बिना और किसी बाहरी क्रेट "
-"के बिना"
+msgstr "इन-मेमोरी डेमन, बिना स्टोरेज, बिना कंसोल और बिना किसी बाहरी क्रेट के"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:937
 msgid "``cargo build --release -p sibuna --features postgres-tls``"
@@ -3570,8 +3531,8 @@ msgid ""
 "Daemon that also connects to a shared PostgreSQL database, with verified "
 "TLS (the ``postgres`` feature alone connects without TLS)"
 msgstr ""
-"डेमन जो एक साझा PostgreSQL डेटाबेस से भी जुड़ता है, सत्यापित TLS के साथ "
-"(केवल ``postgres`` feature TLS के बिना जुड़ता है)"
+"डेमन जो एक शेयर्ड PostgreSQL डेटाबेस से भी जुड़ता है, वेरिफ़ाइड TLS के "
+"साथ (अकेला ``postgres`` फ़ीचर बिना TLS के जुड़ता है)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:939
 msgid "``cargo test``"
@@ -3582,8 +3543,8 @@ msgid ""
 "Unit tests, integration tests against a live daemon, storage and console "
 "tests (PostgreSQL ones when ``SIBUNA_TEST_DATABASE_URL`` is set)"
 msgstr ""
-"यूनिट परीक्षण, चलते हुए डेमन पर integration परीक्षण, स्टोरेज और कंसोल "
-"परीक्षण (``SIBUNA_TEST_DATABASE_URL`` सेट होने पर PostgreSQL वाले भी)"
+"यूनिट टेस्ट, लाइव डेमन पर इंटीग्रेशन टेस्ट, स्टोरेज और कंसोल टेस्ट "
+"(``SIBUNA_TEST_DATABASE_URL`` सेट होने पर PostgreSQL वाले भी)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:941
 msgid "``cargo clippy --all-targets``, ``cargo fmt --check``"
@@ -3601,9 +3562,7 @@ msgstr "``cargo xtask check``"
 msgid ""
 "The 70-line function, 1,408-line file and 99/108-column line limits; no "
 "tabs"
-msgstr ""
-"70-पंक्ति फ़ंक्शन, 1,408-पंक्ति फ़ाइल और 99/108-कॉलम पंक्ति की सीमाएँ; "
-"कोई टैब नहीं"
+msgstr "70-लाइन फ़ंक्शन, 1,408-लाइन फ़ाइल और 99/108-कॉलम लाइन लिमिट; कोई टैब नहीं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:945
 msgid "``cargo xtask browser``"
@@ -3611,7 +3570,7 @@ msgstr "``cargo xtask browser``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:946
 msgid "Checks in headless Chromium (``sibuna-browser``)"
-msgstr "headless Chromium में जाँचें (``sibuna-browser``)"
+msgstr "headless Chromium में चेक (``sibuna-browser``)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:947
 msgid "``cargo xtask bench <primitives|product|latency>``"
@@ -3622,7 +3581,7 @@ msgid ""
 "Release-mode benchmarks; results in "
 "``benchmarks/results/<command>-latest.json``"
 msgstr ""
-"रिलीज़ मोड के बेंचमार्क; परिणाम "
+"रिलीज़ मोड बेंचमार्क; रिज़ल्ट "
 "``benchmarks/results/<command>-latest.json`` में"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:949
@@ -3646,7 +3605,7 @@ msgstr "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:952
 msgid "Validate country data and write an embeddable GeoIP snapshot"
-msgstr "देश डेटा का सत्यापन करें और एम्बेड करने योग्य GeoIP स्नैपशॉट लिखें"
+msgstr "कंट्री डेटा वेरिफ़ाई करें और एम्बेड करने योग्य GeoIP स्नैपशॉट लिखें"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:953
 msgid "``guidedog build`` / ``guidedog dsc``"
@@ -3654,7 +3613,7 @@ msgstr "``guidedog build`` / ``guidedog dsc``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:954
 msgid "This book / the SID records"
-msgstr "यह पुस्तक / SID रिकॉर्ड"
+msgstr "यह बुक / SID रिकॉर्ड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:956
 msgid ""
@@ -3668,12 +3627,12 @@ msgid ""
 msgstr ""
 "डेमन की बिल्ड स्क्रिप्ट (``cmd/sibuna/build.rs``) दोनों WebAssembly "
 "मॉड्यूल को ``wasm`` प्रोफ़ाइल के साथ वर्कस्पेस की टारगेट डायरेक्टरी में "
-"बनाती है, और कंसोल इंटरफ़ेस 768 KiB से अधिक होने पर बिल्ड विफल कर देती "
-"है। ``wasm32-unknown-unknown`` टारगेट के बिना बिल्ड के लिए "
-"``SIBUNA_POW_WASM`` और ``SIBUNA_CONSOLE_WASM`` इसके बजाय पहले से बने "
-"मॉड्यूल का नाम देते हैं। ``SIBUNA_GEOIP_DATA`` एम्बेड करने के लिए एक "
-"GeoIP स्नैपशॉट का नाम देता है; इसे बिल्ड के समय डिकोड किया जाता है, और "
-"कंसोल के बिना बिल्ड इसे अस्वीकार करता है (``GEOIP001``)।"
+"बिल्ड करती है, और कंसोल इंटरफ़ेस 768 KiB से ज़्यादा होने पर बिल्ड फ़ेल कर "
+"देती है। ``wasm32-unknown-unknown`` टारगेट के बिना बिल्ड के लिए "
+"``SIBUNA_POW_WASM`` और ``SIBUNA_CONSOLE_WASM`` पहले से बने मॉड्यूल का पाथ "
+"देते हैं। ``SIBUNA_GEOIP_DATA`` एम्बेड करने के लिए GeoIP स्नैपशॉट का नाम "
+"देता है; इसे बिल्ड के समय डिकोड किया जाता है, और बिना कंसोल वाला बिल्ड "
+"इसे रिजेक्ट कर देता है (``GEOIP001``)।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:958
 msgid "Exercise 12.1"
@@ -3686,14 +3645,14 @@ msgid ""
 "the token and challenge formats, and propose the smallest change to the "
 "interstitial that recovers gracefully."
 msgstr ""
-"हल के बीच में Wi-Fi से सेलुलर पर जाने के बाद एक क्लाइंट को ``CLIENT "
-"FINGERPRINT MISMATCH`` शीर्षक के साथ ``400`` मिलता है। टोकन और चैलेंज के "
-"प्रारूपों से कारण समझाएँ, और इंटरस्टिशियल में वह सबसे छोटा बदलाव "
-"प्रस्तावित करें जो इससे सहज रूप से उबर जाए।"
+"सॉल्व के बीच में Wi-Fi से सेलुलर पर जाने के बाद एक क्लाइंट को ``CLIENT "
+"FINGERPRINT MISMATCH`` टाइटल के साथ ``400`` मिलता है। टोकन और चैलेंज के "
+"फ़ॉर्मेट से इसका कारण समझाएँ, और इंटरस्टिशियल में वह सबसे छोटा बदलाव "
+"सुझाएँ जिससे यह आसानी से रिकवर हो जाए।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:962
 msgid "Explain the invariant"
-msgstr "अपरिवर्तनीय नियम समझाएँ"
+msgstr "इनवैरिएंट समझाएँ"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:964
 msgid ""
@@ -3701,8 +3660,8 @@ msgid ""
 "must route to the daemon rather than to the origin, and say why each is "
 "needed."
 msgstr ""
-"बिना देखे उन एंडपॉइंट की सूची बनाएँ जिन्हें Sibuna के सामने का रिवर्स "
-"प्रॉक्सी ऑरिजिन के बजाय डेमन तक रूट करे, और बताएँ कि हर एक क्यों आवश्यक "
+"बिना देखे उन एंडपॉइंट की लिस्ट बनाएँ जिन्हें Sibuna के सामने लगा रिवर्स "
+"प्रॉक्सी ऑरिजिन के बजाय डेमन को रूट करेगा, और बताएँ कि हर एक क्यों ज़रूरी "
 "है।"
 
 #~ msgid ""

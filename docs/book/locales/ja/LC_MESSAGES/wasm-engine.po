@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:1
 msgid "Part VII: The Browser Proof-of-Work Engine"
-msgstr "第VII部：ブラウザーの作業証明エンジン"
+msgstr "第VII部：ブラウザーのProof of Workエンジン"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:4
 msgid ""
@@ -180,9 +180,7 @@ msgstr "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
 msgid ""
 "Hashcash: search ``max_steps`` nonces from ``start``; returns the nonce "
 "or the all-ones sentinel"
-msgstr ""
-"Hashcash：\\ ``start``\\ から\\ ``max_steps``\\ "
-"個のnonceを探索します。nonce、またはすべてのビットが1の番兵値を返します"
+msgstr "Hashcash：\\ ``start``\\ から\\ ``max_steps``\\ 個のnonceを探索します。nonce、またはすべてのビットが1のセンチネル値を返します"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:61
 msgid "``sibuna_solve_sha256(ptr, len, bits)``"
@@ -399,10 +397,7 @@ msgid ""
 "16-word window in which each round from 16 on overwrites the word it no "
 "longer needs, and the eight working variables are renamed from round to "
 "round instead of being shifted:"
-msgstr ""
-"サーバーでは、圧縮関数は実行時に検出したx86-64のSHA拡張命令またはARMv8のSHA-2命令を使います。ブラウザーにはそのような命令がなく、ソルバーは時間のほぼすべてを移植可能な圧縮関数（\\ "
-"``crates/crypto/src/sha256/portable.rs``\\ "
-"）で費やします。この関数はWebAssembly向けに書かれています。64ラウンドは展開され、メッセージスケジュールは16語の窓に置かれ、16番目以降の各ラウンドはもう必要のない語を上書きします。8個の作業変数は、ずらすのではなく、ラウンドごとに名前を付け替えます。"
+msgstr "サーバーでは、圧縮関数は実行時に検出したx86-64のSHA拡張命令またはARMv8のSHA-2命令を使います。ブラウザーにはそのような命令がなく、ソルバーは時間のほぼすべてを移植可能な圧縮関数（\\ ``crates/crypto/src/sha256/portable.rs``\\ ）で費やします。この関数はWebAssembly向けに書かれています。64ラウンドは展開され、メッセージスケジュールは16ワードのウィンドウに置かれ、16番目以降の各ラウンドはもう必要のない語を上書きします。8個の作業変数は、ずらすのではなく、ラウンドごとに名前を付け替えます。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:134
 msgid ""
@@ -498,8 +493,7 @@ msgid ""
 "Read the message protocol, understand the fallback hierarchy, and see the "
 "sentinel bug that the signed-integer boundary between WebAssembly and "
 "JavaScript caused."
-msgstr ""
-"メッセージのプロトコルを読み、代替手段の階層を理解し、WebAssemblyとJavaScriptの間の符号付き整数の境界が引き起こした番兵値のバグを確かめます。"
+msgstr "メッセージのプロトコルを読み、代替手段の階層を理解し、WebAssemblyとJavaScriptの間の符号付き整数の境界が引き起こしたセンチネル値のバグを確かめます。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:176
 msgid ""
@@ -556,7 +550,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:193
 msgid "The signed sentinel"
-msgstr "符号付きの番兵値"
+msgstr "符号付きのセンチネル値"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:196
 msgid ""
@@ -584,7 +578,7 @@ msgid ""
 "if (found !== 18446744073709551615n) return found.toString();"
 msgstr ""
 "// WebAssemblyのi64の結果は符号付きのBigIntとして届くので、u64の\n"
-"// 「探索し尽くした」番兵値（全ビット1）は-1nとして読める。\n"
+"// 「探索し尽くした」センチネル値（全ビット1）は-1nとして読める。\n"
 "const found = BigInt.asUintN(64,\n"
 "    ex.sibuna_solve_step(ptr, encoded.length, bits, nonce, maxSteps));\n"
 "if (found !== 18446744073709551615n) return found.toString();"

@@ -187,7 +187,7 @@ msgid "%s documentation"
 msgstr "وثائق %s"
 
 msgid "Search needs JavaScript. Use the index instead."
-msgstr "يحتاج البحث إلى JavaScript. استخدم الفهرس بدلًا منه."
+msgstr "يتطلب البحث تفعيل JavaScript. استخدم الفهرس بدلًا منه."
 
 msgid "Fig. %s"
 msgstr "الشكل %s"
@@ -235,7 +235,7 @@ msgid "Copy"
 msgstr "نسخ"
 
 msgid "Copied"
-msgstr "نُسخ"
+msgstr "تم النسخ"
 
 msgid "Breadcrumbs"
 msgstr "مسار التنقل"

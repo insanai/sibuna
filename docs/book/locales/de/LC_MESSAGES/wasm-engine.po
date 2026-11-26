@@ -237,12 +237,7 @@ msgid ""
 "the proof, is a static region of about 92 KiB; no allocator is linked, "
 "and the module has no imports. ``Workspace::new`` is a ``const fn``, so "
 "the static costs only zeroed memory, not initialised data in the module."
-msgstr ""
-"Der Arbeitsbereich des Beweisers, also die behaltenen oberen Ebenen, der "
-"Geschwisterstack und der Nachweis, ist ein statischer Bereich von etwa 92 "
-"KiB; es ist kein Allokator eingebunden, und das Modul hat keine Importe. "
-"``Workspace::new`` ist eine ``const fn``, daher kostet der statische "
-"Bereich nur genullten Speicher, keine initialisierten Daten im Modul."
+msgstr "Der Arbeitsbereich des Beweisers, also die behaltenen oberen Ebenen, der Sibling-Stack und der Nachweis, ist ein statischer Bereich von etwa 92 KiB; es ist kein Allokator eingebunden, und das Modul hat keine Importe. ``Workspace::new`` ist eine ``const fn``, daher kostet der statische Bereich nur genullten Speicher, keine initialisierten Daten im Modul."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:70
 msgid "Implementation: ``sibuna_solve_step``"

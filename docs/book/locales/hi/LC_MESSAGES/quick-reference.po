@@ -19,7 +19,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:1
 msgid "Part XIII: Quick Reference Card"
-msgstr "भाग XIII: त्वरित संदर्भ कार्ड"
+msgstr "भाग XIII: क्विक रेफ़रेंस कार्ड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:4
 msgid ""
@@ -27,9 +27,9 @@ msgid ""
 "diagnose. Part XII holds the full tables; this card holds what an "
 "operator types."
 msgstr ""
-"इसे टर्मिनल के पास रखें: बिल्ड करना, चलाना, कॉन्फ़िगर करना, रूट करना, "
-"निगरानी और निदान। पूरी तालिकाएँ भाग XII में हैं; इस कार्ड में वह है जो "
-"ऑपरेटर टाइप करता है।"
+"इसे टर्मिनल के पास रखें: बिल्ड, रन, कॉन्फ़िगर, रूट, मॉनिटर और डायग्नोज़ "
+"करने के लिए। पूरी टेबलें भाग XII में हैं; इस कार्ड में वही है जो ऑपरेटर "
+"टाइप करता है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:6
 msgid "Build"
@@ -53,21 +53,16 @@ msgid ""
 "benchmarks/results/\n"
 "guidedog build        # this book (guidedog dsc: the SID records)"
 msgstr ""
-"cargo build --release -p sibuna                          # डेमन + SQLite "
-"+ कंसोल + JLV + ACME\n"
-"cargo build --release -p sibuna --no-default-features    # मेमोरी में, "
-"कोई बाहरी क्रेट नहीं\n"
-"cargo build --release -p sibuna --features postgres-tls  # साझा "
-"PostgreSQL क्लस्टर\n"
-"rustup target add wasm32-unknown-unknown   # या SIBUNA_POW_WASM / "
-"SIBUNA_CONSOLE_WASM दें\n"
-"cargo test            # यूनिट, चलते डेमन, स्टोरेज और कंसोल के परीक्षण\n"
+"cargo build --release -p sibuna                          # डेमन + SQLite + कंसोल + JLV + ACME\n"
+"cargo build --release -p sibuna --no-default-features    # इन-मेमोरी, कोई बाहरी क्रेट नहीं\n"
+"cargo build --release -p sibuna --features postgres-tls  # शेयर्ड PostgreSQL क्लस्टर\n"
+"rustup target add wasm32-unknown-unknown   # या SIBUNA_POW_WASM / SIBUNA_CONSOLE_WASM सेट करें\n"
+"cargo test            # यूनिट, लाइव डेमन, स्टोरेज और कंसोल टेस्ट\n"
 "cargo clippy --all-targets && cargo fmt --check\n"
-"cargo xtask check     # 70-पंक्ति / 1,408-पंक्ति / 99-कॉलम की जाँच\n"
-"cargo xtask browser   # headless Chromium में जाँचें\n"
-"cargo xtask bench product   # wrk के तहत पूरे उत्पाद -> "
-"benchmarks/results/\n"
-"guidedog build        # यह पुस्तक (guidedog dsc: SID रिकॉर्ड)"
+"cargo xtask check     # 70-लाइन / 1,408-लाइन / 99-कॉलम गेट\n"
+"cargo xtask browser   # headless Chromium चेक\n"
+"cargo xtask bench product   # wrk के तहत पूरे प्रॉडक्ट -> benchmarks/results/\n"
+"guidedog build        # यह बुक (guidedog dsc: SID रिकॉर्ड)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:22
 msgid "Run"
@@ -92,21 +87,18 @@ msgid ""
 "/etc/sibuna/secret\n"
 "head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret"
 msgstr ""
-"# Shield (डिफ़ॉल्ट): PoW + WAF, :3000 तक प्रॉक्सी\n"
+"# Shield (डिफ़ॉल्ट): PoW + WAF, :3000 पर प्रॉक्सी\n"
 "sibuna -p 8080 -u 3000 -s /etc/sibuna/secret\n"
-"# Gate: केवल PoW\n"
+"# Gate: सिर्फ़ PoW\n"
 "sibuna --gate -p 8080 -u 3000 -s /etc/sibuna/secret\n"
 "# Nginx/Caddy के पीछे forward auth (X-Forwarded-For पर भरोसा करता है)\n"
 "sibuna -m forward_auth --host 127.0.0.1 -p 8080 -s /etc/sibuna/secret\n"
-"# Edge: <dir>/sibuna.db में स्थायी नीतियाँ, प्रतिष्ठा, फ़ॉरेंसिक\n"
+"# Edge: <dir>/sibuna.db में पर्सिस्टेंट पॉलिसी, रेप्युटेशन, फ़ॉरेंसिक\n"
 "sibuna -D /var/lib/sibuna -s /etc/sibuna/secret\n"
-"# विश्वसनीय इनग्रेस से JA4 (Cloudflare का हेडर; nginx मॉड्यूल: x-ja4; "
-"ATS: ja4)\n"
-"sibuna --ja4-header cf-ja4 --trust-forwarded -p 8080 -u 3000 -s "
-"/etc/sibuna/secret\n"
-"# क्लस्टर सदस्य: साझा PostgreSQL, अद्वितीय नोड id\n"
-"sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 -s "
-"/etc/sibuna/secret\n"
+"# ट्रस्टेड इनग्रेस से JA4 (Cloudflare का हेडर; nginx मॉड्यूल: x-ja4; ATS: ja4)\n"
+"sibuna --ja4-header cf-ja4 --trust-forwarded -p 8080 -u 3000 -s /etc/sibuna/secret\n"
+"# क्लस्टर मेंबर: शेयर्ड PostgreSQL, यूनिक नोड id\n"
+"sibuna --database-url-file /etc/sibuna/database-url --cluster-node 1 -s /etc/sibuna/secret\n"
 "head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:41
@@ -191,81 +183,46 @@ msgid ""
 "cat fullchain.pem privkey.pem > /etc/sibuna/certs/site.pem   # one "
 "HAProxy-style bundle"
 msgstr ""
-"sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80   # किसी "
-"फ़ाइल की ज़रूरत नहीं\n"
+"sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80   # किसी फ़ाइल की ज़रूरत नहीं\n"
 "sibuna lb --bind :8080 --server 10.0.0.1:80 --print-config > edge.jlv\n"
-"sibuna lb --bind :8080 --server 10.0.0.1:80 --firewall shield --health "
-"/healthz --admin /run/sibuna/edge.sock --access-log stdout\n"
+"sibuna lb --bind :8080 --server 10.0.0.1:80 --firewall shield --health /healthz --admin /run/sibuna/edge.sock --access-log stdout\n"
 "sibuna lb --proto tcp --bind :2222 --server 10.0.0.8:22\n"
-"sibuna lb --proto udp --bind 192.0.2.10:53 --server 10.0.0.53:53       # "
-"UDP एक विशिष्ट IP पर bind करता है\n"
-"sibuna lb --tls auto --domain example.org --server 10.0.0.1:80     # "
-"स्वचालित HTTPS (ACME)\n"
-"sibuna check -f edge.jlv           # या edge.json: टोपोलॉजी, सर्टिफ़िकेट, "
-"CA फ़ाइलें जाँचें\n"
-"sibuna --config-file edge.jlv      # TCP, UDP और HTTP फ़्रंटएंड सर्व "
-"करें\n"
-"kill -HUP \"$(pidof sibuna)\"        # रूट, नीति और सर्टिफ़िकेट उसी जगह "
-"रीलोड करें\n"
-"sibuna ctl /run/sibuna/edge.sock show servers                      # "
-"global.admin_socket चाहिए\n"
-"sibuna ctl /run/sibuna/edge.sock show stats                        # एज "
-"का Prometheus टेक्स्ट\n"
-"sibuna ctl /run/sibuna/edge.sock help                              # हर "
-"कमांड\n"
-"/opt/sibuna/new/sibuna --config-file edge.jlv   # global.upgrade_socket "
-"के साथ: चल रहे डेमन को बदलता है, कोई कनेक्शन नहीं खोता (Linux)\n"
-"sibuna lb --tls auto --domain localhost --server 10.0.0.1:80       # वही, "
-"स्थानीय अथॉरिटी से\n"
-"sibuna lb --tls auto --domain staging.example.org --acme-issuer internal "
-"--server 10.0.0.1:80   # स्थानीय अथॉरिटी से एक सार्वजनिक नाम\n"
-"sibuna lb --tls auto --domain example.org --acme-on-demand-ask "
-"http://127.0.0.1:9000/ok --server 10.0.0.1:80   # मांग पर और नाम\n"
-"sibuna ctl /run/sibuna/edge.sock show certs                        # "
-"tls.auto और मांग पर जारी सर्टिफ़िकेट, और उनके OCSP staple\n"
-"sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt         # "
-"क्लाइंटों में इंस्टॉल करने के लिए root\n"
-"sibuna ctl /run/sibuna/edge.sock revoke cert db.corp.internal      # "
-"स्थानीय अथॉरिटी का एक सर्टिफ़िकेट, या उसका serial\n"
-"sibuna ctl /run/sibuna/edge.sock show hooks                        # "
-"प्लगइन: कॉल, निर्णय, विफलताएँ, खुले breaker (SID 0030)\n"
-"sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain   "
-"# या ready\n"
+"sibuna lb --proto udp --bind 192.0.2.10:53 --server 10.0.0.53:53       # UDP एक खास IP पर बाइंड करता है\n"
+"sibuna lb --tls auto --domain example.org --server 10.0.0.1:80     # ऑटोमैटिक HTTPS (ACME)\n"
+"sibuna check -f edge.jlv           # या edge.json: टोपोलॉजी, सर्टिफ़िकेट और CA फ़ाइलें वेरिफ़ाई करें\n"
+"sibuna --config-file edge.jlv      # TCP, UDP और HTTP फ़्रंटएंड सर्व करें\n"
+"kill -HUP \"$(pidof sibuna)\"        # रूट, पॉलिसी और सर्टिफ़िकेट इन-प्लेस रीलोड करें\n"
+"sibuna ctl /run/sibuna/edge.sock show servers                      # इसके लिए global.admin_socket चाहिए\n"
+"sibuna ctl /run/sibuna/edge.sock show stats                        # एज का Prometheus टेक्स्ट\n"
+"sibuna ctl /run/sibuna/edge.sock help                              # हर कमांड\n"
+"/opt/sibuna/new/sibuna --config-file edge.jlv   # global.upgrade_socket के साथ: चल रहे डेमन को रिप्लेस करता है, बिना कोई कनेक्शन खोए (Linux)\n"
+"sibuna lb --tls auto --domain localhost --server 10.0.0.1:80       # वही, लोकल अथॉरिटी से\n"
+"sibuna lb --tls auto --domain staging.example.org --acme-issuer internal --server 10.0.0.1:80   # लोकल अथॉरिटी से एक पब्लिक नाम\n"
+"sibuna lb --tls auto --domain example.org --acme-on-demand-ask http://127.0.0.1:9000/ok --server 10.0.0.1:80   # ऑन-डिमांड और नाम\n"
+"sibuna ctl /run/sibuna/edge.sock show certs                        # tls.auto और ऑन-डिमांड सर्टिफ़िकेट, और उनके OCSP स्टेपल\n"
+"sibuna ctl /run/sibuna/edge.sock show ca > sibuna-root.crt         # क्लाइंट्स में इंस्टॉल करने के लिए रूट CA\n"
+"sibuna ctl /run/sibuna/edge.sock revoke cert db.corp.internal      # लोकल अथॉरिटी का सर्टिफ़िकेट, या उसका सीरियल\n"
+"sibuna ctl /run/sibuna/edge.sock show hooks                        # प्लगइन: कॉल, वर्डिक्ट, फ़ेलियर, खुले ब्रेकर (SID 0030)\n"
+"sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain   # या ready\n"
 "sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 weight 5\n"
-"sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain "
-"local   # केवल यह नोड\n"
-"sibuna ctl /run/sibuna/edge.sock del ban 203.0.113.9                      "
-" # मेश के हर नोड पर\n"
-"sibuna ctl /run/sibuna/edge.sock reload cluster                           "
-" # यह नोड, फिर इसके पीयर\n"
-"sibuna ctl /run/sibuna/edge.sock show cluster                             "
-" # हर नोड की फ़ाइल का digest या revision\n"
-"sibuna ctl /run/sibuna/edge.sock show affinity                            "
-" # स्टिकी टेबल और फ़्लीट-व्यापी सीमाओं के हिस्से\n"
+"sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain local   # सिर्फ़ यही नोड\n"
+"sibuna ctl /run/sibuna/edge.sock del ban 203.0.113.9                       # मेश के हर नोड पर\n"
+"sibuna ctl /run/sibuna/edge.sock reload cluster                            # पहले यह नोड, फिर इसके पीयर\n"
+"sibuna ctl /run/sibuna/edge.sock show cluster                              # हर नोड का फ़ाइल डाइजेस्ट या रिविज़न\n"
+"sibuna ctl /run/sibuna/edge.sock show affinity                             # स्टिकी टेबल और फ़्लीट-वाइड लिमिट के हिस्से\n"
 "sibuna ctl /run/sibuna/edge.sock add server app/blue 10.0.0.3:80\n"
 "sibuna ctl /run/sibuna/edge.sock del server app/blue\n"
-"sibuna ctl /run/sibuna/edge.sock reload                            # "
-"SIGHUP की तरह, परिणाम के साथ\n"
-"sibuna ctl /run/sibuna/edge.sock reopen log                        # "
-"logrotate द्वारा एक्सेस लॉग का नाम बदलने के बाद\n"
-"sibuna ctl /run/sibuna/edge.sock show info | grep spill            # "
-"स्टिकी टेबल का डिस्क स्तर: फ़ाइल, लागत, काउंटर\n"
-"sibuna authority diff -c /etc/sibuna/node.json -f edge.jlv         # "
-"apply डेटाबेस में क्या बदलेगा\n"
-"sibuna authority apply -c /etc/sibuna/node.json -f edge.jlv --expect 7 "
-"--note \"add web3\"   # revision 8 प्रकाशित करें, या DBA002\n"
-"sibuna authority history -c /etc/sibuna/node.json --limit 20       # "
-"revision, सबसे नया पहले\n"
-"sibuna authority rollback -c /etc/sibuna/node.json 6               # 6 के "
-"दस्तावेज़ के साथ एक नया revision\n"
-"sibuna authority dump -c /etc/sibuna/node.json --revision 6        # "
-"मूल्यांकित डेटा; स्रोत के लिए --source\n"
-"sibuna authority status -c /etc/sibuna/node.json                   # head "
-"और हर नोड ने क्या लागू किया\n"
-"sibuna ctl /run/sibuna/edge.sock show authority                    # वह "
-"revision जिसे यह नोड सर्व करता है\n"
-"cat fullchain.pem privkey.pem > /etc/sibuna/certs/site.pem   # एक "
-"HAProxy-शैली का bundle"
+"sibuna ctl /run/sibuna/edge.sock reload                            # SIGHUP जैसा ही, रिज़ल्ट के साथ\n"
+"sibuna ctl /run/sibuna/edge.sock reopen log                        # logrotate द्वारा एक्सेस लॉग रीनेम करने के बाद\n"
+"sibuna ctl /run/sibuna/edge.sock show info | grep spill            # स्टिकी टेबल का डिस्क टियर: फ़ाइल, कॉस्ट, काउंटर\n"
+"sibuna authority diff -c /etc/sibuna/node.json -f edge.jlv         # apply डेटाबेस में क्या बदलेगा\n"
+"sibuna authority apply -c /etc/sibuna/node.json -f edge.jlv --expect 7 --note \"add web3\"   # रिविज़न 8 पब्लिश करें, या DBA002\n"
+"sibuna authority history -c /etc/sibuna/node.json --limit 20       # रिविज़न, सबसे नया पहले\n"
+"sibuna authority rollback -c /etc/sibuna/node.json 6               # रिविज़न 6 के डॉक्यूमेंट के साथ नया रिविज़न\n"
+"sibuna authority dump -c /etc/sibuna/node.json --revision 6        # इवैल्यूएट किया गया डेटा; सोर्स के लिए --source\n"
+"sibuna authority status -c /etc/sibuna/node.json                   # head और हर नोड ने क्या अप्लाई किया\n"
+"sibuna ctl /run/sibuna/edge.sock show authority                    # वह रिविज़न जो यह नोड सर्व कर रहा है\n"
+"cat fullchain.pem privkey.pem > /etc/sibuna/certs/site.pem   # एक HAProxy-स्टाइल बंडल"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:87
 msgid ""
@@ -340,15 +297,14 @@ msgid ""
 "``\"http\": {\"surface\": \"off\"}`` gives a load balancer with no "
 "firewall. TCP and UDP frontends never use the firewall."
 msgstr ""
-"``\"http\": {\"surface\": \"off\"}`` बिना फ़ायरवॉल का लोड बैलेंसर देता "
-"है। TCP और UDP फ़्रंटएंड कभी फ़ायरवॉल का उपयोग नहीं करते।"
+"``\"http\": {\"surface\": \"off\"}`` बिना फ़ायरवॉल वाला लोड बैलेंसर देता "
+"है। TCP और UDP फ़्रंटएंड कभी फ़ायरवॉल का इस्तेमाल नहीं करते।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:113
 msgid ""
 "The operator console of the edge (SID 0031) needs a ``console`` section "
 "in the file:"
-msgstr ""
-"एज के ऑपरेटर कंसोल (SID 0031) के लिए फ़ाइल में ``console`` अनुभाग चाहिए:"
+msgstr "एज के ऑपरेटर कंसोल (SID 0031) के लिए फ़ाइल में ``console`` सेक्शन चाहिए:"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:115
 msgid ""
@@ -367,20 +323,13 @@ msgid ""
 "     -d '{\"line\":\"set server app/a state drain\"}' "
 "http://127.0.0.1:9443/console/api/edge/command"
 msgstr ""
-"# console: { listen: \"127.0.0.1:9443\", data_dir: \"/var/lib/sibuna\", "
-"node: 1 }\n"
-"sibuna init-admin admin --data-dir /var/lib/sibuna    # एक बार, जब डेमन "
-"रुका हो\n"
-"sibuna --config-file edge.jlv                         # फिर "
-"http://127.0.0.1:9443/console/ और Edge पेज खोलें\n"
-"curl -b \"$COOKIE\" http://127.0.0.1:9443/console/api/edge          # "
-"नोड, उसके फ़्रंटएंड और उसके पूल\n"
-"curl -b \"$COOKIE\" http://127.0.0.1:9443/console/api/edge/fleet    # हर "
-"सदस्य के लिए एक पंक्ति\n"
-"curl -b \"$COOKIE\" -H \"X-Console-CSRF: $CSRF\" -H \"Origin: "
-"http://127.0.0.1:9443\" -H \"Content-Type: application/json\" \\\n"
-"     -d '{\"line\":\"set server app/a state drain\"}' "
-"http://127.0.0.1:9443/console/api/edge/command"
+"# console: { listen: \"127.0.0.1:9443\", data_dir: \"/var/lib/sibuna\", node: 1 }\n"
+"sibuna init-admin admin --data-dir /var/lib/sibuna    # एक बार, जब डेमन बंद हो\n"
+"sibuna --config-file edge.jlv                         # फिर http://127.0.0.1:9443/console/ और Edge पेज खोलें\n"
+"curl -b \"$COOKIE\" http://127.0.0.1:9443/console/api/edge          # नोड, उसके फ़्रंटएंड और उसके पूल\n"
+"curl -b \"$COOKIE\" http://127.0.0.1:9443/console/api/edge/fleet    # हर मेंबर के लिए एक रो\n"
+"curl -b \"$COOKIE\" -H \"X-Console-CSRF: $CSRF\" -H \"Origin: http://127.0.0.1:9443\" -H \"Content-Type: application/json\" \\\n"
+"     -d '{\"line\":\"set server app/a state drain\"}' http://127.0.0.1:9443/console/api/edge/command"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:125
 msgid ""
@@ -391,8 +340,8 @@ msgid ""
 msgstr ""
 "कमांड रूट ``set server ... state|weight``, ``add server``, ``del "
 "server``, ``del ban``, ``reload cluster`` और ``show "
-"servers|cluster|certs|ca`` लेता है, हर एक ``sibuna ctl`` की जाँचों के "
-"साथ। इसके लिए ऑपरेटर की role चाहिए।"
+"servers|cluster|certs|ca`` लेता है, हर एक ``sibuna ctl`` के चेक्स के साथ। "
+"इसके लिए ऑपरेटर रोल चाहिए।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:127
 msgid ""
@@ -402,7 +351,7 @@ msgid ""
 "``tcp_inspect``; ``\"udp_inspect\": \"quic\"`` on ``udp``. All are off by "
 "default."
 msgstr ""
-"फ़्रंटएंड के प्रवेश विकल्प (SID 0032): ``tcp`` और ``http`` पर "
+"फ़्रंटएंड के एडमिशन ऑप्शन (SID 0032): ``tcp`` और ``http`` पर "
 "``\"defer_accept\": \"5s\"`` और ``\"backlog\": 4096``; ``tcp_inspect`` के "
 "साथ ``\"inspect_bytes\"`` और ``\"inspect_fallback\": {\"absent\": "
 "{\"action\": \"deny\"}}``; ``udp`` पर ``\"udp_inspect\": \"quic\"``। सभी "
@@ -418,7 +367,7 @@ msgid ""
 "90, \"off\": 75, \"new_per_second\": 1000}`` (on by default, ``\"off\"`` "
 "switches it off) and ``\"accept_threads\": \"auto\"`` in ``global``."
 msgstr ""
-"हमले के समय प्रवेश (SID 0034): किसी भी फ़्रंटएंड पर "
+"हमले के समय एडमिशन (SID 0034): किसी भी फ़्रंटएंड पर "
 "``\"max_flows_per_ip\": 20`` और ``\"max_flows\": 5000``; ``tcp`` और "
 "``http`` पर ``\"refuse\": \"reset\"`` (डिफ़ॉल्ट), ``\"close\"`` या "
 "``\"tarpit\"`` और ``\"auto_ban\": {\"strikes\": 50, \"window\": \"10s\", "
@@ -429,7 +378,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:131
 msgid "Console (opt-in preview)"
-msgstr "कंसोल (वैकल्पिक प्रीव्यू)"
+msgstr "कंसोल (ऑप्ट-इन प्रीव्यू)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:134
 msgid ""
@@ -437,7 +386,7 @@ msgid ""
 "sibuna init-admin admin --data-dir ./data\n"
 "sibuna --data-dir ./data --console 127.0.0.1:19446"
 msgstr ""
-"# डेमन बंद रहते हुए प्रारंभ करें, फिर कंसोल शुरू करें\n"
+"# डेमन बंद रहते हुए इनिशियलाइज़ करें, फिर कंसोल शुरू करें\n"
 "sibuna init-admin admin --data-dir ./data\n"
 "sibuna --data-dir ./data --console 127.0.0.1:19446"
 
@@ -450,16 +399,16 @@ msgid ""
 "passes its browser workflows in headless Chromium (SID 0010, criterion "
 "5); its formal performance isolation gate remains open (Part X)."
 msgstr ""
-"``http://127.0.0.1:19446/console/`` खोलें और अस्थायी पासवर्ड बदलें। नोड "
+"``http://127.0.0.1:19446/console/`` खोलें और टेम्पररी पासवर्ड बदलें। नोड "
 "को ग्लोब पर रखने के लिए ``--console-location 1.3521,103.8198`` जोड़ें। "
-"दूरस्थ पहुँच के लिए एक HTTPS प्रॉक्सी, एक स्पष्ट ऑरिजिन और trusted-proxy "
+"रिमोट एक्सेस के लिए एक HTTPS प्रॉक्सी, एक स्पष्ट ऑरिजिन और trusted-proxy "
 "CIDR चाहिए; भाग XI का पालन करें। SID 0007 की स्थिति Committed है। कंसोल "
 "headless Chromium में अपने ब्राउज़र वर्कफ़्लो पास करता है (SID 0010, "
-"मानदंड 5); उसका औपचारिक प्रदर्शन-पृथक्करण गेट अभी खुला है (भाग X)।"
+"क्राइटेरिया 5); इसका औपचारिक परफ़ॉर्मेंस आइसोलेशन गेट अभी खुला है (भाग X)।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:142
 msgid "Flags That Matter First"
-msgstr "सबसे पहले जानने योग्य फ़्लैग"
+msgstr "सबसे पहले काम आने वाले फ़्लैग"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:149
 msgid "Flag"
@@ -472,7 +421,7 @@ msgstr "डिफ़ॉल्ट"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:151
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:320
 msgid "Meaning"
-msgstr "अर्थ"
+msgstr "मतलब"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:152
 msgid "``-d, --difficulty``"
@@ -485,7 +434,7 @@ msgstr "16"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:154
 msgid "work bits (PoSW depth = bits - 3)"
-msgstr "वर्क बिट्स (PoSW गहराई = बिट्स - 3)"
+msgstr "वर्क बिट्स (PoSW डेप्थ = बिट्स - 3)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:155
 msgid "``-a, --algorithm``"
@@ -505,7 +454,7 @@ msgstr "``--posw-challenges``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:160
 msgid "openings per proof"
-msgstr "प्रति प्रमाण ओपनिंग"
+msgstr "प्रति प्रूफ़ ओपनिंग"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:161
 msgid "``--token-ttl``"
@@ -517,7 +466,7 @@ msgstr "86400"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:163
 msgid "session seconds"
-msgstr "सत्र के सेकंड"
+msgstr "सेशन के सेकंड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:164
 msgid "``--challenge-ttl``"
@@ -565,7 +514,7 @@ msgstr "3600"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:175
 msgid "honeypot ban"
-msgstr "हनीपॉट प्रतिबंध"
+msgstr "हनीपॉट बैन"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:176
 msgid "``-w, --workers``"
@@ -601,7 +550,7 @@ msgstr "64"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:184
 msgid "per peer address (IPv6: per ``--ipv6-prefix``), then ``503``"
-msgstr "प्रति पीयर पता (IPv6: प्रति ``--ipv6-prefix``), फिर ``503``"
+msgstr "प्रति पीयर एड्रेस (IPv6: प्रति ``--ipv6-prefix``), फिर ``503``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:185
 msgid "``--trusted-hops``"
@@ -613,7 +562,7 @@ msgstr "1"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:187
 msgid "client = n-th ``X-Forwarded-For`` entry from the right"
-msgstr "क्लाइंट = दाईं ओर से n-वीं ``X-Forwarded-For`` प्रविष्टि"
+msgstr "क्लाइंट = दाईं ओर से n-वीं ``X-Forwarded-For`` एंट्री"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:188
 msgid "``--ja4-header``"
@@ -627,8 +576,7 @@ msgstr "बंद"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:190
 msgid "header with the ingress's JA4 fingerprint; read only when trusted"
-msgstr ""
-"इनग्रेस के JA4 फ़िंगरप्रिंट वाला हेडर; केवल भरोसा होने पर पढ़ा जाता है"
+msgstr "इनग्रेस के JA4 फ़िंगरप्रिंट वाला हेडर; सिर्फ़ ट्रस्ट होने पर पढ़ा जाता है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:191
 msgid "``--idle-timeout``"
@@ -652,7 +600,7 @@ msgstr "कोई नहीं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:196
 msgid "JSON policy"
-msgstr "JSON नीति"
+msgstr "JSON पॉलिसी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:197
 msgid "``--trust-forwarded``"
@@ -672,7 +620,7 @@ msgstr "``Secure`` जोड़ें"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:204
 msgid "Endpoints Under ``/__sibuna/``"
-msgstr "``/__sibuna/`` के अंतर्गत एंडपॉइंट"
+msgstr "``/__sibuna/`` के नीचे के एंडपॉइंट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:211
 msgid "Route"
@@ -680,7 +628,7 @@ msgstr "रूट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:212
 msgid "Answer"
-msgstr "उत्तर"
+msgstr "रिस्पॉन्स"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:213
 msgid "``challenge``"
@@ -707,7 +655,7 @@ msgid ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, else "
 "``400``"
 msgstr ""
-"``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, अन्यथा "
+"``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, वरना "
 "``400``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:219
@@ -733,7 +681,7 @@ msgstr "``honeypot``"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:224
 msgid "bans caller, ``403``; ``404`` for a subresource or cross-site fetch"
 msgstr ""
-"कॉल करने वाले पर प्रतिबंध, ``403``; सबरिसोर्स या cross-site fetch के लिए "
+"कॉल करने वाले पर बैन, ``403``; सबरिसोर्स या cross-site fetch के लिए "
 "``404``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:225
@@ -774,7 +722,7 @@ msgstr "200"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:242
 msgid "admitted (forward auth), interstitial, internal routes"
-msgstr "स्वीकृत (forward auth), इंटरस्टिशियल, आंतरिक रूट"
+msgstr "एडमिटेड (forward auth), इंटरस्टिशियल, इंटरनल रूट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:243
 msgid "400"
@@ -782,7 +730,7 @@ msgstr "400"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:244
 msgid "malformed request or target, rejected solution (diagnostic body)"
-msgstr "विकृत अनुरोध या लक्ष्य, अस्वीकृत समाधान (निदान वाली बॉडी)"
+msgstr "मैलफ़ॉर्म्ड रिक्वेस्ट या टारगेट, रिजेक्टेड सॉल्यूशन (डायग्नॉस्टिक बॉडी)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:245
 msgid "401"
@@ -790,7 +738,7 @@ msgstr "401"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:246
 msgid "challenge required: non-HTML client or forward auth"
-msgstr "चैलेंज आवश्यक: गैर-HTML क्लाइंट या forward auth"
+msgstr "चैलेंज ज़रूरी: नॉन-HTML क्लाइंट या forward auth"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:247
 msgid "403"
@@ -798,7 +746,7 @@ msgstr "403"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:248
 msgid "policy or WAF denial, ban, honeypot"
-msgstr "नीति या WAF द्वारा अस्वीकृति, प्रतिबंध, हनीपॉट"
+msgstr "पॉलिसी या WAF डिनायल, बैन, हनीपॉट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:249
 msgid "404"
@@ -806,7 +754,7 @@ msgstr "404"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:250
 msgid "unknown ``/__sibuna/`` route, refused honeypot hit"
-msgstr "अज्ञात ``/__sibuna/`` रूट, अस्वीकृत हनीपॉट हिट"
+msgstr "अनजान ``/__sibuna/`` रूट, रिजेक्ट किया गया हनीपॉट हिट"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:251
 msgid "413"
@@ -814,7 +762,7 @@ msgstr "413"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:252
 msgid "solution body over the 64 KB buffer"
-msgstr "समाधान की बॉडी 64 KB बफ़र से बड़ी"
+msgstr "सॉल्यूशन की बॉडी 64 KB बफ़र से बड़ी"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:253
 msgid "414"
@@ -830,7 +778,7 @@ msgstr "417"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:256
 msgid "unsupported request expectation"
-msgstr "असमर्थित अनुरोध अपेक्षा (expectation)"
+msgstr "अनसपोर्टेड रिक्वेस्ट एक्सपेक्टेशन"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:257
 msgid "429"
@@ -838,7 +786,7 @@ msgstr "429"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:258
 msgid "GCRA limit, ``Retry-After`` seconds"
-msgstr "GCRA सीमा, ``Retry-After`` सेकंड"
+msgstr "GCRA लिमिट, ``Retry-After`` सेकंड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:259
 msgid "431"
@@ -854,7 +802,7 @@ msgstr "501"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:262
 msgid "transfer coding other than chunked"
-msgstr "chunked के अलावा कोई अन्य transfer coding"
+msgstr "chunked के अलावा कोई और transfer coding"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:263
 msgid "502"
@@ -862,7 +810,7 @@ msgstr "502"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:264
 msgid "origin unreachable or malformed"
-msgstr "ऑरिजिन तक पहुँच नहीं या उसका उत्तर विकृत"
+msgstr "ऑरिजिन अनरीचेबल या उसका रिस्पॉन्स मैलफ़ॉर्म्ड"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:265
 msgid "503"
@@ -870,7 +818,7 @@ msgstr "503"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:266
 msgid "connection limits reached, or node draining"
-msgstr "कनेक्शन सीमाएँ पूरी, या नोड ड्रेन हो रहा है"
+msgstr "कनेक्शन लिमिट पूरी, या नोड ड्रेन हो रहा है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:268
 msgid "Headers"
@@ -883,23 +831,23 @@ msgid ""
 "client), ``X-Sibuna-Status: PASS``, ``X-Sibuna-Rule: <rule>``; hop-by-hop "
 "and alternative forwarding fields dropped, underscore spellings too."
 msgstr ""
-"*अपस्ट्रीम (प्रॉक्सी)*: ``X-Forwarded-For`` (सॉकेट पीयर, विश्वसनीय होने "
-"पर प्राप्त शृंखला के बाद), ``X-Forwarded-Proto``, ``X-Real-IP`` (जिस "
-"क्लाइंट का निर्णय हुआ), ``X-Sibuna-Status: PASS``, ``X-Sibuna-Rule: "
-"<rule>``; hop-by-hop और वैकल्पिक फ़ॉरवर्डिंग फ़ील्ड हटा दिए जाते हैं, "
-"अंडरस्कोर वाली वर्तनियाँ भी।"
+"*अपस्ट्रीम (प्रॉक्सी)*: ``X-Forwarded-For`` (सॉकेट पीयर, ट्रस्ट होने पर "
+"आई हुई चेन के बाद), ``X-Forwarded-Proto``, ``X-Real-IP`` (जिस क्लाइंट पर "
+"फैसला हुआ), ``X-Sibuna-Status: PASS``, ``X-Sibuna-Rule: <rule>``; "
+"hop-by-hop और वैकल्पिक फ़ॉरवर्डिंग फ़ील्ड हटा दिए जाते हैं, अंडरस्कोर "
+"वाली स्पेलिंग भी।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:272
 msgid ""
 "*Forward-auth reply*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``."
 msgstr ""
-"*Forward-auth उत्तर*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
+"*Forward-auth रिस्पॉन्स*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:273
 msgid "*Challenge reply*: ``X-Sibuna-Status: CHALLENGE``."
-msgstr "*चैलेंज उत्तर*: ``X-Sibuna-Status: CHALLENGE``।"
+msgstr "*चैलेंज रिस्पॉन्स*: ``X-Sibuna-Status: CHALLENGE``।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:274
 msgid ""
@@ -911,7 +859,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:276
 msgid "Policy File Skeleton"
-msgstr "नीति फ़ाइल का ढाँचा"
+msgstr "पॉलिसी फ़ाइल का ढाँचा"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:279
 msgid ""
@@ -963,12 +911,11 @@ msgid ""
 "are matched in normal form. Order: WAF -> trie deny/allow -> rules -> "
 "score -> bypass -> trie challenge -> bots -> default."
 msgstr ""
-"JA4: पूरा फ़िंगरप्रिंट, या प्रीफ़िक्स और ``*``; फ़िंगरप्रिंट नहीं, तो मेल "
-"नहीं। पैटर्न: ``*`` या ``.*`` कुछ भी; ``^...$`` सटीक; अंत में ``*`` "
-"प्रीफ़िक्स; शुरू में ``/`` सटीक पाथ; अन्यथा केस-असंवेदी सबस्ट्रिंग। पाथ "
-"का मिलान सामान्य रूप (normal form) में होता है। क्रम: WAF -> trie "
-"deny/allow -> नियम -> स्कोर -> बायपास -> trie challenge -> बॉट -> "
-"डिफ़ॉल्ट।"
+"JA4: पूरा फ़िंगरप्रिंट, या प्रीफ़िक्स और ``*``; फ़िंगरप्रिंट नहीं, तो मैच "
+"नहीं। पैटर्न: ``*`` या ``.*`` कुछ भी; ``^...$`` एग्ज़ैक्ट; अंत में ``*`` "
+"प्रीफ़िक्स; शुरू में ``/`` एग्ज़ैक्ट पाथ; वरना केस-इनसेंसिटिव सबस्ट्रिंग। "
+"पाथ नॉर्मल फ़ॉर्म में मैच होते हैं। क्रम: WAF -> trie deny/allow -> नियम "
+"-> स्कोर -> बायपास -> trie challenge -> बॉट -> डिफ़ॉल्ट।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:295
 msgid "Storage (Edge) in SQL"
@@ -1015,20 +962,20 @@ msgid ""
 "unique N from 1 to 8,388,607; no member list, leader or cluster TLS (SID "
 "0011)."
 msgstr ""
-"SQLite (``sqlite3 <dir>/sibuna.db``); एक्शन छोटे अक्षरों में हैं। स्कोर "
+"SQLite (``sqlite3 <dir>/sibuna.db``); एक्शन लोअरकेस में हैं। स्कोर "
 ":math:`\\le -50` -> deny प्रीफ़िक्स; :math:`\\ge 50` -> allow। क्लस्टर: "
 "हर नोड पर एक ही सीक्रेट, एक PostgreSQL डेटाबेस, ``--features "
-"postgres-tls``, ``--database-url-file <file> --cluster-node N`` जिसमें N, "
-"1 से 8,388,607 तक अद्वितीय हो; कोई सदस्य सूची, लीडर या क्लस्टर TLS नहीं "
-"(SID 0011)।"
+"postgres-tls``, ``--database-url-file <file> --cluster-node N`` जहाँ N, 1 "
+"से 8,388,607 तक यूनिक हो; कोई मेंबर लिस्ट, लीडर या क्लस्टर TLS नहीं (SID "
+"0011)।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:312
 msgid "Diagnostics"
-msgstr "निदान"
+msgstr "डायग्नॉस्टिक्स"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:319
 msgid "Title"
-msgstr "शीर्षक"
+msgstr "टाइटल"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:321
 msgid "``MALFORMED CHALLENGE``"
@@ -1036,7 +983,7 @@ msgstr "``MALFORMED CHALLENGE``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:322
 msgid "id edited or truncated; fetch a new one"
-msgstr "id संपादित या छोटा कर दिया गया; नया लें"
+msgstr "id एडिट या ट्रंकेट हो गया; नया लें"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:323
 msgid "``INVALID CHALLENGE TAG``"
@@ -1052,7 +999,7 @@ msgstr "``CHALLENGE EXPIRED``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:326
 msgid "older than TTL or clock skew > 60 s"
-msgstr "TTL से पुराना या घड़ी का अंतर > 60 s"
+msgstr "TTL से पुराना या क्लॉक स्क्यू > 60 s"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:327
 msgid "``CLIENT FINGERPRINT MISMATCH``"
@@ -1060,7 +1007,7 @@ msgstr "``CLIENT FINGERPRINT MISMATCH``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:328
 msgid "address or User-Agent changed"
-msgstr "पता या User-Agent बदल गया"
+msgstr "एड्रेस या User-Agent बदल गया"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:329
 msgid "``DIFFICULTY NOT MET``"
@@ -1068,7 +1015,7 @@ msgstr "``DIFFICULTY NOT MET``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:330
 msgid "nonce lacks zero bits"
-msgstr "नॉनस में शून्य बिट कम हैं"
+msgstr "नॉनस में ज़रूरी ज़ीरो बिट नहीं हैं"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:331
 msgid "``INVALID PROOF OF SEQUENTIAL WORK``"
@@ -1084,7 +1031,7 @@ msgstr "``WRONG SOLUTION TYPE``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:334
 msgid "nonce for PoSW or proof for Hashcash"
-msgstr "PoSW के लिए नॉनस या Hashcash के लिए प्रमाण"
+msgstr "PoSW के लिए नॉनस या Hashcash के लिए प्रूफ़"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:335
 msgid "``DOUBLE SPEND PREVENTED``"
@@ -1092,7 +1039,7 @@ msgstr "``DOUBLE SPEND PREVENTED``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:336
 msgid "challenge already used"
-msgstr "चैलेंज पहले ही उपयोग हो चुका"
+msgstr "चैलेंज पहले ही इस्तेमाल हो चुका है"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:337
 msgid "``STORE FULL``"
@@ -1116,7 +1063,7 @@ msgstr "``INVALID COMMAND LINE``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:342
 msgid "unknown option, bad value, or a removed Zaxonlite option"
-msgstr "अज्ञात विकल्प, गलत मान, या हटाया गया Zaxonlite विकल्प"
+msgstr "अनजान ऑप्शन, गलत वैल्यू, या हटाया गया Zaxonlite ऑप्शन"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:344
 msgid ""
@@ -1128,12 +1075,12 @@ msgid ""
 "``sibuna_edge_hook_calls_total`` with ``result`` ``timeout``, ``trap`` or "
 "``unavailable``, and ``sibuna_edge_hook_breakers_open``."
 msgstr ""
-"एज ``EDGE`` (शुरुआत और रीलोड), ``ADM`` (एडमिन सॉकेट), ``ACME`` (स्वचालित "
+"एज ``EDGE`` (स्टार्ट और रीलोड), ``ADM`` (एडमिन सॉकेट), ``ACME`` (ऑटोमैटिक "
 "HTTPS), ``DBA`` (डेटाबेस अथॉरिटी), ``UPG`` (बाइनरी हैंडऑफ़), ``SPILL`` "
-"(spill cache) और ``HOOK`` (प्लगइन) परिवारों के कोड के साथ निदान प्रिंट "
-"करता है; भाग XII हर कोड सूचीबद्ध करता है। लोड न होने वाला प्लगइन "
-"``HOOK001`` से ``HOOK009`` के साथ अस्वीकार होता है। हुक पर अलर्ट के लिए: "
-"``result`` ``timeout``, ``trap`` या ``unavailable`` के साथ "
+"(spill cache) और ``HOOK`` (प्लगइन) फ़ैमिली के कोड के साथ डायग्नॉस्टिक्स "
+"प्रिंट करता है; भाग XII में हर कोड की लिस्ट है। जो प्लगइन लोड नहीं होता, "
+"वह ``HOOK001`` से ``HOOK009`` के साथ रिजेक्ट होता है। हुक पर अलर्ट लगाने "
+"के लिए: ``result`` ``timeout``, ``trap`` या ``unavailable`` के साथ "
 "``sibuna_edge_hook_calls_total``, और ``sibuna_edge_hook_breakers_open``।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:346
@@ -1147,18 +1094,18 @@ msgid ""
 "``sibuna_edge_acme_nearest_expiry_seconds`` and "
 "``sibuna_edge_forward_local_total``."
 msgstr ""
-"जिन मेट्रिक पर अलर्ट लगाएँ: ``denied``, ``rate_limited``, ``overloaded``, "
-"``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
-"``bans_refused``, ``forwarded_invalid`` (सभी ``sibuna_*_total``)। एज पर "
-"ये भी: ``sibuna_edge_server_up``, ``sibuna_edge_server_failures_total``, "
-"``reason`` के अनुसार ``sibuna_edge_refused_total``, "
-"``sibuna_edge_access_log_dropped_total``, "
+"जिन मेट्रिक्स पर अलर्ट लगाएँ: ``denied``, ``rate_limited``, "
+"``overloaded``, ``upstream_errors``, ``incidents_dropped``, "
+"``incident_write_failures``, ``bans_refused``, ``forwarded_invalid`` (सभी "
+"``sibuna_*_total``)। एज पर ये भी: ``sibuna_edge_server_up``, "
+"``sibuna_edge_server_failures_total``, ``reason`` के हिसाब से "
+"``sibuna_edge_refused_total``, ``sibuna_edge_access_log_dropped_total``, "
 "``sibuna_edge_acme_nearest_expiry_seconds`` और "
 "``sibuna_edge_forward_local_total``।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:348
 msgid "Numbers to Remember"
-msgstr "याद रखने योग्य संख्याएँ"
+msgstr "याद रखने वाले नंबर"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:351
 msgid ""
@@ -1172,14 +1119,15 @@ msgid ""
 "embeddings; keep-alive 4,096 requests per connection; origin pool 256 "
 "sockets; storage job queue 32."
 msgstr ""
-"चैलेंज id 70 अक्षर (36-बाइट पेलोड + 16-बाइट टैग); टोकन 75 अक्षर (40 + "
-"16), Ed25519 के साथ 139; प्रमाण के बाइट :math:`32(1 + t(n+1))`; PoSW "
-"गहराई = बिट्स - 3, सीमा 4 से 24; अनुरोध बफ़र 64 KB; हेड सीमा 16 KB; "
-"निरीक्षित बॉडी 8 KB; spent set 1,048,576 टैग (``--spent-tags``); रेट सेल "
-"प्रति टेबल 262,144 (``--rate-table-cells``); प्रतिबंध 65,536 स्लॉट "
-"(``--ban-table-slots``); प्रति क्लाइंट पता 64 कनेक्शन; घटना रिंग 512; बैच "
-"32; सबसे हाल की 16,384 एम्बेडिंग पर कैंपेन दूरी 0.35; keep-alive प्रति "
-"कनेक्शन 4,096 अनुरोध; ऑरिजिन पूल 256 सॉकेट; स्टोरेज जॉब कतार 32।"
+"चैलेंज id 70 कैरेक्टर (36-बाइट पेलोड + 16-बाइट टैग); टोकन 75 कैरेक्टर (40 "
+"+ 16), Ed25519 के साथ 139; प्रूफ़ के बाइट :math:`32(1 + t(n+1))`; PoSW "
+"डेप्थ = बिट्स - 3, रेंज 4 से 24; रिक्वेस्ट बफ़र 64 KB; हेड लिमिट 16 KB; "
+"इंस्पेक्ट की जाने वाली बॉडी 8 KB; spent set 1,048,576 टैग "
+"(``--spent-tags``); रेट सेल प्रति टेबल 262,144 (``--rate-table-cells``); "
+"बैन 65,536 स्लॉट (``--ban-table-slots``); प्रति क्लाइंट एड्रेस 64 "
+"कनेक्शन; इंसिडेंट रिंग 512; बैच 32; सबसे हाल की 16,384 एम्बेडिंग पर "
+"कैंपेन दूरी 0.35; keep-alive प्रति कनेक्शन 4,096 रिक्वेस्ट; ऑरिजिन पूल "
+"256 सॉकेट; स्टोरेज जॉब क्यू 32।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:353
 msgid "Ingress Routing"
@@ -1193,11 +1141,11 @@ msgid ""
 "audit headers with the authorization result. Nginx needs explicit "
 "challenge, 429 and unavailable-auth handling."
 msgstr ""
-"भाग XI, इनग्रेस के पीछे Forward Auth, में दी गई Nginx या Caddy विधि का "
-"उपयोग करें। ``/__sibuna/*`` को सीधे रूट करें; एप्लिकेशन अनुरोधों को मूल "
-"URI, मेथड और विश्वसनीय क्लाइंट पते के साथ अधिकृत करें। आने वाले Sibuna "
-"ऑडिट हेडर को प्राधिकरण के परिणाम से बदलें। Nginx को चैलेंज, 429 और "
-"अनुपलब्ध auth के लिए स्पष्ट हैंडलिंग चाहिए।"
+"भाग XI, इनग्रेस के पीछे Forward Auth, में दी गई Nginx या Caddy रेसिपी का "
+"इस्तेमाल करें। ``/__sibuna/*`` को सीधे रूट करें; एप्लिकेशन की रिक्वेस्ट "
+"को मूल URI, मेथड और ट्रस्टेड क्लाइंट एड्रेस के साथ ऑथराइज़ करें। आने वाले "
+"Sibuna ऑडिट हेडर को ऑथराइज़ेशन के रिज़ल्ट से बदलें। Nginx में चैलेंज, 429 "
+"और अनअवेलेबल auth के लिए अलग से हैंडलिंग ज़रूरी है।"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:358
 msgid ""
@@ -1209,10 +1157,10 @@ msgid ""
 "HTTP/3 itself. Uploads use Content-Length or chunked coding; inspection "
 "sees at most an 8 KiB prefix, with file bytes opaque."
 msgstr ""
-"``reverse_proxy`` स्वीकृत HTTP/1.1 बॉडी और WebSocket ले जाता है; "
-"``forward_auth`` प्रवेश देता है और उन्हें इनग्रेस ले जाता है। छोड़ी गई "
-"auth बॉडी और ऑरिजिन रिस्पॉन्स का Sibuna निरीक्षण या गिनती नहीं कर सकता। "
-"डेमन मोड में TLS इनग्रेस पर टर्मिनेट होता है और कोई नेटिव HTTP/2 नहीं है; "
-"एज (``--config-file``) TLS, HTTP/2 और HTTP/3 स्वयं टर्मिनेट करता है। "
-"अपलोड Content-Length या chunked coding का उपयोग करते हैं; निरीक्षण अधिकतम "
-"8 KiB प्रीफ़िक्स देखता है, और फ़ाइल के बाइट अपारदर्शी रहते हैं।"
+"``reverse_proxy`` एडमिटेड HTTP/1.1 बॉडी और WebSocket आगे ले जाता है; "
+"``forward_auth`` एडमिशन देता है और उन्हें इनग्रेस ले जाता है। छोड़ी गई "
+"auth बॉडी और ऑरिजिन रिस्पॉन्स को Sibuna इंस्पेक्ट या काउंट नहीं कर सकता। "
+"डेमन मोड में TLS इनग्रेस पर टर्मिनेट होता है और नेटिव HTTP/2 नहीं है; एज "
+"(``--config-file``) TLS, HTTP/2 और HTTP/3 खुद टर्मिनेट करता है। अपलोड "
+"Content-Length या chunked coding का इस्तेमाल करते हैं; इंस्पेक्शन ज़्यादा "
+"से ज़्यादा 8 KiB प्रीफ़िक्स देखता है, और फ़ाइल के बाइट अपारदर्शी रहते हैं।"

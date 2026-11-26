@@ -58,9 +58,7 @@ msgid ""
 "The rule that sends the flows of one client to one server: by a cookie, "
 "by the source address, or by a sticky table. It gives way when the server "
 "is down, full, ejected or drained (SID 0019, SID 0025)."
-msgstr ""
-"한 클라이언트의 플로를 한 서버로 보내는 규칙입니다. 쿠키, 출발지 주소, 스티키 테이블로 정합니다. 서버가 내려갔거나, 가득 "
-"찼거나, 배제되었거나, 드레인되면 양보합니다(SID 0019, SID 0025)."
+msgstr "한 클라이언트의 플로우를 한 서버로 보내는 규칙입니다. 쿠키, 출발지 주소, 스티키 테이블로 정합니다. 서버가 내려갔거나, 가득 찼거나, 배제되었거나, 드레인되면 양보합니다(SID 0019, SID 0025)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:15
 msgid "Aho-Corasick automaton"
@@ -154,10 +152,7 @@ msgid ""
 "algorithm, difficulty, openings, issue time, client fingerprint, PRF "
 "nonce, rule hash, and a 16-byte keyed BLAKE3 tag. Issuing one writes "
 "nothing on the server."
-msgstr ""
-"클라이언트가 풀어야 하는 70자 길이의 상태 없는 식별자입니다. 버전, 알고리즘, 난이도, 개방 수, 발급 시각, 클라이언트 지문, "
-"PRF nonce, 규칙 해시, 16바이트 키 기반 BLAKE3 태그를 담습니다. 챌린지를 발급해도 서버에는 아무것도 기록되지 "
-"않습니다."
+msgstr "클라이언트가 풀어야 하는 70자 길이의 상태 없는 식별자입니다. 버전, 알고리즘, 난이도, 오프닝 수, 발급 시각, 클라이언트 지문, PRF nonce, 규칙 해시, 16바이트 키 기반 BLAKE3 태그를 담습니다. 챌린지를 발급해도 서버에는 아무것도 기록되지 않습니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:36
 msgid "ClientHello inspection"
@@ -197,10 +192,7 @@ msgid ""
 "ones. ``set server POOL/NAME state drain`` sets it, a reload keeps it, "
 "and a restart ends it. A node drains as a whole at shutdown, while "
 "readiness answers 503."
-msgstr ""
-"새 플로는 받지 않고 이미 수립된 플로는 유지하는 서버의 상태입니다. ``set server POOL/NAME state "
-"drain``\\ 이 설정하고, 다시 불러오기가 유지하며, 재시작이 끝냅니다. 노드는 종료할 때 전체가 드레인하며, 그동안 준비 "
-"상태는 503으로 답합니다."
+msgstr "새 플로우는 받지 않고 이미 수립된 플로우는 유지하는 서버의 상태입니다. ``set server POOL/NAME state drain``\\ 이 설정하고, 다시 불러오기가 유지하며, 재시작이 끝냅니다. 노드는 종료할 때 전체가 드레인하며, 그동안 준비 상태는 503으로 답합니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:45
 msgid "Edge"
@@ -242,9 +234,7 @@ msgid ""
 "pointer. Workers hold a reference while classifying; the storage thread "
 "builds a new engine off the request path and publishes it by pointer "
 "swap, and the old engine is freed when its last reader releases it."
-msgstr ""
-"게시된 정책 엔진이 참조 카운트 포인터로 놓이는 자리입니다. 워커는 분류하는 동안 참조를 쥐고 있습니다. 저장소 스레드는 요청 경로 "
-"밖에서 새 엔진을 만들어 포인터 교환으로 게시하고, 이전 엔진은 마지막 읽기 측이 참조를 놓을 때 해제됩니다."
+msgstr "게시된 정책 엔진이 참조 카운트 포인터로 놓이는 자리입니다. 워커는 분류하는 동안 참조를 유지합니다. 저장소 스레드는 요청 경로 밖에서 새 엔진을 만들어 포인터 교환으로 게시하고, 이전 엔진은 마지막 읽기 측이 참조를 놓을 때 해제됩니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:54
 msgid "Fingerprint"
@@ -268,14 +258,11 @@ msgid ""
 "together, with ``max_flows_scope: \"fleet\"``. Each node holds a share of "
 "the limit, and unused shares move to the nodes that have the flows (SID "
 "0025)."
-msgstr ""
-"``max_flows_scope: \"fleet\"``\\ 일 때 메시의 모든 노드의 플로를 합쳐서 제한하는 서버의 "
-"``max_flows``\\ 입니다. 각 노드는 한도의 몫을 쥐며, 쓰지 않는 몫은 플로가 있는 노드로 옮겨 갑니다(SID "
-"0025)."
+msgstr "``max_flows_scope: \"fleet\"``\\ 일 때 메시의 모든 노드의 플로우를 합쳐서 제한하는 서버의 ``max_flows``\\ 입니다. 각 노드는 한도의 몫을 보유하며, 쓰지 않는 몫은 플로우가 있는 노드로 옮겨 갑니다(SID 0025)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:60
 msgid "Flow"
-msgstr "플로"
+msgstr "플로우"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:61
 msgid ""
@@ -331,9 +318,7 @@ msgid ""
 "The Generic Cell Rate Algorithm: one theoretical arrival time per client "
 "that admits a burst of :math:`N` then one request per emission interval, "
 "with no window boundaries."
-msgstr ""
-"Generic Cell Rate Algorithm입니다. 클라이언트마다 이론적 도착 시각 하나만 두고, :math:`N`\\ 개의 "
-"버스트를 허용한 뒤 방출 간격마다 요청 하나를 허용합니다. 윈도 경계가 없습니다."
+msgstr "Generic Cell Rate Algorithm입니다. 클라이언트마다 이론적 도착 시각 하나만 두고, :math:`N`\\ 개의 버스트를 허용한 뒤 방출 간격마다 요청 하나를 허용합니다. 윈도우 경계가 없습니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:75
 msgid "Handoff"
@@ -465,9 +450,7 @@ msgid ""
 "It keeps a root and an intermediate in the storage of automatic HTTPS, "
 "writes a revocation list, and can serve other machines as an ACME server "
 "(SID 0021)."
-msgstr ""
-"엣지가 내부 이름을 위해 직접 운영하는 인증 기관입니다. 루트와 중간 인증서를 자동 HTTPS 저장소에 두고, 폐지 목록을 쓰며, "
-"ACME 서버로서 다른 기계에 서비스할 수 있습니다(SID 0021)."
+msgstr "엣지가 내부 이름을 위해 직접 운영하는 인증 기관입니다. 루트와 중간 인증서를 자동 HTTPS 저장소에 두고, 폐지 목록을 쓰며, ACME 서버로서 다른 머신에 제공할 수 있습니다(SID 0021)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:105
 msgid "MAC token"
@@ -509,10 +492,7 @@ msgid ""
 "bans, commands, the sticky table and the shares of fleet caps; with "
 "``forward`` they also send flows to their owner. At most 64 nodes (SID "
 "0022 to SID 0026)."
-msgstr ""
-"``mesh`` 절에 공유 키와 함께 나열된 엣지 클러스터의 노드들입니다. 0.5초마다 UDP로 서로를 프로브하고, 차단, 명령, "
-"스티키 테이블, 플릿 상한의 몫을 공유합니다. ``forward``\\ 가 있으면 플로를 소유 노드로 보내기도 합니다. 노드는 최대 "
-"64개입니다(SID 0022부터 SID 0026까지)."
+msgstr "``mesh`` 절에 공유 키와 함께 나열된 엣지 클러스터의 노드들입니다. 0.5초마다 UDP로 서로를 프로브하고, 차단, 명령, 스티키 테이블, 플릿 상한의 몫을 공유합니다. ``forward``\\ 가 있으면 플로우를 소유 노드로 보내기도 합니다. 노드는 최대 64개입니다(SID 0022부터 SID 0026까지)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:114
 msgid "Node"
@@ -541,16 +521,14 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:120
 msgid "Opening"
-msgstr "개방"
+msgstr "오프닝"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:121
 msgid ""
 "In a sequential-work proof, one leaf label plus the sibling labels along "
 "its path to the root; the verifier recomputes the path and compares with "
 "the commitment."
-msgstr ""
-"순차 작업 증명에서 잎 라벨 하나와, 그 잎에서 루트까지의 경로에 있는 형제 라벨입니다. 검증자는 경로를 다시 계산해 커밋먼트와 "
-"비교합니다."
+msgstr "순차 작업 증명에서 리프 라벨 하나와, 그 리프 노드에서 루트까지의 경로에 있는 형제 라벨입니다. 검증자는 경로를 다시 계산해 커밋먼트와 비교합니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:123
 msgid "Owner"
@@ -561,9 +539,7 @@ msgid ""
 "The node of a mesh that serves a client under peer forwarding: the live "
 "node with the largest rendezvous score for the client's address (SID "
 "0026)."
-msgstr ""
-"동료 전달에서 클라이언트를 서비스하는 메시의 노드입니다. 클라이언트 주소에 대한 랑데부 점수가 가장 큰 살아 있는 노드입니다(SID "
-"0026)."
+msgstr "피어 전달에서 클라이언트를 서비스하는 메시의 노드입니다. 클라이언트 주소에 대한 랑데부 점수가 가장 큰 살아 있는 노드입니다(SID 0026)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:126
 msgid "Passive health"
@@ -592,7 +568,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:132
 msgid "Peer forwarding"
-msgstr "동료 전달"
+msgstr "피어 전달"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:133
 msgid ""
@@ -636,11 +612,7 @@ msgid ""
 "round trip stays at or below 3 ms, and *wide-area* above 3 ms. A mesh "
 "returns from wide-area to regional only below 1.5 ms (``Regime::step`` in "
 "``crates/lb/src/mesh.rs``)."
-msgstr ""
-"동료들과의 왕복 시간의 95번째 백분위수로 고르는 메시의 라우팅 모드입니다. 살아 있는 동료가 없으면 *standalone*, 왕복 "
-"시간이 3 ms 이하인 동안은 *regional*, 3 ms를 넘으면 *wide-area*\\ 입니다. 메시는 1.5 ms "
-"아래에서만 wide-area에서 regional로 돌아옵니다(``crates/lb/src/mesh.rs``\\ 의 "
-"``Regime::step``)."
+msgstr "피어들과의 왕복 시간의 95번째 백분위수로 고르는 메시의 라우팅 모드입니다. 살아 있는 피어가 없으면 *standalone*, 왕복 시간이 3 ms 이하인 동안은 *regional*, 3 ms를 넘으면 *wide-area*\\ 입니다. 메시는 1.5 ms 아래에서만 wide-area에서 regional로 돌아옵니다(``crates/lb/src/mesh.rs``\\ 의 ``Regime::step``)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:144
 msgid "Rendezvous hashing"
@@ -828,10 +800,7 @@ msgid ""
 "every frontend and owns the flow table and the UDP mappings; relay "
 "threads carry TCP streams; on Linux the event-driven HTTP workers, one "
 "per processor, serve HTTP connections (SID 0015, SID 0016)."
-msgstr ""
-"엣지에서 트래픽을 서비스하는 스레드입니다. 엣지 워커는 모든 프런트엔드에 대해 accept하고 플로 테이블과 UDP 매핑을 "
-"소유합니다. 중계 스레드는 TCP 스트림을 나릅니다. Linux에서는 프로세서마다 하나씩인 이벤트 기반 HTTP 워커가 HTTP "
-"연결을 서비스합니다(SID 0015, SID 0016)."
+msgstr "엣지에서 트래픽을 서비스하는 스레드입니다. 엣지 워커는 모든 프런트엔드에 대해 accept하고 플로우 테이블과 UDP 매핑을 소유합니다. 중계 스레드는 TCP 스트림을 나릅니다. Linux에서는 프로세서마다 하나씩인 이벤트 기반 HTTP 워커가 HTTP 연결을 서비스합니다(SID 0015, SID 0016)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:192
 msgid "Zaxonlite"
@@ -1041,11 +1010,4 @@ msgid ""
 "TLS on the workers, shared affinity and fleet caps, peer forwarding, the "
 "spill cache, the database authority, the upgrade handoff, plugin tiers, "
 "the operator console of the edge, and staged admission."
-msgstr ""
-"Sibuna Discussions 0001부터 0032까지, ``docs/sid/records``, 2026: 프로세스, 기반 "
-"아키텍처, 선언형 정책 엔진, 의미 기반 검사, Zaxonlite 저장소 아키텍처, 수학적 기초, 콘솔 관리 인터페이스, AI 봇 "
-"트래픽 모니터링, 청크 요청 본문, Rust 포팅, sqlx를 통한 저장소, rustls를 통한 콘솔의 아웃바운드 TLS, 콘솔 "
-"저장소, 인그레스에서 받는 신뢰할 수 있는 JA4 지문, 분산 엣지 로드 밸런서, 이벤트 기반 HTTP 워커, 프로세스 내 교환, "
-"간단한 설정과 실행 중 설정, 트래픽 정책, 엣지 관측, 자동 HTTPS, 복제된 차단, 클러스터 설정, 워커 위의 TLS, 공유 "
-"어피니티와 플릿 상한, 동료 전달, spill 캐시, 데이터베이스 authority, 업그레이드 핸드오프, 플러그인 계층, 엣지의 "
-"운영자 콘솔, 단계적 허용."
+msgstr "Sibuna Discussions 0001부터 0032까지, ``docs/sid/records``, 2026: 프로세스, 기반 아키텍처, 선언형 정책 엔진, 의미 기반 검사, Zaxonlite 저장소 아키텍처, 수학적 기초, 콘솔 관리 인터페이스, AI 봇 트래픽 모니터링, 청크 요청 본문, Rust 포팅, sqlx를 통한 저장소, rustls를 통한 콘솔의 아웃바운드 TLS, 콘솔 저장소, 인그레스에서 받는 신뢰할 수 있는 JA4 지문, 분산 엣지 로드 밸런서, 이벤트 기반 HTTP 워커, 프로세스 내 교환, 간단한 설정과 실행 중 설정, 트래픽 정책, 엣지 관측, 자동 HTTPS, 복제된 차단, 클러스터 설정, 워커 위의 TLS, 공유 어피니티와 플릿 상한, 피어 전달, spill 캐시, 데이터베이스 authority, 업그레이드 핸드오프, 플러그인 계층, 엣지의 운영자 콘솔, 단계적 허용."

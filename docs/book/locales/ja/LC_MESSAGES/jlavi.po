@@ -566,8 +566,7 @@ msgid ""
 "writes its own address and port from the nodes list into mesh.self. We "
 "run the check in that directory. The shared key authenticates peers, and "
 "accept_config lets them receive a cluster reload."
-msgstr ""
-"両ノードで同じモジュールを使えます。空のディレクトリに32バイトの乱数を格納したmesh.keyを作成し、もう一方のノードへ安全にコピーします。各ノードはnodesリストにある自身のアドレスとポートをmesh.selfに書き、このディレクトリで検証します。共有鍵でピアを認証し、accept_configでクラスタの設定の再読み込みを受け付けます。"
+msgstr "両ノードで同じモジュールを使えます。空のディレクトリに32バイトの乱数を格納したmesh.keyを作成し、もう一方のノードへ安全にコピーします。各ノードはnodesリストにある自身のアドレスとポートをmesh.selfに書き、このディレクトリで検証します。共有鍵でピアを認証し、accept_configでクラスターの設定の再読み込みを受け付けます。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:208
 msgid ""

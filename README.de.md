@@ -1,9 +1,9 @@
-<!-- English source SHA-256: 4c67703ca6d3304b7b577e9000320ec59884185b2ef46b6fcc2b14a811cf150f -->
+<!-- English source SHA-256: 042dfd1f971e2a895223216b56e2eaa8b0119c40748dfe2230db4fc208e2d004 -->
 <h1 align="center">sibuna</h1>
-<p align="center">Verteilter Edge-Lastverteiler und Web Application Firewall</p>
+<p align="center">Verteilter Edge-Load-Balancer und Web Application Firewall</p>
 <p align="center">
   <a href="#features">Funktionen</a> ·
-  <a href="#load-balancing">Lastverteilung</a> ·
+  <a href="#load-balancing">Load Balancing</a> ·
   <a href="#beside-haproxy-and-envoy">Benchmarks</a> ·
   <a href="#quickstart">Schnellstart</a> ·
   <a href="#console">Konsole</a> ·
@@ -19,19 +19,19 @@
   <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a>
 </p>
 
-Sibuna leitet TCP, UDP und HTTP von einem einzelnen Edge-Knoten oder einem Mesh an gesunde Server weiter. Es kann TLS terminieren, ausgewählte HTTP-Routen prüfen und Backends vor DDoS-Fluten schützen.
+Sibuna routet TCP, UDP und HTTP von einem einzelnen Edge-Knoten oder einem Mesh an gesunde Server. Es kann TLS terminieren, ausgewählte HTTP-Routen inspizieren und Backends vor DDoS-Fluten schützen.
 
 ## Einsatzgebiete von Sibuna
 
 - **Öffentliche Websites**
 
-  Wir bedienen Browser über HTTP/2 oder HTTP/3, erneuern öffentliche Zertifikate mit Let's Encrypt und prüfen Anfragen vor der Weiterleitung an HTTP/1.1-Replikate.
+  Browser über HTTP/2 oder HTTP/3 bedienen, öffentliche Zertifikate über Let's Encrypt erneuern und Anfragen prüfen, bevor sie an HTTP/1.1-Replikas weitergeleitet werden.
 - **Interne gRPC-Dienste**
 
-  Wir stellen mit der lokalen CA Zertifikate für interne Namen aus. Clients vertrauen ihrem Stammzertifikat und rufen den Dienst über TLS auf. Ein HTTP/2-Backend überträgt gRPC-Nachrichten und Trailer.
+  Zertifikate für interne Namen über die lokale CA ausstellen. Clients vertrauen ihrem Root-Zertifikat und rufen den Dienst über TLS auf. Ein HTTP/2-Backend transportiert gRPC-Nachrichten und Trailer.
 - **Ein Cluster aus Edge-Knoten**
 
-  Wir verteilen eine geprüfte Routingkonfiguration im Mesh. Die Knoten können Sperren und gelernte Serverzuordnungen austauschen, während jeder Knoten Verkehr an seine Backend-Pools weiterleitet.
+  Eine geprüfte Routing-Konfiguration im Mesh verteilen. Knoten können Sperren und gelernte Affinitäten teilen, während jeder Knoten Traffic an seine eigenen Backend-Pools weiterleitet.
 
 [Was ist Sibuna?](https://insanai.github.io/sibuna/de/book/introduction.html)
 
@@ -39,23 +39,23 @@ Sibuna leitet TCP, UDP und HTTP von einem einzelnen Edge-Knoten oder einem Mesh 
 
 ## Funktionen
 
-- **Eine ausführbare Datei:** Engine, eingebetteter SQLite-Speicher, Browser-Löser und Konsolen-Assets.
-- **Native Pakete:** Linux, macOS, Windows, FreeBSD und OpenBSD. Der Browser-Löser nutzt WebAssembly.
-- **Browser-Challenges:** Nachweis sequenzieller Arbeit (Standard) oder Hashcash, danach eine signierte Sitzung.
-- **Zugangsrichtlinien:** Anfragen nach Adresse, Pfad, Headern und User-Agent zulassen, mit einer Challenge belegen, gewichten oder ablehnen.
-- **Lastverteilung:** TCP, UDP und HTTP vor mehreren Servern, mit TLS-Terminierung, automatischen Zertifikaten und einem Cluster-Modus. Siehe [Lastverteilung](#load-balancing).
-- **[DDoS-Schutz am Netzrand](https://insanai.github.io/sibuna/de/book/operations.html#edge-admission-under-attack)** Wir können gleichzeitige Datenflüsse pro Client-IP und Frontend begrenzen, bei hoher Auslastung weniger neue Adressen zulassen und UDP-Kapazität für bestätigte Datenflüsse reservieren. Bei Angriffen, die den Netzanschluss auslasten, muss der Verkehr bereits im vorgelagerten Netz gefiltert werden.
-- **TLS-Fingerabdrücke:** den JA4-Fingerabdruck, den ein vertrauenswürdiger Eingangsproxy weiterleitet, exakt oder per Präfix abgleichen.
-- **Anwendungsprüfung:** eingebaute Prüfungen für SQL-Injection, XSS, Path Traversal und Command Injection.
-- **Lokale Ratenlimits:** Bursts und Dauerlast steuern, optional mit Limits je Regel.
-- **Betreiberkonsole:** Datenverkehr, Länderstichproben, aufgezeichnete Vorfälle und Richtlinienbearbeitung.
-- **Cluster-Unterstützung:** ein gesonderter Build teilt Richtlinien und Reputation über PostgreSQL.
+- **Eine einzige Binärdatei:** Engine, eingebetteter SQLite-Speicher, Browser-Solver und Konsolen-Assets.
+- **Native Pakete:** Linux, macOS, Windows, FreeBSD und OpenBSD. Der Browser-Solver nutzt WebAssembly.
+- **Browser-Challenges:** Proof of Sequential Work (Standard) oder Hashcash, gefolgt von einer signierten Session.
+- **Zugriffsrichtlinien:** Anfragen nach Adresse, Pfad, Headern und User-Agent zulassen, mit einer Challenge belegen, gewichten oder ablehnen.
+- **Load Balancing:** TCP, UDP und HTTP vor mehreren Servern, mit TLS-Terminierung, automatischen Zertifikaten und einem Cluster-Modus. Siehe [Load Balancing](#load-balancing).
+- **[DDoS-Schutz am Edge](https://insanai.github.io/sibuna/de/book/operations.html#edge-admission-under-attack)** Gleichzeitige Flows pro Client-IP und Frontend begrenzen, unter Last die Zulassung neuer Adressen drosseln und UDP-Kapazität für bestätigte Flows reservieren. Bei Angriffen, die den Uplink sättigen, ist vorgelagertes Upstream-Filtering erforderlich.
+- **TLS-Fingerprints:** Den JA4-Fingerprint, den ein vertrauenswürdiger Ingress weiterleitet, exakt oder per Präfix abgleichen.
+- **Anwendungsprüfung:** Eingebaute Prüfungen auf SQL-Injection, XSS, Path Traversal und Command Injection.
+- **Lokale Rate-Limits:** Bursts und Dauerlast steuern, optional mit Limits pro Regel.
+- **Operator-Konsole:** Traffic, Länderstichproben, aufgezeichnete Vorfälle und Policy-Bearbeitung.
+- **Cluster-Unterstützung:** Ein separater Build teilt Policies und Reputation über PostgreSQL.
 
 <a id="load-balancing"></a>
 
-## Lastverteilung
+## Load Balancing
 
-Sibuna 1.0.0-rc.7 enthält den Edge-Modus. Den Release Candidate können wir auch [aus dem Quellcode bauen](#build-from-source).
+Sibuna 1.0.0-rc.7 enthält den Edge-Modus. Der Release Candidate lässt sich auch [aus dem Quellcode bauen](#build-from-source).
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -67,22 +67,22 @@ sibuna --config-file edge.jlv
 
 [Sibuna mit Jlavi konfigurieren](https://insanai.github.io/sibuna/de/book/jlavi.html)
 
-- **Weiterleitung:** TCP und UDP, unentschlüsseltes Durchreichen von TLS, geroutet nach Servername (exakt oder Platzhalter), Durchreichen von QUIC und das PROXY-Protokoll.
-- **Unter Angriff:** Flusslimits je Client-Adresse und je Frontend, Sperren, die schon beim Annehmen einer Verbindung geprüft und über das Mesh geteilt werden, automatische Sperren, Ablehnung per Reset oder Tarpit, ein Druckmodus, der bekannte Clients zuerst zulässt, Annahme-Threads auf mehreren Kernen und ein UDP-Paketbudget mit einer Reserve für bestätigte Clients.
-- **HTTP:** TLS-Terminierung mit PEM-Bündeln im Stil von HAProxy und Post-Quanten-Schlüsselaustausch (X25519MLKEM768); HTTP/1.1, HTTP/2, HTTP/3 und WebSocket; Routing nach Hostname (exakt oder Platzhalter wie `*.example.org`) und Pfad zu HTTP/1.1-, HTTP/2- oder HTTP/3-Servern. Unter Linux bedienen ereignisgesteuerte Worker die Verbindungen, ein Worker pro Prozessor.
-- **Zertifikate:** automatisch über ACME mit Erneuerung, Ausweich-Zertifizierungsstellen und External Account Binding; Wildcards über DNS mit einem Hook-Programm, einem Update nach RFC 2136 oder der Cloudflare-API; OCSP-Stapling; Zertifikate auf Abruf hinter einem Guard; eine lokale Zertifizierungsstelle für `localhost`, interne Namen und IP-Adressen, mit einer Sperrliste und einem eigenen ACME-Server.
-- **Server:** Zustandsprüfungen, Slow Start, Draining, Gewichte, Sticky Sessions und ein Limit für Flüsse je Server.
-- **Änderungen im laufenden Betrieb:** Beim erfolgreichen Neuladen bleiben bestehende TCP-Verbindungen erhalten. Über den Admin-Socket lassen sich Server leeren (Draining), gewichten, hinzufügen und entfernen (`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`). Unter Linux übernimmt eine neue ausführbare Datei die lauschenden Sockets und die UDP-Zuordnungen der alten; QUIC-Verbindungen enden.
-- **Cluster:** Die Knoten eines Mesh teilen die Sticky-Tabelle und die Flusslimits eines Servers und leiten einen Client an den Knoten weiter, dem er gehört. Eine PostgreSQL-Datenbank kann eine Konfiguration an alle Knoten verteilen und sie zurückrollen. Eine gemappte Datei bewahrt Affinitätshinweise über einen Neustart hinweg.
-- **Hooks:** bei der Verbindung und bei der Anfrage, einkompiliert, als WebAssembly mit einem Budget oder als Agent an einem Unix-Socket.
-- **Beobachtung:** Metriken, Zugriffsprotokolle und eine Konsolenansicht von Servern, Flüssen und Ablehnungen.
+- **Weiterleitung:** TCP und UDP, TLS-Passthrough mit Routing nach Servername (exakt oder Wildcard), QUIC-Passthrough und das PROXY-Protokoll.
+- **Unter Angriff:** Flow-Limits pro Client-Adresse und Frontend, Sperren, die bereits beim Verbindungsaufbau geprüft und über das Mesh geteilt werden, automatische Sperren, Ablehnung per Reset oder Tarpit, ein Druckmodus, der bekannte Clients bevorzugt zulässt, Accept-Threads auf mehreren Kernen und ein UDP-Paketbudget mit Reserve für bestätigte Clients.
+- **HTTP:** TLS-Terminierung mit PEM-Bundles im HAProxy-Format und Post-Quanten-Schlüsselaustausch (X25519MLKEM768); HTTP/1.1, HTTP/2, HTTP/3 und WebSocket; Routing nach Hostname (exakt oder Wildcard wie `*.example.org`) und Pfad an HTTP/1.1-, HTTP/2- oder HTTP/3-Server. Unter Linux bedienen eventgesteuerte Worker die Verbindungen, ein Worker pro Prozessor.
+- **Zertifikate:** Automatisch über ACME mit Erneuerung, Fallback-CAs und External Account Binding; Wildcards über DNS mit einem Hook-Programm, RFC-2136-Update oder der Cloudflare-API; OCSP-Stapling; On-Demand-Zertifikate hinter einem Guard; eine lokale CA für `localhost`, interne Namen und IP-Adressen, mit Sperrliste und eigenem ACME-Server.
+- **Server:** Health-Checks, Slow Start, Draining, Gewichte, Sticky Sessions und ein Flow-Limit pro Server.
+- **Änderungen im laufenden Betrieb:** Ein akzeptierter Reload erhält bestehende TCP-Verbindungen. Über den Admin-Socket lassen sich Server drainen, gewichten, hinzufügen und entfernen (`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`). Unter Linux übernimmt eine neue Binärdatei die Listening-Sockets und die UDP-Zuordnungen der alten; QUIC-Verbindungen werden dabei beendet.
+- **Cluster:** Die Knoten eines Mesh teilen die Sticky-Tabelle und die Flow-Limits eines Servers und leiten einen Client an den zuständigen Knoten weiter. Eine PostgreSQL-Datenbank kann eine Konfiguration an alle Knoten ausrollen und zurückrollen. Eine gemappte Datei bewahrt Affinitätshinweise über einen Neustart hinweg.
+- **Hooks:** Auf Verbindungs- und Request-Ebene, einkompiliert, als WebAssembly mit Budget oder als Agent an einem Unix-Socket.
+- **Beobachtbarkeit:** Metriken, Access-Logs und eine Konsolenansicht für Server, Flows und Ablehnungen.
 
-Gate oder Shield gilt für die Namen, die es brauchen, oder für keinen. Die Datei bleibt
-maßgeblich: Eine Änderung zur Laufzeit gilt bis zum nächsten Neuladen.
+Gate oder Shield gelten für die Namen, die sie benötigen, oder für keinen. Die Konfigurationsdatei bleibt
+maßgeblich: Änderungen zur Laufzeit gelten bis zum nächsten Reload.
 
-Die Prüfung unter Produktionsverkehr steht noch aus. Seine
+Die Qualifizierung unter Produktivverkehr steht noch aus. Die
 Cluster-Funktionen wurden auf drei Hosts getestet. Jede
-[Entwurfsdiskussion](https://insanai.github.io/sibuna/sid/) nennt, was gebaut ist und
+[Entwurfsdiskussion](https://insanai.github.io/sibuna/sid/) nennt, was bereits umgesetzt ist und
 welche Lücken bekannt sind.
 
 <a id="quickstart"></a>
@@ -90,13 +90,13 @@ welche Lücken bekannt sind.
 ## Schnellstart
 
 [Lade ein Release](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.7) für deine
-Plattform herunter. Das Standardpaket unterstützt Speicherung und Konsole. Die Konsole startet mit
+Plattform herunter. Das Standardpaket enthält Speicherung und Konsole. Die Konsole startet mit
 `--console`.
 
 | Plattform | Paket | Voraussetzungen |
 | --- | --- | --- |
-| Linux x86-64 | `sibuna-linux-amd64.tar.gz` | Linux 5.10 oder neuer; statisch gebundenes musl |
-| Linux ARM64 | `sibuna-linux-arm64.tar.gz` | Linux 5.10 oder neuer; statisch gebundenes musl |
+| Linux x86-64 | `sibuna-linux-amd64.tar.gz` | Linux 5.10 oder neuer; statisch gelinktes musl |
+| Linux ARM64 | `sibuna-linux-arm64.tar.gz` | Linux 5.10 oder neuer; statisch gelinktes musl |
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 oder neuer |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 oder neuer |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 oder neuer; natives `sibuna.exe` |
@@ -106,18 +106,17 @@ Plattform herunter. Das Standardpaket unterstützt Speicherung und Konsole. Die 
 macOS-Builds sind unsigniert. Jedes Paket enthält Lizenzen,
 Quellverweise und ein Build-Manifest. Prüfe das Archiv vor der Nutzung gegen `SHA256SUMS`.
 
-Debian/RPM-Pakete unterstützen Linux x86-64 und ARM64; Arch `sibuna-bin` unterstützt x86-64.
-Pakete für FreeBSD 15.1 und OpenBSD 7.9 unterstützen x86-64 und installieren die CLI.
-Linux-Pakete enthalten einen optionalen, deaktivierten systemd-Dienst. BSD-Pakete erzeugen
-weder Dienst noch Konto oder Zustand. Dies sind Upstream-Downloads; die Aufnahme in
-Community-Archive ist ein separates Verfahren. Das Release enthält auch ein Helm-Chart und ein
+Debian/RPM-Pakete decken Linux x86-64 und ARM64 ab; Arch `sibuna-bin` deckt x86-64 ab.
+Pakete für FreeBSD 15.1 und OpenBSD 7.9 decken x86-64 ab und installieren die CLI.
+Linux-Pakete enthalten einen optionalen, deaktivierten systemd-Dienst. BSD-Pakete legen
+weder Dienst noch Benutzerkonto oder Zustand an. Dies sind Upstream-Downloads; die Aufnahme in
+Community-Archive erfolgt getrennt. Das Release enthält außerdem ein Helm-Chart und ein
 Container-Image, `ghcr.io/insanai/sibuna`.
 Die [Paket-Betriebsanleitung](https://insanai.github.io/sibuna/de/book/operations.html)
-beschreibt Installation, Verifikation, privaten Zustand, Upgrades und die Einrichtung unter
-Kubernetes.
+beschreibt Installation, Verifikation, privaten Zustand, Upgrades und das Kubernetes-Setup.
 
-Der [Sibuna-Homebrew-Tap](https://github.com/insanai/homebrew-sibuna) bietet eine CLI-Formel,
-die das geprüfte Release-Archiv für macOS und Linux (Apple Silicon, ARM64 und x86-64)
+Der [Sibuna-Homebrew-Tap](https://github.com/insanai/homebrew-sibuna) stellt eine CLI-Formel bereit,
+die das verifizierte Release-Archiv für macOS und Linux (Apple Silicon, ARM64 und x86-64)
 installiert. Der Tap folgt dem neuesten veröffentlichten Release. Die Installation startet keinen Dienst:
 
 ```sh
@@ -126,7 +125,7 @@ brew install insanai/sibuna/sibuna
 sibuna --version
 ```
 
-Für Linux x86-64, mit deiner Anwendung auf Port 3000:
+Für Linux x86-64, wenn deine Anwendung auf Port 3000 lauscht:
 
 ```sh
 curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.7/sibuna-linux-amd64.tar.gz
@@ -137,28 +136,28 @@ tar -xzf sibuna-linux-amd64.tar.gz
 ./sibuna --host 127.0.0.1 --port 8080 --upstream-port 3000 --secret-file ./sibuna.seed
 ```
 
-Öffne `http://127.0.0.1:8080` für einen lokalen Versuch. Terminiere bei einer öffentlichen
-Website HTTPS an einem vertrauenswürdigen Eingangsproxy und halte Sibunas Listener privat.
-Folge der [Einsatzanleitung](https://insanai.github.io/sibuna/de/book/operations.html) für Caddy
+Öffne `http://127.0.0.1:8080`, um es lokal auszuprobieren. Terminiere bei einer öffentlichen
+Website HTTPS an einem vertrauenswürdigen Ingress und halte Sibunas Listener privat.
+Folge der [Deployment-Anleitung](https://insanai.github.io/sibuna/de/book/operations.html) für Caddy
 oder nginx.
 
-Der Standardmodus ist `reverse_proxy`. Nutze `--mode forward_auth`, wenn dein Eingangsproxy
-Anfragen weiterleitet und Sibuna nach einer Zugangsentscheidung fragt. Die Anleitung enthält
+Der Standardmodus ist `reverse_proxy`. Nutze `--mode forward_auth`, wenn dein Ingress
+Anfragen weiterleitet und Sibuna um eine Zugangsentscheidung bittet. Die Anleitung enthält
 beide Konfigurationen. Shields eingebaute Prüfung ist standardmäßig aktiv. Nutze `--gate` für
-Zulassung ohne diesen Prüfer. Wähle Zugangsregeln mit `--policy-file <file>`, auch Regeln für
+die Zulassung ohne diesen Inspektor. Definiere Zugriffsregeln mit `--policy-file <file>`, einschließlich Regeln für
 API-Clients und Health-Checks, die keine Browser-Challenge ausführen können. `./sibuna --help`
 listet alle Optionen auf.
 
-Entpacke unter Windows die ZIP-Datei und führe `.\sibuna.exe --help` in PowerShell aus.
-Beende es mit Ctrl+C. Beschränke den Zugriff auf Seed-, Zugangsdaten- und Datendateien mit
+Entpacke unter Windows das ZIP-Archiv und führe `.\sibuna.exe --help` in PowerShell aus.
+Beende Sibuna mit Strg+C. Beschränke den Zugriff auf Seed-, Zugangsdaten- und Datendateien mit
 Windows-ACLs.
 
 <a id="build-from-source"></a>
 
 ### Aus dem Quellcode bauen
 
-Wir bauen und testen mit **Rust 1.100**, das der standardmäßige JLV-Compiler voraussetzt. Den reinen JSON-Daemon können wir mit Rust 1.100 und `--no-default-features` bauen und bei Bedarf `sqlite,console` auswählen.
-Browser-Löser und Konsolenoberfläche sind in Rust geschrieben und zu WebAssembly kompiliert; der
+Alle Feature-Sets erfordern **Rust 1.100**. Der reine JSON-Daemon lässt sich mit `--no-default-features` bauen, und `sqlite,console` können bei Bedarf ausgewählt werden.
+Der Browser-Solver und die Konsolenoberfläche sind in Rust geschrieben und werden zu WebAssembly kompiliert; der
 Build braucht weder Node noch npm.
 
 ```sh
@@ -168,7 +167,7 @@ rustup toolchain install 1.100.0 --profile minimal --target wasm32-unknown-unkno
 cargo +1.100.0 build --release -p sibuna
 ```
 
-Die ausführbare Datei liegt unter `target/release/sibuna`. Es speichert seinen Zustand mit `--data-dir`
+Die Binärdatei liegt unter `target/release/sibuna`. Mit `--data-dir` speichert sie ihren Zustand
 in SQLite. Cluster-Builds nutzen `--features postgres-tls` und teilen eine PostgreSQL-Datenbank
 über `--database-url-file` und `--cluster-node`.
 [CONTRIBUTING.md](CONTRIBUTING.md) beschreibt Tests, Lints und Größenprüfungen.
@@ -177,7 +176,7 @@ in SQLite. Cluster-Builds nutzen `--features postgres-tls` und teilen eine Postg
 
 ## Konsole
 
-Die Konsole läuft in derselben ausführbaren Datei. Initialisiere einen Administrator bei gestopptem Daemon:
+Die Konsole läuft in derselben Binärdatei. Initialisiere einen Administrator bei gestopptem Daemon:
 
 ```sh
 ./sibuna init-admin admin --data-dir ./data
@@ -185,31 +184,31 @@ Die Konsole läuft in derselben ausführbaren Datei. Initialisiere einen Adminis
   --data-dir ./data --console 127.0.0.1:19446
 ```
 
-Öffne `http://127.0.0.1:19446/console/` und ändere das vorläufige Passwort.
+Öffne `http://127.0.0.1:19446/console/` und ändere das temporäre Passwort.
 Die [Betriebsanleitung](https://insanai.github.io/sibuna/de/book/operations.html) erklärt
-HTTPS-Zugriff, GeoIP-Importe, Benutzer, API-Tokens und Wandanzeigen.
+HTTPS-Zugriff, GeoIP-Importe, Benutzer, API-Tokens und Wall-Displays.
 
 ![Sibuna-Konsole mit Navigation, Globus der Länderaktivität, Anfrageergebnissen, Abdeckung und Länderstichproben](docs/readme/images/console-globe-93225dc9.png)
 
-Der Globus zeigt Länderstichproben der letzten Minute. Marker geben ungefähre Länderpositionen
-an. Pfeile zeigen zum eingestellten Standort des Servers. Sie zeigen keine einzelnen
-Live-Verbindungen. GeoIP benötigt einen getrennt importierten Datensatz.
+Der Globus zeigt Stichproben der Länderaktivität aus der letzten Minute. Marker geben ungefähre Länderpositionen
+an. Pfeile zeigen zum konfigurierten Standort des Servers. Sie stellen keine einzelnen
+Live-Verbindungen dar. GeoIP benötigt einen getrennt importierten Datensatz.
 Setze `--console-location <latitude,longitude>`, um den Server auf dem Globus zu platzieren.
 
 <details>
-<summary>Verkehrsübersicht, Sicherheitsübersicht, Richtlinien und Vorfallsuntersuchung</summary>
+<summary>Traffic-Übersicht, Sicherheitsübersicht, Policies und Vorfallsuntersuchung</summary>
 
-**Verkehrsübersicht** - Live-Anfrageergebnisse, Zähler für Zulassungen und Challenges, Knotenstatus und Sparklines.
+**Traffic-Übersicht** - Live-Anfrageergebnisse, Zähler für Zulassungen und Challenges, Knotenstatus und Sparklines.
 
-![Verkehrsübersicht der Sibuna-Konsole mit Zählern für Anfragen, Zulassungen, Challenges und Ablehnungen](docs/readme/images/console-traffic-fba02476.png)
+![Traffic-Übersicht der Sibuna-Konsole mit Zählern für Anfragen, Zulassungen, Challenges und Ablehnungen](docs/readme/images/console-traffic-fba02476.png)
 
-**Sicherheitsübersicht** - aufgezeichnete Funde, Challenges, Sperren und ein Live-Ereignis-Feed.
+**Sicherheitsübersicht** - aufgezeichnete Funde, Challenges, Sperren und ein Live-Event-Feed.
 
-![Sicherheitsübersicht der Sibuna-Konsole mit Funden aus Prüfung, Challenges, Sperren und Honeypot](docs/readme/images/console-security.png)
+![Sicherheitsübersicht der Sibuna-Konsole mit Funden aus Inspektion, Challenges, Sperren und Honeypot](docs/readme/images/console-security.png)
 
-**Richtlinien** - die Regeln, die ein Knoten der Reihe nach anwendet, mit ihren aufgezeichneten Treffern.
+**Policies** - die Regeln, die ein Knoten der Reihe nach anwendet, mit ihren aufgezeichneten Treffern.
 
-![Richtlinienseite der Sibuna-Konsole mit der angewendeten Konfiguration und einer Erlauben-Regel](docs/readme/images/console-policies.png)
+![Policy-Seite der Sibuna-Konsole mit der angewendeten Konfiguration und einer Allow-Regel](docs/readme/images/console-policies.png)
 
 **Ereignisse** - aufgezeichnete Vorfälle, mit Filtern nach Modul, Land, Adresse, Pfad und Zeit.
 
@@ -217,47 +216,47 @@ Setze `--console-location <latitude,longitude>`, um den Server auf dem Globus zu
 
 </details>
 
-Der Globus und die Verkehrsübersicht wurden in einem normalen Chrome-Fenster mit
+Der Globus und die Traffic-Übersicht wurden in einem normalen Chrome-Fenster mit
 v1.0.0-beta.2 aufgenommen; die anderen Ansichten zeigen v1.0.0-beta.1. Alle Aufnahmen
-verwenden einen lokalen Testknoten mit erzeugtem Datenverkehr und GeoIP-Testzuordnungen.
+verwenden einen lokalen Testknoten mit generiertem Traffic und GeoIP-Testzuordnungen.
 Die angezeigten Zähler sind keine Benchmark-Ergebnisse.
 
 <a id="how-it-works"></a>
 
 ## Funktionsweise
 
-Ein Frontend nimmt die Verbindung an. Bei TCP oder UDP wählt Sibuna einen Server für den Datenstrom. Bei HTTP prüft Sibuna Host und Pfad jeder Anfrage, wendet die Firewall-Regeln der Route an und leitet zugelassene Anfragen an einen gesunden Server im gewählten Pool weiter. Jeder Edge-Knoten trifft diese Entscheidung selbst, während die Peers Serverzuordnungen und Sperren austauschen.
+Ein Frontend nimmt die Verbindung an. Bei TCP oder UDP wählt Sibuna einen Server für den Flow. Bei HTTP gleicht Sibuna Host und Pfad jeder Anfrage ab, wendet die Firewall-Policy der Route an und leitet zugelassenen Traffic an einen gesunden Server im gewählten Pool weiter. Jeder Edge-Knoten trifft diese Entscheidung selbst, während seine Peers Affinitäts- und Sperr-Updates austauschen.
 
 Eine Anfrage kann zugelassen, mit einer Challenge belegt oder abgelehnt werden. Ein Besucher, der eine
-Challenge löst, erhält eine signierte Sitzung. Spätere Anfragen durchlaufen weiterhin die
-anwendbaren Richtlinien- und Ratenprüfungen.
+Challenge löst, erhält eine signierte Session. Spätere Anfragen durchlaufen weiterhin die
+geltenden Policy- und Rate-Limit-Prüfungen.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/admission-session-dark.svg">
-  <img src="docs/readme/images/admission-session.svg" alt="Rätsel lösen, signierte Sitzung erhalten und Regeln bei späteren Anfragen prüfen">
+  <img src="docs/readme/images/admission-session.svg" alt="Rätsel lösen, signierte Session erhalten und Regeln bei späteren Anfragen prüfen">
 </picture>
 
-Gate prüft Zugangsregeln, Sitzungen und lokale Ratenlimits. Shield ergänzt den eingebauten
-Angriffsprüfer. Shield ist der Standard; `--gate` wählt beim Start Gate.
+Gate prüft Zugriffsregeln, Sessions und lokale Rate-Limits. Shield ergänzt den eingebauten
+Angriffsinspektor. Shield ist der Standard; `--gate` wählt beim Start Gate.
 
 <details>
 <summary>Gate, Shield und die Crates in Sibuna</summary>
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/protection-surfaces-dark.svg">
-  <img src="docs/readme/images/protection-surfaces.svg" alt="Gate- und Shield-Entscheidungen über Anfragen: zulassen, Challenge stellen oder sperren">
+  <img src="docs/readme/images/protection-surfaces.svg" alt="Gate- und Shield-Entscheidungen über Anfragen: zulassen, Challenge stellen oder blockieren">
 </picture>
 
 Das Diagramm zeigt die eingebauten Gate- und Shield-Prüfungen.
-Eine gültige Sitzung umgeht weder anwendbare Angriffsprüfungen noch Anfragelimits.
+Eine gültige Session umgeht weder geltende Angriffsprüfungen noch Request-Limits.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/readme/images/subsystems-dark.svg">
   <img src="docs/readme/images/subsystems.svg" alt="Die Aufgaben der Crates in Sibuna">
 </picture>
 
-Die Crates trennen Netzwerk, Nachweise, Richtlinien, lokalen Zustand, Speicher und Verwaltung.
-Das [Buch](https://insanai.github.io/sibuna/de/book/) erklärt ihre Aufgaben.
+Die Crates trennen Netzwerk, Proofs, Policies, lokalen Zustand, Speicherung und Verwaltung.
+Das [Handbuch](https://insanai.github.io/sibuna/de/book/) erklärt ihre Aufgaben.
 
 </details>
 
@@ -265,19 +264,19 @@ Das [Buch](https://insanai.github.io/sibuna/de/book/) erklärt ihre Aufgaben.
 
 ### Einsatzgrenzen
 
-Der private Listener nutzt HTTP/1.1 hinter einem externen Eingangsproxy. Im Edge-Modus können wir TLS, HTTP/2 und HTTP/3 in Sibuna terminieren und an Serverpools mit HTTP/1.1, HTTP/2 oder HTTP/3 weiterleiten.
-Im Forward-Auth-Modus prüft Sibuna die Metadaten, die der Eingangsproxy liefert. Im
-Reverse-Proxy-Modus deckt der eingebaute Prüfer die ersten 8 KiB eines Bodys ab. Uploads werden
+Der private Listener nutzt HTTP/1.1 hinter einem externen Ingress. Im Edge-Modus kann Sibuna TLS, HTTP/2 und HTTP/3 selbst terminieren und an Server-Pools mit HTTP/1.1, HTTP/2 oder HTTP/3 weiterleiten.
+Im Forward-Auth-Modus prüft Sibuna die Metadaten, die der Ingress liefert. Im
+Reverse-Proxy-Modus deckt der eingebaute Inspektor die ersten 8 KiB eines Bodys ab. Uploads werden
 zu deiner Anwendung gestreamt. WebSocket-Nachrichten werden ungeprüft weitergeleitet. Der
-Prüfer ist eine Heuristik, kein vollständiger Sprachparser.
+Inspektor ist eine Heuristik, kein vollständiger Sprachparser.
 
-Ratenlimits sind knotenlokal. Sibuna bietet keinen Schutz vor volumetrischen
+Rate-Limits sind knotenlokal. Sibuna bietet keinen Schutz vor volumetrischen
 Netzwerkangriffen.
-Der Austausch der ausführbaren Datei ohne verlorene Verbindungen und die ereignisgesteuerten
-Worker existieren nur unter Linux.
-Challenges sind an den Knoten gebunden, der sie ausgestellt hat; leite eine Challenge und ihre
-Lösung zum selben Knoten. Das strenge Leistungsziel der Konsole ist nicht
-formal bestanden. Prüfe die
+Das unterbrechungsfreie Binary-Upgrade und die eventgesteuerten
+Worker gibt es nur unter Linux.
+Challenges sind an den Knoten gebunden, der sie ausgestellt hat; route eine Challenge und ihre
+Lösung zum selben Knoten. Das strenge Leistungsziel der Konsole wurde noch nicht
+formal nachgewiesen. Prüfe die
 [Einsatzgrenzen und Messungen](https://insanai.github.io/sibuna/de/book/operations.html), bevor du
 die Konsole neben einer produktiven Anwendung aktivierst.
 
@@ -285,21 +284,21 @@ die Konsole neben einer produktiven Anwendung aktivierst.
 
 ## Benchmarks
 
-Das Buch nennt Quellrevision, Konfiguration und Host jedes Laufs. Diese Messungen zeigen
-Anfragekosten unter einigen Lasten auf einer Maschine. Sie messen weder gleichwertigen Schutz
-noch Bot-Genauigkeit.
+Das Handbuch dokumentiert Quellrevision, Konfiguration und Host jedes Laufs. Diese Messungen zeigen
+Anfragekosten unter einigen Workloads auf einer Maschine. Sie messen weder gleichwertigen Schutz
+noch Bot-Erkennungsgenauigkeit.
 
 <a id="sibuna-on-one-host"></a>
 
 ### Sibuna auf einem Host
 
 Diese Läufe nutzten einen AMD Ryzen 9 5950X. Der Daemon hatte vier CPUs und lief im
-Arbeitsspeicher; Lastgenerator und ein Stub-Ursprungsserver liefen auf acht anderen CPUs. `wrk`
+Arbeitsspeicher; Lastgenerator und ein Stub-Origin liefen auf acht anderen CPUs. `wrk`
 nutzte 64 Verbindungen über Loopback.
 Die Werte sind Mediane aus drei Läufen.
 
-- Im Forward-Auth-Modus lief jede Last mit 197.532 bis 211.636 Anfragen pro Sekunde, mit einem
-  p99 von 305 bis 327 µs und 11,7 bis 13,8 µs CPU pro Anfrage. Die Grenze war der Lastgenerator.
+- Im Forward-Auth-Modus lief jeder Workload mit 197.532 bis 211.636 Anfragen pro Sekunde, mit einem
+  p99 von 305 bis 327 µs und 11,7 bis 13,8 µs CPU pro Anfrage. Der Lastgenerator war das Limit.
 - Weitergeleitete Anfragen liefen mit 138.965 bis 147.303 pro Sekunde. Der Spitzenspeicher lag
   bei etwa 16 MiB.
 - Bei gleicher angebotener Last von 100.000 zugelassenen Anfragen pro Sekunde betrug die
@@ -309,7 +308,7 @@ Die Werte sind Mediane aus drei Läufen.
 
 ### Neben HAProxy und Envoy
 
-Am 25. November 2026 haben wir Sibuna, HAProxy 3.0.11 und Envoy 1.40.2 mit BoringSSL auf demselben Rechner gemessen. Jeder Proxy hatte acht CPUs und acht Worker-Threads. Wir verwendeten dieselben Ursprungsserver, dasselbe Zertifikat und denselben Lastgenerator mit 256 Verbindungen und einer Antwort von zwei Bytes über Loopback. Die ersten drei Zeilen zeigen den Median der Anfragen pro Sekunde aus drei Läufen zu je acht Sekunden. Die letzten drei zeigen den residenten Speicher am Ende des Laufs. Die Streuung der Anfragerate betrug höchstens 4 %. Alle Anfragen wurden abgeschlossen.
+Am 25. November 2026 haben wir Sibuna, HAProxy 3.0.11 und Envoy 1.40.2 mit BoringSSL auf demselben Host gemessen. Jeder Proxy hatte acht CPUs und acht Worker-Threads. Wir verwendeten dieselben Origins, dasselbe Zertifikat und denselben Lastgenerator mit 256 Verbindungen und einer Antwort von zwei Bytes über Loopback. Die ersten drei Zeilen zeigen den Median der Anfragen pro Sekunde aus drei Läufen zu je acht Sekunden. Die letzten drei zeigen den residenten Speicher am Ende des Laufs. Die Streuung der Anfragerate betrug in jedem Fall höchstens 4 %. Alle Anfragen wurden abgeschlossen.
 
 | Fall | Sibuna | HAProxy | Envoy |
 | --- | ---: | ---: | ---: |
@@ -320,16 +319,16 @@ Am 25. November 2026 haben wir Sibuna, HAProxy 3.0.11 und Envoy 1.40.2 mit Borin
 | Residenter Speicher, HTTP/1.1 über TLS | 21 MiB | 61 MiB | 61 MiB |
 | Residenter Speicher, HTTP/2 | 116 MiB | 112 MiB | 140 MiB |
 
-Bei unverschlüsseltem HTTP lagen Sibuna und HAProxy praktisch gleichauf. Bei HTTP/2 bediente HAProxy rund 48 % mehr Anfragen als Sibuna und benötigte dabei etwas weniger Speicher. Wir nutzten Envoy mit einer statischen Konfiguration und seinem Router-Filter. Andere Einstellungen oder Lastprofile können das Ergebnis verändern. Die kurzen Läufe sagen wenig über dynamische Konfiguration, Anwendungslatenz oder die Leistung in einem echten Netz aus. [Benchmarks](https://insanai.github.io/sibuna/de/book/benchmarks.html#sibuna-haproxy-and-envoy)
+Bei unverschlüsseltem HTTP lagen Sibuna und HAProxy praktisch gleichauf. Bei HTTP/2 bediente HAProxy rund 48 % mehr Anfragen als Sibuna und benötigte dabei etwas weniger Speicher. Wir nutzten Envoy mit einer statischen Konfiguration und seinem Router-Filter. Andere Einstellungen oder Workloads können das Ergebnis verändern. Diese kurzen Läufe sagen wenig über dynamische Konfiguration, Anwendungslatenz oder die Leistung in einem echten Netz aus. [Methode und Messungen](https://insanai.github.io/sibuna/de/book/benchmarks.html#sibuna-haproxy-and-envoy)
 
 <a id="beside-anubis"></a>
 
 ### Neben Anubis
 
-Wir haben die offizielle Release-Binärdatei von Anubis 1.27.0 mit denselben Lasten, CPUs und
+Wir haben die offizielle Release-Binärdatei von Anubis 1.27.0 mit denselben Workloads, CPUs und
 demselben Lastgenerator gemessen. Die Hashcash-Arbeit war angeglichen: 8 Nullbits für Sibuna,
-2 hexadezimale Nullziffern für Anubis. Der Ursprungsserver war `caddy respond`. Die Tabelle zeigt
-zugelassene Anfragen mit Sitzung.
+2 hexadezimale Nullziffern für Anubis. Der Origin war `caddy respond`. Die Tabelle zeigt
+zugelassene Anfragen mit Session.
 
 | Zugelassene Anfragen | Sibuna Gate | Sibuna Shield | Anubis 1.27.0 |
 | --- | ---: | ---: | ---: |
@@ -339,21 +338,21 @@ zugelassene Anfragen mit Sitzung.
 | Reverse Proxy, Anfr./s | 106.376 | 103.298 | 19.398 |
 | Reverse Proxy, p99 | 3.331 µs | 3.321 µs | 11.062 µs |
 
-Der zweite Lauf maß die Dauer von Zulassungsoperationen, jedes Produkt auf zwei CPUs. Anubis
+Der zweite Lauf maß Zulassungsoperationen, jedes Produkt auf zwei CPUs. Anubis
 lief einmal mit seinen standardmäßigen Ed25519-Tokens und einmal mit HS512-Tokens.
 
-| Operationen pro Sekunde | Sibuna (BLAKE3 mit Schlüssel) | Anubis (Ed25519) | Anubis (HS512) |
+| Operationen pro Sekunde | Sibuna (Keyed BLAKE3) | Anubis (Ed25519) | Anubis (HS512) |
 | --- | ---: | ---: | ---: |
-| Prüfung einer gültigen Sitzung | 88.104 | 10.951 | 16.976 |
+| Prüfung einer gültigen Session | 88.104 | 10.951 | 16.976 |
 | Prüfung ohne Authentifizierung | 78.997 | 28.619 | 27.785 |
-| Start einer Challenge | 42.664 | 7.893 | 7.952 |
-| Prüfung des Nachweises | 57.924 | 12.668 | 19.261 |
+| Challenge-Bootstrap | 42.664 | 7.893 | 7.952 |
+| Proof-Verifikation | 57.924 | 12.668 | 19.261 |
 
 Sibunas Spitzenspeicher blieb nahe 16 MiB. Anubis nutzte etwa 33 MiB im Forward-Auth-Modus und
 bis zu etwa 600 MiB im Reverse-Proxy-Modus. Anubis ist ein weit verbreitetes und
-leistungsfähiges Werkzeug, und diese Zeilen sind keine Rangliste. Mehrere sind nicht direkt
+leistungsfähiges Tool, und diese Zeilen sind keine Rangliste. Mehrere davon sind nicht direkt
 vergleichbar: Im Forward-Auth-Modus beantwortet Anubis einige Pfade selbst, es prüft keine
-Nutzlasten, und die Challenge-Seiten unterscheiden sich. Die Läufe nutzten Loopback ohne TLS,
+Payloads, und die Challenge-Seiten unterscheiden sich. Die Läufe nutzten Loopback ohne TLS,
 ohne echte Browser und ohne Speicherung.
 
 Die [Benchmark-Aufzeichnungen](benchmarks/results/README.md) enthalten Methode, Bereiche und
@@ -361,15 +360,15 @@ Wiederholungsbefehle: [product-latest.md](benchmarks/results/product-latest.md),
 [latency-latest.md](benchmarks/results/latency-latest.md),
 [comparison-latest.md](benchmarks/results/comparison-latest.md) und
 [admission-latest.md](benchmarks/results/admission-latest.md).
-Teil X des Buchs bespricht jeden Unterschied.
+Teil X des Handbuchs bespricht jeden Unterschied.
 
 <a id="documentation"></a>
 
 ## Dokumentation
 
-- [Buch](https://insanai.github.io/sibuna/de/book/): Konzepte, Algorithmen, Beispiele und Messungen.
+- [Handbuch](https://insanai.github.io/sibuna/de/book/): Konzepte, Algorithmen, Beispiele und Messungen.
 - [Whitepaper](https://insanai.github.io/sibuna/de/whitepaper/): Architektur, Beweise und Entwurfsdetails.
-- [Betriebsanleitung](https://insanai.github.io/sibuna/de/book/operations.html): Installation und Einsatz.
+- [Betriebsanleitung](https://insanai.github.io/sibuna/de/book/operations.html): Installation und Deployment.
 - [Referenz](https://insanai.github.io/sibuna/de/book/reference.html): Details zu CLI und Protokoll.
 - [Entwurfsdiskussionen](https://insanai.github.io/sibuna/sid/): Entscheidungen und technische Verträge.
 - [Mitwirken](CONTRIBUTING.md): Quellbuilds und Prüfungen.
@@ -378,13 +377,13 @@ Teil X des Buchs bespricht jeden Unterschied.
 
 ## Weitere Software
 
-- [Anubis](https://github.com/TecharoHQ/anubis): Browser-Challenges, um den Datenverkehr von Crawlern zu verringern.
+- [Anubis](https://github.com/TecharoHQ/anubis): Browser-Challenges, um Crawler-Traffic zu verringern.
 - [BunkerWeb](https://github.com/bunkerity/bunkerweb): nginx, ModSecurity, CRS und Bot-Challenges.
 - [ModSecurity](https://github.com/owasp-modsecurity/ModSecurity): eine WAF-Engine, die über Connectoren genutzt wird.
 - [Coraza](https://github.com/corazawaf/coraza): eine Go-WAF-Bibliothek mit Unterstützung für ModSecurity-Regeln und CRS.
 - [OWASP Core Rule Set](https://github.com/coreruleset/coreruleset): Angriffserkennungsregeln für WAF-Engines.
 
-Diese Projekte decken verschiedene Bereiche des Webschutzes ab. Sibunas Prüfer ist eingebaut;
+Diese Projekte decken verschiedene Bereiche des Webschutzes ab. Sibunas Inspektor ist eingebaut;
 er führt weder CRS noch andere ModSecurity-Regelsätze aus. Kombiniere Sibuna mit einer
 vollständigen WAF, wenn deine Anwendung eine breitere Regelabdeckung braucht.
 
@@ -393,7 +392,7 @@ vollständigen WAF, wenn deine Anwendung eine breitere Regelabdeckung braucht.
 ## Lizenz
 
 Sibuna steht unter **LGPL 3.0 oder später**. Die Lizenz umfasst die Engine, die Bibliotheken,
-den Browser-Löser und die Konsole einschließlich ihrer WebAssembly-Oberfläche.
+den Browser-Solver und die Konsole einschließlich ihrer WebAssembly-Oberfläche.
 
 [LICENSE](LICENSE) beschreibt den Umfang. [LICENSES](LICENSES) enthält die vollständigen
 Bedingungen. [NOTICE](NOTICE) nennt Abhängigkeiten. Quellen und Build-Skripte stehen unter
@@ -401,4 +400,4 @@ jedem Release-Tag bereit.
 
 Sibuna wurde von Vikrant Rathore geschrieben, mit Unterstützung von Ronak Rathore und Kanak
 Rathore. Unternehmen, die andere Lizenzbedingungen wünschen, können Vikrant Rathore kontaktieren.
-Bibliotheken und Materialien Dritter behalten ihre jeweiligen Lizenzen.
+Drittanbieter-Bibliotheken und -Materialien behalten ihre jeweiligen Lizenzen.

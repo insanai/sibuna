@@ -70,7 +70,7 @@ msgid "Ask bots to do the work."
 msgstr "让自动化客户端承担计算成本。"
 
 msgid "Beside HAProxy"
-msgstr "与 HAProxy 并排"
+msgstr "与 HAProxy 对比"
 
 msgid "Blocked by a rule"
 msgstr "被规则拒绝"
@@ -82,7 +82,7 @@ msgid "Book PDF"
 msgstr "手册 PDF"
 
 msgid "Both proxies ran on eight processors with 256 connections over loopback, each case for eight seconds, with no failed request. Sibuna is level or ahead in three cases. HAProxy is faster for HTTP/2, and we say why in the book."
-msgstr "两个代理都在八个处理器上运行，通过回环接口建立 256 个连接，每个场景运行八秒，没有失败的请求。Sibuna 在三个场景中持平或领先。HAProxy 在 HTTP/2 上更快，我们在技术手册中说明了原因。"
+msgstr "两个代理均在 8 核 CPU 上运行，通过回环接口建立 256 个连接，每个场景运行 8 秒，无任何失败请求。Sibuna 在三个场景中持平或领先；HAProxy 在 HTTP/2 上更快，我们在技术手册中分析了原因。"
 
 msgid "Bring post-quantum TLS to an existing website"
 msgstr "为现有网站部署抗量子 TLS"
@@ -118,7 +118,7 @@ msgid "Check the proof. Issue a session."
 msgstr "验证证明，签发会话。"
 
 msgid "Checking the proof is designed to take less computation than creating it."
-msgstr "验证证明所需的计算量，按设计应小于生成证明所需的计算量。"
+msgstr "验证证明的计算开销在设计上低于生成证明。"
 
 msgid "Choose a request journey"
 msgstr "选择一条请求路径"
@@ -148,7 +148,7 @@ msgid "Deadlines at a glance"
 msgstr "迁移期限一览"
 
 msgid "Decisions with context"
-msgstr "带上下文的决策"
+msgstr "附带背景的设计决策"
 
 msgid "Deployment examples and migration timelines"
 msgstr "部署示例与迁移时间表"
@@ -169,7 +169,7 @@ msgid "Digital signatures follow for the same federal systems."
 msgstr "上述联邦系统随后迁移数字签名。"
 
 msgid "Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools."
-msgstr "在网状集群中分发已验证的路由配置。各节点可以共享封禁和已学习的客户端亲和性，同时向各自的后端池转发流量。"
+msgstr "在网状集群中分发经过校验的路由配置。各节点可共享封禁列表与已学习的会话亲和性，同时将流量转发至各自的后端池。"
 
 msgid "Distributed edge load balancer and web application firewall"
 msgstr "分布式边缘负载均衡器和 Web 应用防火墙"
@@ -181,7 +181,7 @@ msgid "Download."
 msgstr "下载。"
 
 msgid "Each Sibuna Discussion states a design, its alternatives, what is built and what is not."
-msgstr "每份 Sibuna 讨论记录都说明一项设计、它的备选方案、已实现的部分和未实现的部分。这些设计讨论只有英文原文。"
+msgstr "每份 Sibuna 设计讨论（SID）都详述了一项设计、备选方案、已实现部分与未实现部分（仅提供英文原文）。"
 
 msgid "Edge nodes"
 msgstr "边缘节点"
@@ -199,7 +199,7 @@ msgid "First visit"
 msgstr "首次访问"
 
 msgid "Follow a request"
-msgstr "跟随一个请求"
+msgstr "追踪一次请求"
 
 msgid "From proofs to protection"
 msgstr "从证明到防护"
@@ -220,13 +220,13 @@ msgid "HTTPS ingress"
 msgstr "HTTPS 入口代理"
 
 msgid "HTTPS without a second proxy."
-msgstr "无需第二个代理的 HTTPS。"
+msgstr "无需第二层代理的 HTTPS。"
 
 msgid "Home"
 msgstr "首页"
 
 msgid "Hooks run at the connection and at the request: compiled in, as WebAssembly with a budget, or in a separate process. Metrics, access logs and a console show servers, flows and the reason for each refusal."
-msgstr "钩子在连接阶段和请求阶段运行：可以编译进程序，可以作为带预算的 WebAssembly，也可以放在独立进程中。指标、访问日志和控制台展示服务器、流以及每次拒绝的原因。"
+msgstr "Hook 可在连接阶段与请求阶段运行：支持静态编译内置、作为带执行预算的 WebAssembly 模块运行，或运行在独立进程中。指标、访问日志和控制台可展示服务器状态、连接流及每次拒绝的原因。"
 
 msgid "How to try it"
 msgstr "如何试用"
@@ -241,7 +241,7 @@ msgid "Internal gRPC services"
 msgstr "内部 gRPC 服务"
 
 msgid "Issue certificates for internal names with the local CA. Clients trust its root and call the service over TLS. An HTTP/2 backend carries gRPC messages and trailers."
-msgstr "使用本地 CA 为内部名称签发证书。客户端信任其根证书，通过 TLS 调用服务。HTTP/2 后端传输 gRPC 消息和尾部字段。"
+msgstr "使用本地 CA 为内部名称签发证书。客户端信任其根证书，并通过 TLS 调用服务。HTTP/2 后端负责承载 gRPC 消息和 Trailer。"
 
 msgid "Know the boundary"
 msgstr "了解边界"
@@ -265,7 +265,7 @@ msgid "Main"
 msgstr "主导航"
 
 msgid "Measured, with the losses"
-msgstr "实测结果，包括落后之处"
+msgstr "实测结果，坦陈落后之处"
 
 msgid "Member States begin the transition."
 msgstr "成员国启动迁移。"
@@ -277,13 +277,16 @@ msgid "Next step"
 msgstr "下一步"
 
 msgid "Nodes of a mesh share the sticky table and the limits of a server, and forward a client to the node that owns it. A PostgreSQL database can publish one configuration to every node and roll it back."
-msgstr "网格中的节点共享会话保持表和服务器的限制，并把客户端转发给拥有它的节点。PostgreSQL 数据库可以把同一份配置发布到每个节点，也可以回滚。"
+msgstr "网状集群中的节点共享会话保持表与单服务器并发限制，并将客户端转发至归属节点。PostgreSQL 数据库可将同一份配置发布至所有节点，并支持回滚。"
 
 msgid "November 2026"
 msgstr "2026 年 11 月"
 
+msgid "On this page"
+msgstr "本页内容"
+
 msgid "One process on the path"
-msgstr "路径上只有一个进程"
+msgstr "请求路径上仅需一个进程"
 
 msgid "Open source · LGPL 3.0 · {version}"
 msgstr "开源 · LGPL 3.0 · {version}"
@@ -334,7 +337,7 @@ msgid "Public connection"
 msgstr "公网连接"
 
 msgid "Public websites"
-msgstr "公共网站"
+msgstr "公开网站"
 
 msgid "RC7 includes the load balancer, firewall and console in one executable."
 msgstr "RC7 将负载均衡器、防火墙和控制台集成在一个可执行文件中。"
@@ -388,7 +391,7 @@ msgid "Sequential work happens in the browser. Later steps depend on earlier res
 msgstr "顺序计算在浏览器中进行。后续步骤依赖前面步骤的结果。"
 
 msgid "Serve browsers over HTTP/2 or HTTP/3, renew public certificates with Let's Encrypt and inspect requests before forwarding them to HTTP/1.1 replicas."
-msgstr "通过 HTTP/2 或 HTTP/3 接受浏览器连接，用 Let's Encrypt 续订公有证书，并在向 HTTP/1.1 副本转发前检查请求。"
+msgstr "通过 HTTP/2 或 HTTP/3 服务浏览器请求，使用 Let's Encrypt 续期公网证书，并在转发给 HTTP/1.1 后端副本前检查请求。"
 
 msgid "Several nodes, one behaviour."
 msgstr "多个节点，一致的行为。"
@@ -415,10 +418,10 @@ msgid "Sibuna returns a challenge to the client."
 msgstr "Sibuna 向客户端返回挑战。"
 
 msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods."
-msgstr "Sibuna 可通过单个边缘节点或网状集群将 TCP、UDP 和 HTTP 流量分发到健康的服务器。它可以在边缘终止 TLS、检查指定的 HTTP 路由，并帮助后端抵御 DDoS 流量洪泛。"
+msgstr "Sibuna 可通过单个边缘节点或网状集群将 TCP、UDP 和 HTTP 流量路由至健康的后端服务器。它支持边缘 TLS 终止、对指定 HTTP 路由进行请求检查，并帮助后端抵御 DDoS 洪泛攻击。"
 
 msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name, by a wildcard such as *.example.org, and by path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
-msgstr "Sibuna 终止 TLS，并提供 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket 服务。它按主机名、*.example.org 这样的通配符以及路径路由每个请求。证书来自 Let's Encrypt 或其他 ACME 证书颁发机构，本地证书颁发机构负责内部名称。"
+msgstr "Sibuna 负责终止 TLS，并提供 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket 服务。它按主机名、通配符（如 *.example.org）及路径路由每个请求。证书由 Let's Encrypt 或其他 ACME 机构自动签发，内置本地 CA 则负责覆盖内部名称。"
 
 msgid "Singapore"
 msgstr "新加坡"
@@ -451,7 +454,7 @@ msgid "The browser sends a request through your HTTPS ingress."
 msgstr "浏览器通过你的 HTTPS 入口代理发送请求。"
 
 msgid "The built-in inspector checks the first 8 KiB of supported bodies. WebSocket messages are relayed without inspection. Sibuna does not provide volumetric network mitigation. A challenge adds work. It does not establish that a visitor is human."
-msgstr "内置检查器检查受支持请求体的前 8 KiB。WebSocket 消息只中继，不检查。Sibuna 不提供针对大流量网络攻击的缓解。挑战增加的是计算工作量。它并不能证明访问者是人。"
+msgstr "内置检查器仅检查受支持请求体的前 8 KiB。WebSocket 消息直接透传中继，不做检查。Sibuna 不提供大流量网络层缓解。挑战增加的是计算成本，并不能证明访问者是人类。"
 
 msgid "The checks still apply"
 msgstr "检查仍然生效"
@@ -511,16 +514,16 @@ msgid "Vikrant Rathore, with assistance from Ronak Rathore and Kanak Rathore"
 msgstr "Vikrant Rathore 著，Ronak Rathore 与 Kanak Rathore 协助"
 
 msgid "We state the limits beside the features. Linux requires kernel 5.10 or later, macOS 12 or later, and Windows 10 or Server 2016 or later. The event-driven workers and the replacement of the executable without lost connections exist on Linux only."
-msgstr "我们把限制写在功能旁边。Linux 需要 5.10 或更高版本的内核，macOS 需要 12 或更高版本，Windows 需要 Windows 10 或 Server 2016 及更高版本。事件驱动的 worker 以及不丢失连接的可执行文件替换只在 Linux 上提供。"
+msgstr "我们在介绍功能的同时明确列出边界与限制。Linux 需 5.10 及以上内核，macOS 需 12 及以上版本，Windows 需 Windows 10 或 Server 2016 及以上版本。事件驱动的 worker 以及不断连的可执行文件热替换仅支持 Linux。"
 
 msgid "We tested the cluster on three hosts. Qualification under production traffic remains open. Replacing the executable ends QUIC connections."
-msgstr "我们在三台主机上测试了集群。生产流量下的验证仍待进行。替换可执行文件会终止 QUIC 连接。"
+msgstr "我们已在三台主机上完成了集群测试，生产流量下的全面验证仍在进行中。热替换可执行文件会终止现有 QUIC 连接。"
 
 msgid "What is Sibuna?"
 msgstr "Sibuna 是什么？"
 
 msgid "What it does not do."
-msgstr "它不做的事。"
+msgstr "它不做什么。"
 
 msgid "Where each part stands."
 msgstr "各部分的现状。"
@@ -541,7 +544,7 @@ msgid "Work before access."
 msgstr "先计算，再访问。"
 
 msgid "Yet, or at all."
-msgstr "尚未做到，或根本不做。"
+msgstr "尚未支持，或不打算支持。"
 
 msgid "Your app"
 msgstr "你的应用"
@@ -553,7 +556,7 @@ msgid "Your website"
 msgstr "你的网站"
 
 msgid "on one host."
-msgstr "同一台主机。"
+msgstr "单机实测。"
 
 msgid "· CHECK THE PROOF AT SIBUNA"
 msgstr "· 在 SIBUNA 验证证明"
@@ -574,4 +577,4 @@ msgid "DDoS protection at the edge"
 msgstr "边缘 DDoS 防护"
 
 msgid "We can cap concurrent flows per client IP and frontend, limit admission of new addresses under pressure and reserve UDP capacity for confirmed flows. Floods that saturate the uplink require upstream filtering."
-msgstr "我们可以限制每个客户端 IP 和每个前端的并发流数，在负载过高时限制新地址的接入速率，并为已确认的流预留 UDP 处理容量。如果攻击流量占满上联链路，就需要在上游过滤。"
+msgstr "支持限制每个客户端 IP 和每个前端的并发流数，在高负载压力下限制新地址的接入，并为已确认的流预留 UDP 容量。若攻击流量打满上联带宽，则仍需上游过滤。"

@@ -511,7 +511,7 @@ msgstr "100 / 10"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:172
 msgid "GCRA burst per window"
-msgstr "窓あたりのGCRAのバースト"
+msgstr "ウィンドウあたりのGCRAのバースト"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:173
 msgid "``--ban-seconds``"
@@ -1027,7 +1027,7 @@ msgstr "``INVALID PROOF OF SEQUENTIAL WORK``"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:332
 msgid "openings do not reach the root"
-msgstr "開示が根に到達しない"
+msgstr "開示がルートに到達しない"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:333
 msgid "``WRONG SOLUTION TYPE``"

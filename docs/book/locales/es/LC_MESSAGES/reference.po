@@ -27,11 +27,7 @@ msgid ""
 "one place, for the firewall daemon and for the edge load balancer (Part "
 "VIII, Part IX). The tables of the edge were read from the code, not from "
 "the SID records."
-msgstr ""
-"Endpoints, métricas, catálogo de errores, esquema de políticas y tablas "
-"de almacenamiento en un solo lugar, para el daemon cortafuegos y para el "
-"balanceador de carga del edge (parte VIII, parte IX). Las tablas del edge "
-"se leyeron del código, no de los registros SID."
+msgstr "Endpoints, métricas, catálogo de errores, esquema de políticas y tablas de almacenamiento en un solo lugar, para el daemon del firewall y para el balanceador de carga del edge (parte VIII, parte IX). Las tablas del edge se leyeron del código, no de los registros SID."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:6
 msgid "Endpoints"
@@ -249,12 +245,7 @@ msgid ""
 "``shield``. It adds the routes below. ``cmd/sibuna/src/routes.rs``, "
 "``cmd/sibuna/src/edge/probe.rs``, ``cmd/sibuna/src/acme.rs`` and "
 "``crates/acme/src/server.rs`` hold them."
-msgstr ""
-"Un edge arrancado con ``--config-file`` o ``sibuna lb`` sirve las rutas "
-"del cortafuegos en los frontends HTTP cuyo modo de protección es ``gate`` "
-"o ``shield``. Añade las rutas siguientes. Están en "
-"``cmd/sibuna/src/routes.rs``, ``cmd/sibuna/src/edge/probe.rs``, "
-"``cmd/sibuna/src/acme.rs`` y ``crates/acme/src/server.rs``."
+msgstr "Un edge arrancado con ``--config-file`` o ``sibuna lb`` sirve las rutas del firewall en los frontends HTTP cuyo modo de protección es ``gate`` o ``shield``. Añade las rutas siguientes. Están en ``cmd/sibuna/src/routes.rs``, ``cmd/sibuna/src/edge/probe.rs``, ``cmd/sibuna/src/acme.rs`` y ``crates/acme/src/server.rs``."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:54
 msgid "HTTP routes of the edge"
@@ -279,9 +270,7 @@ msgstr "``/__sibuna/health``, ``/__sibuna/metrics`` en un frontend HTTP"
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:66
 msgid ""
 "As in the firewall. The metrics text adds the series of the edge (below)"
-msgstr ""
-"Como en el cortafuegos. El texto de métricas añade las series del edge "
-"(más abajo)"
+msgstr "Como en el firewall. El texto de métricas añade las series del edge (más abajo)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:67
 msgid "``/health``, ``/ready``, ``/metrics`` on ``observability.listen``"
@@ -305,9 +294,7 @@ msgstr ""
 msgid ""
 "The HTTP-01 answer of automatic HTTPS, before the firewall and before a "
 "redirect (SID 0021)"
-msgstr ""
-"La respuesta HTTP-01 del HTTPS automático, antes del cortafuegos y antes "
-"de una redirección (SID 0021)"
+msgstr "La respuesta HTTP-01 del HTTPS automático, antes del firewall y antes de una redirección (SID 0021)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:73
 msgid "``URL/directory``, ``URL/new-nonce``"
@@ -616,11 +603,7 @@ msgid ""
 "listener of its own. Besides the routes of the firewall console, three "
 "routes concern the edge (``crates/console/src/routes.rs``, "
 "``crates/console/src/api/edge.rs``)."
-msgstr ""
-"Con una sección ``console``, el edge sirve la consola del SID 0031 en una "
-"dirección de escucha propia. Además de las rutas de la consola del "
-"cortafuegos, tres rutas conciernen al edge "
-"(``crates/console/src/routes.rs``, ``crates/console/src/api/edge.rs``)."
+msgstr "Con una sección ``console``, el edge sirve la consola del SID 0031 en una dirección de escucha propia. Además de las rutas de la consola del firewall, tres rutas conciernen al edge (``crates/console/src/routes.rs``, ``crates/console/src/api/edge.rs``)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:156
 msgid "Console routes of the edge"
@@ -1027,7 +1010,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:372
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:380
 msgid "gauge"
-msgstr ""
+msgstr "indicador (gauge)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:254
 msgid "1 while readiness answers 200, 0 from the start of a shutdown"
@@ -1069,7 +1052,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:364
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:376
 msgid "counter"
-msgstr ""
+msgstr "contador (counter)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:262
 msgid "Datagrams that the edge worker discarded and admissions it refused"
@@ -1186,7 +1169,7 @@ msgstr ""
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:296
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:316
 msgid "histogram"
-msgstr ""
+msgstr "histograma (histogram)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:298
 msgid ""
@@ -1661,10 +1644,7 @@ msgid ""
 "An HTTP frontend of the edge answers with the codes above where its "
 "firewall decides, and adds these of its own (SID 0019, SID 0020, SID "
 "0030)."
-msgstr ""
-"Un frontend HTTP del edge responde con los códigos anteriores allí donde "
-"decide su cortafuegos, y añade estos propios (SID 0019, SID 0020, SID "
-"0030)."
+msgstr "Un frontend HTTP del edge responde con los códigos anteriores allí donde decide su firewall, y añade estos propios (SID 0019, SID 0020, SID 0030)."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:428
 msgid "Status codes that the edge adds"
@@ -3450,18 +3430,7 @@ msgid ""
 "``seen_at``). On PostgreSQL an update of ``edge_head`` notifies the "
 "channel ``sibuna_edge``. The history is never pruned. "
 "``crates/authority/src/sql.rs`` holds the schema."
-msgstr ""
-"La base de datos como autoridad del edge (SID 0028) añade tres tablas "
-"como componente ``authority`` de ``sibuna_schema``, en la base de datos "
-"del cortafuegos o en otra: ``edge_head`` (una fila con el número de la "
-"cabeza), ``edge_revisions`` (una fila por revisión: ``origin`` ``apply`` "
-"o ``rollback``, ``restored``, el ``document`` comprobado de 256 KiB como "
-"máximo con su ``digest`` de 64 dígitos, la ``source`` con su nombre y su "
-"resumen, ``author``, ``note`` y ``committed_at``) y ``edge_nodes`` (una "
-"fila por nodo: ``applied``, ``digest``, ``refused``, ``detail`` y "
-"``seen_at``). En PostgreSQL, una actualización de ``edge_head`` envía una "
-"notificación al canal ``sibuna_edge``. El historial nunca se poda. El "
-"esquema está en ``crates/authority/src/sql.rs``."
+msgstr "La base de datos como autoridad del edge (SID 0028) añade tres tablas como componente ``authority`` de ``sibuna_schema``, en la base de datos del firewall o en otra: ``edge_head`` (una fila con el número de la cabeza), ``edge_revisions`` (una fila por revisión: ``origin`` ``apply`` o ``rollback``, ``restored``, el ``document`` comprobado de 256 KiB como máximo con su ``digest`` de 64 dígitos, la ``source`` con su nombre y su resumen, ``author``, ``note`` y ``committed_at``) y ``edge_nodes`` (una fila por nodo: ``applied``, ``digest``, ``refused``, ``detail`` y ``seen_at``). En PostgreSQL, una actualización de ``edge_head`` envía una notificación al canal ``sibuna_edge``. El historial nunca se poda. El esquema está en ``crates/authority/src/sql.rs``."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:898
 msgid "Commands of the Binary"
@@ -3471,9 +3440,7 @@ msgstr "Comandos del binario"
 msgid ""
 "One binary holds the firewall daemon, the edge and their tools. Part XI "
 "describes each command; this table says where."
-msgstr ""
-"Un solo binario contiene el daemon cortafuegos, el edge y sus "
-"herramientas. La parte XI describe cada comando; esta tabla dice dónde."
+msgstr "Un solo binario contiene el daemon del firewall, el edge y sus herramientas. La parte XI describe cada comando; esta tabla dice dónde."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:903
 msgid "Commands of ``sibuna``"
@@ -3489,7 +3456,7 @@ msgstr ""
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:910
 msgid "The firewall daemon (*Command-Line Reference*)"
-msgstr "El daemon cortafuegos (*Referencia de la línea de comandos*)"
+msgstr "El daemon del firewall (*Referencia de la línea de comandos*)"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:911
 msgid "``sibuna --config-file FILE``"

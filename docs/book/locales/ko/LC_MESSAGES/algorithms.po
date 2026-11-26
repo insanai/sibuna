@@ -717,10 +717,7 @@ msgid ""
 "decision. The storage hook copies a bounded incident record; SQL runs "
 "later. The response path need not hold the engine snapshot while an "
 "origin connection is idle."
-msgstr ""
-"이제 토크나이저는 따옴표, 키워드 ``OR``, 서로 같은 리터럴 피연산자를 봅니다. 거부는 최종 정책 결과입니다. 유효한 세션이 "
-"있어도 이 결과는 허용으로 바뀌지 않습니다. 세션 확인은 챌린지 결정만 해소합니다. 저장소 훅은 크기가 제한된 인시던트 레코드를 "
-"복사하고, SQL은 나중에 실행됩니다. 응답 경로는 원본 서버 연결이 유휴 상태인 동안 엔진 스냅숏을 붙잡고 있을 필요가 없습니다."
+msgstr "이제 토크나이저는 따옴표, 키워드 ``OR``, 서로 같은 리터럴 피연산자를 봅니다. 거부는 최종 정책 결과입니다. 유효한 세션이 있어도 이 결과는 허용으로 바뀌지 않습니다. 세션 확인은 챌린지 결정만 해소합니다. 저장소 훅은 크기가 제한된 인시던트 레코드를 복사하고, SQL은 나중에 실행됩니다. 응답 경로는 원본 서버 연결이 유휴 상태인 동안 엔진 스냅샷을 붙잡고 있을 필요가 없습니다."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:181
 msgid "Exercise 6.1"

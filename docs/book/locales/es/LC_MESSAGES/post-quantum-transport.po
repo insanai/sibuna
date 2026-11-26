@@ -133,7 +133,7 @@ msgstr "Un sitio web con un servidor de origen HTTP local"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:49
 msgid "We save this file as ``website.jlv`` and the policy above as ``probe-policy.json``. The file ``edge.pem`` contains the certificate chain for ``edge.example.test`` and its private key. Our HTTP application answers ``/status`` on port 29443. Plaintext stays on loopback. For a remote device we place the gateway on its host or identify and protect the private link separately."
-msgstr "Guardamos este archivo como ``website.jlv`` y la política anterior como ``probe-policy.json``. El archivo ``edge.pem`` contiene la cadena de certificados de ``edge.example.test`` y su clave privada. Nuestra aplicación HTTP atiende la ruta ``/status`` en el puerto 29443. El texto en claro solo circula por la interfaz de bucle local. Para un dispositivo remoto, instalamos la pasarela en el propio equipo o identificamos y protegemos por separado el enlace privado."
+msgstr "Guardamos este archivo como ``website.jlv`` y la política anterior como ``probe-policy.json``. El archivo ``edge.pem`` contiene la cadena de certificados de ``edge.example.test`` y su clave privada. Nuestra aplicación HTTP atiende la ruta ``/status`` en el puerto 29443. El texto en claro solo circula por la interfaz loopback. Para un dispositivo remoto, instalamos la pasarela en el propio equipo o identificamos y protegemos por separado el enlace privado."
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:52
 msgid "The browser negotiates hybrid TLS with Sibuna. Sibuna forwards the request locally and sends the response through the browser's encrypted connection."
@@ -168,7 +168,7 @@ msgstr ""
 "    msg(\"c\", \"s\", \"Ofrecer TLS híbrido\", accent: true),\n"
 "    msg(\"s\", \"c\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
 "    msg(\"c\", \"s\", \"`GET /status`\"),\n"
-"    msg(\"s\", \"w\", \"HTTP por bucle local\"),\n"
+"    msg(\"s\", \"w\", \"HTTP por loopback\"),\n"
 "    msg(\"w\", \"s\", \"`200 OK`\", reply: true),\n"
 "    msg(\"s\", \"c\", \"Respuesta cifrada\", reply: true, accent: true),\n"
 "  ),\n"
@@ -181,7 +181,7 @@ msgstr "Un cliente accede a un sitio que sirve HTTP en el mismo equipo que Sibun
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:55
 msgid "The frontend's ``tls.crt`` makes Sibuna the TLS endpoint. The ``default_backend`` selects the pool named ``app``. Its loopback address keeps the HTTP request on this host. For public service we bind the frontend to the public interface and provision a certificate for the site's actual name."
-msgstr "Con ``tls.crt`` en el frontend, Sibuna actúa como extremo TLS. ``default_backend`` selecciona el grupo llamado ``app``. Su dirección de bucle local mantiene la solicitud HTTP en este equipo. Para prestar servicio al público, vinculamos el frontend a la interfaz pública y le proporcionamos un certificado para el nombre real del sitio."
+msgstr "Con ``tls.crt`` en el frontend, Sibuna actúa como extremo TLS. ``default_backend`` selecciona el grupo llamado ``app``. Su dirección loopback mantiene la solicitud HTTP en este equipo. Para prestar servicio al público, vinculamos el frontend a la interfaz pública y le proporcionamos un certificado para el nombre real del sitio."
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:57
 msgid ""
@@ -341,7 +341,7 @@ msgstr "Un dispositivo antiguo que envía solicitudes"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:82
 msgid "Here the device is the client. We save the file as ``device-gateway.jlv`` and run Sibuna beside it. The device sends HTTP to the loopback listener. Sibuna opens authenticated TLS to the central service. Only that outgoing connection can negotiate the hybrid group. The listener must stay reachable only by the intended client. If the device already supports classical HTTPS, the preceding configuration also accepts it on the client side."
-msgstr "Aquí el dispositivo actúa como cliente. Guardamos el archivo como ``device-gateway.jlv`` y ejecutamos Sibuna en el mismo equipo. El dispositivo envía HTTP al puerto de escucha de la interfaz de bucle local. Sibuna abre una conexión TLS autenticada al servicio central. Solo esa conexión saliente puede negociar el grupo híbrido. El puerto de escucha debe estar al alcance únicamente del cliente previsto. Si el dispositivo ya admite HTTPS clásico, la configuración anterior también lo acepta como cliente."
+msgstr "Aquí el dispositivo actúa como cliente. Guardamos el archivo como ``device-gateway.jlv`` y ejecutamos Sibuna en el mismo equipo. El dispositivo envía HTTP al puerto de escucha de la interfaz loopback. Sibuna abre una conexión TLS autenticada al servicio central. Solo esa conexión saliente puede negociar el grupo híbrido. El puerto de escucha debe estar al alcance únicamente del cliente previsto. Si el dispositivo ya admite HTTPS clásico, la configuración anterior también lo acepta como cliente."
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:85
 msgid "The device sends local HTTP to Sibuna. Sibuna verifies the central service and uses a hybrid connection for the network leg. The reply returns to the device over local HTTP."
@@ -374,7 +374,7 @@ msgstr ""
 "  (actor(\"c\", \"Dispositivo antiguo\", kind: \"party\"), actor(\"s\", \"Sibuna\", kind: \"accent\"),\n"
 "   actor(\"w\", \"Servicio central\", kind: \"party\")),\n"
 "  (\n"
-"    msg(\"c\", \"s\", \"HTTP por bucle local\"),\n"
+"    msg(\"c\", \"s\", \"HTTP por loopback\"),\n"
 "    msg(\"s\", \"w\", \"Ofrecer TLS híbrido\", accent: true),\n"
 "    msg(\"w\", \"s\", \"`X25519MLKEM768`\", reply: true, accent: true),\n"
 "    act(\"s\", \"Verificar el nombre del servicio y el emisor\"),\n"
@@ -486,7 +486,7 @@ msgstr "``X25519MLKEM768``"
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:115
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:126
 msgid "HTTP on loopback"
-msgstr "HTTP por bucle local"
+msgstr "HTTP por loopback"
 
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:116
 #: ../../../home/insan/projects/sibuna/docs/book/post-quantum-transport.rst:119
