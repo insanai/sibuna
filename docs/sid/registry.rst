@@ -111,6 +111,9 @@ Discussion registry
    * - 0033
      - :doc:`records/0033-reputation-deltas`
      - discussion
+   * - 0034
+     - :doc:`records/0034-admission-under-attack`
+     - discussion
    * - 0035
      - :doc:`records/0035-post-quantum-key-exchange`
      - discussion
