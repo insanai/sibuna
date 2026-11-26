@@ -166,9 +166,9 @@ The crate ``sibuna-acme`` (``crates/acme``) holds the protocol and no I/O. It de
 
 The state machine is the algorithm of this record. The caller gives it the response to the last request, and it returns the next action.
 
-.. graphviz:: ../diagrams/acme-order.dot
+.. typst-diagram:: ../diagrams/acme-order.typ
    :caption: States of an ACME client order.
-   :alt: Directory discovery, nonce and account setup precede the order. Sibuna presents the challenge, waits for authorization, finalizes the order and downloads the certificate.
+   :alt: Twelve phases in three rows. Directory, Nonce, Account and NewOrder precede the authorization. Authorization leads to Present, Present leads to Respond once the answer is presented, and Respond leads to PollAuthorization, which stays while the authority answers pending. Finalize follows, or comes straight after Authorization when the authorization is already valid. PollOrder stays while the order is processing, and Download then leads to Done. Any phase ends in Failed on an unexpected answer or when the budget of requests is spent.
 
 .. list-table:: Actions of the order
    :header-rows: 1
@@ -463,9 +463,9 @@ The DNS-01 challenge
 
 The authority looks up the TXT record ``_acme-challenge.NAME``, where NAME is the name without ``*.``. Its value is the base64url SHA-256 digest of the key authorization (RFC 8555, section 8.4). We write the record through a *provider*, wait until the authoritative servers show it, tell the authority, and remove the record when the order ends.
 
-.. graphviz:: ../diagrams/dns-record-lifetime.dot
+.. typst-diagram:: ../diagrams/dns-record-lifetime.typ
    :caption: Lifetime of a DNS-01 TXT record.
-   :alt: Sibuna records the owner and value before publishing, waits for every authoritative server, and cleans up both the DNS record and its recovery file when the order ends.
+   :alt: Sibuna writes the owner and the value to the file certs/NAME/dns and then publishes the TXT record through the provider. It asks every authoritative server. While one does not show the value, it waits 2 seconds and asks again; at the timeout the attempt fails with ACME010. When every server shows the value, Sibuna responds to the challenge. When the order ends, with or without a certificate, it removes the TXT record and then the file. A file found at the start is cleaned up first.
 
 ``global.acme.challenge`` gains the value ``"dns-01"``. It then applies to every ACME name, also to names without a wildcard. This serves hosts with no open port 80 or 443. With ``"auto"``, a wildcard uses DNS-01 and every other name uses HTTP-01 or TLS-ALPN-01 as before. With ``"http-01"`` or ``"tls-alpn-01"`` a wildcard still uses DNS-01, because nothing else can prove it.
 
@@ -658,7 +658,7 @@ Issuance on demand
 
 A frontend with ``on_demand: true`` may have an empty ``auto`` list. A handshake that names a host for which the frontend has no certificate, neither automatic nor from a file, asks for one and waits.
 
-.. graphviz:: ../diagrams/on-demand-issuance.dot
+.. typst-diagram:: ../diagrams/on-demand-issuance.typ
    :caption: On-demand certificate selection during a TCP handshake.
    :alt: The handshake queues an admissible name and waits up to its limit. The ACME thread checks storage, policy and the rate token before ordering. A timeout resumes the handshake while the order continues.
 
@@ -864,7 +864,7 @@ With ``internal.server`` the local authority answers ACME clients (RFC 8555), so
 
 **Orders.** An order has 1 to 16 DNS names in lower case. A wildcard and an IP address are refused, because HTTP-01 proves neither here. Every name must be covered by a suffix of ``allow`` and, when the root has name constraints, be permitted by them. Each name gets one authorization with one HTTP-01 challenge and a token of 128 random bits. Authorizations are not reused between orders.
 
-.. graphviz:: ../diagrams/internal-order.dot
+.. typst-diagram:: ../diagrams/internal-order.typ
    :caption: States of an order at the internal ACME authority.
    :alt: An order becomes ready when all names validate. Finalization begins processing. Issuance succeeds or the order becomes invalid. A failed authorization also invalidates the order.
 

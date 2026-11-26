@@ -43,7 +43,7 @@ Invariants
 #. A server connection carries one exchange at a time, and returns to the pool only after a complete response.
 #. Every wait has a bound.
 
-.. graphviz:: ../diagrams/inline.dot
+.. typst-diagram:: ../diagrams/inline.typ
    :caption: One request. The decision is a function call, and the server connection belongs to the runtime.
    :alt: A stream is translated to an HTTP/1.1 head and the start of its body. The decision either answers or admits. An admitted request goes to a pooled server connection and the response returns to the stream.
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,8 +37,8 @@ msgstr ""
 msgid "Single-Pass Multi-Pattern Matching"
 msgstr "مطابقة أنماط متعددة بمرور واحد"
 
-#: ../../algorithms.rst:9 ../../algorithms.rst:80 ../../algorithms.rst:103
-#: ../../algorithms.rst:162
+#: ../../algorithms.rst:9 ../../algorithms.rst:59 ../../algorithms.rst:82
+#: ../../algorithms.rst:141
 msgid "Objectives"
 msgstr "الأهداف"
 
@@ -138,75 +138,75 @@ msgstr ""
 
 #: ../../algorithms.rst:40
 msgid ""
-"digraph aho_corasick {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.55, ranksep=0.5, "
-"pad=0.12];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
-"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, margin=\"0.12,0.05\"];\n"
-"  edge [fontname=\"Courier-Bold\", fontsize=10, fontcolor=\"#1e40af\", "
-"color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
-"  root [label=\"Root (0)\", fillcolor=\"#ffffff\", color=\"#172033\", "
-"penwidth=1.4];\n"
-"  g [label=\"G\", group=top];\n"
-"  gp [label=\"GP\", group=top];\n"
-"  gptbot [label=\"GPTBot\", group=top, fillcolor=\"#fef2f2\", "
-"color=\"#b91c1c\", peripheries=2];\n"
-"  c [label=\"C\", group=bottom];\n"
-"  cl [label=\"Cl\", group=bottom];\n"
-"  claudebot [label=\"ClaudeBot\", group=bottom, fillcolor=\"#fef2f2\", "
-"color=\"#b91c1c\", peripheries=2];\n"
-"  root -> g [label=\"g\"];\n"
-"  g -> gp [label=\"p\"];\n"
-"  gp -> gptbot [label=\"tbot\"];\n"
-"  root -> c [label=\"c\"];\n"
-"  c -> cl [label=\"l\"];\n"
-"  cl -> claudebot [label=\"audebot\"];\n"
-"  root:n -> gp:n [dir=back, label=\"fail\", style=dashed, "
-"color=\"#d97706\", fontcolor=\"#b45309\", fontname=\"Helvetica\", "
-"fontsize=8.5];\n"
-"  root:s -> cl:s [dir=back, label=\"fail\", style=dashed, "
-"color=\"#d97706\", fontcolor=\"#b45309\", fontname=\"Helvetica\", "
-"fontsize=8.5];\n"
-"}"
+"// algorithms.rst: trie states and failure edges for two signatures.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#let goto(from, to, letters) = edge(from, to, \"-|>\", text(font: mono, "
+"size: 8.5pt,\n"
+"  fill: green, weight: \"bold\", letters), label-side: left)\n"
+"#let fail(from, to, bend) = edge(from, to, \"-|>\", stroke: thin + "
+"gold-deep, dash: \"dashed\",\n"
+"  bend: bend, say-in(\"wait\", \"fail\"))\n"
+"\n"
+"#flow(\n"
+"  spacing: (13mm, 8mm),\n"
+"  state((0, 1), \"Root (0)\", name: <root>),\n"
+"  step((1, 0), \"G\", name: <g>),\n"
+"  step((2, 0), \"GP\", name: <gp>),\n"
+"  outcome((3, 0), \"GPTBot\", \"match\", kind: \"stop\", name: "
+"<gptbot>),\n"
+"  step((1, 2), \"C\", name: <c>),\n"
+"  step((2, 2), \"Cl\", name: <cl>),\n"
+"  outcome((3, 2), \"ClaudeBot\", \"match\", kind: \"stop\", name: "
+"<claudebot>),\n"
+"  goto(<root>, <g>, \"g\"),\n"
+"  goto(<g>, <gp>, \"p\"),\n"
+"  goto(<gp>, <gptbot>, \"tbot\"),\n"
+"  goto(<root>, <c>, \"c\"),\n"
+"  goto(<c>, <cl>, \"l\"),\n"
+"  goto(<cl>, <claudebot>, \"audebot\"),\n"
+"  fail(<gp>, <root>, 12deg),\n"
+"  fail(<cl>, <root>, -12deg),\n"
+")\n"
 msgstr ""
-"digraph aho_corasick {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.55, ranksep=0.5, "
-"pad=0.12];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
-"fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, margin=\"0.12,0.05\"];\n"
-"  edge [fontname=\"Courier-Bold\", fontsize=10, fontcolor=\"#1e40af\", "
-"color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
-"  root [label=\"الجذر 0\", fillcolor=\"#ffffff\", color=\"#172033\", "
-"penwidth=1.4];\n"
-"  g [label=\"G\", group=top];\n"
-"  gp [label=\"GP\", group=top];\n"
-"  gptbot [label=\"GPTBot\", group=top, fillcolor=\"#fef2f2\", "
-"color=\"#b91c1c\", peripheries=2];\n"
-"  c [label=\"C\", group=bottom];\n"
-"  cl [label=\"Cl\", group=bottom];\n"
-"  claudebot [label=\"ClaudeBot\", group=bottom, fillcolor=\"#fef2f2\", "
-"color=\"#b91c1c\", peripheries=2];\n"
-"  root -> g [label=\"g\"];\n"
-"  g -> gp [label=\"p\"];\n"
-"  gp -> gptbot [label=\"tbot\"];\n"
-"  root -> c [label=\"c\"];\n"
-"  c -> cl [label=\"l\"];\n"
-"  cl -> claudebot [label=\"audebot\"];\n"
-"  root:n -> gp:n [dir=back, label=\"فشل\", style=dashed, "
-"color=\"#d97706\", fontcolor=\"#b45309\", fontname=\"Helvetica\", "
-"fontsize=8.5];\n"
-"  root:s -> cl:s [dir=back, label=\"فشل\", style=dashed, "
-"color=\"#d97706\", fontcolor=\"#b45309\", fontname=\"Helvetica\", "
-"fontsize=8.5];\n"
-"}"
+"// algorithms.rst: trie states and failure edges for two signatures.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"ar\")\n"
+"\n"
+"#let goto(from, to, letters) = edge(from, to, \"-|>\", text(font: mono, "
+"size: 8.5pt,\n"
+"  fill: green, weight: \"bold\", letters), label-side: left)\n"
+"#let fail(from, to, bend) = edge(from, to, \"-|>\", stroke: thin + "
+"gold-deep, dash: \"dashed\",\n"
+"  bend: bend, say-in(\"wait\", \"فشل\"))\n"
+"\n"
+"#flow(\n"
+"  spacing: (13mm, 8mm),\n"
+"  state((0, 1), \"الجذر (0)\", name: <root>),\n"
+"  step((1, 0), \"G\", name: <g>),\n"
+"  step((2, 0), \"GP\", name: <gp>),\n"
+"  outcome((3, 0), \"GPTBot\", \"تطابق\", kind: \"stop\", name: "
+"<gptbot>),\n"
+"  step((1, 2), \"C\", name: <c>),\n"
+"  step((2, 2), \"Cl\", name: <cl>),\n"
+"  outcome((3, 2), \"ClaudeBot\", \"تطابق\", kind: \"stop\", name: "
+"<claudebot>),\n"
+"  goto(<root>, <g>, \"g\"),\n"
+"  goto(<g>, <gp>, \"p\"),\n"
+"  goto(<gp>, <gptbot>, \"tbot\"),\n"
+"  goto(<root>, <c>, \"c\"),\n"
+"  goto(<c>, <cl>, \"l\"),\n"
+"  goto(<cl>, <claudebot>, \"audebot\"),\n"
+"  fail(<gp>, <root>, 12deg),\n"
+"  fail(<cl>, <root>, -12deg),\n"
+")\n"
 
 #: ../../algorithms.rst:40
 msgid "Trie states and failure edges for two signatures"
 msgstr "حالات شجرة البادئات وحواف الفشل لتوقيعين"
 
-#: ../../algorithms.rst:64
+#: ../../algorithms.rst:43
 msgid ""
 "The automaton's state budget is a run-time option. The policy engine "
 "reserves at most one root plus the sum of all signature lengths, a safe "
@@ -231,15 +231,15 @@ msgstr ""
 "ويسجل الجزء العاشر أحجام المحرك الدقيقة والمقارنة مع البحث المتسلسل عن "
 "السلاسل الفرعية، وهو بحث يستخدم الأنماط نفسها ويكتفي بأي مطابقة."
 
-#: ../../algorithms.rst:66
+#: ../../algorithms.rst:45
 msgid "Regular Expressions, SIMD Engines, and the Choice"
 msgstr "التعبيرات النمطية ومحركات SIMD والاختيار بينها"
 
-#: ../../algorithms.rst:69
+#: ../../algorithms.rst:48
 msgid "Three families were weighed for the signature stage:"
 msgstr "وازنّا بين ثلاث عائلات لمرحلة التوقيعات:"
 
-#: ../../algorithms.rst:71
+#: ../../algorithms.rst:50
 msgid ""
 "*Backtracking regular expressions* (a backtracking rule-set style) run "
 "hundreds of patterns per request and allocate per match; they are the "
@@ -249,7 +249,7 @@ msgstr ""
 "تشغّل مئات الأنماط لكل طلب وتخصص ذاكرة لكل مطابقة؛ وهي أبطأ الخيارات "
 "وأكثرها عرضة للإنذارات الكاذبة."
 
-#: ../../algorithms.rst:72
+#: ../../algorithms.rst:51
 msgid ""
 "*SIMD literal engines* (Hyperscan, Vectorscan) prefilter blocks of 16 to "
 "32 bytes with shuffle-based nibble masks (the \"Teddy\" algorithm) and "
@@ -267,7 +267,7 @@ msgstr ""
 "لها على مدخلات من مئة بايت: يُمسح الحقل كله في زمن أقل من إخفاق واحد في "
 "الذاكرة المخبئية."
 
-#: ../../algorithms.rst:73
+#: ../../algorithms.rst:52
 msgid ""
 "*Dense Aho-Corasick plus small structural tokenizers*, the libinjection "
 "lineage, gives exact linear-time behaviour in a fixed table and needs "
@@ -277,7 +277,7 @@ msgstr ""
 "تعطي سلوكًا خطيًا دقيقًا في جدول ثابت، ولا تحتاج إلى شيء خارج الملف "
 "التنفيذي."
 
-#: ../../algorithms.rst:75
+#: ../../algorithms.rst:54
 msgid ""
 "Sibuna's fields are short, so the third family wins on both memory and "
 "speed; Part X records about 1.56 ns per byte on an 8 KiB body (the "
@@ -291,11 +291,11 @@ msgstr ""
 "``benchmarks/results/primitives-latest.md``). هذا هو عبء العمل الوحيد "
 "الذي قد يفيد فيه ترشيح SIMD مسبق، ويبقيه SID 0006 بندًا مفتوحًا."
 
-#: ../../algorithms.rst:77
+#: ../../algorithms.rst:56
 msgid "The Radix Trie for IPv4 and IPv6"
 msgstr "شجرة radix لعناوين IPv4 وIPv6"
 
-#: ../../algorithms.rst:82
+#: ../../algorithms.rst:61
 msgid ""
 "Trace a longest-prefix lookup through the 128-bit trie, explain the IPv4 "
 "root shortcut, and see how the trie doubles as the reputation store fed "
@@ -304,7 +304,7 @@ msgstr ""
 "نتتبع بحثًا عن أطول بادئة في الشجرة ذات 128 بت، ونشرح اختصار جذر IPv4، "
 "ونرى كيف تؤدي الشجرة أيضًا دور مخزن السمعة الذي يغذيه العنقود."
 
-#: ../../algorithms.rst:84
+#: ../../algorithms.rst:63
 msgid ""
 "One binary trie over 128-bit keys serves both families: IPv6 prefixes are "
 "inserted as-is, IPv4 prefixes are mapped into ``::ffff:0:0/96`` so a "
@@ -320,7 +320,7 @@ msgstr ""
 "الأكثر، يعتمد كل منها على سابقه، بلا تتبع للمؤشرات. والشجرة هي "
 "``PrefixTrie`` في الحزمة ``sibuna-cidr``."
 
-#: ../../algorithms.rst:86
+#: ../../algorithms.rst:65
 msgid ""
 "Walking the 96 mapped-prefix levels for every IPv4 lookup would cost 96 "
 "dependent loads before it reached the first bit of the IPv4 address. So "
@@ -331,7 +331,7 @@ msgstr ""
 "96 تحميلًا متعاقبًا قبل الوصول إلى أول بت من عنوان IPv4. لذا تسجل الشجرة "
 "العقدة التي على العمق 96 عند التهيئة، وتبدأ منها عمليات البحث عن IPv4:"
 
-#: ../../algorithms.rst:88
+#: ../../algorithms.rst:67
 msgid ""
 "let (mut node, mut depth, mut best) = if is_ipv4_mapped(key) {\n"
 "    let start = self.ipv4_root;\n"
@@ -349,7 +349,7 @@ msgstr ""
 "    (0, 0, self.nodes[0].value.as_ref())\n"
 "};"
 
-#: ../../algorithms.rst:98
+#: ../../algorithms.rst:77
 msgid ""
 "Classifying an IPv4 address costs 32.0 ns and an IPv6 address 79.3 ns "
 "(``ipv4_cidr_classification`` and ``ipv6_cidr_classification`` in "
@@ -364,11 +364,11 @@ msgstr ""
 "أحكام ``allow``/``deny`` النهائية قبل جدول القواعد، كي يتغلب الحظر على "
 "مستوى العنقود على كل قاعدة، وأحكام ``challenge`` بعده."
 
-#: ../../algorithms.rst:100
+#: ../../algorithms.rst:79
 msgid "The Semantic Firewall"
 msgstr "الجدار الناري الدلالي"
 
-#: ../../algorithms.rst:105
+#: ../../algorithms.rst:84
 msgid ""
 "Understand the byte-class pre-scan, the tagged signature automaton, the "
 "SQL tokenizer with tautology detection, the HTML and shell structure "
@@ -380,11 +380,11 @@ msgstr ""
 "والصدفة، والتطبيع، وانضباط الإنذارات الكاذبة الذي يقتضي أن يمر طلب "
 "المتصفح الحقيقي دون مساس."
 
-#: ../../algorithms.rst:107
+#: ../../algorithms.rst:86
 msgid "A Lesson in False Positives"
 msgstr "درس في الإنذارات الكاذبة"
 
-#: ../../algorithms.rst:110
+#: ../../algorithms.rst:89
 msgid ""
 "The first version of the WAF matched a flat substring list against every "
 "header. The list contained ``/*``, and every browser sends ``Accept: "
@@ -402,11 +402,11 @@ msgstr ""
 "كاملًا، بما فيه نص تعليق يحتوي على ``select`` و\\ ``--`` وفاصلة عليا، "
 "وتتأكد من أنه يخرج نظيفًا."
 
-#: ../../algorithms.rst:112
+#: ../../algorithms.rst:91
 msgid "Byte Classes in One Pass"
 msgstr "فئات البايتات في مرور واحد"
 
-#: ../../algorithms.rst:115
+#: ../../algorithms.rst:94
 msgid ""
 "Each inspected field is scanned once to collect which byte classes occur: "
 "quotes, ``=``, ``<``, shell separators, ``%``, NUL, canonicalisation "
@@ -425,7 +425,7 @@ msgstr ""
 "أربعة مراكِمات سلاسل OR قصيرة، ولا يُبحث عن زوجي البايتات (``/*`` "
 "ومسافتين متجاورتين) إلا إذا لم يكن أي بايت مفرد قد طلب التطبيع بالفعل:"
 
-#: ../../algorithms.rst:117
+#: ../../algorithms.rst:96
 msgid ""
 "pub(crate) fn scan(text: &[u8]) -> Classes {\n"
 "    let (chunks, remainder) = text.as_chunks::<8>();\n"
@@ -488,11 +488,11 @@ msgstr ""
 "    Classes { bits }\n"
 "}"
 
-#: ../../algorithms.rst:143
+#: ../../algorithms.rst:122
 msgid "Detectors"
 msgstr "الكواشف"
 
-#: ../../algorithms.rst:146
+#: ../../algorithms.rst:125
 msgid ""
 "*Signatures.* All strong signatures of every category live in one tagged "
 "automaton; a hit is a terminal ``deny`` named ``waf:sqli``, ``waf:xss``, "
@@ -502,7 +502,7 @@ msgstr ""
 "والإصابة رفض ``deny`` نهائي باسم ``waf:sqli`` أو ``waf:xss`` أو "
 "``waf:path-traversal`` أو ``waf:rce``."
 
-#: ../../algorithms.rst:147
+#: ../../algorithms.rst:126
 msgid ""
 "*SQL injection.* A single-pass word scanner looks up each alphanumeric "
 "word (at most seven bytes) in the keyword table and, on ``or`` / ``and``, "
@@ -520,7 +520,7 @@ msgstr ""
 "(2)، وعلامة تعليق (1)، و\\ ``=`` (1). ويكون ``admin'--`` نهائيًا بمفرده. "
 "أما \"it's a group order from the shop\" فدرجته 3 فيمر."
 
-#: ../../algorithms.rst:148
+#: ../../algorithms.rst:127
 msgid ""
 "*Cross-site scripting.* Requires ``<``; fires when a tag that can host "
 "script co-occurs with an ``on<event>=`` attribute in attribute position. "
@@ -530,7 +530,7 @@ msgstr ""
 "يجتمع وسم يمكنه استضافة نص برمجي مع سمة ``on<event>=`` في موضع السمات. "
 "ولا تُحتسب ``onboarding=1``."
 
-#: ../../algorithms.rst:149
+#: ../../algorithms.rst:128
 msgid ""
 "*Command injection.* Requires a separator; fires when ``;``, ``|``, "
 "``&&``, ``$(``, a backtick, or a newline is followed by a known command "
@@ -540,7 +540,7 @@ msgstr ""
 "``&&`` أو ``$(`` أو علامةَ الاقتباس المائلة (backtick) أو سطرًا جديدًا "
 "اسمُ أمر معروف. ويمر ``status ok; done | next``."
 
-#: ../../algorithms.rst:150
+#: ../../algorithms.rst:129
 msgid ""
 "*Path traversal.* Signatures (``../``, ``..%2f``, ``/etc/passwd``, "
 "``id_rsa``, ...) plus NUL and ``%00``."
@@ -548,7 +548,7 @@ msgstr ""
 "*اجتياز المسارات.* توقيعات (``../``، و\\ ``..%2f``، و\\ ``/etc/passwd``، "
 "و\\ ``id_rsa``، ...) إضافة إلى NUL و\\ ``%00``."
 
-#: ../../algorithms.rst:152
+#: ../../algorithms.rst:131
 msgid ""
 "Structural headers whose grammar legitimately contains quotes and stars "
 "(``Accept*``, ``Content-Type``, ``Sec-*``, ``If-*``, ...) are skipped; "
@@ -566,11 +566,11 @@ msgstr ""
 "المكدس بحجم 8 KB ثم تُفحص مجددًا، فيتحول ``1%27/**/UnIoN/**/SeLeCt`` و\\ "
 "``%252e%252e/`` إلى التوقيعات الخام."
 
-#: ../../algorithms.rst:154
+#: ../../algorithms.rst:133
 msgid "Cost"
 msgstr "التكلفة"
 
-#: ../../algorithms.rst:157
+#: ../../algorithms.rst:136
 msgid ""
 "The inspection cost depends on the fields and bytes presented to the "
 "engine, not just the number of requests. The benchmark chapter reports "
@@ -585,11 +585,11 @@ msgstr ""
 "على وكيل الدخول الذي يستخدم forward-auth أن يمرر معلومات الطلب ذات الصلة؛ "
 "فالبايتات المحذوفة لا يمكن أن تفحصها هذه العملية."
 
-#: ../../algorithms.rst:159
+#: ../../algorithms.rst:138
 msgid "The Declarative Policy Engine"
 msgstr "محرك السياسة التصريحي"
 
-#: ../../algorithms.rst:164
+#: ../../algorithms.rst:143
 msgid ""
 "Read the rule model, the evaluation order, WEIGH scoring with thresholds, "
 "and the JSON policy grammar."
@@ -597,7 +597,7 @@ msgstr ""
 "نقرأ نموذج القواعد، وترتيب التقييم، واحتساب الدرجات بـ WEIGH مع العتبات، "
 "وقواعد صياغة سياسة JSON."
 
-#: ../../algorithms.rst:166
+#: ../../algorithms.rst:145
 msgid ""
 "A rule is a conjunction of optional criteria (path pattern, User-Agent "
 "pattern, up to four headers, up to eight IPv4/IPv6 CIDR blocks, one JA4 "
@@ -611,22 +611,22 @@ msgstr ""
 "وصعوبة اختيارية لكل قاعدة ببتات العمل والخوارزمية، و\\ ``weight`` ذي "
 "إشارة. ترتيب التقييم:"
 
-#: ../../algorithms.rst:168
+#: ../../algorithms.rst:147
 msgid "Semantic WAF (Shield only): violation is a terminal ``deny``."
 msgstr "WAF الدلالي (Shield فقط): المخالفة ``deny`` نهائي."
 
-#: ../../algorithms.rst:169
+#: ../../algorithms.rst:148
 msgid "Reputation trie: ``deny`` or ``allow`` prefixes are terminal."
 msgstr "شجرة السمعة: بادئات ``deny`` أو ``allow`` نهائية."
 
-#: ../../algorithms.rst:170
+#: ../../algorithms.rst:149
 msgid ""
 "Rules in order: the first terminal match returns; ``WEIGH`` matches "
 "accumulate."
 msgstr ""
 "القواعد بالترتيب: تعيد أول مطابقة نهائية؛ وتتراكم مطابقات ``WEIGH``."
 
-#: ../../algorithms.rst:171
+#: ../../algorithms.rst:150
 msgid ""
 "Score: negative totals ``allow``; totals :math:`\\geq 40` ``deny``; "
 "totals :math:`\\geq 10` ``challenge`` with one extra work bit per 5 "
@@ -636,7 +636,7 @@ msgstr ""
 "والمجاميع :math:`\\geq 10` ``challenge`` مع بت عمل إضافي لكل 5 نقاط فوق "
 "العتبة، بحد أقصى ستة."
 
-#: ../../algorithms.rst:172
+#: ../../algorithms.rst:151
 msgid ""
 "Static bypass paths, then trie ``challenge`` verdicts, then the bot "
 "automaton."
@@ -644,11 +644,11 @@ msgstr ""
 "مسارات التجاوز الثابتة، ثم أحكام ``challenge`` من الشجرة، ثم آلة "
 "الروبوتات."
 
-#: ../../algorithms.rst:173
+#: ../../algorithms.rst:152
 msgid "Default action, ``challenge`` unless the policy file says otherwise."
 msgstr "الإجراء الافتراضي، ``challenge`` ما لم يقل ملف السياسة غير ذلك."
 
-#: ../../algorithms.rst:175
+#: ../../algorithms.rst:154
 msgid ""
 "Built-in rules allow ``/.well-known/*``, ``/favicon.ico``, "
 "``/robots.txt``, and ``/__sibuna/*``, deny ``CF-Worker`` clients and "
@@ -660,7 +660,7 @@ msgstr ""
 "``Amazonbot``، وتتحدى كل User-Agent يحمل ``Mozilla``: فتزوير سلسلة "
 "المتصفح لا يكلف شيئًا، وقبولها يجعل البوابة شكلية."
 
-#: ../../algorithms.rst:177
+#: ../../algorithms.rst:156
 msgid ""
 "{\n"
 "  \"default_action\": \"CHALLENGE\",\n"
@@ -706,11 +706,11 @@ msgstr ""
 "  ]\n"
 "}"
 
-#: ../../algorithms.rst:195
+#: ../../algorithms.rst:174
 msgid "Worked Trace: an Encoded Attack with a Valid Session"
 msgstr "تتبع تفصيلي: هجوم مرمَّز مع جلسة صالحة"
 
-#: ../../algorithms.rst:198
+#: ../../algorithms.rst:177
 msgid ""
 "Consider ``GET /search?q=%2527%2520OR%25201%253D1`` from a client holding "
 "a valid session. First the HTTP parser separates the path and query "
@@ -724,7 +724,7 @@ msgstr ""
 "المئوية الحقل للتطبيع. فيكشف مرور فك ترميز أول ``%27%20OR%201%3D1``؛ "
 "ويكشف مرور ثانٍ ``' OR 1=1``."
 
-#: ../../algorithms.rst:200
+#: ../../algorithms.rst:179
 msgid ""
 "The tokenizer now sees a quote, the keyword ``OR``, and equal literal "
 "operands. A denial is a terminal policy result. The valid session does "
@@ -739,11 +739,11 @@ msgstr ""
 "الحجم؛ ويجري SQL لاحقًا. ولا يحتاج مسار الاستجابة إلى الاحتفاظ بلقطة "
 "المحرك أثناء خمول الاتصال بالخادم الأصلي."
 
-#: ../../algorithms.rst:202
+#: ../../algorithms.rst:181
 msgid "Exercise 6.1"
 msgstr "تمرين 6.1"
 
-#: ../../algorithms.rst:204
+#: ../../algorithms.rst:183
 msgid ""
 "Replace the payload with ``O'Reilly`` and then with ``order=1``. Why "
 "should neither alone establish SQL injection? Give an example of a false "
@@ -753,11 +753,11 @@ msgstr ""
 "منهما وحده حقن SQL؟ أعطِ مثالًا على إنذار كاذب قد ينتجه كاشف يعتمد على "
 "السلاسل الفرعية وحدها."
 
-#: ../../algorithms.rst:206
+#: ../../algorithms.rst:185
 msgid "Exercise 6.2"
 msgstr "تمرين 6.2"
 
-#: ../../algorithms.rst:208
+#: ../../algorithms.rst:187
 msgid ""
 "Write the byte-class table entries needed to add a detector for LDAP "
 "injection (patterns such as ``)(|(``), and explain which existing class "
@@ -766,11 +766,11 @@ msgstr ""
 "اكتب مدخلات جدول فئات البايتات اللازمة لإضافة كاشف لحقن LDAP (أنماط مثل "
 "``)(|(``)، واشرح أي بتات الفئات الحالية يمكنه إعادة استخدامها."
 
-#: ../../algorithms.rst:210
+#: ../../algorithms.rst:189
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../algorithms.rst:212
+#: ../../algorithms.rst:191
 msgid ""
 "Explain to a reviewer why ``Accept: */*`` was a false positive, what "
 "structural property the new SQL detector requires, and how the automaton "
@@ -778,3 +778,70 @@ msgid ""
 msgstr ""
 "اشرح لمراجِع لماذا كان ``Accept: */*`` إنذارًا كاذبًا، وما الخاصية "
 "البنيوية التي يشترطها كاشف SQL الجديد، وكيف تتقاسم الآلة والمقسِّم العمل."
+
+#~ msgid ""
+#~ "digraph aho_corasick {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.55, "
+#~ "ranksep=0.5, pad=0.12];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+#~ "fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, "
+#~ "margin=\"0.12,0.05\"];\n"
+#~ "  edge [fontname=\"Courier-Bold\", fontsize=10, fontcolor=\"#1e40af\", "
+#~ "color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
+#~ "  root [label=\"Root (0)\", fillcolor=\"#ffffff\", color=\"#172033\", "
+#~ "penwidth=1.4];\n"
+#~ "  g [label=\"G\", group=top];\n"
+#~ "  gp [label=\"GP\", group=top];\n"
+#~ "  gptbot [label=\"GPTBot\", group=top, fillcolor=\"#fef2f2\", "
+#~ "color=\"#b91c1c\", peripheries=2];\n"
+#~ "  c [label=\"C\", group=bottom];\n"
+#~ "  cl [label=\"Cl\", group=bottom];\n"
+#~ "  claudebot [label=\"ClaudeBot\", group=bottom, fillcolor=\"#fef2f2\", "
+#~ "color=\"#b91c1c\", peripheries=2];\n"
+#~ "  root -> g [label=\"g\"];\n"
+#~ "  g -> gp [label=\"p\"];\n"
+#~ "  gp -> gptbot [label=\"tbot\"];\n"
+#~ "  root -> c [label=\"c\"];\n"
+#~ "  c -> cl [label=\"l\"];\n"
+#~ "  cl -> claudebot [label=\"audebot\"];\n"
+#~ "  root:n -> gp:n [dir=back, label=\"fail\", style=dashed, "
+#~ "color=\"#d97706\", fontcolor=\"#b45309\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5];\n"
+#~ "  root:s -> cl:s [dir=back, label=\"fail\", style=dashed, "
+#~ "color=\"#d97706\", fontcolor=\"#b45309\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph aho_corasick {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.55, "
+#~ "ranksep=0.5, pad=0.12];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=10, fontcolor=\"#172033\", color=\"#1e40af\", "
+#~ "fillcolor=\"#eff6ff\", penwidth=1.1, height=0.4, "
+#~ "margin=\"0.12,0.05\"];\n"
+#~ "  edge [fontname=\"Courier-Bold\", fontsize=10, fontcolor=\"#1e40af\", "
+#~ "color=\"#64748b\", arrowsize=0.65, penwidth=1.1];\n"
+#~ "  root [label=\"الجذر 0\", fillcolor=\"#ffffff\", color=\"#172033\", "
+#~ "penwidth=1.4];\n"
+#~ "  g [label=\"G\", group=top];\n"
+#~ "  gp [label=\"GP\", group=top];\n"
+#~ "  gptbot [label=\"GPTBot\", group=top, fillcolor=\"#fef2f2\", "
+#~ "color=\"#b91c1c\", peripheries=2];\n"
+#~ "  c [label=\"C\", group=bottom];\n"
+#~ "  cl [label=\"Cl\", group=bottom];\n"
+#~ "  claudebot [label=\"ClaudeBot\", group=bottom, fillcolor=\"#fef2f2\", "
+#~ "color=\"#b91c1c\", peripheries=2];\n"
+#~ "  root -> g [label=\"g\"];\n"
+#~ "  g -> gp [label=\"p\"];\n"
+#~ "  gp -> gptbot [label=\"tbot\"];\n"
+#~ "  root -> c [label=\"c\"];\n"
+#~ "  c -> cl [label=\"l\"];\n"
+#~ "  cl -> claudebot [label=\"audebot\"];\n"
+#~ "  root:n -> gp:n [dir=back, label=\"فشل\", style=dashed, "
+#~ "color=\"#d97706\", fontcolor=\"#b45309\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5];\n"
+#~ "  root:s -> cl:s [dir=back, label=\"فشل\", style=dashed, "
+#~ "color=\"#d97706\", fontcolor=\"#b45309\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5];\n"
+#~ "}"

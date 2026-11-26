@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -286,18 +286,18 @@ msgid ""
 "directly for a collection would bypass that erasure. The proof-of-work "
 "WebAssembly module has no heap allocator, and Argon2 already uses a "
 "caller-owned, reused workspace. We therefore keep the existing allocators "
-"until a measured workload justifies a change. "
-"A candidate must improve latency or resident memory while preserving "
-"erasure, bounded input handling and the allocation-free request path."
+"until a measured workload justifies a change. A candidate must improve "
+"latency or resident memory while preserving erasure, bounded input "
+"handling and the allocation-free request path."
 msgstr ""
 "نبقي المخصص العام الحالي ``WipeOnFree`` لوحدة WebAssembly الخاصة بوحدة "
 "التحكم في ``cmd/console-ui/src/abi.rs``. يمحو الكتل المحررة، ومنها الكتلة "
 "القديمة بعد إعادة التخصيص. اختيار ``System`` مباشرة لمجموعة سيتجاوز هذا "
 "المحو. لا تحتوي وحدة WebAssembly لإثبات العمل على مخصص كومة، ويستخدم "
 "Argon2 بالفعل مساحة عمل يملكها المستدعي ويعيد استخدامها. لذلك نبقي "
-"المخصصات الحالية حتى يبرر حمل مقاس تغييرا. يجب أن "
-"يحسن البديل زمن الاستجابة أو الذاكرة المقيمة مع الحفاظ على المحو "
-"والمعالجة المحدودة للمدخلات ومسار الطلب الخالي من التخصيص."
+"المخصصات الحالية حتى يبرر حمل مقاس تغييرا. يجب أن يحسن البديل زمن "
+"الاستجابة أو الذاكرة المقيمة مع الحفاظ على المحو والمعالجة المحدودة "
+"للمدخلات ومسار الطلب الخالي من التخصيص."
 
 #: ../../zero-allocation.rst:79
 msgid "One Buffer per Connection"
@@ -1676,7 +1676,7 @@ msgstr ""
 "أولًا مسار الإزاحة دون تغيير أي شيء (``can_insert``) ويتحقق من أن الإزاحة "
 "المحدودة يمكن أن تنجح دون فقد وسم حي."
 
-#: ../../zero-allocation.rst:485 ../../zero-allocation.rst:708
+#: ../../zero-allocation.rst:485 ../../zero-allocation.rst:685
 msgid "Invariant"
 msgstr "اللامتغير"
 
@@ -2195,83 +2195,81 @@ msgstr ""
 
 #: ../../zero-allocation.rst:641
 msgid ""
-"digraph engine_publication {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.45, "
-"ranksep=0.55, pad=0.1];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
-"fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
-"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
+"// zero-allocation.rst: engine publication. After EngineSlot::publish "
+"and\n"
+"// EngineCache::refresh in cmd/sibuna/src/slot.rs.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
 "\n"
-"  storage [label=\"Storage thread\\nbuild Engine v2\\noff the request "
-"path\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
-"  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
-"AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
-"  v2 [label=\"Engine v2\\n(published)\", color=\"#15803d\", "
-"fillcolor=\"#f0fdf4\"];\n"
-"  a [label=\"Connection thread A\\nEngineCache\\ngeneration 2\"];\n"
-"  b [label=\"Connection thread B\\nEngineCache\\ngeneration 1\"];\n"
-"  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
-"color=\"#94a3b8\", fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
-"style=\"rounded,filled,dashed\"];\n"
-"\n"
-"  { rank=same; slot; v2; }\n"
-"  { rank=same; a; b; v1; }\n"
-"\n"
-"  storage -> slot [label=\" publish: swap the Arc\\n under the write "
-"lock,\\n generation += 1 (Release)\", color=\"#b45309\", "
-"fontcolor=\"#92400e\", penwidth=1.4];\n"
-"  slot -> v2 [label=\"holds\", color=\"#15803d\", fontcolor=\"#15803d\", "
-"penwidth=1.4, minlen=3];\n"
-"  slot -> a [dir=back, label=\"refresh: load generation\\n(Acquire); "
-"equal, no clone \"];\n"
-"  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
-"fontcolor=\"#15803d\"];\n"
-"  slot -> b [dir=back, label=\" generation moved:\\n read lock, clone "
-"Arc\", style=dashed];\n"
-"  b -> v1 [label=\"Arc until\\nnext refresh\", color=\"#94a3b8\", "
-"minlen=2];\n"
-"}"
+"#flow(\n"
+"  spacing: (8mm, 12mm),\n"
+"  step((1, 0), \"Storage thread\", \"builds Engine v2 off the request "
+"path\", kind: \"wait\",\n"
+"    name: <storage>),\n"
+"  sibuna((1, 1), \"`EngineSlot`\", \"`RwLock<Arc<Engine>>`\\n`generation: "
+"AtomicU64`\",\n"
+"    stroke: bold + green, name: <slot>),\n"
+"  outcome((2.6, 1), \"Engine v2\", \"published\", name: <v2>),\n"
+"  step((2.2, 2.2), \"Connection thread A\", \"`EngineCache`, generation "
+"2\", name: <a>),\n"
+"  step((0.2, 2.2), \"Connection thread B\", \"`EngineCache`, generation "
+"1\", name: <b>),\n"
+"  outcome((0.2, 3.3), \"Engine v1\", \"freed when the last cache lets "
+"go\", kind: \"quiet\",\n"
+"    name: <v1>),\n"
+"  edge(<storage>, <slot>, \"-|>\", stroke: thin + gold-deep, label-side: "
+"left,\n"
+"    say(\"publish: swap the `Arc` under the write lock,\\n`generation += "
+"1` (Release)\")),\n"
+"  main-edge(<slot>, <v2>, \"-|>\", say(\"holds\"), label-side: left),\n"
+"  edge(<a>, <slot>, \"-|>\", label-side: left, label-pos: 0.55,\n"
+"    say(\"refresh: load the generation (Acquire);\\nequal, no clone\")),\n"
+"  main-edge(<a>, <v2>, \"-|>\", say(\"`Arc`\"), label-side: right),\n"
+"  edge(<b>, <slot>, \"-|>\", dash: \"dashed\", label-side: left, "
+"label-pos: 0.5,\n"
+"    say(\"generation moved:\\nread lock, clone the `Arc`\")),\n"
+"  edge(<b>, <v1>, \"-|>\", stroke: thin + rule, say(\"`Arc` until the "
+"next refresh\"),\n"
+"    label-side: left),\n"
+")\n"
 msgstr ""
-"digraph engine_publication {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, nodesep=0.45, "
-"ranksep=0.55, pad=0.1];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
-"fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
-"fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
+"// zero-allocation.rst: engine publication. After EngineSlot::publish "
+"and\n"
+"// EngineCache::refresh in cmd/sibuna/src/slot.rs.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"ar\")\n"
 "\n"
-"  storage [label=\"خيط التخزين يبني\\nEngine v2\\nخارج مسار الطلب\", "
-"color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
-"  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
-"AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
-"  v2 [label=\"Engine v2\\nمنشور\", color=\"#15803d\", "
-"fillcolor=\"#f0fdf4\"];\n"
-"  a [label=\"خيط الاتصال\\nA\\nEngineCache\\nالجيل 2\"];\n"
-"  b [label=\"خيط الاتصال\\nB\\nEngineCache\\nالجيل 1\"];\n"
-"  v1 [label=\"Engine v1\\nيُحرَّر عندما تتخلى عنه\\nآخر ذاكرة مؤقتة\", "
-"color=\"#94a3b8\", fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
-"style=\"rounded,filled,dashed\"];\n"
-"\n"
-"  { rank=same; slot; v2; }\n"
-"  { rank=same; a; b; v1; }\n"
-"\n"
-"  storage -> slot [label=\" النشر بتبديل المؤشر\\n Arc\\n تحت قفل "
-"الكتابة\\n generation += 1 (Release)\", color=\"#b45309\", "
-"fontcolor=\"#92400e\", penwidth=1.4];\n"
-"  slot -> v2 [label=\"يحمل\", color=\"#15803d\", fontcolor=\"#15803d\", "
-"penwidth=1.4, minlen=3];\n"
-"  slot -> a [dir=back, label=\"التحديث: تحميل الجيل \\n(Acquire) "
-"\\nمتساوٍ، بلا نسخ \"];\n"
-"  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
-"fontcolor=\"#15803d\"];\n"
-"  slot -> b [dir=back, label=\" تغيّر الجيل\\n قفل قراءة ونسخ المؤشر\\n "
-"Arc\", style=dashed];\n"
-"  b -> v1 [label=\"Arc\\nحتى التحديث التالي\", color=\"#94a3b8\", "
-"minlen=2];\n"
-"}"
+"#flow(\n"
+"  spacing: (8mm, 12mm),\n"
+"  step((1, 0), \"خيط التخزين\", \"يبني Engine v2 خارج مسار الطلب\", kind: "
+"\"wait\",\n"
+"    name: <storage>),\n"
+"  sibuna((1, 1), \"`EngineSlot`\", \"`RwLock<Arc<Engine>>`\\n`generation: "
+"AtomicU64`\",\n"
+"    stroke: bold + green, name: <slot>),\n"
+"  outcome((2.6, 1), \"Engine v2\", \"منشور\", name: <v2>),\n"
+"  step((2.2, 2.2), \"خيط الاتصال A\", \"`EngineCache`، الجيل 2\", name: "
+"<a>),\n"
+"  step((0.2, 2.2), \"خيط الاتصال B\", \"`EngineCache`، الجيل 1\", name: "
+"<b>),\n"
+"  outcome((0.2, 3.3), \"Engine v1\", \"يُحرَّر حين تتخلى عنه آخر ذاكرة "
+"مؤقتة\", kind: \"quiet\",\n"
+"    name: <v1>),\n"
+"  edge(<storage>, <slot>, \"-|>\", stroke: thin + gold-deep, label-side: "
+"left,\n"
+"    say(\"النشر: تبديل `Arc` تحت قفل الكتابة،\\n`generation += 1` "
+"(Release)\")),\n"
+"  main-edge(<slot>, <v2>, \"-|>\", say(\"يحمل\"), label-side: left),\n"
+"  edge(<a>, <slot>, \"-|>\", label-side: left, label-pos: 0.55,\n"
+"    say(\"التحديث: تحميل الجيل (Acquire)؛\\nمتساوٍ، بلا نسخ\")),\n"
+"  main-edge(<a>, <v2>, \"-|>\", say(\"`Arc`\"), label-side: right),\n"
+"  edge(<b>, <slot>, \"-|>\", dash: \"dashed\", label-side: left, "
+"label-pos: 0.5,\n"
+"    say(\"تغيّر الجيل:\\nقفل قراءة، نسخ `Arc`\")),\n"
+"  edge(<b>, <v1>, \"-|>\", stroke: thin + rule, say(\"`Arc` حتى التحديث "
+"التالي\"),\n"
+"    label-side: left),\n"
+")\n"
 
 #: ../../zero-allocation.rst:641
 msgid ""
@@ -2284,11 +2282,11 @@ msgstr ""
 "الجيل بتحميل acquire واحد، ولا ينسخ Arc المنشور إلا بعد نشر جديد. يُحرَّر "
 "المحرك القديم عندما تتخلى عنه آخر ذاكرة مؤقتة تحمله."
 
-#: ../../zero-allocation.rst:667
+#: ../../zero-allocation.rst:644
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
 msgstr "التنفيذ: ``EngineSlot::publish`` و\\ ``EngineCache::refresh``"
 
-#: ../../zero-allocation.rst:669
+#: ../../zero-allocation.rst:646
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
@@ -2296,7 +2294,7 @@ msgstr ""
 "نشر محرك كامل، ورؤية اتصال واحد له. في ``cmd/sibuna/src/slot.rs`` (الحزمة "
 "``sibuna``)."
 
-#: ../../zero-allocation.rst:671
+#: ../../zero-allocation.rst:648
 msgid ""
 "pub struct EngineSlot {\n"
 "    current: RwLock<Arc<Engine>>,\n"
@@ -2369,7 +2367,7 @@ msgstr ""
 "    self.engine.get_or_insert_with(|| slot.load())\n"
 "}"
 
-#: ../../zero-allocation.rst:706
+#: ../../zero-allocation.rst:683
 msgid ""
 "The generation is stored with release ordering after the engine is in "
 "place, and loaded with acquire ordering: a reader that sees a new "
@@ -2389,7 +2387,7 @@ msgstr ""
 "واحدًا لطلب واحد؛ لكنه لا يستطيع أبدًا أن يرى محركًا نصف مبني، لأن الموضع "
 "لا يُخزَّن فيه إلا محركات كاملة."
 
-#: ../../zero-allocation.rst:710
+#: ../../zero-allocation.rst:687
 msgid ""
 "Every engine a request reads is complete, and no engine is freed while "
 "any request or connection cache holds it. The first holds because an "
@@ -2402,7 +2400,7 @@ msgstr ""
 "``publish``؛ ويصح الثاني لأن كل قارئ يحمل ``Arc``، ولا يُسقط المحرك إلا "
 "مع آخر ``Arc`` له."
 
-#: ../../zero-allocation.rst:712
+#: ../../zero-allocation.rst:689
 msgid ""
 "Why a cache and not simply a lock? SID 0010 asked us to measure the read "
 "cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a "
@@ -2417,7 +2415,7 @@ msgstr ""
 "سطرا ذاكرة مخبئية تكتب فيهما كل نواة. أما الجيل فيُكتب مرة واحدة لكل نشر "
 "ويُقرأ فقط في غير ذلك، فتحتفظ كل نواة بنسختها منه:"
 
-#: ../../zero-allocation.rst:714
+#: ../../zero-allocation.rst:691
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
@@ -2425,55 +2423,55 @@ msgstr ""
 "تكلفة قراءة واحدة للمحرك، Ryzen 9 5950X، و16 خيطًا تقرأ في حلقة (أكتوبر "
 "2026)"
 
-#: ../../zero-allocation.rst:717
+#: ../../zero-allocation.rst:694
 msgid "Reader"
 msgstr "القارئ"
 
-#: ../../zero-allocation.rst:718
+#: ../../zero-allocation.rst:695
 msgid "1 thread"
 msgstr "خيط واحد"
 
-#: ../../zero-allocation.rst:719
+#: ../../zero-allocation.rst:696
 msgid "16 threads"
 msgstr "16 خيطًا"
 
-#: ../../zero-allocation.rst:720
+#: ../../zero-allocation.rst:697
 msgid "``RwLock`` read guard only"
 msgstr "حارس القراءة لـ ``RwLock`` فقط"
 
-#: ../../zero-allocation.rst:721
+#: ../../zero-allocation.rst:698
 msgid "4.2 ns"
 msgstr "4.2 ns"
 
-#: ../../zero-allocation.rst:722
+#: ../../zero-allocation.rst:699
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../zero-allocation.rst:723
+#: ../../zero-allocation.rst:700
 msgid "``RwLock`` read and ``Arc`` clone"
 msgstr "قراءة ``RwLock`` ونسخ ``Arc``"
 
-#: ../../zero-allocation.rst:724
+#: ../../zero-allocation.rst:701
 msgid "7.6 ns"
 msgstr "7.6 ns"
 
-#: ../../zero-allocation.rst:725
+#: ../../zero-allocation.rst:702
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../zero-allocation.rst:726
+#: ../../zero-allocation.rst:703
 msgid "generation check with a cached ``Arc``"
 msgstr "فحص الجيل مع ``Arc`` مخزَّن مؤقتًا"
 
-#: ../../zero-allocation.rst:727
+#: ../../zero-allocation.rst:704
 msgid "0.8 ns"
 msgstr "0.8 ns"
 
-#: ../../zero-allocation.rst:728
+#: ../../zero-allocation.rst:705
 msgid "1.8 ns"
 msgstr "1.8 ns"
 
-#: ../../zero-allocation.rst:730
+#: ../../zero-allocation.rst:707
 msgid ""
 "Under contention the cached read is more than 400 times cheaper than the "
 "lock, so the request path uses the cache and the ``RwLock`` only on the "
@@ -2495,11 +2493,11 @@ msgstr ""
 "``benchmarks/results/primitives-latest.json``)، مع سعة لـ 128 قاعدة، "
 "وأسماء قواعد من 128 بايت، و8,192 عقدة في الشجرة."
 
-#: ../../zero-allocation.rst:732
+#: ../../zero-allocation.rst:709
 msgid "Why ``Arc`` and not reader counts"
 msgstr "لماذا ``Arc`` وليس عدادات القراء"
 
-#: ../../zero-allocation.rst:734
+#: ../../zero-allocation.rst:711
 msgid ""
 "The fixed-memory alternative keeps two engine slots, each with a reader "
 "count and its own allocation arena. A request pins a slot by incrementing "
@@ -2521,7 +2519,7 @@ msgstr ""
 "الباني، وكان الخادم الأصلي البطيء سيعطل النشر التالي ما لم يحرر كل طلب "
 "موضعه قبل بدء عمليات الإدخال والإخراج في الوكيل."
 
-#: ../../zero-allocation.rst:736
+#: ../../zero-allocation.rst:713
 msgid ""
 "``Arc`` reference counting needs none of this. The storage thread builds "
 "a fresh ``Engine`` from each snapshot and publishes it; nothing is "
@@ -2544,11 +2542,11 @@ msgstr ""
 "سياق الاتصال كاملًا قابلًا للتعديل. والاتصال المُرقّى، الذي قد يعيش "
 "ساعات، يحرر محركه المخزَّن مؤقتًا قبل تمريره عبر الوكيل."
 
-#: ../../zero-allocation.rst:738
+#: ../../zero-allocation.rst:715
 msgid "Exercise 5.2"
 msgstr "تمرين 5.2"
 
-#: ../../zero-allocation.rst:740
+#: ../../zero-allocation.rst:717
 msgid ""
 "Using the GCRA theorem, compute the maximum number of requests a single "
 "client can get through in the first 3 seconds after being idle, for "
@@ -2559,14 +2557,93 @@ msgstr ""
 "أول 3 ثوانٍ بعد خموله، مع ``--rate-limit 100 --rate-window 10``. قارن ذلك "
 "بعداد نافذة ثابتة من 10 ثوانٍ وبسجل نافذة منزلقة حقيقي."
 
-#: ../../zero-allocation.rst:742
+#: ../../zero-allocation.rst:719
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../zero-allocation.rst:744
+#: ../../zero-allocation.rst:721
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."
 msgstr ""
 "اشرح، بمثال من ثلاثة مواضع، لماذا لا يجوز الكتابة فوق مُدخل Robin Hood "
 "منتهٍ إلا بمفتاح مسافته كبيرة بالقدر نفسه على الأقل."
+
+#~ msgid ""
+#~ "digraph engine_publication {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
+#~ "nodesep=0.45, ranksep=0.55, pad=0.1];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+#~ "fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
+#~ "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+#~ "fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
+#~ "\n"
+#~ "  storage [label=\"Storage thread\\nbuild Engine v2\\noff the request "
+#~ "path\", color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
+#~ "  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
+#~ "AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
+#~ "  v2 [label=\"Engine v2\\n(published)\", color=\"#15803d\", "
+#~ "fillcolor=\"#f0fdf4\"];\n"
+#~ "  a [label=\"Connection thread A\\nEngineCache\\ngeneration 2\"];\n"
+#~ "  b [label=\"Connection thread B\\nEngineCache\\ngeneration 1\"];\n"
+#~ "  v1 [label=\"Engine v1\\nfreed when the last\\ncache lets go\", "
+#~ "color=\"#94a3b8\", fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
+#~ "style=\"rounded,filled,dashed\"];\n"
+#~ "\n"
+#~ "  { rank=same; slot; v2; }\n"
+#~ "  { rank=same; a; b; v1; }\n"
+#~ "\n"
+#~ "  storage -> slot [label=\" publish: swap the Arc\\n under the write "
+#~ "lock,\\n generation += 1 (Release)\", color=\"#b45309\", "
+#~ "fontcolor=\"#92400e\", penwidth=1.4];\n"
+#~ "  slot -> v2 [label=\"holds\", color=\"#15803d\", "
+#~ "fontcolor=\"#15803d\", penwidth=1.4, minlen=3];\n"
+#~ "  slot -> a [dir=back, label=\"refresh: load generation\\n(Acquire); "
+#~ "equal, no clone \"];\n"
+#~ "  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
+#~ "fontcolor=\"#15803d\"];\n"
+#~ "  slot -> b [dir=back, label=\" generation moved:\\n read lock, clone "
+#~ "Arc\", style=dashed];\n"
+#~ "  b -> v1 [label=\"Arc until\\nnext refresh\", color=\"#94a3b8\", "
+#~ "minlen=2];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph engine_publication {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
+#~ "nodesep=0.45, ranksep=0.55, pad=0.1];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=9.5, fontcolor=\"#172033\", color=\"#1e40af\", "
+#~ "fillcolor=\"#eff6ff\", penwidth=1.1, margin=\"0.12,0.06\"];\n"
+#~ "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=8, "
+#~ "fontcolor=\"#475569\", arrowsize=0.6, penwidth=1.1];\n"
+#~ "\n"
+#~ "  storage [label=\"خيط التخزين يبني\\nEngine v2\\nخارج مسار الطلب\", "
+#~ "color=\"#b45309\", fillcolor=\"#fffbeb\"];\n"
+#~ "  slot [label=\"EngineSlot\\nRwLock<Arc<Engine>>\\ngeneration: "
+#~ "AtomicU64\", color=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.6];\n"
+#~ "  v2 [label=\"Engine v2\\nمنشور\", color=\"#15803d\", "
+#~ "fillcolor=\"#f0fdf4\"];\n"
+#~ "  a [label=\"خيط الاتصال\\nA\\nEngineCache\\nالجيل 2\"];\n"
+#~ "  b [label=\"خيط الاتصال\\nB\\nEngineCache\\nالجيل 1\"];\n"
+#~ "  v1 [label=\"Engine v1\\nيُحرَّر عندما تتخلى عنه\\nآخر ذاكرة مؤقتة\", "
+#~ "color=\"#94a3b8\", fillcolor=\"#f8fafc\", fontcolor=\"#475569\", "
+#~ "style=\"rounded,filled,dashed\"];\n"
+#~ "\n"
+#~ "  { rank=same; slot; v2; }\n"
+#~ "  { rank=same; a; b; v1; }\n"
+#~ "\n"
+#~ "  storage -> slot [label=\" النشر بتبديل المؤشر\\n Arc\\n تحت قفل "
+#~ "الكتابة\\n generation += 1 (Release)\", color=\"#b45309\", "
+#~ "fontcolor=\"#92400e\", penwidth=1.4];\n"
+#~ "  slot -> v2 [label=\"يحمل\", color=\"#15803d\", "
+#~ "fontcolor=\"#15803d\", penwidth=1.4, minlen=3];\n"
+#~ "  slot -> a [dir=back, label=\"التحديث: تحميل الجيل \\n(Acquire) "
+#~ "\\nمتساوٍ، بلا نسخ \"];\n"
+#~ "  v2 -> a [dir=back, label=\" Arc\", color=\"#15803d\", "
+#~ "fontcolor=\"#15803d\"];\n"
+#~ "  slot -> b [dir=back, label=\" تغيّر الجيل\\n قفل قراءة ونسخ "
+#~ "المؤشر\\n Arc\", style=dashed];\n"
+#~ "  b -> v1 [label=\"Arc\\nحتى التحديث التالي\", color=\"#94a3b8\", "
+#~ "minlen=2];\n"
+#~ "}"

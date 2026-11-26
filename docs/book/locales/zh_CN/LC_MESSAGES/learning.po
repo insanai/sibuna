@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,8 +22,14 @@ msgid "How to Read This Book"
 msgstr "如何阅读本书"
 
 #: ../../learning.rst:4
-msgid "The timetable example gives us two questions to carry into the design chapters. Which requests does the edge admit, and which server handles an admitted request? The first chapters develop the cost and correctness of admission. Later chapters show how a single edge selects a server and how multiple edges cooperate."
-msgstr "时刻表的例子为接下来的设计章节留下了两个问题：边缘节点允许哪些请求通过，获准通过的请求由哪台服务器处理？前几章讨论准入的成本和正确性，之后再看一个节点如何选择服务器，以及多个节点如何协作。"
+msgid ""
+"The timetable example gives us two questions to carry into the design "
+"chapters. Which requests does the edge admit, and which server handles an "
+"admitted request? The first chapters develop the cost and correctness of "
+"admission. Later chapters show how a single edge selects a server and how "
+"multiple edges cooperate."
+msgstr ""
+"时刻表的例子为接下来的设计章节留下了两个问题：边缘节点允许哪些请求通过，获准通过的请求由哪台服务器处理？前几章讨论准入的成本和正确性，之后再看一个节点如何选择服务器，以及多个节点如何协作。"
 
 #: ../../learning.rst:10
 msgid "Question"
@@ -136,8 +142,14 @@ msgstr ""
 "部分中的所有权思想。先完成练习，之后再与书末的解答比较。当追踪涉及共享表或借用切片时，回到第 V 部分。"
 
 #: ../../learning.rst:37
-msgid "For a first deployment, we work through :doc:`jlavi` after meeting frontends, routes and pools in :doc:`introduction`. Part XI then explains how to install, observe and reload the running system. Parts XII and XIII provide the reference and the command summary."
-msgstr "初次部署时，我们先在 :doc:`introduction` 中认识前端、路由和池，再学习 :doc:`jlavi` 。第 XI 部分讲解安装、观测和重新加载运行中的系统。第 XII 和 XIII 部分提供参考资料和命令速查。"
+msgid ""
+"For a first deployment, we work through :doc:`jlavi` after meeting "
+"frontends, routes and pools in :doc:`introduction`. Part XI then explains "
+"how to install, observe and reload the running system. Parts XII and XIII "
+"provide the reference and the command summary."
+msgstr ""
+"初次部署时，我们先在 :doc:`introduction` 中认识前端、路由和池，再学习 :doc:`jlavi` 。第 XI "
+"部分讲解安装、观测和重新加载运行中的系统。第 XII 和 XIII 部分提供参考资料和命令速查。"
 
 #: ../../learning.rst:38
 msgid ""

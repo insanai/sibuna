@@ -63,9 +63,9 @@ The transfer
 
 The sender connects by TCP to the mesh address of the peer. The port number is that of the mesh datagrams.
 
-.. code-block:: text
-
-   S E C 1 | stamp: 8 bytes | length: 4 bytes | file | tag: 32 bytes
+.. typst-diagram:: ../diagrams/config-transfer.typ
+   :caption: The message that carries a file to a peer.
+   :alt: A strip of fields with their offsets in bytes. The four bytes SEC1 stand at offset 0. The stamp takes 8 bytes at offset 4 and the length 4 bytes at offset 12. The file follows at offset 16, as long as the length says and at most 256 KiB. A tag of 32 bytes, a keyed BLAKE3 hash, ends the message at n - 32.
 
 The stamp is the Unix millisecond of the send. The tag is a keyed BLAKE3 hash of everything before it. The key is derived from the mesh key with the context ``sibuna/edge-mesh/config/v1``, so a datagram of the mesh cannot stand for a file and the reverse. A file holds at most 256 KiB, the same limit as a local edge source.
 

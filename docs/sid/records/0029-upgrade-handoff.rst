@@ -64,9 +64,9 @@ Who speaks to whom
 
 The replacement connects to the old process. The old process gives; the replacement takes. One handoff runs at a time. The messages below are in the order they are sent.
 
-.. graphviz:: ../diagrams/handoff-protocol.dot
+.. typst-diagram:: ../diagrams/handoff-protocol.typ
    :caption: The handoff exchanges and the two local cutover points.
-   :alt: The replacement validates its file and the listener descriptors. READY pauses UDP. FLOWS and COMMIT carry mappings, sockets and count. The replacement accepts TCP before DONE, then reads UDP. The old process drains its established TCP streams.
+   :alt: A sequence diagram with the old process and the replacement. The replacement checks its file and connects to the upgrade socket; both ends have checked the peer with SO_PEERCRED. The replacement sends HELLO with its range of versions. The old process answers LISTENERS with the version and the kind, address and descriptor of each listener. The replacement verifies the descriptors and starts HTTP, logs and counters without reading. The cutover follows, in which nobody reads UDP, for at most 10 seconds: the replacement sends READY, the old process pauses UDP and keeps TCP open, sends FLOWS with the mappings and their server sockets and COMMIT with their number, the replacement adopts the mappings, accepts TCP and sends DONE with the mappings adopted and dropped. Then the replacement reads UDP, binds the upgrade and admin sockets and reports ready, while the old process stops accepting, forgets the mappings, drains TCP and exits with status 0.
 
 The replacement has "validated its configuration, acquired listeners and acknowledged readiness", in the words of SID 0015, when it sends READY. Until then the old process has changed nothing. Between READY and DONE the old process accepts TCP and does not read UDP. That interval is the only one in which UDP datagrams wait. The old process measures it and writes it in its log line.
 
@@ -77,9 +77,9 @@ The frames
 
 The socket is a Unix stream socket. A frame has a header of seven bytes and a payload.
 
-.. code-block:: text
-
-   kind: 1 byte | payload length: 4 bytes, little endian | descriptors: 2 bytes | payload
+.. typst-diagram:: ../diagrams/handoff-frame.typ
+   :caption: A frame of the upgrade socket.
+   :alt: A strip of fields with their offsets in bytes. The kind takes 1 byte at offset 0. The payload length takes 4 bytes, little endian, at offset 1. The number of descriptors takes 2 bytes at offset 5. The payload of at most 65,536 bytes begins at offset 7.
 
 The descriptors of a frame travel with its header in one ``sendmsg`` call, as one ``SCM_RIGHTS`` control message. The receiver reads every header with ``recvmsg`` and the flag ``MSG_CMSG_CLOEXEC``. It refuses a header whose count differs from the descriptors that arrived, a truncated control message, a payload above 65,536 bytes and more than 64 descriptors in a frame.
 
@@ -250,7 +250,7 @@ Under systemd the two processes are two instances of one template unit, for exam
 Structure
 ~~~~~~~~~
 
-.. graphviz:: ../diagrams/handoff-crates.dot
+.. typst-diagram:: ../diagrams/handoff-crates.typ
    :caption: Dependencies of the listener handoff.
    :alt: The daemon coordinates the old and new processes. The load balancer freezes, adopts and arms sockets. The upgrade crate implements frames, descriptor passing and peer credentials.
 

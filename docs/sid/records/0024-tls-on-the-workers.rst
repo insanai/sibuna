@@ -23,7 +23,7 @@ Motivation and scope
 
 We measured Sibuna beside HAProxy with both writing the same headers (the book, "Like for like"). Over plain HTTP Sibuna carried the same load with less CPU for a request. Over HTTPS it carried 90 percent, although it used 40 of 48 CPU seconds. The time of each thread group showed the reason: the runtime threads ended TLS, the workers served the request, and every request and every response waited for the other thread. Sixteen threads also shared eight CPUs.
 
-.. graphviz:: ../diagrams/tls-worker-path.dot
+.. typst-diagram:: ../diagrams/tls-worker-path.typ
    :caption: Where TLS terminates before and after the worker change.
    :alt: The original path decrypted on the runtime thread and passed bytes through a socket pair. The new path terminates TLS on the worker and sends bytes to the server.
 

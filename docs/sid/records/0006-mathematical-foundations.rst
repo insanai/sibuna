@@ -95,7 +95,7 @@ Write :math:`c_{\mathrm{iss}}` for the server cost to issue a challenge, :math:`
 
 The figure below fixes the pipeline that the rest of the record analyses; each box names the part that proves its properties.
 
-.. graphviz:: ../diagrams/pipeline.dot
+.. typst-diagram:: ../diagrams/pipeline.typ
    :caption: The request pipeline and the part of this record that proves each stage.
    :alt: A request is parsed without copying, then passes the ban table (Part E style, lock-free reads), the GCRA limiter (Part D), the keyed BLAKE3 token check (Part C) and the policy stage of automaton, tokenizer and rules (Part F). Policy allows (proxy), denies (403) or issues a challenge whose identifier is payload concatenated with a MAC (Part C). The solution is hashcash (Part A) or PoSW (Part B); verification inserts into the spent set (Part E) and mints a token (Part C). Engine slots are swapped by RCU (Part G), difficulty follows load (Part H), and incidents flow through a ring to storage and campaigns by embedding (Part I).
 

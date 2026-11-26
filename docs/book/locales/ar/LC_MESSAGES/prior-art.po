@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -132,155 +132,108 @@ msgstr ""
 
 #: ../../prior-art.rst:21
 msgid ""
-"digraph lineage {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
-"compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, fontname=\"Helvetica\", "
-"fontsize=9.5, fontcolor=\"#172033\"];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9, fontcolor=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.0, "
-"width=1.35, height=0.4, margin=\"0.08,0.04\"];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55, penwidth=1.0];\n"
+"// prior-art.rst: the lineage of the ideas Sibuna combines. Three "
+"columns, time running\n"
+"// downward; the filled boxes are the ideas Sibuna takes directly.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
 "\n"
-"  subgraph cluster_puzzles {\n"
-"    label=<<b>Client puzzles and<br/>sequential work</b>>; "
-"style=\"rounded,filled\"; color=\"#fde68a\"; fillcolor=\"#fffdf5\"; "
-"margin=10;\n"
-"    node [color=\"#d6a35c\"];\n"
-"    dwork [label=\"Dwork-Naor\\n1992\"];\n"
-"    hashcash [label=\"Hashcash\\n1997\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"    juels [label=\"Juels-Brainard\\n1999\"];\n"
-"    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
-"    cohen [label=\"Cohen-Pietrzak\\n2018\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"    blocki [label=\"Blocki-Lee-Zhou\\n2021\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"  }\n"
-"  subgraph cluster_products {\n"
-"    label=<<b>Products in<br/>the same space</b>>; "
-"style=\"rounded,filled\"; color=\"#ddd6fe\"; fillcolor=\"#fbfaff\"; "
-"margin=10;\n"
-"    node [color=\"#6d28d9\", fillcolor=\"#ddd6fe\", penwidth=1.3];\n"
-"    p0 [style=invis, label=\"\"];\n"
-"    p1 [style=invis, label=\"\"];\n"
-"    anubis [label=\"Anubis\\ninterstitial\"];\n"
-"    cloudflare [label=\"Cloudflare\\nhosted edge\"];\n"
-"    safeline [label=\"SafeLine\\nsemantic WAF\"];\n"
-"  }\n"
-"  subgraph cluster_systems {\n"
-"    label=<<b>Algorithms and<br/>systems</b>>; style=\"rounded,filled\"; "
-"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=10;\n"
-"    node [color=\"#7c9cd6\"];\n"
-"    aho [label=\"Aho-Corasick\\n1975\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    gcra [label=\"GCRA\\nATM Forum 1996\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
-"    libinj [label=\"libinjection\\n2012\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
-"  }\n"
-"  sibuna [label=<<b>Sibuna</b><br/><font point-size=\"9\">Gate, Shield, "
-"Edge</font>>, fontsize=11, color=\"#15803d\", fillcolor=\"#bbf7d0\", "
-"penwidth=1.8, width=2.2, height=0.5];\n"
+"#let idea(at, title, year, name, taken: false) = step(at, title, year,\n"
+"  kind: if taken { \"accent\" } else { \"step\" }, width: 34mm, name: "
+"name)\n"
 "\n"
-"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki "
-"[color=\"#d6a35c\"];\n"
-"  aho -> gcra [style=invis];\n"
-"  gcra -> modsec [style=invis];\n"
-"  modsec -> libinj [color=\"#7c9cd6\"];\n"
-"  libinj -> hyperscan [style=invis];\n"
-"  aho -> hyperscan [color=\"#7c9cd6\", constraint=false];\n"
-"  hashcash -> anubis [color=\"#d6a35c\", constraint=false];\n"
-"  libinj -> safeline [color=\"#7c9cd6\", constraint=false];\n"
-"  { rank=same; dwork; p0; aho; }\n"
-"  { rank=same; hashcash; p1; gcra; }\n"
-"  { rank=same; juels; anubis; modsec; }\n"
-"  { rank=same; mahmoody; cloudflare; libinj; }\n"
-"  { rank=same; cohen; safeline; hyperscan; }\n"
-"  p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];\n"
-"\n"
-"  blocki -> sibuna [ltail=cluster_puzzles, color=\"#b45309\", "
-"penwidth=1.3, minlen=2];\n"
-"  safeline -> sibuna [ltail=cluster_products, color=\"#6d28d9\", "
-"penwidth=1.3, minlen=2];\n"
-"  hyperscan -> sibuna [ltail=cluster_systems, color=\"#1e40af\", "
-"penwidth=1.3, minlen=2];\n"
-"}"
+"#flow(\n"
+"  spacing: (7mm, 4.5mm),\n"
+"  caption-node((0, -1), \"Client puzzles and\\nsequential work\"),\n"
+"  caption-node((1, -1), \"Products in\\nthe same space\"),\n"
+"  caption-node((2, -1), \"Algorithms and\\nsystems\"),\n"
+"  idea((0, 0), \"Dwork-Naor\", \"1992\", <dwork>),\n"
+"  idea((0, 1), \"Hashcash\", \"1997\", <hashcash>, taken: true),\n"
+"  idea((0, 2), \"Juels-Brainard\", \"1999\", <juels>),\n"
+"  idea((0, 3), \"Mahmoody et al.\", \"2013\", <mahmoody>),\n"
+"  idea((0, 4), \"Cohen-Pietrzak\", \"2018\", <cohen>, taken: true),\n"
+"  idea((0, 5), \"Blocki-Lee-Zhou\", \"2021\", <blocki>, taken: true),\n"
+"  idea((1, 2), \"Anubis\", \"interstitial\", <anubis>, taken: true),\n"
+"  idea((1, 3), \"Cloudflare\", \"hosted edge\", <cloudflare>, taken: "
+"true),\n"
+"  idea((1, 4), \"SafeLine\", \"semantic WAF\", <safeline>, taken: true),\n"
+"  idea((2, 0), \"Aho-Corasick\", \"1975\", <aho>, taken: true),\n"
+"  idea((2, 1), \"GCRA\", \"ATM Forum 1996\", <gcra>, taken: true),\n"
+"  idea((2, 2), \"ModSecurity, CRS\", \"2002\", <modsec>),\n"
+"  idea((2, 3), \"libinjection\", \"2012\", <libinj>, taken: true),\n"
+"  idea((2, 4), \"Hyperscan\", \"2019\", <hyperscan>),\n"
+"  group((<dwork>, <blocki>), name: <puzzles>),\n"
+"  group((<anubis>, <safeline>), name: <products>),\n"
+"  group((<aho>, <hyperscan>), name: <systems>),\n"
+"  sibuna((1, 6.6), text(weight: \"semibold\", \"Sibuna\"), \"Gate, "
+"Shield, Edge\", width: 46mm,\n"
+"    stroke: bold + green, name: <sibuna>),\n"
+"  edge(<dwork>, <hashcash>, \"-|>\"),\n"
+"  edge(<hashcash>, <juels>, \"-|>\"),\n"
+"  edge(<juels>, <mahmoody>, \"-|>\"),\n"
+"  edge(<mahmoody>, <cohen>, \"-|>\"),\n"
+"  edge(<cohen>, <blocki>, \"-|>\"),\n"
+"  edge(<modsec>, <libinj>, \"-|>\"),\n"
+"  edge(<aho>, (2.8, 0), (2.8, 4), <hyperscan>, \"-|>\", corner-radius: "
+"4pt),\n"
+"  edge(<hashcash>, <anubis>, \"-|>\"),\n"
+"  edge(<libinj>, <safeline>, \"-|>\"),\n"
+"  main-edge(<puzzles>, <sibuna>, \"-|>\"),\n"
+"  main-edge(<products>, <sibuna>, \"-|>\"),\n"
+"  main-edge(<systems>, <sibuna>, \"-|>\"),\n"
+")\n"
 msgstr ""
-"digraph lineage {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
-"compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, fontname=\"Helvetica\", "
-"fontsize=9.5, fontcolor=\"#172033\"];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9, fontcolor=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.0, "
-"width=1.35, height=0.4, margin=\"0.08,0.04\"];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55, penwidth=1.0];\n"
+"// prior-art.rst: the lineage of the ideas Sibuna combines. Three "
+"columns, time running\n"
+"// downward; the filled boxes are the ideas Sibuna takes directly.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"ar\")\n"
 "\n"
-"  subgraph cluster_puzzles {\n"
-"    label=<<b>الألغاز والعمل المتسلسل</b>>; style=\"rounded,filled\"; "
-"color=\"#fde68a\"; fillcolor=\"#fffdf5\"; margin=10;\n"
-"    node [color=\"#d6a35c\"];\n"
-"    dwork [label=\"Dwork-Naor\\n1992\"];\n"
-"    hashcash [label=\"Hashcash\\n1997\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"    juels [label=\"Juels-Brainard\\n1999\"];\n"
-"    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
-"    cohen [label=\"Cohen-Pietrzak\\n2018\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"    blocki [label=\"Blocki-Lee-Zhou\\n2021\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"  }\n"
-"  subgraph cluster_products {\n"
-"    label=<<b>المنتجات في الفضاء نفسه</b>>; style=\"rounded,filled\"; "
-"color=\"#ddd6fe\"; fillcolor=\"#fbfaff\"; margin=10;\n"
-"    node [color=\"#6d28d9\", fillcolor=\"#ddd6fe\", penwidth=1.3];\n"
-"    p0 [style=invis, label=\"\"];\n"
-"    p1 [style=invis, label=\"\"];\n"
-"    anubis [label=\"Anubis\\nصفحة وسيطة\"];\n"
-"    cloudflare [label=\"Cloudflare\\nحافة مستضافة\"];\n"
-"    safeline [label=\"SafeLine\\nجدار ناري دلالي\"];\n"
-"  }\n"
-"  subgraph cluster_systems {\n"
-"    label=<<b>الخوارزميات والأنظمة</b>>; style=\"rounded,filled\"; "
-"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=10;\n"
-"    node [color=\"#7c9cd6\"];\n"
-"    aho [label=\"Aho-Corasick\\n1975\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    gcra [label=\"GCRA\\nATM Forum 1996\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
-"    libinj [label=\"libinjection\\n2012\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
-"  }\n"
-"  sibuna [label=<<b>Sibuna</b><br/><font point-size=\"9\">Gate, Shield, "
-"Edge</font>>, fontsize=11, color=\"#15803d\", fillcolor=\"#bbf7d0\", "
-"penwidth=1.8, width=2.2, height=0.5];\n"
+"#let idea(at, title, year, name, taken: false) = step(at, title, year,\n"
+"  kind: if taken { \"accent\" } else { \"step\" }, width: 34mm, name: "
+"name)\n"
 "\n"
-"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki "
-"[color=\"#d6a35c\"];\n"
-"  aho -> gcra [style=invis];\n"
-"  gcra -> modsec [style=invis];\n"
-"  modsec -> libinj [color=\"#7c9cd6\"];\n"
-"  libinj -> hyperscan [style=invis];\n"
-"  aho -> hyperscan [color=\"#7c9cd6\", constraint=false];\n"
-"  hashcash -> anubis [color=\"#d6a35c\", constraint=false];\n"
-"  libinj -> safeline [color=\"#7c9cd6\", constraint=false];\n"
-"  { rank=same; dwork; p0; aho; }\n"
-"  { rank=same; hashcash; p1; gcra; }\n"
-"  { rank=same; juels; anubis; modsec; }\n"
-"  { rank=same; mahmoody; cloudflare; libinj; }\n"
-"  { rank=same; cohen; safeline; hyperscan; }\n"
-"  p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];\n"
-"\n"
-"  blocki -> sibuna [ltail=cluster_puzzles, color=\"#b45309\", "
-"penwidth=1.3, minlen=2];\n"
-"  safeline -> sibuna [ltail=cluster_products, color=\"#6d28d9\", "
-"penwidth=1.3, minlen=2];\n"
-"  hyperscan -> sibuna [ltail=cluster_systems, color=\"#1e40af\", "
-"penwidth=1.3, minlen=2];\n"
-"}"
+"#flow(\n"
+"  spacing: (7mm, 4.5mm),\n"
+"  caption-node((0, -1), \"ألغاز العميل\\nوالعمل التسلسلي\"),\n"
+"  caption-node((1, -1), \"منتجات في\\nالمجال نفسه\"),\n"
+"  caption-node((2, -1), \"الخوارزميات\\nوالأنظمة\"),\n"
+"  idea((0, 0), \"Dwork-Naor\", \"1992\", <dwork>),\n"
+"  idea((0, 1), \"Hashcash\", \"1997\", <hashcash>, taken: true),\n"
+"  idea((0, 2), \"Juels-Brainard\", \"1999\", <juels>),\n"
+"  idea((0, 3), \"Mahmoody وآخرون\", \"2013\", <mahmoody>),\n"
+"  idea((0, 4), \"Cohen-Pietrzak\", \"2018\", <cohen>, taken: true),\n"
+"  idea((0, 5), \"Blocki-Lee-Zhou\", \"2021\", <blocki>, taken: true),\n"
+"  idea((1, 2), \"Anubis\", \"صفحة وسيطة\", <anubis>, taken: true),\n"
+"  idea((1, 3), \"Cloudflare\", \"حافة مستضافة\", <cloudflare>, taken: "
+"true),\n"
+"  idea((1, 4), \"SafeLine\", \"جدار ناري دلالي\", <safeline>, taken: "
+"true),\n"
+"  idea((2, 0), \"Aho-Corasick\", \"1975\", <aho>, taken: true),\n"
+"  idea((2, 1), \"GCRA\", \"ATM Forum 1996\", <gcra>, taken: true),\n"
+"  idea((2, 2), \"ModSecurity، CRS\", \"2002\", <modsec>),\n"
+"  idea((2, 3), \"libinjection\", \"2012\", <libinj>, taken: true),\n"
+"  idea((2, 4), \"Hyperscan\", \"2019\", <hyperscan>),\n"
+"  group((<dwork>, <blocki>), name: <puzzles>),\n"
+"  group((<anubis>, <safeline>), name: <products>),\n"
+"  group((<aho>, <hyperscan>), name: <systems>),\n"
+"  sibuna((1, 6.6), text(weight: \"semibold\", \"Sibuna\"), \"Gate، "
+"Shield، Edge\", width: 46mm,\n"
+"    stroke: bold + green, name: <sibuna>),\n"
+"  edge(<dwork>, <hashcash>, \"-|>\"),\n"
+"  edge(<hashcash>, <juels>, \"-|>\"),\n"
+"  edge(<juels>, <mahmoody>, \"-|>\"),\n"
+"  edge(<mahmoody>, <cohen>, \"-|>\"),\n"
+"  edge(<cohen>, <blocki>, \"-|>\"),\n"
+"  edge(<modsec>, <libinj>, \"-|>\"),\n"
+"  edge(<aho>, (2.8, 0), (2.8, 4), <hyperscan>, \"-|>\", corner-radius: "
+"4pt),\n"
+"  edge(<hashcash>, <anubis>, \"-|>\"),\n"
+"  edge(<libinj>, <safeline>, \"-|>\"),\n"
+"  main-edge(<puzzles>, <sibuna>, \"-|>\"),\n"
+"  main-edge(<products>, <sibuna>, \"-|>\"),\n"
+"  main-edge(<systems>, <sibuna>, \"-|>\"),\n"
+")\n"
 
 #: ../../prior-art.rst:21
 msgid ""
@@ -300,11 +253,11 @@ msgstr ""
 "1998؛ SID 0005)؛ أما الآن فيخزن Sibuna حالته في SQLite أو PostgreSQL (SID "
 "0011)."
 
-#: ../../prior-art.rst:79
+#: ../../prior-art.rst:24
 msgid "Application Firewalls"
 msgstr "جدران حماية التطبيقات"
 
-#: ../../prior-art.rst:82
+#: ../../prior-art.rst:27
 msgid ""
 "The first generation of web application firewalls matched request bytes "
 "against regular expressions. ModSecurity (2002) and the OWASP Core Rule "
@@ -332,11 +285,11 @@ msgstr ""
 "الجزء السادس لماذا اختار Sibuna آلة كثيفة مع مقسِّمات بنيوية صغيرة، بدل "
 "التعبيرات النمطية أو محرك SIMD، للحقول القصيرة التي يفحصها."
 
-#: ../../prior-art.rst:84
+#: ../../prior-art.rst:29
 msgid "Interstitials and Edges"
 msgstr "الصفحات الوسيطة وشبكات الحافة"
 
-#: ../../prior-art.rst:87
+#: ../../prior-art.rst:32
 msgid ""
 "The proof-of-work interstitial in front of a website became common in "
 "2025, when scraper traffic feeding language-model training made ordinary "
@@ -355,7 +308,7 @@ msgstr ""
 "عديم الحالة، ورمز متماثل، ومستوى عمل ثانٍ؛ وتسجل المقارنة أدناه مواضع "
 "الاختلاف بينهما."
 
-#: ../../prior-art.rst:89
+#: ../../prior-art.rst:34
 msgid ""
 "At the other end of the scale, hosted edges such as Cloudflare place "
 "inspection, rate limiting, and bot scoring in hundreds of points of "
@@ -374,11 +327,11 @@ msgstr ""
 "قاعدة بيانات PostgreSQL واحدة يتشاركها عنقود) يقرؤها خيط تخزين خارج مسار "
 "الطلب، بدل استدعاء خدمة."
 
-#: ../../prior-art.rst:91
+#: ../../prior-art.rst:36
 msgid "Three Ideas in One Binary"
 msgstr "ثلاث أفكار في ملف تنفيذي واحد"
 
-#: ../../prior-art.rst:94
+#: ../../prior-art.rst:39
 msgid ""
 "Sibuna combines a browser work challenge for admission, bounded "
 "application-payload inspection, and a shared control plane that publishes "
@@ -389,71 +342,71 @@ msgstr ""
 "ومستوى تحكم مشتركًا ينشر لقطات سياسة محلية. وGate وShield هما وضعا "
 "المنتج؛ أما التخزين والنشر الموزع فخياران لأي منهما."
 
-#: ../../prior-art.rst:100
+#: ../../prior-art.rst:45
 msgid "**Property**"
 msgstr "**الخاصية**"
 
-#: ../../prior-art.rst:101
+#: ../../prior-art.rst:46
 msgid "**Gate**"
 msgstr "**Gate**"
 
-#: ../../prior-art.rst:102
+#: ../../prior-art.rst:47
 msgid "**Shield**"
 msgstr "**Shield**"
 
-#: ../../prior-art.rst:103
+#: ../../prior-art.rst:48
 msgid "Admission"
 msgstr "القبول"
 
-#: ../../prior-art.rst:104
+#: ../../prior-art.rst:49
 msgid "Native Hashcash or sequential-work verification"
 msgstr "تحقق أصلي من Hashcash أو العمل المتسلسل"
 
-#: ../../prior-art.rst:105 ../../prior-art.rst:108 ../../prior-art.rst:111
+#: ../../prior-art.rst:50 ../../prior-art.rst:53 ../../prior-art.rst:56
 msgid "Same"
 msgstr "نفسه"
 
-#: ../../prior-art.rst:106
+#: ../../prior-art.rst:51
 msgid "Session"
 msgstr "الجلسة"
 
-#: ../../prior-art.rst:107
+#: ../../prior-art.rst:52
 msgid "Keyed BLAKE3; optional Ed25519"
 msgstr "BLAKE3 ذو مفتاح؛ Ed25519 اختياري"
 
-#: ../../prior-art.rst:109
+#: ../../prior-art.rst:54
 msgid "Local controls"
 msgstr "الضوابط المحلية"
 
-#: ../../prior-art.rst:110
+#: ../../prior-art.rst:55
 msgid "Rules, CIDRs, GCRA, bans"
 msgstr "قواعد، ونطاقات CIDR، وGCRA، وحظر"
 
-#: ../../prior-art.rst:112
+#: ../../prior-art.rst:57
 msgid "Inspection"
 msgstr "الفحص"
 
-#: ../../prior-art.rst:113
+#: ../../prior-art.rst:58
 msgid "Disabled"
 msgstr "معطل"
 
-#: ../../prior-art.rst:114
+#: ../../prior-art.rst:59
 msgid "Bounded signatures and structural tokenizers"
 msgstr "توقيعات محدودة ومقسِّمات بنيوية"
 
-#: ../../prior-art.rst:115
+#: ../../prior-art.rst:60
 msgid "State"
 msgstr "الحالة"
 
-#: ../../prior-art.rst:116
+#: ../../prior-art.rst:61
 msgid "Optional persistent policy and reputation, shared across a cluster"
 msgstr "سياسة وسمعة دائمتان اختياريتان، مشتركتان عبر العنقود"
 
-#: ../../prior-art.rst:117
+#: ../../prior-art.rst:62
 msgid "Also inspection forensics"
 msgstr "وأدلة الفحص الجنائية أيضًا"
 
-#: ../../prior-art.rst:119
+#: ../../prior-art.rst:64
 msgid ""
 "The browser solver compiles from the same proof sources as the native "
 "verifier. Dense literal matching avoids backtracking and keeps scan work "
@@ -470,11 +423,11 @@ msgstr ""
 "أمثلية خوارزمية مطلقة: فالترويسات القصيرة، والأجسام الطويلة، وتنوع "
 "الأنماط، وعدد النوى، وحجم الذاكرة المخبئية كلها تغير الموازنات."
 
-#: ../../prior-art.rst:121
+#: ../../prior-art.rst:66
 msgid "Design constraints adopted"
 msgstr "قيود التصميم المعتمدة"
 
-#: ../../prior-art.rst:123
+#: ../../prior-art.rst:68
 msgid ""
 "No heap allocation on the request path; every table has a fixed capacity "
 "and a stated saturation behaviour."
@@ -482,20 +435,20 @@ msgstr ""
 "لا تخصيص على الكومة في مسار الطلب؛ ولكل جدول سعة ثابتة وسلوك محدد عند "
 "الامتلاء."
 
-#: ../../prior-art.rst:124
+#: ../../prior-art.rst:69
 msgid ""
 "Issuing a challenge writes nothing; only a paid-for solution occupies "
 "memory."
 msgstr "إصدار التحدي لا يكتب شيئًا؛ ولا يشغل الذاكرة إلا حل دُفع ثمنه."
 
-#: ../../prior-art.rst:125
+#: ../../prior-art.rst:70
 msgid ""
 "A session admits; it never exempts a request from inspection or an "
 "explicit denial."
 msgstr ""
 "الجلسة تمنح القبول؛ لكنها لا تعفي الطلب أبدًا من الفحص ولا من رفض صريح."
 
-#: ../../prior-art.rst:126
+#: ../../prior-art.rst:71
 msgid ""
 "Every claimed number is either measured by a committed harness or "
 "labelled as a model."
@@ -503,18 +456,18 @@ msgstr ""
 "كل رقم مُعلَن إما مقيس بأداة قياس مودَعة في المستودع، وإما موسوم بأنه "
 "نموذج."
 
-#: ../../prior-art.rst:127
+#: ../../prior-art.rst:72
 msgid ""
 "Cryptographic choices cite a venue and a proof, and state their quantum "
 "posture."
 msgstr ""
 "تستشهد الخيارات التشفيرية بمنشور وبرهان، وتذكر موقفها من الحوسبة الكمومية."
 
-#: ../../prior-art.rst:129
+#: ../../prior-art.rst:74
 msgid "Feature Comparison"
 msgstr "مقارنة الميزات"
 
-#: ../../prior-art.rst:132
+#: ../../prior-art.rst:77
 msgid ""
 "The four tables below compare Sibuna with the three tools most often "
 "mentioned alongside it. Facts about the other products were read from "
@@ -542,40 +495,40 @@ msgstr ""
 "مقابل سجل تغييرات Anubis (1.21.0 و1.26.0)، وملاحظات إصدار SafeLine "
 "(8.10.0 و9.2.0)، وصفحة Cloudflare \"JA3/JA4 fingerprint\"."
 
-#: ../../prior-art.rst:134
+#: ../../prior-art.rst:79
 msgid "Feature comparison, part 1: deployment"
 msgstr "مقارنة الميزات، القسم 1: النشر"
 
-#: ../../prior-art.rst:139 ../../prior-art.rst:170 ../../prior-art.rst:211
-#: ../../prior-art.rst:247 ../../prior-art.rst:341
+#: ../../prior-art.rst:84 ../../prior-art.rst:115 ../../prior-art.rst:156
+#: ../../prior-art.rst:192 ../../prior-art.rst:260
 msgid "Feature"
 msgstr "الميزة"
 
-#: ../../prior-art.rst:140 ../../prior-art.rst:171 ../../prior-art.rst:212
-#: ../../prior-art.rst:248
+#: ../../prior-art.rst:85 ../../prior-art.rst:116 ../../prior-art.rst:157
+#: ../../prior-art.rst:193
 msgid "Sibuna"
 msgstr "Sibuna"
 
-#: ../../prior-art.rst:141 ../../prior-art.rst:172 ../../prior-art.rst:213
-#: ../../prior-art.rst:249
+#: ../../prior-art.rst:86 ../../prior-art.rst:117 ../../prior-art.rst:158
+#: ../../prior-art.rst:194
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../prior-art.rst:142 ../../prior-art.rst:173 ../../prior-art.rst:214
-#: ../../prior-art.rst:250
+#: ../../prior-art.rst:87 ../../prior-art.rst:118 ../../prior-art.rst:159
+#: ../../prior-art.rst:195
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../prior-art.rst:143 ../../prior-art.rst:174 ../../prior-art.rst:215
-#: ../../prior-art.rst:251
+#: ../../prior-art.rst:88 ../../prior-art.rst:119 ../../prior-art.rst:160
+#: ../../prior-art.rst:196
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
-#: ../../prior-art.rst:144
+#: ../../prior-art.rst:89
 msgid "Runs as"
 msgstr "طريقة التشغيل"
 
-#: ../../prior-art.rst:145
+#: ../../prior-art.rst:90
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database; or an edge load balancer with the firewall per route "
@@ -585,11 +538,11 @@ msgstr ""
 "بيانات PostgreSQL مشتركة؛ أو موازن حمل على الحافة مع الجدار الناري لكل "
 "مسار (الجزء الثامن)"
 
-#: ../../prior-art.rst:146
+#: ../../prior-art.rst:91
 msgid "One Go binary; reverse proxy or forward auth"
 msgstr "ملف تنفيذي واحد بـ Go؛ وكيل عكسي أو forward auth"
 
-#: ../../prior-art.rst:147
+#: ../../prior-art.rst:92
 msgid ""
 "Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
@@ -597,55 +550,55 @@ msgstr ""
 "سبع حاويات Docker (tengine، وdetector، وmgt، وluigi، وfvm، وchaos، "
 "وPostgreSQL)"
 
-#: ../../prior-art.rst:148
+#: ../../prior-art.rst:93
 msgid "Hosted network; DNS points at Cloudflare"
 msgstr "شبكة مستضافة؛ يشير DNS إلى Cloudflare"
 
-#: ../../prior-art.rst:149
+#: ../../prior-art.rst:94
 msgid "Language, runtime"
 msgstr "اللغة وبيئة التشغيل"
 
-#: ../../prior-art.rst:150
+#: ../../prior-art.rst:95
 msgid "Rust, no garbage collector; no external crate when storage is off"
 msgstr "Rust، بلا جامع نفايات؛ وبلا حزم خارجية عند تعطيل التخزين"
 
-#: ../../prior-art.rst:151
+#: ../../prior-art.rst:96
 msgid "Go, garbage collected"
 msgstr "Go، مع جمع النفايات"
 
-#: ../../prior-art.rst:152
+#: ../../prior-art.rst:97
 msgid "C/C++ proxy and detector, Go management, PostgreSQL"
 msgstr "وكيل وكاشف بـ C/C++، وإدارة بـ Go، وPostgreSQL"
 
-#: ../../prior-art.rst:153
+#: ../../prior-art.rst:98
 msgid "Proprietary edge software"
 msgstr "برمجيات حافة مملوكة"
 
-#: ../../prior-art.rst:154
+#: ../../prior-art.rst:99
 msgid "Licence"
 msgstr "الرخصة"
 
-#: ../../prior-art.rst:155
+#: ../../prior-art.rst:100
 msgid "LGPL-3.0-or-later"
 msgstr "LGPL-3.0-or-later"
 
-#: ../../prior-art.rst:156
+#: ../../prior-art.rst:101
 msgid "MIT"
 msgstr "MIT"
 
-#: ../../prior-art.rst:157
+#: ../../prior-art.rst:102
 msgid "GPL-3.0 management code; closed detector images"
 msgstr "شفرة إدارة بترخيص GPL-3.0؛ صور كاشف مغلقة"
 
-#: ../../prior-art.rst:158
+#: ../../prior-art.rst:103
 msgid "Proprietary service"
 msgstr "خدمة مملوكة"
 
-#: ../../prior-art.rst:159
+#: ../../prior-art.rst:104
 msgid "Host footprint"
 msgstr "الأثر على المضيف"
 
-#: ../../prior-art.rst:160
+#: ../../prior-art.rst:105
 msgid ""
 "35.7 MiB binary (``benchmarks/results/comparison-latest.json``); 5.9 MiB "
 "idle RSS (``benchmarks/results/primitives-latest.json``); at most 16.0 "
@@ -656,29 +609,29 @@ msgstr ""
 "(``benchmarks/results/primitives-latest.json``)؛ و16.0 MiB على الأكثر "
 "ذروةً لـ RSS تحت الحمل (``benchmarks/results/product-latest.md``)"
 
-#: ../../prior-art.rst:161
+#: ../../prior-art.rst:106
 msgid "38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off"
 msgstr ""
 "ملف تنفيذي بحجم 38.1 MiB؛ و21 MiB من RSS في الخمول؛ بيئة اختبار Linux، "
 "ووحدة التحكم معطلة"
 
-#: ../../prior-art.rst:162
+#: ../../prior-art.rst:107
 msgid "1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+"
 msgstr "1 نواة CPU، و1 GB من RAM، و5 GB من القرص حدًا أدنى، وDocker 20.10+"
 
-#: ../../prior-art.rst:163
+#: ../../prior-art.rst:108
 msgid "None on premises"
 msgstr "لا شيء محليًا"
 
-#: ../../prior-art.rst:165
+#: ../../prior-art.rst:110
 msgid "Feature comparison, part 2: admission and sessions"
 msgstr "مقارنة الميزات، القسم 2: القبول والجلسات"
 
-#: ../../prior-art.rst:175
+#: ../../prior-art.rst:120
 msgid "Proof-of-work admission"
 msgstr "القبول بإثبات العمل"
 
-#: ../../prior-art.rst:176
+#: ../../prior-art.rst:121
 msgid ""
 "Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule; "
 "WebAssembly with JavaScript fallback"
@@ -686,7 +639,7 @@ msgstr ""
 "Hashcash (على مستوى البتات) والعمل المتسلسل لـ Cohen-Pietrzak، يُختار لكل "
 "قاعدة؛ WebAssembly مع بديل JavaScript"
 
-#: ../../prior-art.rst:177
+#: ../../prior-art.rst:122
 msgid ""
 "SHA-256 Hashcash in hex nibbles (``fast``, ``slow``); non-work "
 "``metarefresh`` and ``preact`` challenges"
@@ -694,11 +647,11 @@ msgstr ""
 "Hashcash بـ SHA-256 بأنصاف بايت ست عشرية (``fast``، و\\ ``slow``)؛ وتحديا "
 "``metarefresh`` و\\ ``preact`` بلا عمل"
 
-#: ../../prior-art.rst:178
+#: ../../prior-art.rst:123
 msgid "JavaScript anti-bot challenge and CAPTCHA; not work-bound"
 msgstr "تحدي JavaScript لمكافحة الروبوتات وCAPTCHA؛ غير مشروط بالعمل"
 
-#: ../../prior-art.rst:179
+#: ../../prior-art.rst:124
 msgid ""
 "Managed challenge, JS challenge, Turnstile; Bot Fight Mode issues a "
 "compute challenge"
@@ -706,31 +659,31 @@ msgstr ""
 "Managed challenge، وJS challenge، وTurnstile؛ يصدر Bot Fight Mode تحديًا "
 "حسابيًا"
 
-#: ../../prior-art.rst:180
+#: ../../prior-art.rst:125
 msgid "Challenge state on the server"
 msgstr "حالة التحدي على الخادم"
 
-#: ../../prior-art.rst:181
+#: ../../prior-art.rst:126
 msgid "None until solved; solved tags in a fixed Robin Hood table"
 msgstr "لا شيء حتى الحل؛ الوسوم المحلولة في جدول Robin Hood ثابت"
 
-#: ../../prior-art.rst:182
+#: ../../prior-art.rst:127
 msgid "Store backend: memory, bbolt, Valkey, or S3"
 msgstr "خلفية التخزين: الذاكرة، أو bbolt، أو Valkey، أو S3"
 
-#: ../../prior-art.rst:183
+#: ../../prior-art.rst:128
 msgid "Managed by the stack"
 msgstr "تديرها المجموعة البرمجية"
 
-#: ../../prior-art.rst:184
+#: ../../prior-art.rst:129
 msgid "Managed by Cloudflare"
 msgstr "تديرها Cloudflare"
 
-#: ../../prior-art.rst:185
+#: ../../prior-art.rst:130
 msgid "Session token"
 msgstr "رمز الجلسة"
 
-#: ../../prior-art.rst:186
+#: ../../prior-art.rst:131
 msgid ""
 "Keyed BLAKE3 tag, 75-character cookie bound to the work paid; Ed25519 "
 "optional"
@@ -738,39 +691,39 @@ msgstr ""
 "وسم BLAKE3 ذو مفتاح، وملف تعريف ارتباط من 75 محرفًا مربوط بالعمل المدفوع؛ "
 "Ed25519 اختياري"
 
-#: ../../prior-art.rst:187
+#: ../../prior-art.rst:132
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
 msgstr "JSON Web Token موقع بـ Ed25519؛ HS512 اختياري"
 
-#: ../../prior-art.rst:188
+#: ../../prior-art.rst:133
 msgid "Cookie issued by the stack"
 msgstr "ملف تعريف ارتباط تصدره المجموعة البرمجية"
 
-#: ../../prior-art.rst:189
+#: ../../prior-art.rst:134
 msgid "``cf_clearance`` cookie"
 msgstr "ملف تعريف الارتباط ``cf_clearance``"
 
-#: ../../prior-art.rst:190
+#: ../../prior-art.rst:135
 msgid "Post-quantum posture of the default token"
 msgstr "موقف الرمز الافتراضي من الحوسبة الكمومية"
 
-#: ../../prior-art.rst:191
+#: ../../prior-art.rst:136
 msgid "Symmetric: only Grover's quadratic speedup applies"
 msgstr "متماثل: لا ينطبق إلا تسارع Grover التربيعي"
 
-#: ../../prior-art.rst:192
+#: ../../prior-art.rst:137
 msgid "Ed25519: broken by Shor's algorithm"
 msgstr "Ed25519: تكسره خوارزمية Shor"
 
-#: ../../prior-art.rst:193 ../../prior-art.rst:194
+#: ../../prior-art.rst:138 ../../prior-art.rst:139
 msgid "Not documented"
 msgstr "غير موثق"
 
-#: ../../prior-art.rst:195
+#: ../../prior-art.rst:140
 msgid "Policy language"
 msgstr "لغة السياسة"
 
-#: ../../prior-art.rst:196
+#: ../../prior-art.rst:141
 msgid ""
 "JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR, JA4 fingerprint; "
 "ALLOW, DENY, CHALLENGE, WEIGH with thresholds; dynamic rules from the "
@@ -780,7 +733,7 @@ msgstr ""
 "وبصمة JA4؛ ALLOW وDENY وCHALLENGE وWEIGH مع عتبات؛ قواعد ديناميكية من "
 "قاعدة البيانات"
 
-#: ../../prior-art.rst:197
+#: ../../prior-art.rst:142
 msgid ""
 "YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH "
 "with thresholds"
@@ -788,20 +741,20 @@ msgstr ""
 "روبوتات YAML/JSON: تعبيرات نمطية على UA والمسار والترويسات؛ CIDR؛ تعبيرات "
 "CEL؛ WEIGH مع عتبات"
 
-#: ../../prior-art.rst:198
+#: ../../prior-art.rst:143
 msgid "Console-defined custom rules, ACLs, IP groups"
 msgstr "قواعد مخصصة تُعرّف في وحدة التحكم، وACLs، ومجموعات IP"
 
-#: ../../prior-art.rst:199
+#: ../../prior-art.rst:144
 msgid ""
 "Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*"
 msgstr "تعبيرات لغة القواعد؛ *5 / 20 / 100 / 1000 قاعدة مخصصة حسب الخطة*"
 
-#: ../../prior-art.rst:200
+#: ../../prior-art.rst:145
 msgid "TLS fingerprint (JA4)"
 msgstr "بصمة TLS (JA4)"
 
-#: ../../prior-art.rst:201
+#: ../../prior-art.rst:146
 msgid ""
 "Rules match a JA4 fingerprint exactly or by prefix; a trusted ingress "
 "computes it and forwards it in a header (``--ja4-header``); Sibuna does "
@@ -810,7 +763,7 @@ msgstr ""
 "تطابق القواعد بصمة JA4 مطابقة تامة أو بالبادئة؛ يحسبها وكيل دخول موثوق "
 "ويمررها في ترويسة (``--ja4-header``)؛ ولا يحسبها Sibuna"
 
-#: ../../prior-art.rst:202
+#: ../../prior-art.rst:147
 msgid ""
 "Not documented; policies may reference the HTTP fingerprint JA4H, which "
 "Anubis computes and adds as the header ``X-Http-Fingerprint-JA4H``"
@@ -818,7 +771,7 @@ msgstr ""
 "غير موثق؛ يمكن للسياسات أن تشير إلى بصمة HTTP المسماة JA4H، التي يحسبها "
 "Anubis ويضيفها في الترويسة ``X-Http-Fingerprint-JA4H``"
 
-#: ../../prior-art.rst:203
+#: ../../prior-art.rst:148
 msgid ""
 "Computed at its own TLS termination; shown in attack details; custom "
 "rules match it (equals, not equals); a built-in rule denies fingerprints "
@@ -828,7 +781,7 @@ msgstr ""
 "المخصصة (يساوي، لا يساوي)؛ وترفض قاعدة مدمجة البصمات المدرجة في معلوماته "
 "عن بصمات JA4 الخبيثة"
 
-#: ../../prior-art.rst:204
+#: ../../prior-art.rst:149
 msgid ""
 "JA3 and JA4 fingerprints in WAF custom rules and analytics *(Enterprise "
 "with Bot Management)*"
@@ -836,28 +789,28 @@ msgstr ""
 "بصمات JA3 وJA4 في قواعد WAF المخصصة والتحليلات *(Enterprise مع Bot "
 "Management)*"
 
-#: ../../prior-art.rst:206
+#: ../../prior-art.rst:151
 msgid "Feature comparison, part 3: inspection and state"
 msgstr "مقارنة الميزات، القسم 3: الفحص والحالة"
 
-#: ../../prior-art.rst:216
+#: ../../prior-art.rst:161
 msgid "SQLi, XSS, RCE, traversal inspection"
 msgstr "فحص SQLi وXSS وRCE والاجتياز"
 
-#: ../../prior-art.rst:217
+#: ../../prior-art.rst:162
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
 msgstr "Shield: آلة موسومة مع مقسِّمات بنيوية، وأول 8 KB من الجسم"
 
-#: ../../prior-art.rst:218 ../../prior-art.rst:264
+#: ../../prior-art.rst:163 ../../prior-art.rst:209
 msgid "\\-"
 msgstr "\\-"
 
-#: ../../prior-art.rst:219
+#: ../../prior-art.rst:164
 msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
 msgstr "محرك تحليل دلالي على فئات OWASP، وأيضًا SSRF وXXE وCRLF"
 
-#: ../../prior-art.rst:220
+#: ../../prior-art.rst:165
 msgid ""
 "Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
 "*(Business and above)*"
@@ -865,75 +818,75 @@ msgstr ""
 "مجموعات قواعد مُدارة *(Pro وما فوق)*؛ OWASP Core Ruleset؛ درجة الهجوم "
 "*(Business وما فوق)*"
 
-#: ../../prior-art.rst:221
+#: ../../prior-art.rst:166
 msgid "Rate limiting"
 msgstr "تحديد المعدل"
 
-#: ../../prior-art.rst:222
+#: ../../prior-art.rst:167
 msgid "GCRA per client, local to a node"
 msgstr "GCRA لكل عميل، محلي للعقدة"
 
-#: ../../prior-art.rst:223
+#: ../../prior-art.rst:168
 msgid "\\- (system load is exposed to CEL rules)"
 msgstr "\\- (يُعرض حمل النظام لقواعد CEL)"
 
-#: ../../prior-art.rst:224
+#: ../../prior-art.rst:169
 msgid "Per IP, path, session"
 msgstr "لكل IP ومسار وجلسة"
 
-#: ../../prior-art.rst:225
+#: ../../prior-art.rst:170
 msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
 msgstr "*1 / 2 / 5 / 100 قاعدة حسب الخطة*؛ مفاتيح IP فقط دون Enterprise"
 
-#: ../../prior-art.rst:226
+#: ../../prior-art.rst:171
 msgid "Bans and reputation"
 msgstr "الحظر والسمعة"
 
-#: ../../prior-art.rst:227
+#: ../../prior-art.rst:172
 msgid ""
 "Honeypot bans; reputation trie loaded from the reputation table shared "
 "across the cluster"
 msgstr "حظر المصيدة؛ شجرة سمعة تُحمّل من جدول السمعة المشترك عبر العنقود"
 
-#: ../../prior-art.rst:228
+#: ../../prior-art.rst:173
 msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
 msgstr "DNSBL؛ ASN وGeoIP عبر Thoth *(مدفوع، مغلق)*"
 
-#: ../../prior-art.rst:229
+#: ../../prior-art.rst:174
 msgid "IP groups and blacklists; threat intelligence *(Pro)*"
 msgstr "مجموعات IP وقوائم سوداء؛ معلومات التهديدات *(Pro)*"
 
-#: ../../prior-art.rst:230
+#: ../../prior-art.rst:175
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
 msgstr "قوائم IP؛ قوائم مُدارة ودرجة الروبوت *(Enterprise)*"
 
-#: ../../prior-art.rst:231
+#: ../../prior-art.rst:176
 msgid "Forensics"
 msgstr "الأدلة الجنائية"
 
-#: ../../prior-art.rst:232
+#: ../../prior-art.rst:177
 msgid ""
 "SQLite or PostgreSQL: full-text search over incidents, vector campaign "
 "clustering"
 msgstr "SQLite أو PostgreSQL: بحث نصي كامل في الحوادث، وتجميع متجهي للحملات"
 
-#: ../../prior-art.rst:233
+#: ../../prior-art.rst:178
 msgid "Prometheus metrics only"
 msgstr "مقاييس Prometheus فقط"
 
-#: ../../prior-art.rst:234
+#: ../../prior-art.rst:179
 msgid "PostgreSQL attack log with console"
 msgstr "سجل هجمات في PostgreSQL مع وحدة تحكم"
 
-#: ../../prior-art.rst:235
+#: ../../prior-art.rst:180
 msgid "Security Events; sampled on Free"
 msgstr "Security Events؛ بعينات في خطة Free"
 
-#: ../../prior-art.rst:236
+#: ../../prior-art.rst:181
 msgid "Multi-node"
 msgstr "العقد المتعددة"
 
-#: ../../prior-art.rst:237
+#: ../../prior-art.rst:182
 msgid ""
 "Daemon: one PostgreSQL database shared by every node for policy and "
 "reputation; shared seed; sticky challenge verification. Edge: a mesh "
@@ -943,91 +896,91 @@ msgstr ""
 "والسمعة؛ بذرة مشتركة؛ تحقق من التحدي مثبت على العقدة المُصدرة. الحافة: "
 "شبكة متداخلة تتشارك الحظر (SID 0022)"
 
-#: ../../prior-art.rst:238
+#: ../../prior-art.rst:183
 msgid "Shared signing key; shared Valkey store"
 msgstr "مفتاح توقيع مشترك؛ مخزن Valkey مشترك"
 
-#: ../../prior-art.rst:239
+#: ../../prior-art.rst:184
 msgid "One stack per host"
 msgstr "مجموعة واحدة لكل مضيف"
 
-#: ../../prior-art.rst:240
+#: ../../prior-art.rst:185
 msgid "Global anycast"
 msgstr "Anycast عالمي"
 
-#: ../../prior-art.rst:242
+#: ../../prior-art.rst:187
 msgid "Feature comparison, part 4: operations"
 msgstr "مقارنة الميزات، القسم 4: التشغيل"
 
-#: ../../prior-art.rst:252
+#: ../../prior-art.rst:197
 msgid "Metrics"
 msgstr "المقاييس"
 
-#: ../../prior-art.rst:253
+#: ../../prior-art.rst:198
 msgid "Prometheus at ``/__sibuna/metrics``"
 msgstr "Prometheus على ``/__sibuna/metrics``"
 
-#: ../../prior-art.rst:254
+#: ../../prior-art.rst:199
 msgid "Prometheus on a separate port"
 msgstr "Prometheus على منفذ منفصل"
 
-#: ../../prior-art.rst:255
+#: ../../prior-art.rst:200
 msgid "Console dashboards"
 msgstr "لوحات وحدة التحكم"
 
-#: ../../prior-art.rst:256
+#: ../../prior-art.rst:201
 msgid "Dashboard and analytics"
 msgstr "لوحة معلومات وتحليلات"
 
-#: ../../prior-art.rst:257 ../../prior-art.rst:353
+#: ../../prior-art.rst:202 ../../prior-art.rst:272
 msgid "TLS termination"
 msgstr "إنهاء TLS"
 
-#: ../../prior-art.rst:258
+#: ../../prior-art.rst:203
 msgid ""
 "Daemon: \\- (ingress). Edge: **Yes**, with automatic HTTPS (SID 0021)"
 msgstr ""
 "البرنامج الخدمي: \\- (وكيل الدخول). الحافة: **نعم**، مع HTTPS التلقائي "
 "(SID 0021)"
 
-#: ../../prior-art.rst:259
+#: ../../prior-art.rst:204
 msgid "\\- (ingress)"
 msgstr "\\- (وكيل الدخول)"
 
-#: ../../prior-art.rst:260 ../../prior-art.rst:261 ../../prior-art.rst:265
-#: ../../prior-art.rst:266 ../../prior-art.rst:269
+#: ../../prior-art.rst:205 ../../prior-art.rst:206 ../../prior-art.rst:210
+#: ../../prior-art.rst:211 ../../prior-art.rst:214
 msgid "**Yes**"
 msgstr "**نعم**"
 
-#: ../../prior-art.rst:262
+#: ../../prior-art.rst:207
 msgid "Management console"
 msgstr "وحدة تحكم الإدارة"
 
-#: ../../prior-art.rst:263
+#: ../../prior-art.rst:208
 msgid "Opt-in; SID 0007 Committed"
 msgstr "تُفعَّل اختياريًا؛ SID 0007 بحالة Committed"
 
-#: ../../prior-art.rst:267
+#: ../../prior-art.rst:212
 msgid "Measured on the benchmark host"
 msgstr "مقيس على مضيف قياس الأداء"
 
-#: ../../prior-art.rst:268
+#: ../../prior-art.rst:213
 msgid "**Yes** (Part X)"
 msgstr "**نعم** (الجزء العاشر)"
 
-#: ../../prior-art.rst:270
+#: ../../prior-art.rst:215
 msgid "\\- (Docker only)"
 msgstr "\\- (Docker فقط)"
 
-#: ../../prior-art.rst:271
+#: ../../prior-art.rst:216
 msgid "\\- (hosted)"
 msgstr "\\- (مستضاف)"
 
-#: ../../prior-art.rst:273
+#: ../../prior-art.rst:218
 msgid "Three differences carry most of the weight in a selection decision."
 msgstr "تحمل ثلاثة فروق معظم الوزن في قرار الاختيار."
 
-#: ../../prior-art.rst:275
+#: ../../prior-art.rst:220
 msgid ""
 "*Where the work goes.* Anubis and Sibuna Gate make the *client* pay "
 "before the origin does anything. SafeLine and Cloudflare inspect first "
@@ -1040,7 +993,7 @@ msgstr ""
 "وموقفهما الافتراضي هو القبول ثم التصفية. يفعل Sibuna Shield الأمرين بهذا "
 "الترتيب: قد يرفض الفحص طلبًا يحمل جلسة صالحة بالفعل."
 
-#: ../../prior-art.rst:276
+#: ../../prior-art.rst:221
 msgid ""
 "*What the server remembers.* Anubis keeps challenge state in a store "
 "(memory, bbolt, Valkey, or S3) and signs a JSON Web Token with Ed25519; "
@@ -1054,7 +1007,7 @@ msgstr ""
 "سجلات الهجمات في PostgreSQL؛ ويحفظ Cloudflare كل شيء، مع رؤية بالعينات في "
 "خطة Free."
 
-#: ../../prior-art.rst:277
+#: ../../prior-art.rst:222
 msgid ""
 "*What an operator has to run.* Sibuna is one binary with an optional "
 "SQLite file, or a PostgreSQL database shared by a cluster; Anubis is one "
@@ -1068,11 +1021,11 @@ msgstr ""
 "واحدة على الأقل، وغيغابايت واحد من الذاكرة، وخمسة غيغابايتات من القرص؛ "
 "وCloudflare تغيير في DNS واشتراك."
 
-#: ../../prior-art.rst:279
+#: ../../prior-art.rst:224
 msgid "Current product boundary"
 msgstr "حدود المنتج الحالية"
 
-#: ../../prior-art.rst:282
+#: ../../prior-art.rst:227
 msgid ""
 "The firewall daemon leaves TLS termination to the deployment proxy; the "
 "edge terminates TLS itself (Part VIII). Sibuna does not score bots with a "
@@ -1101,11 +1054,11 @@ msgstr ""
 "الأداء، مع ثماني لوحات معلومات نشطة تحت الحمل، فلم يُقس بعد؛ ويسجل الجزء "
 "الثامن ما قيس."
 
-#: ../../prior-art.rst:284
+#: ../../prior-art.rst:229
 msgid "Load Balancers"
 msgstr "موازنات الحمل"
 
-#: ../../prior-art.rst:287
+#: ../../prior-art.rst:232
 msgid ""
 "Since SID 0015 Sibuna is also an edge load balancer: it forwards TCP and "
 "UDP, terminates TLS, HTTP/2 and HTTP/3, and routes HTTP requests to pools "
@@ -1118,11 +1071,11 @@ msgstr ""
 "الناري على المسارات التي تطلبه. ويسمي هذا القسم ما يستند إليه موازن الحمل "
 "ويقارنه بموازنَي حمل مفتوحين."
 
-#: ../../prior-art.rst:289
+#: ../../prior-art.rst:234
 msgid "Where the Load Balancer Comes From"
 msgstr "من أين جاء موازن الحمل"
 
-#: ../../prior-art.rst:292
+#: ../../prior-art.rst:237
 msgid ""
 "The vocabulary is HAProxy's. A *frontend* binds addresses, a *backend* is "
 "a pool of *servers*, and an operator drains a server through a local "
@@ -1146,11 +1099,11 @@ msgstr ""
 "وامتدادات بـ WebAssembly، وإعدادات تدفعها مستوى تحكم. وترتبط خطافات SID "
 "0030 أيضًا بمراحل ثابتة، في ثلاث طبقات، وكل قرار استدعاء واحد بموعد نهائي."
 
-#: ../../prior-art.rst:294
+#: ../../prior-art.rst:239
 msgid "Four papers decide how the edge places a flow and what it remembers."
 msgstr "أربع أوراق بحثية تقرر كيف تضع الحافة التدفق وما تتذكره."
 
-#: ../../prior-art.rst:296
+#: ../../prior-art.rst:241
 msgid ""
 "*Maglev* (Eisenbud et al., NSDI 2016) fills a table of a prime number of "
 "slots from one permutation per server, so a lookup is one hash and one "
@@ -1165,7 +1118,7 @@ msgstr ""
 "موزونًا من 65,537 خانة (``crates/lb/src/maglev.rs``)، والشبكة المتداخلة "
 "في نظامها الإقليمي تضع العملاء به (SID 0015)."
 
-#: ../../prior-art.rst:297
+#: ../../prior-art.rst:242
 msgid ""
 "*Consistent hashing with bounded loads* (Mirrokni, Thorup and "
 "Zadimoghaddam, SODA 2018) caps the load of the chosen server at a factor "
@@ -1180,7 +1133,7 @@ msgstr ""
 "``load_factor_pct``، وقيمته 125 افتراضيًا. ويطبّق HAProxy الفكرة نفسها "
 "على تجزئته المتسقة مع ``hash-balance-factor``."
 
-#: ../../prior-art.rst:298
+#: ../../prior-art.rst:243
 msgid ""
 "*Rendezvous hashing* (Thaler and Ravishankar, IEEE/ACM Transactions on "
 "Networking 1998) gives each server a score from a hash of its name and "
@@ -1195,7 +1148,7 @@ msgstr ""
 "تثبيت المصدر الخوادم بهذه الطريقة (SID 0019)، ويختار التمرير بين النظراء "
 "مالك العميل بين العقد بهذه الطريقة (SID 0026)."
 
-#: ../../prior-art.rst:299
+#: ../../prior-art.rst:244
 msgid ""
 "*TinyLFU* (Einziger, Friedman and Manes, ACM Transactions on Storage "
 "2017) admits a new entry to a full cache only when a small frequency "
@@ -1207,7 +1160,7 @@ msgstr ""
 "إنه يُستخدم أكثر من المدخل الذي سيزيحه. وتقبل ذاكرة الإفاضة المؤقتة في "
 "SID 0027 التلميحات في ملفها بهذه القاعدة."
 
-#: ../../prior-art.rst:302
+#: ../../prior-art.rst:247
 msgid ""
 "HAProxy gives the vocabulary and the admin socket, nginx the event-driven "
 "workers, and Envoy shares the idea of hook stages. Maglev and bounded "
@@ -1222,73 +1175,100 @@ msgstr ""
 "العميل، ويعطي TinyLFU قبول ذاكرة الإفاضة المؤقتة. ويتشارك "
 "hash-balance-factor في HAProxy فكرة الأحمال المحدودة."
 
-#: ../../prior-art.rst:302
+#: ../../prior-art.rst:247
 msgid ""
-"digraph lb_lineage {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#ffffff\", color=\"#7c9cd6\", "
-"margin=\"0.08,0.04\"];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
+"// prior-art.rst: what the edge load balancer takes from earlier systems "
+"and papers.\n"
+"// Solid arrows are ideas taken directly; dashed lines are ideas shared.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
 "\n"
-"  haproxy [label=\"HAProxy\"];\n"
-"  nginx [label=\"nginx\"];\n"
-"  envoy [label=\"Envoy\"];\n"
-"  maglev [label=\"Maglev\\nEisenbud et al. 2016\"];\n"
-"  bounded [label=\"Bounded loads\\nMirrokni et al. 2018\"];\n"
-"  hrw [label=\"Rendezvous hashing\\nThaler-Ravishankar 1998\"];\n"
-"  tinylfu [label=\"TinyLFU\\nEinziger et al. 2017\"];\n"
+"#let source(at, title, detail, name) = step(at, title, detail, width: "
+"46mm, name: name)\n"
+"#let ours(at, title, detail, name) = sibuna(at, title, detail, width: "
+"52mm, name: name)\n"
 "\n"
-"  node [color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
-"  vocab [label=\"frontends, backends,\\nadmin socket (SID 0018)\"];\n"
-"  workers [label=\"event-driven HTTP\\nworkers (SID 0016)\"];\n"
-"  hooks [label=\"hook stages and\\ntiers (SID 0030)\"];\n"
-"  bmaglev [label=\"bounded_maglev\\n(SID 0015)\"];\n"
-"  sticky [label=\"source stickiness (SID 0019),\\nowner of a client (SID "
-"0026)\"];\n"
-"  spill [label=\"spill cache admission\\n(SID 0027)\"];\n"
-"\n"
-"  haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];\n"
-"  maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> "
-"spill;\n"
-"  haproxy -> bounded [style=dashed, dir=none, label=\" "
-"hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
-"}"
+"#flow(\n"
+"  spacing: (16mm, 3.5mm),\n"
+"  caption-node((0, -1), \"Earlier systems and papers\"),\n"
+"  caption-node((1, -1), \"In Sibuna\"),\n"
+"  source((0, 0), \"HAProxy\", none, <haproxy>),\n"
+"  source((0, 1), \"nginx\", none, <nginx>),\n"
+"  source((0, 2), \"Envoy\", none, <envoy>),\n"
+"  source((0, 3), \"Maglev\", \"Eisenbud et al. 2016\", <maglev>),\n"
+"  source((0, 4), \"Bounded loads\", \"Mirrokni et al. 2018\", "
+"<bounded>),\n"
+"  source((0, 5), \"Rendezvous hashing\", \"Thaler-Ravishankar 1998\", "
+"<hrw>),\n"
+"  source((0, 6), \"TinyLFU\", \"Einziger et al. 2017\", <tinylfu>),\n"
+"  ours((1, 0), \"Frontends, backends,\\nadmin socket\", \"SID 0018\", "
+"<vocab>),\n"
+"  ours((1, 1), \"Event-driven HTTP workers\", \"SID 0016\", <workers>),\n"
+"  ours((1, 2), \"Hook stages and tiers\", \"SID 0030\", <hooks>),\n"
+"  ours((1, 3.5), \"`bounded_maglev`\", \"SID 0015\", <bmaglev>),\n"
+"  ours((1, 5), \"Source stickiness, owner of a client\", \"SID 0019, SID "
+"0026\", <sticky>),\n"
+"  ours((1, 6), \"Spill cache admission\", \"SID 0027\", <spill>),\n"
+"  main-edge(<haproxy>, <vocab>, \"-|>\"),\n"
+"  main-edge(<nginx>, <workers>, \"-|>\"),\n"
+"  edge(<envoy>, <hooks>, \"-\", dash: \"dashed\"),\n"
+"  main-edge(<maglev>, <bmaglev>, \"-|>\"),\n"
+"  main-edge(<bounded>, <bmaglev>, \"-|>\"),\n"
+"  main-edge(<hrw>, <sticky>, \"-|>\"),\n"
+"  main-edge(<tinylfu>, <spill>, \"-|>\"),\n"
+"  edge(<haproxy>, (-0.72, 0), (-0.72, 4), <bounded>, \"-\", dash: "
+"\"dashed\",\n"
+"    corner-radius: 4pt, say(\"`hash-balance-factor`\"), label-side: left, "
+"label-angle: auto),\n"
+")\n"
 msgstr ""
-"digraph lb_lineage {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#ffffff\", color=\"#7c9cd6\", "
-"margin=\"0.08,0.04\"];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
+"// prior-art.rst: what the edge load balancer takes from earlier systems "
+"and papers.\n"
+"// Solid arrows are ideas taken directly; dashed lines are ideas shared.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"ar\")\n"
 "\n"
-"  haproxy [label=\"HAProxy\"];\n"
-"  nginx [label=\"nginx\"];\n"
-"  envoy [label=\"Envoy\"];\n"
-"  maglev [label=\"Maglev\\nEisenbud وآخرون 2016\"];\n"
-"  bounded [label=\"الأحمال المحدودة\\nMirrokni وآخرون 2018\"];\n"
-"  hrw [label=\"تجزئة rendezvous\\nThaler-Ravishankar 1998\"];\n"
-"  tinylfu [label=\"TinyLFU\\nEinziger وآخرون 2017\"];\n"
+"#let source(at, title, detail, name) = step(at, title, detail, width: "
+"46mm, name: name)\n"
+"#let ours(at, title, detail, name) = sibuna(at, title, detail, width: "
+"52mm, name: name)\n"
 "\n"
-"  node [color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
-"  vocab [label=\"الواجهات الأمامية والخلفية،\\nمقبس الإدارة (SID "
-"0018)\"];\n"
-"  workers [label=\"عمال HTTP المدفوعون\\nبالأحداث (SID 0016)\"];\n"
-"  hooks [label=\"مراحل الخطافات\\nوطبقاتها (SID 0030)\"];\n"
-"  bmaglev [label=\"bounded_maglev\\n(SID 0015)\"];\n"
-"  sticky [label=\"تثبيت المصدر (SID 0019)،\\nمالك العميل (SID 0026)\"];\n"
-"  spill [label=\"القبول في ذاكرة الإفاضة\\n(SID 0027)\"];\n"
-"\n"
-"  haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];\n"
-"  maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> "
-"spill;\n"
-"  haproxy -> bounded [style=dashed, dir=none, label=\" "
-"hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
-"}"
+"#flow(\n"
+"  spacing: (16mm, 3.5mm),\n"
+"  caption-node((0, -1), \"أنظمة وأوراق سابقة\"),\n"
+"  caption-node((1, -1), \"في Sibuna\"),\n"
+"  source((0, 0), \"HAProxy\", none, <haproxy>),\n"
+"  source((0, 1), \"nginx\", none, <nginx>),\n"
+"  source((0, 2), \"Envoy\", none, <envoy>),\n"
+"  source((0, 3), \"Maglev\", \"Eisenbud وآخرون 2016\", <maglev>),\n"
+"  source((0, 4), \"الأحمال المحدودة\", \"Mirrokni وآخرون 2018\", "
+"<bounded>),\n"
+"  source((0, 5), \"تجزئة rendezvous\", \"Thaler-Ravishankar 1998\", "
+"<hrw>),\n"
+"  source((0, 6), \"TinyLFU\", \"Einziger وآخرون 2017\", <tinylfu>),\n"
+"  ours((1, 0), \"الواجهات الأمامية والخلفية،\\nمقبس الإدارة\", \"SID "
+"0018\", <vocab>),\n"
+"  ours((1, 1), \"عمال HTTP المدفوعون بالأحداث\", \"SID 0016\", "
+"<workers>),\n"
+"  ours((1, 2), \"مراحل الخطافات وطبقاتها\", \"SID 0030\", <hooks>),\n"
+"  ours((1, 3.5), \"`bounded_maglev`\", \"SID 0015\", <bmaglev>),\n"
+"  ours((1, 5), \"تثبيت المصدر، مالك العميل\", \"SID 0019، SID 0026\", "
+"<sticky>),\n"
+"  ours((1, 6), \"القبول في ذاكرة الإفاضة\", \"SID 0027\", <spill>),\n"
+"  main-edge(<haproxy>, <vocab>, \"-|>\"),\n"
+"  main-edge(<nginx>, <workers>, \"-|>\"),\n"
+"  edge(<envoy>, <hooks>, \"-\", dash: \"dashed\"),\n"
+"  main-edge(<maglev>, <bmaglev>, \"-|>\"),\n"
+"  main-edge(<bounded>, <bmaglev>, \"-|>\"),\n"
+"  main-edge(<hrw>, <sticky>, \"-|>\"),\n"
+"  main-edge(<tinylfu>, <spill>, \"-|>\"),\n"
+"  edge(<haproxy>, (-0.72, 0), (-0.72, 4), <bounded>, \"-\", dash: "
+"\"dashed\",\n"
+"    corner-radius: 4pt, say(\"`hash-balance-factor`\"), label-side: left, "
+"label-angle: auto),\n"
+")\n"
 
-#: ../../prior-art.rst:302
+#: ../../prior-art.rst:247
 msgid ""
 "What the edge load balancer takes from earlier systems and papers. Solid "
 "arrows are ideas taken directly; dashed lines are ideas shared."
@@ -1296,11 +1276,11 @@ msgstr ""
 "ما يأخذه موازن الحمل على الحافة من الأنظمة والأوراق البحثية السابقة. "
 "الأسهم المتصلة أفكار مأخوذة مباشرة؛ والخطوط المتقطعة أفكار مشتركة."
 
-#: ../../prior-art.rst:331
+#: ../../prior-art.rst:250
 msgid "Load Balancing Compared"
 msgstr "مقارنة موازنة الحمل"
 
-#: ../../prior-art.rst:334
+#: ../../prior-art.rst:253
 msgid ""
 "The table compares the load balancing of Sibuna with HAProxy and Envoy. "
 "We read their public documentation on 25 November 2026: the HAProxy 3.4.8 "
@@ -1321,27 +1301,27 @@ msgstr ""
 "التي قرأناها. وفي Sibuna تحسم الشيفرة وسجلات SID، والميزة التي لم تُبنَ "
 "يُصرَّح بذلك عنها."
 
-#: ../../prior-art.rst:336
+#: ../../prior-art.rst:255
 msgid "Load balancing: Sibuna, HAProxy and Envoy"
 msgstr "موازنة الحمل: Sibuna وHAProxy وEnvoy"
 
-#: ../../prior-art.rst:342
+#: ../../prior-art.rst:261
 msgid "Sibuna edge"
 msgstr "حافة Sibuna"
 
-#: ../../prior-art.rst:343
+#: ../../prior-art.rst:262
 msgid "HAProxy 3.4"
 msgstr ""
 
-#: ../../prior-art.rst:344
+#: ../../prior-art.rst:263
 msgid "Envoy 1.40"
 msgstr ""
 
-#: ../../prior-art.rst:345
+#: ../../prior-art.rst:264
 msgid "Protocols"
 msgstr "البروتوكولات"
 
-#: ../../prior-art.rst:346
+#: ../../prior-art.rst:265
 msgid ""
 "TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3 and gRPC, toward clients and toward "
 "servers; WebSocket, but not toward an HTTP/2 or HTTP/3 pool"
@@ -1349,7 +1329,7 @@ msgstr ""
 "TCP وUDP وHTTP/1.1 وHTTP/2 وHTTP/3 وgRPC، نحو العملاء ونحو الخوادم؛ "
 "وWebSocket، لكن ليس نحو مجمّع HTTP/2 أو HTTP/3"
 
-#: ../../prior-art.rst:347
+#: ../../prior-art.rst:266
 msgid ""
 "TCP, HTTP/1.1, HTTP/2 and HTTP/3; QUIC toward servers is experimental; "
 "UDP listeners only in ``log-forward`` sections"
@@ -1357,7 +1337,7 @@ msgstr ""
 "TCP وHTTP/1.1 وHTTP/2 وHTTP/3؛ وQUIC نحو الخوادم تجريبي؛ ومستمعو UDP في "
 "أقسام ``log-forward`` فقط"
 
-#: ../../prior-art.rst:348
+#: ../../prior-art.rst:267
 msgid ""
 "TCP, UDP (UDP proxy filter), HTTP/1.1, HTTP/2, and HTTP/3 toward clients "
 "and toward servers"
@@ -1365,11 +1345,11 @@ msgstr ""
 "TCP، وUDP (مرشِّح وكيل UDP)، وHTTP/1.1، وHTTP/2، وHTTP/3 نحو العملاء ونحو "
 "الخوادم"
 
-#: ../../prior-art.rst:349
+#: ../../prior-art.rst:268
 msgid "Scheduling"
 msgstr "الجدولة"
 
-#: ../../prior-art.rst:350
+#: ../../prior-art.rst:269
 msgid ""
 "Least connections (default), round robin, power of two choices with peak "
 "EWMA, bounded Maglev; slow start"
@@ -1377,7 +1357,7 @@ msgstr ""
 "أقل الاتصالات (افتراضي)، والدوران الدائري، وقوة الخيارين مع peak EWMA، "
 "وMaglev المحدود؛ والبدء التدريجي"
 
-#: ../../prior-art.rst:351
+#: ../../prior-art.rst:270
 msgid ""
 "``roundrobin``, ``static-rr``, ``leastconn``, ``first``, ``hash``, "
 "``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, "
@@ -1388,7 +1368,7 @@ msgstr ""
 "و\\ ``random``، و\\ ``rdp-cookie``، و\\ ``sticky``؛ والأحمال المحدودة مع "
 "``hash-balance-factor``؛ و\\ ``slowstart``"
 
-#: ../../prior-art.rst:352
+#: ../../prior-art.rst:271
 msgid ""
 "Weighted round robin, least request (power of two choices), ring hash, "
 "Maglev with 65,537 slots, random, client-side weighted round robin"
@@ -1396,26 +1376,26 @@ msgstr ""
 "الدوران الدائري الموزون، وأقل الطلبات (قوة الخيارين)، وring hash، وMaglev "
 "بـ 65,537 خانة، والعشوائي، والدوران الدائري الموزون من جهة العميل"
 
-#: ../../prior-art.rst:354
+#: ../../prior-art.rst:273
 msgid ""
 "**Yes**: PEM bundles chosen by server name; HTTP/2 over TLS and HTTP/3 "
 "over QUIC"
 msgstr ""
 "**نعم**: حزم PEM تُختار بحسب اسم الخادم؛ وHTTP/2 عبر TLS وHTTP/3 عبر QUIC"
 
-#: ../../prior-art.rst:355
+#: ../../prior-art.rst:274
 msgid "**Yes**: ``bind ... ssl crt``"
 msgstr "**نعم**: ``bind ... ssl crt``"
 
-#: ../../prior-art.rst:356
+#: ../../prior-art.rst:275
 msgid "**Yes**: certificates from files or the secret discovery service"
 msgstr "**نعم**: شهادات من ملفات أو من خدمة اكتشاف الأسرار"
 
-#: ../../prior-art.rst:357
+#: ../../prior-art.rst:276
 msgid "TLS passthrough"
 msgstr "تمرير TLS دون فك تشفير"
 
-#: ../../prior-art.rst:358
+#: ../../prior-art.rst:277
 msgid ""
 "**Yes**: ``tcp`` frontends route or refuse by server name, ALPN or JA4 "
 "read from the ClientHello; QUIC is validated by connection ID (SID 0032); "
@@ -1425,21 +1405,21 @@ msgstr ""
 "أو JA4 المقروءة من ClientHello؛ ويُتحقق من QUIC بمعرف الاتصال (SID 0032)؛ "
 "وRetry الذي تولّده الحافة لم يُبنَ"
 
-#: ../../prior-art.rst:359
+#: ../../prior-art.rst:278
 msgid "**Yes**: ``mode tcp`` with content inspection of ``req.ssl_sni``"
 msgstr "**نعم**: ``mode tcp`` مع فحص محتوى ``req.ssl_sni``"
 
-#: ../../prior-art.rst:360
+#: ../../prior-art.rst:279
 msgid ""
 "**Yes**: the TLS Inspector reads server name and ALPN to choose a filter "
 "chain"
 msgstr "**نعم**: يقرأ TLS Inspector اسم الخادم وALPN لاختيار سلسلة مرشِّحات"
 
-#: ../../prior-art.rst:361
+#: ../../prior-art.rst:280
 msgid "ACME"
 msgstr "ACME"
 
-#: ../../prior-art.rst:362
+#: ../../prior-art.rst:281
 msgid ""
 "**Built in**: HTTP-01, TLS-ALPN-01 and DNS-01 (hook, RFC 2136, "
 "Cloudflare), wildcards, issuance on demand, OCSP stapling, and a local "
@@ -1449,7 +1429,7 @@ msgstr ""
 "والشهادات الشاملة (wildcard)، والإصدار عند الطلب، وOCSP stapling، وسلطة "
 "محلية تستطيع خدمة أجهزة أخرى عبر ACME (SID 0021)"
 
-#: ../../prior-art.rst:363
+#: ../../prior-art.rst:282
 msgid ""
 "**Experimental** ``acme`` section: HAProxy answers HTTP-01 itself; DNS-01 "
 "and dns-persist-01 need the Data Plane API or another tool"
@@ -1457,15 +1437,15 @@ msgstr ""
 "قسم ``acme`` **تجريبي**: يجيب HAProxy عن HTTP-01 بنفسه؛ وDNS-01 "
 "وdns-persist-01 يحتاجان إلى Data Plane API أو أداة أخرى"
 
-#: ../../prior-art.rst:364 ../../prior-art.rst:396
+#: ../../prior-art.rst:283 ../../prior-art.rst:315
 msgid "Not checked"
 msgstr "لم يُفحص"
 
-#: ../../prior-art.rst:365
+#: ../../prior-art.rst:284
 msgid "Health checks"
 msgstr "فحوص السلامة"
 
-#: ../../prior-art.rst:366
+#: ../../prior-art.rst:285
 msgid ""
 "Active TCP connect or HTTP ``GET`` with ``rise`` and ``fall``; passive "
 "ejection by real failures (SID 0019)"
@@ -1473,7 +1453,7 @@ msgstr ""
 "اتصال TCP نشط أو ``GET`` عبر HTTP مع ``rise`` و\\ ``fall``؛ وإخراج سلبي "
 "بالإخفاقات الحقيقية (SID 0019)"
 
-#: ../../prior-art.rst:367
+#: ../../prior-art.rst:286
 msgid ""
 "Active checks (``check``, ``option httpchk``); passive observation with "
 "``observe`` and ``error-limit``"
@@ -1481,7 +1461,7 @@ msgstr ""
 "فحوص نشطة (``check``، ``option httpchk``)؛ ومراقبة سلبية مع ``observe`` "
 "و\\ ``error-limit``"
 
-#: ../../prior-art.rst:368
+#: ../../prior-art.rst:287
 msgid ""
 "Active HTTP, gRPC, L3/L4, Redis and Thrift checks; passive outlier "
 "detection"
@@ -1489,11 +1469,11 @@ msgstr ""
 "فحوص نشطة لـ HTTP وgRPC وL3/L4 وRedis وThrift؛ وكشف سلبي للخوادم الشاذة "
 "(outlier detection)"
 
-#: ../../prior-art.rst:369
+#: ../../prior-art.rst:288
 msgid "Sticky sessions"
 msgstr "الجلسات المثبتة"
 
-#: ../../prior-art.rst:370
+#: ../../prior-art.rst:289
 msgid ""
 "Keyed cookie, source address, or a learned table by source or cookie that "
 "a mesh replicates and a file can keep over a restart (SID 0025, SID 0027)"
@@ -1502,13 +1482,13 @@ msgstr ""
 "أو ملف تعريف الارتباط تنسخه الشبكة المتداخلة ويستطيع ملف الاحتفاظ به عبر "
 "إعادة التشغيل (SID 0025، SID 0027)"
 
-#: ../../prior-art.rst:371
+#: ../../prior-art.rst:290
 msgid ""
 "``cookie`` (insert, rewrite, prefix); stick tables (``stick on src``)"
 msgstr ""
 "``cookie`` (insert، rewrite، prefix)؛ وجداول stick (``stick on src``)"
 
-#: ../../prior-art.rst:372
+#: ../../prior-art.rst:291
 msgid ""
 "A hash policy on the route with ring hash or Maglev; the stateful session "
 "filter with a cookie or a header"
@@ -1516,11 +1496,11 @@ msgstr ""
 "سياسة تجزئة على المسار مع ring hash أو Maglev؛ ومرشِّح الجلسة ذي الحالة "
 "مع ملف تعريف ارتباط أو ترويسة"
 
-#: ../../prior-art.rst:373
+#: ../../prior-art.rst:292
 msgid "Runtime API"
 msgstr "واجهة وقت التشغيل البرمجية"
 
-#: ../../prior-art.rst:374
+#: ../../prior-art.rst:293
 msgid ""
 "Unix admin socket and ``sibuna ctl``: drain, weight, add and remove "
 "servers, lift bans, reload, show; a subset in the operator console (SID "
@@ -1530,7 +1510,7 @@ msgstr ""
 "وإضافتها وإزالتها، ورفع الحظر، وإعادة التحميل، والعرض؛ وجزء من ذلك في "
 "وحدة تحكم المشغّل (SID 0018، SID 0031)"
 
-#: ../../prior-art.rst:375
+#: ../../prior-art.rst:294
 msgid ""
 "Runtime API on the stats socket: ``set server ... state|weight``, ``add "
 "server``, ``del server``, ``show stat``, ``show table``, ``clear table``, "
@@ -1540,7 +1520,7 @@ msgstr ""
 "``add server``، و\\ ``del server``، و\\ ``show stat``، و\\ ``show "
 "table``، و\\ ``clear table``، و\\ ``acme renew``"
 
-#: ../../prior-art.rst:376
+#: ../../prior-art.rst:295
 msgid ""
 "Admin interface: stats, ``config_dump``, ``drain_listeners``, "
 "``healthcheck/fail``, ``runtime_modify``; endpoints and listeners change "
@@ -1550,11 +1530,11 @@ msgstr ""
 "و\\ ``healthcheck/fail``، و\\ ``runtime_modify``؛ وتتغير نقاط النهاية "
 "والمستمعون عبر xDS من مستوى تحكم"
 
-#: ../../prior-art.rst:377
+#: ../../prior-art.rst:296
 msgid "Hot reload"
 msgstr "إعادة التحميل الساخنة"
 
-#: ../../prior-art.rst:378
+#: ../../prior-art.rst:297
 msgid ""
 "In the same process by SIGHUP, ``reload`` or a file watcher; established "
 "flows keep their server; ``reload cluster`` for a mesh; a database "
@@ -1564,7 +1544,7 @@ msgstr ""
 "المؤسَّسة بخادمها؛ و\\ ``reload cluster`` للشبكة المتداخلة؛ ومراجعة قاعدة "
 "بيانات في الوضع الدائم (SID 0023، SID 0028)"
 
-#: ../../prior-art.rst:379
+#: ../../prior-art.rst:298
 msgid ""
 "A reload starts a new worker that takes the listening sockets of the old "
 "one (``-x``; automatic in master-worker mode)"
@@ -1572,15 +1552,15 @@ msgstr ""
 "تبدأ إعادة التحميل عاملًا جديدًا يأخذ مقابس الاستماع من القديم (``-x``؛ "
 "تلقائي في وضع master-worker)"
 
-#: ../../prior-art.rst:380
+#: ../../prior-art.rst:299
 msgid "Dynamic configuration through xDS without a restart"
 msgstr "إعدادات ديناميكية عبر xDS دون إعادة تشغيل"
 
-#: ../../prior-art.rst:381
+#: ../../prior-art.rst:300
 msgid "Binary replacement"
 msgstr "استبدال الملف التنفيذي"
 
-#: ../../prior-art.rst:382
+#: ../../prior-art.rst:301
 msgid ""
 "``global.upgrade_socket``: the listening sockets and the live UDP "
 "mappings pass to the new process, and TCP streams drain in the old one; "
@@ -1590,11 +1570,11 @@ msgstr ""
 "العملية الجديدة، وتُصرَّف تدفقات TCP في القديمة؛ Linux فقط (SID 0029). أو "
 "``global.reuse_port``"
 
-#: ../../prior-art.rst:383
+#: ../../prior-art.rst:302
 msgid "The same reload passes the listening sockets to the new process"
 msgstr "إعادة التحميل نفسها تمرر مقابس الاستماع إلى العملية الجديدة"
 
-#: ../../prior-art.rst:384
+#: ../../prior-art.rst:303
 msgid ""
 "Hot restart passes the listening sockets over a Unix socket; existing "
 "connections are not transferred; HTTP/3 is not handled gracefully yet"
@@ -1602,11 +1582,11 @@ msgstr ""
 "إعادة التشغيل الساخنة تمرر مقابس الاستماع عبر مقبس Unix؛ ولا تُنقل "
 "الاتصالات القائمة؛ ولا يُعالج HTTP/3 بسلاسة بعد"
 
-#: ../../prior-art.rst:385
+#: ../../prior-art.rst:304
 msgid "Clustering of state"
 msgstr "عنقدة الحالة"
 
-#: ../../prior-art.rst:386
+#: ../../prior-art.rst:305
 msgid ""
 "A mesh of at most 64 nodes shares bans, server commands, the sticky table "
 "and fleet-wide ``max_flows``, and forwards each client to its owner node "
@@ -1617,7 +1597,7 @@ msgstr ""
 "المالكة له (SID 0022، SID 0025، SID 0026)؛ وتعدّ محددات معدل الطلبات على "
 "كل عقدة"
 
-#: ../../prior-art.rst:387
+#: ../../prior-art.rst:306
 msgid ""
 "``peers`` sections push stick-table entries between instances over TCP, "
 "multi-master; values overwrite without aggregation"
@@ -1625,7 +1605,7 @@ msgstr ""
 "أقسام ``peers`` تدفع مدخلات stick-table بين النسخ عبر TCP، بعدة رؤساء "
 "(multi-master)؛ والقيم تُكتب فوق بعضها دون تجميع"
 
-#: ../../prior-art.rst:388
+#: ../../prior-art.rst:307
 msgid ""
 "Global rate limits through an external gRPC rate limit service; other "
 "shared state not checked"
@@ -1633,11 +1613,11 @@ msgstr ""
 "حدود معدل شاملة عبر خدمة خارجية لحد المعدل بـ gRPC؛ وحالة مشتركة أخرى لم "
 "تُفحص"
 
-#: ../../prior-art.rst:389
+#: ../../prior-art.rst:308
 msgid "Extension mechanism"
 msgstr "آلية التوسعة"
 
-#: ../../prior-art.rst:390
+#: ../../prior-art.rst:309
 msgid ""
 "Native Rust hooks, WebAssembly on an in-house metered interpreter, and "
 "agents on a Unix socket, at the connection, request and telemetry stages; "
@@ -1647,7 +1627,7 @@ msgstr ""
 "على مقبس Unix، في مراحل الاتصال والطلب والقياس عن بعد؛ ولا خطاف على "
 "استجابة أو جسم (SID 0030)"
 
-#: ../../prior-art.rst:391
+#: ../../prior-art.rst:310
 msgid ""
 "Lua (``lua-load``); filters, among them the Stream Processing Offload "
 "Engine (SPOE)"
@@ -1655,7 +1635,7 @@ msgstr ""
 "Lua (``lua-load``)؛ ومرشِّحات، منها Stream Processing Offload Engine "
 "(SPOE)"
 
-#: ../../prior-art.rst:392
+#: ../../prior-art.rst:311
 msgid ""
 "Filters, among them Lua, external authorization and external processing; "
 "WebAssembly through the Proxy-Wasm ABI"
@@ -1663,11 +1643,11 @@ msgstr ""
 "مرشِّحات، منها Lua، والتفويض الخارجي، والمعالجة الخارجية؛ وWebAssembly "
 "عبر Proxy-Wasm ABI"
 
-#: ../../prior-art.rst:393
+#: ../../prior-art.rst:312
 msgid "Built-in bot protection"
 msgstr "حماية مدمجة من الروبوتات"
 
-#: ../../prior-art.rst:394
+#: ../../prior-art.rst:313
 msgid ""
 "Proof-of-work admission (Gate) and the semantic firewall (Shield), chosen "
 "per frontend and per route; off in ``sibuna lb`` unless asked"
@@ -1675,15 +1655,15 @@ msgstr ""
 "القبول بإثبات العمل (Gate) والجدار الناري الدلالي (Shield)، يُختاران لكل "
 "واجهة أمامية ولكل مسار؛ ومعطّلان في ``sibuna lb`` ما لم يُطلبا"
 
-#: ../../prior-art.rst:395
+#: ../../prior-art.rst:314
 msgid "None in the Configuration Manual; stick-table rates and deny rules"
 msgstr "لا شيء في Configuration Manual؛ معدلات stick-table وقواعد الرفض"
 
-#: ../../prior-art.rst:398
+#: ../../prior-art.rst:317
 msgid "Three differences matter most when we choose."
 msgstr "ثلاثة فروق هي الأهم حين نختار."
 
-#: ../../prior-art.rst:400
+#: ../../prior-art.rst:319
 msgid ""
 "*What changes at run time.* HAProxy and Sibuna both change servers "
 "through a local socket. Envoy expects a control plane: its admin "
@@ -1696,7 +1676,7 @@ msgstr ""
 "الإعدادات. ومقبس Sibuna يغيّر الخوادم والحظر وشهادات سلطته المحلية؛ أما "
 "الواجهات الأمامية والمسارات والسياسة فتتغير بإعادة التحميل (SID 0018)."
 
-#: ../../prior-art.rst:401
+#: ../../prior-art.rst:320
 msgid ""
 "*What a cluster shares.* HAProxy replicates stick tables between peers. "
 "Sibuna's mesh replicates more kinds of state, each with its own merge "
@@ -1710,7 +1690,7 @@ msgstr ""
 "واحدة من 64 عقدة على الأكثر فقط، وعلى شبكة موثوقة فقط، لأن الشبكة "
 "المتداخلة توثّق ولا تشفّر (SID 0026)."
 
-#: ../../prior-art.rst:402
+#: ../../prior-art.rst:321
 msgid ""
 "*What a replacement keeps.* All three keep the listening sockets. Sibuna "
 "also passes live UDP mappings, so a UDP client keeps its server; none of "
@@ -1720,31 +1700,33 @@ msgstr ""
 "أيضًا تعيينات UDP الحية، فيحتفظ عميل UDP بخادمه؛ ولا ينقل أي من الثلاثة "
 "اتصال TCP مؤسَّسًا إلى العملية الجديدة."
 
-#: ../../prior-art.rst:404
+#: ../../prior-art.rst:323
 msgid "Current boundary of the load balancer"
 msgstr "الحدود الحالية لموازن الحمل"
 
-#: ../../prior-art.rst:407
+#: ../../prior-art.rst:326
 msgid ""
 "The edge is new. HAProxy and Envoy have served production traffic for "
 "years; Sibuna's edge has run in tests and in benchmarks on up to three "
 "hosts (Part X). Its known gaps are listed in each SID: among them, TCP "
 "and UDP frontends do not consult the ban table, the admin socket cannot "
-"change frontends or routes, the spill cache missed the retention target at 50 million distinct keys"
-", and an agent call at the request stage holds its thread."
+"change frontends or routes, the spill cache missed the retention target "
+"at 50 million distinct keys, and an agent call at the request stage holds "
+"its thread."
 msgstr ""
 "الحافة جديدة. خدم HAProxy وEnvoy حركة مرور إنتاجية لسنوات؛ أما حافة "
 "Sibuna فعملت في الاختبارات وفي قياسات الأداء على ما يصل إلى ثلاثة مضيفين "
 "(الجزء العاشر). وفجواتها المعروفة مسرودة في كل SID: منها أن الواجهات "
 "الأمامية TCP وUDP لا ترجع إلى جدول الحظر، وأن مقبس الإدارة لا يستطيع "
-"تغيير الواجهات الأمامية أو المسارات، وأن ذاكرة الإفاضة المؤقتة لم تحقق هدف الاحتفاظ عند 50 مليون مفتاح مختلف"
-"، وأن استدعاء الوكيل في مرحلة الطلب يحتجز خيطه."
+"تغيير الواجهات الأمامية أو المسارات، وأن ذاكرة الإفاضة المؤقتة لم تحقق "
+"هدف الاحتفاظ عند 50 مليون مفتاح مختلف، وأن استدعاء الوكيل في مرحلة الطلب "
+"يحتجز خيطه."
 
-#: ../../prior-art.rst:409
+#: ../../prior-art.rst:328
 msgid "Exercise 2.1"
 msgstr "تمرين 2.1"
 
-#: ../../prior-art.rst:411
+#: ../../prior-art.rst:330
 msgid ""
 "Explain why compiling one verifier source to native code and WebAssembly "
 "reduces protocol drift. Which properties still require independent "
@@ -1754,11 +1736,11 @@ msgstr ""
 "انحراف البروتوكول. ما الخصائص التي ما زالت تتطلب اختبارًا مستقلًا أو "
 "مراجعة تشفيرية؟"
 
-#: ../../prior-art.rst:413
+#: ../../prior-art.rst:332
 msgid "Exercise 2.2"
 msgstr "تمرين 2.2"
 
-#: ../../prior-art.rst:415
+#: ../../prior-art.rst:334
 msgid ""
 "Using only the comparison tables, write down the smallest deployment that "
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
@@ -1768,15 +1750,15 @@ msgstr ""
 "بوابة إثبات عمل، و(b) فحصًا لحقن SQL، و(c) حظرًا على مستوى العنقود. ما "
 "الصفوف التي فرضت كل اختيار؟"
 
-#: ../../prior-art.rst:417
+#: ../../prior-art.rst:336
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
 msgstr "تلميح: ابدأ بصفّي \"طريقة التشغيل\" و\"العقد المتعددة\"."
 
-#: ../../prior-art.rst:419
+#: ../../prior-art.rst:338
 msgid "Exercise 2.3"
 msgstr "تمرين 2.3"
 
-#: ../../prior-art.rst:421
+#: ../../prior-art.rst:340
 msgid ""
 "A pool has four servers of equal weight and 1,000 clients. Using only the "
 "descriptions of Maglev and rendezvous hashing above, say how many clients "
@@ -1788,7 +1770,7 @@ msgstr ""
 "مخطط، ولماذا اختار التمرير بين النظراء (SID 0026) تجزئة rendezvous لمالك "
 "العميل."
 
-#: ../../prior-art.rst:423
+#: ../../prior-art.rst:342
 msgid ""
 "Hint: Ask which clients a removal must move, and which ones a rebuilt "
 "table may move as well."
@@ -1796,11 +1778,11 @@ msgstr ""
 "تلميح: اسأل أي العملاء يجب أن تنقلهم الإزالة، وأيهم قد ينقله الجدول "
 "المعاد بناؤه أيضًا."
 
-#: ../../prior-art.rst:425
+#: ../../prior-art.rst:344
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../prior-art.rst:427
+#: ../../prior-art.rst:346
 msgid ""
 "Describe how Gate, Shield, and optional shared storage divide admission, "
 "inspection and policy distribution. Then name one row of the comparison "
@@ -1810,6 +1792,224 @@ msgstr ""
 "صف كيف يقسم Gate وShield والتخزين المشترك الاختياري مهام القبول والفحص "
 "وتوزيع السياسة. ثم سمِّ صفًا واحدًا من جداول المقارنة نود التحقق منه "
 "مجددًا قبل نقله إلى عميل، وبيّن كيف نتحقق منه."
+
+#~ msgid ""
+#~ "digraph lineage {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
+#~ "compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, "
+#~ "fontname=\"Helvetica\", fontsize=9.5, fontcolor=\"#172033\"];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=9, fontcolor=\"#172033\", fillcolor=\"#ffffff\", "
+#~ "penwidth=1.0, width=1.35, height=0.4, margin=\"0.08,0.04\"];\n"
+#~ "  edge [color=\"#94a3b8\", arrowsize=0.55, penwidth=1.0];\n"
+#~ "\n"
+#~ "  subgraph cluster_puzzles {\n"
+#~ "    label=<<b>Client puzzles and<br/>sequential work</b>>; "
+#~ "style=\"rounded,filled\"; color=\"#fde68a\"; fillcolor=\"#fffdf5\"; "
+#~ "margin=10;\n"
+#~ "    node [color=\"#d6a35c\"];\n"
+#~ "    dwork [label=\"Dwork-Naor\\n1992\"];\n"
+#~ "    hashcash [label=\"Hashcash\\n1997\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "    juels [label=\"Juels-Brainard\\n1999\"];\n"
+#~ "    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
+#~ "    cohen [label=\"Cohen-Pietrzak\\n2018\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "    blocki [label=\"Blocki-Lee-Zhou\\n2021\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "  }\n"
+#~ "  subgraph cluster_products {\n"
+#~ "    label=<<b>Products in<br/>the same space</b>>; "
+#~ "style=\"rounded,filled\"; color=\"#ddd6fe\"; fillcolor=\"#fbfaff\"; "
+#~ "margin=10;\n"
+#~ "    node [color=\"#6d28d9\", fillcolor=\"#ddd6fe\", penwidth=1.3];\n"
+#~ "    p0 [style=invis, label=\"\"];\n"
+#~ "    p1 [style=invis, label=\"\"];\n"
+#~ "    anubis [label=\"Anubis\\ninterstitial\"];\n"
+#~ "    cloudflare [label=\"Cloudflare\\nhosted edge\"];\n"
+#~ "    safeline [label=\"SafeLine\\nsemantic WAF\"];\n"
+#~ "  }\n"
+#~ "  subgraph cluster_systems {\n"
+#~ "    label=<<b>Algorithms and<br/>systems</b>>; "
+#~ "style=\"rounded,filled\"; color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; "
+#~ "margin=10;\n"
+#~ "    node [color=\"#7c9cd6\"];\n"
+#~ "    aho [label=\"Aho-Corasick\\n1975\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    gcra [label=\"GCRA\\nATM Forum 1996\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+#~ "    libinj [label=\"libinjection\\n2012\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+#~ "  }\n"
+#~ "  sibuna [label=<<b>Sibuna</b><br/><font point-size=\"9\">Gate, "
+#~ "Shield, Edge</font>>, fontsize=11, color=\"#15803d\", "
+#~ "fillcolor=\"#bbf7d0\", penwidth=1.8, width=2.2, height=0.5];\n"
+#~ "\n"
+#~ "  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki "
+#~ "[color=\"#d6a35c\"];\n"
+#~ "  aho -> gcra [style=invis];\n"
+#~ "  gcra -> modsec [style=invis];\n"
+#~ "  modsec -> libinj [color=\"#7c9cd6\"];\n"
+#~ "  libinj -> hyperscan [style=invis];\n"
+#~ "  aho -> hyperscan [color=\"#7c9cd6\", constraint=false];\n"
+#~ "  hashcash -> anubis [color=\"#d6a35c\", constraint=false];\n"
+#~ "  libinj -> safeline [color=\"#7c9cd6\", constraint=false];\n"
+#~ "  { rank=same; dwork; p0; aho; }\n"
+#~ "  { rank=same; hashcash; p1; gcra; }\n"
+#~ "  { rank=same; juels; anubis; modsec; }\n"
+#~ "  { rank=same; mahmoody; cloudflare; libinj; }\n"
+#~ "  { rank=same; cohen; safeline; hyperscan; }\n"
+#~ "  p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];\n"
+#~ "\n"
+#~ "  blocki -> sibuna [ltail=cluster_puzzles, color=\"#b45309\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "  safeline -> sibuna [ltail=cluster_products, color=\"#6d28d9\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "  hyperscan -> sibuna [ltail=cluster_systems, color=\"#1e40af\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph lineage {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
+#~ "compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, "
+#~ "fontname=\"Helvetica\", fontsize=9.5, fontcolor=\"#172033\"];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=9, fontcolor=\"#172033\", fillcolor=\"#ffffff\", "
+#~ "penwidth=1.0, width=1.35, height=0.4, margin=\"0.08,0.04\"];\n"
+#~ "  edge [color=\"#94a3b8\", arrowsize=0.55, penwidth=1.0];\n"
+#~ "\n"
+#~ "  subgraph cluster_puzzles {\n"
+#~ "    label=<<b>الألغاز والعمل المتسلسل</b>>; style=\"rounded,filled\"; "
+#~ "color=\"#fde68a\"; fillcolor=\"#fffdf5\"; margin=10;\n"
+#~ "    node [color=\"#d6a35c\"];\n"
+#~ "    dwork [label=\"Dwork-Naor\\n1992\"];\n"
+#~ "    hashcash [label=\"Hashcash\\n1997\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "    juels [label=\"Juels-Brainard\\n1999\"];\n"
+#~ "    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
+#~ "    cohen [label=\"Cohen-Pietrzak\\n2018\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "    blocki [label=\"Blocki-Lee-Zhou\\n2021\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "  }\n"
+#~ "  subgraph cluster_products {\n"
+#~ "    label=<<b>المنتجات في الفضاء نفسه</b>>; style=\"rounded,filled\"; "
+#~ "color=\"#ddd6fe\"; fillcolor=\"#fbfaff\"; margin=10;\n"
+#~ "    node [color=\"#6d28d9\", fillcolor=\"#ddd6fe\", penwidth=1.3];\n"
+#~ "    p0 [style=invis, label=\"\"];\n"
+#~ "    p1 [style=invis, label=\"\"];\n"
+#~ "    anubis [label=\"Anubis\\nصفحة وسيطة\"];\n"
+#~ "    cloudflare [label=\"Cloudflare\\nحافة مستضافة\"];\n"
+#~ "    safeline [label=\"SafeLine\\nجدار ناري دلالي\"];\n"
+#~ "  }\n"
+#~ "  subgraph cluster_systems {\n"
+#~ "    label=<<b>الخوارزميات والأنظمة</b>>; style=\"rounded,filled\"; "
+#~ "color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=10;\n"
+#~ "    node [color=\"#7c9cd6\"];\n"
+#~ "    aho [label=\"Aho-Corasick\\n1975\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    gcra [label=\"GCRA\\nATM Forum 1996\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+#~ "    libinj [label=\"libinjection\\n2012\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+#~ "  }\n"
+#~ "  sibuna [label=<<b>Sibuna</b><br/><font point-size=\"9\">Gate, "
+#~ "Shield, Edge</font>>, fontsize=11, color=\"#15803d\", "
+#~ "fillcolor=\"#bbf7d0\", penwidth=1.8, width=2.2, height=0.5];\n"
+#~ "\n"
+#~ "  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki "
+#~ "[color=\"#d6a35c\"];\n"
+#~ "  aho -> gcra [style=invis];\n"
+#~ "  gcra -> modsec [style=invis];\n"
+#~ "  modsec -> libinj [color=\"#7c9cd6\"];\n"
+#~ "  libinj -> hyperscan [style=invis];\n"
+#~ "  aho -> hyperscan [color=\"#7c9cd6\", constraint=false];\n"
+#~ "  hashcash -> anubis [color=\"#d6a35c\", constraint=false];\n"
+#~ "  libinj -> safeline [color=\"#7c9cd6\", constraint=false];\n"
+#~ "  { rank=same; dwork; p0; aho; }\n"
+#~ "  { rank=same; hashcash; p1; gcra; }\n"
+#~ "  { rank=same; juels; anubis; modsec; }\n"
+#~ "  { rank=same; mahmoody; cloudflare; libinj; }\n"
+#~ "  { rank=same; cohen; safeline; hyperscan; }\n"
+#~ "  p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];\n"
+#~ "\n"
+#~ "  blocki -> sibuna [ltail=cluster_puzzles, color=\"#b45309\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "  safeline -> sibuna [ltail=cluster_products, color=\"#6d28d9\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "  hyperscan -> sibuna [ltail=cluster_systems, color=\"#1e40af\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "}"
+
+#~ msgid ""
+#~ "digraph lb_lineage {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.25, "
+#~ "ranksep=0.5, fontname=\"Helvetica\", fontsize=9];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#ffffff\", color=\"#7c9cd6\", "
+#~ "margin=\"0.08,0.04\"];\n"
+#~ "  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
+#~ "\n"
+#~ "  haproxy [label=\"HAProxy\"];\n"
+#~ "  nginx [label=\"nginx\"];\n"
+#~ "  envoy [label=\"Envoy\"];\n"
+#~ "  maglev [label=\"Maglev\\nEisenbud et al. 2016\"];\n"
+#~ "  bounded [label=\"Bounded loads\\nMirrokni et al. 2018\"];\n"
+#~ "  hrw [label=\"Rendezvous hashing\\nThaler-Ravishankar 1998\"];\n"
+#~ "  tinylfu [label=\"TinyLFU\\nEinziger et al. 2017\"];\n"
+#~ "\n"
+#~ "  node [color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
+#~ "  vocab [label=\"frontends, backends,\\nadmin socket (SID 0018)\"];\n"
+#~ "  workers [label=\"event-driven HTTP\\nworkers (SID 0016)\"];\n"
+#~ "  hooks [label=\"hook stages and\\ntiers (SID 0030)\"];\n"
+#~ "  bmaglev [label=\"bounded_maglev\\n(SID 0015)\"];\n"
+#~ "  sticky [label=\"source stickiness (SID 0019),\\nowner of a client "
+#~ "(SID 0026)\"];\n"
+#~ "  spill [label=\"spill cache admission\\n(SID 0027)\"];\n"
+#~ "\n"
+#~ "  haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];\n"
+#~ "  maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> "
+#~ "spill;\n"
+#~ "  haproxy -> bounded [style=dashed, dir=none, label=\" "
+#~ "hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph lb_lineage {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.25, "
+#~ "ranksep=0.5, fontname=\"Helvetica\", fontsize=9];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#ffffff\", color=\"#7c9cd6\", "
+#~ "margin=\"0.08,0.04\"];\n"
+#~ "  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
+#~ "\n"
+#~ "  haproxy [label=\"HAProxy\"];\n"
+#~ "  nginx [label=\"nginx\"];\n"
+#~ "  envoy [label=\"Envoy\"];\n"
+#~ "  maglev [label=\"Maglev\\nEisenbud وآخرون 2016\"];\n"
+#~ "  bounded [label=\"الأحمال المحدودة\\nMirrokni وآخرون 2018\"];\n"
+#~ "  hrw [label=\"تجزئة rendezvous\\nThaler-Ravishankar 1998\"];\n"
+#~ "  tinylfu [label=\"TinyLFU\\nEinziger وآخرون 2017\"];\n"
+#~ "\n"
+#~ "  node [color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
+#~ "  vocab [label=\"الواجهات الأمامية والخلفية،\\nمقبس الإدارة (SID "
+#~ "0018)\"];\n"
+#~ "  workers [label=\"عمال HTTP المدفوعون\\nبالأحداث (SID 0016)\"];\n"
+#~ "  hooks [label=\"مراحل الخطافات\\nوطبقاتها (SID 0030)\"];\n"
+#~ "  bmaglev [label=\"bounded_maglev\\n(SID 0015)\"];\n"
+#~ "  sticky [label=\"تثبيت المصدر (SID 0019)،\\nمالك العميل (SID "
+#~ "0026)\"];\n"
+#~ "  spill [label=\"القبول في ذاكرة الإفاضة\\n(SID 0027)\"];\n"
+#~ "\n"
+#~ "  haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];\n"
+#~ "  maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> "
+#~ "spill;\n"
+#~ "  haproxy -> bounded [style=dashed, dir=none, label=\" "
+#~ "hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
+#~ "}"
 
 #~ msgid "Source in the repository"
 #~ msgstr "المصدر في المستودع"

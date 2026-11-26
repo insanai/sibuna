@@ -51,17 +51,9 @@ The file
 
 The file has a fixed length. It starts with two pages of 4,096 bytes and continues with the slots.
 
-.. code-block:: text
-
-   page 0   header (64 bytes used)
-   page 1   one write counter of 32 bits for each of the 64 shards
-   slots    64 shards x B buckets x 4 slots x 64 bytes
-
-   header   magic "SIBSPILL" | version | slot length | shards | ways |
-            buckets per shard | file length | salt | creation time | checksum
-
-   slot     checksum 8 | expiry 8 | stamp 4 | key length 1 | value length 1 |
-            zero 2 | key 24 | value 16
+.. typst-diagram:: ../diagrams/spill-file.typ
+   :caption: The spill file, its header and one slot.
+   :alt: Three strips of fields with their offsets in bytes. The file holds page 0 with the header, of which 64 of 4,096 bytes are used, then page 1 with a write counter of 32 bits for each shard, and from offset 8192 the slots: 64 shards times B buckets times 4 slots of 64 bytes each. The header holds the magic SIBSPILL in 8 bytes, the version, the slot length, the number of shards and the ways in 4 bytes each, then the buckets per shard, the file length, the salt, the creation time and the checksum in 8 bytes each. A slot holds the checksum in 8 bytes, the expiry in 8, the stamp in 4, the key length and the value length in 1 each, 2 zero bytes, the key in 24 bytes and the value in 16.
 
 The number of buckets per shard :math:`B` is the largest that fits the configured size, so the file is at most 16 KiB shorter than the size. All numbers are little-endian. The salt is drawn at random when the file is created. The checksum of the header is a wyhash over the 56 bytes before it. The checksum of a slot is a wyhash over its other 56 bytes, seeded with the salt and the number of the slot. So a slot that was copied to another place, or into another file, fails its check.
 
@@ -113,7 +105,7 @@ The age of a slot comes from its stamp. Each shard counts its writes in 32 bits 
 The two tiers in the edge
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. graphviz:: ../diagrams/tiers.dot
+.. typst-diagram:: ../diagrams/tiers.typ
    :caption: A worker reads and writes the table in memory. Only the storage thread touches the file.
    :alt: Workers and the mesh thread use the store. The store holds the table in memory. A bounded queue carries offers and questions to the storage thread, which owns the mapped file and answers into the table.
 

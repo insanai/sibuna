@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -122,155 +122,106 @@ msgstr ""
 
 #: ../../prior-art.rst:21
 msgid ""
-"digraph lineage {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
-"compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, fontname=\"Helvetica\", "
-"fontsize=9.5, fontcolor=\"#172033\"];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9, fontcolor=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.0, "
-"width=1.35, height=0.4, margin=\"0.08,0.04\"];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55, penwidth=1.0];\n"
+"// prior-art.rst: the lineage of the ideas Sibuna combines. Three "
+"columns, time running\n"
+"// downward; the filled boxes are the ideas Sibuna takes directly.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
 "\n"
-"  subgraph cluster_puzzles {\n"
-"    label=<<b>Client puzzles and<br/>sequential work</b>>; "
-"style=\"rounded,filled\"; color=\"#fde68a\"; fillcolor=\"#fffdf5\"; "
-"margin=10;\n"
-"    node [color=\"#d6a35c\"];\n"
-"    dwork [label=\"Dwork-Naor\\n1992\"];\n"
-"    hashcash [label=\"Hashcash\\n1997\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"    juels [label=\"Juels-Brainard\\n1999\"];\n"
-"    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
-"    cohen [label=\"Cohen-Pietrzak\\n2018\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"    blocki [label=\"Blocki-Lee-Zhou\\n2021\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"  }\n"
-"  subgraph cluster_products {\n"
-"    label=<<b>Products in<br/>the same space</b>>; "
-"style=\"rounded,filled\"; color=\"#ddd6fe\"; fillcolor=\"#fbfaff\"; "
-"margin=10;\n"
-"    node [color=\"#6d28d9\", fillcolor=\"#ddd6fe\", penwidth=1.3];\n"
-"    p0 [style=invis, label=\"\"];\n"
-"    p1 [style=invis, label=\"\"];\n"
-"    anubis [label=\"Anubis\\ninterstitial\"];\n"
-"    cloudflare [label=\"Cloudflare\\nhosted edge\"];\n"
-"    safeline [label=\"SafeLine\\nsemantic WAF\"];\n"
-"  }\n"
-"  subgraph cluster_systems {\n"
-"    label=<<b>Algorithms and<br/>systems</b>>; style=\"rounded,filled\"; "
-"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=10;\n"
-"    node [color=\"#7c9cd6\"];\n"
-"    aho [label=\"Aho-Corasick\\n1975\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    gcra [label=\"GCRA\\nATM Forum 1996\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
-"    libinj [label=\"libinjection\\n2012\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
-"  }\n"
-"  sibuna [label=<<b>Sibuna</b><br/><font point-size=\"9\">Gate, Shield, "
-"Edge</font>>, fontsize=11, color=\"#15803d\", fillcolor=\"#bbf7d0\", "
-"penwidth=1.8, width=2.2, height=0.5];\n"
+"#let idea(at, title, year, name, taken: false) = step(at, title, year,\n"
+"  kind: if taken { \"accent\" } else { \"step\" }, width: 34mm, name: "
+"name)\n"
 "\n"
-"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki "
-"[color=\"#d6a35c\"];\n"
-"  aho -> gcra [style=invis];\n"
-"  gcra -> modsec [style=invis];\n"
-"  modsec -> libinj [color=\"#7c9cd6\"];\n"
-"  libinj -> hyperscan [style=invis];\n"
-"  aho -> hyperscan [color=\"#7c9cd6\", constraint=false];\n"
-"  hashcash -> anubis [color=\"#d6a35c\", constraint=false];\n"
-"  libinj -> safeline [color=\"#7c9cd6\", constraint=false];\n"
-"  { rank=same; dwork; p0; aho; }\n"
-"  { rank=same; hashcash; p1; gcra; }\n"
-"  { rank=same; juels; anubis; modsec; }\n"
-"  { rank=same; mahmoody; cloudflare; libinj; }\n"
-"  { rank=same; cohen; safeline; hyperscan; }\n"
-"  p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];\n"
-"\n"
-"  blocki -> sibuna [ltail=cluster_puzzles, color=\"#b45309\", "
-"penwidth=1.3, minlen=2];\n"
-"  safeline -> sibuna [ltail=cluster_products, color=\"#6d28d9\", "
-"penwidth=1.3, minlen=2];\n"
-"  hyperscan -> sibuna [ltail=cluster_systems, color=\"#1e40af\", "
-"penwidth=1.3, minlen=2];\n"
-"}"
+"#flow(\n"
+"  spacing: (7mm, 4.5mm),\n"
+"  caption-node((0, -1), \"Client puzzles and\\nsequential work\"),\n"
+"  caption-node((1, -1), \"Products in\\nthe same space\"),\n"
+"  caption-node((2, -1), \"Algorithms and\\nsystems\"),\n"
+"  idea((0, 0), \"Dwork-Naor\", \"1992\", <dwork>),\n"
+"  idea((0, 1), \"Hashcash\", \"1997\", <hashcash>, taken: true),\n"
+"  idea((0, 2), \"Juels-Brainard\", \"1999\", <juels>),\n"
+"  idea((0, 3), \"Mahmoody et al.\", \"2013\", <mahmoody>),\n"
+"  idea((0, 4), \"Cohen-Pietrzak\", \"2018\", <cohen>, taken: true),\n"
+"  idea((0, 5), \"Blocki-Lee-Zhou\", \"2021\", <blocki>, taken: true),\n"
+"  idea((1, 2), \"Anubis\", \"interstitial\", <anubis>, taken: true),\n"
+"  idea((1, 3), \"Cloudflare\", \"hosted edge\", <cloudflare>, taken: "
+"true),\n"
+"  idea((1, 4), \"SafeLine\", \"semantic WAF\", <safeline>, taken: true),\n"
+"  idea((2, 0), \"Aho-Corasick\", \"1975\", <aho>, taken: true),\n"
+"  idea((2, 1), \"GCRA\", \"ATM Forum 1996\", <gcra>, taken: true),\n"
+"  idea((2, 2), \"ModSecurity, CRS\", \"2002\", <modsec>),\n"
+"  idea((2, 3), \"libinjection\", \"2012\", <libinj>, taken: true),\n"
+"  idea((2, 4), \"Hyperscan\", \"2019\", <hyperscan>),\n"
+"  group((<dwork>, <blocki>), name: <puzzles>),\n"
+"  group((<anubis>, <safeline>), name: <products>),\n"
+"  group((<aho>, <hyperscan>), name: <systems>),\n"
+"  sibuna((1, 6.6), text(weight: \"semibold\", \"Sibuna\"), \"Gate, "
+"Shield, Edge\", width: 46mm,\n"
+"    stroke: bold + green, name: <sibuna>),\n"
+"  edge(<dwork>, <hashcash>, \"-|>\"),\n"
+"  edge(<hashcash>, <juels>, \"-|>\"),\n"
+"  edge(<juels>, <mahmoody>, \"-|>\"),\n"
+"  edge(<mahmoody>, <cohen>, \"-|>\"),\n"
+"  edge(<cohen>, <blocki>, \"-|>\"),\n"
+"  edge(<modsec>, <libinj>, \"-|>\"),\n"
+"  edge(<aho>, (2.8, 0), (2.8, 4), <hyperscan>, \"-|>\", corner-radius: "
+"4pt),\n"
+"  edge(<hashcash>, <anubis>, \"-|>\"),\n"
+"  edge(<libinj>, <safeline>, \"-|>\"),\n"
+"  main-edge(<puzzles>, <sibuna>, \"-|>\"),\n"
+"  main-edge(<products>, <sibuna>, \"-|>\"),\n"
+"  main-edge(<systems>, <sibuna>, \"-|>\"),\n"
+")\n"
 msgstr ""
-"digraph lineage {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
-"compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, fontname=\"Helvetica\", "
-"fontsize=9.5, fontcolor=\"#172033\"];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=9, fontcolor=\"#172033\", fillcolor=\"#ffffff\", penwidth=1.0, "
-"width=1.35, height=0.4, margin=\"0.08,0.04\"];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55, penwidth=1.0];\n"
+"// prior-art.rst: the lineage of the ideas Sibuna combines. Three "
+"columns, time running\n"
+"// downward; the filled boxes are the ideas Sibuna takes directly.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"ko\")\n"
 "\n"
-"  subgraph cluster_puzzles {\n"
-"    label=<<b>클라이언트 퍼즐과<br/>순차 작업</b>>; style=\"rounded,filled\"; "
-"color=\"#fde68a\"; fillcolor=\"#fffdf5\"; margin=10;\n"
-"    node [color=\"#d6a35c\"];\n"
-"    dwork [label=\"Dwork-Naor\\n1992\"];\n"
-"    hashcash [label=\"Hashcash\\n1997\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"    juels [label=\"Juels-Brainard\\n1999\"];\n"
-"    mahmoody [label=\"Mahmoody 외\\n2013\"];\n"
-"    cohen [label=\"Cohen-Pietrzak\\n2018\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"    blocki [label=\"Blocki-Lee-Zhou\\n2021\", color=\"#b45309\", "
-"fillcolor=\"#fde68a\", penwidth=1.3];\n"
-"  }\n"
-"  subgraph cluster_products {\n"
-"    label=<<b>같은 영역의<br/>제품</b>>; style=\"rounded,filled\"; "
-"color=\"#ddd6fe\"; fillcolor=\"#fbfaff\"; margin=10;\n"
-"    node [color=\"#6d28d9\", fillcolor=\"#ddd6fe\", penwidth=1.3];\n"
-"    p0 [style=invis, label=\"\"];\n"
-"    p1 [style=invis, label=\"\"];\n"
-"    anubis [label=\"Anubis\\n중간 페이지\"];\n"
-"    cloudflare [label=\"Cloudflare\\n호스팅형 엣지\"];\n"
-"    safeline [label=\"SafeLine\\n의미 기반 WAF\"];\n"
-"  }\n"
-"  subgraph cluster_systems {\n"
-"    label=<<b>알고리즘과<br/>시스템</b>>; style=\"rounded,filled\"; "
-"color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=10;\n"
-"    node [color=\"#7c9cd6\"];\n"
-"    aho [label=\"Aho-Corasick\\n1975\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    gcra [label=\"GCRA\\nATM Forum 1996\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
-"    libinj [label=\"libinjection\\n2012\", color=\"#1e40af\", "
-"fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
-"    hyperscan [label=\"Hyperscan\\n2019\"];\n"
-"  }\n"
-"  sibuna [label=<<b>Sibuna</b><br/><font point-size=\"9\">Gate, Shield, "
-"Edge</font>>, fontsize=11, color=\"#15803d\", fillcolor=\"#bbf7d0\", "
-"penwidth=1.8, width=2.2, height=0.5];\n"
+"#let idea(at, title, year, name, taken: false) = step(at, title, year,\n"
+"  kind: if taken { \"accent\" } else { \"step\" }, width: 34mm, name: "
+"name)\n"
 "\n"
-"  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki "
-"[color=\"#d6a35c\"];\n"
-"  aho -> gcra [style=invis];\n"
-"  gcra -> modsec [style=invis];\n"
-"  modsec -> libinj [color=\"#7c9cd6\"];\n"
-"  libinj -> hyperscan [style=invis];\n"
-"  aho -> hyperscan [color=\"#7c9cd6\", constraint=false];\n"
-"  hashcash -> anubis [color=\"#d6a35c\", constraint=false];\n"
-"  libinj -> safeline [color=\"#7c9cd6\", constraint=false];\n"
-"  { rank=same; dwork; p0; aho; }\n"
-"  { rank=same; hashcash; p1; gcra; }\n"
-"  { rank=same; juels; anubis; modsec; }\n"
-"  { rank=same; mahmoody; cloudflare; libinj; }\n"
-"  { rank=same; cohen; safeline; hyperscan; }\n"
-"  p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];\n"
-"\n"
-"  blocki -> sibuna [ltail=cluster_puzzles, color=\"#b45309\", "
-"penwidth=1.3, minlen=2];\n"
-"  safeline -> sibuna [ltail=cluster_products, color=\"#6d28d9\", "
-"penwidth=1.3, minlen=2];\n"
-"  hyperscan -> sibuna [ltail=cluster_systems, color=\"#1e40af\", "
-"penwidth=1.3, minlen=2];\n"
-"}"
+"#flow(\n"
+"  spacing: (7mm, 4.5mm),\n"
+"  caption-node((0, -1), \"클라이언트 퍼즐과\\n순차 작업\"),\n"
+"  caption-node((1, -1), \"같은 분야의\\n제품\"),\n"
+"  caption-node((2, -1), \"알고리즘과\\n시스템\"),\n"
+"  idea((0, 0), \"Dwork-Naor\", \"1992\", <dwork>),\n"
+"  idea((0, 1), \"Hashcash\", \"1997\", <hashcash>, taken: true),\n"
+"  idea((0, 2), \"Juels-Brainard\", \"1999\", <juels>),\n"
+"  idea((0, 3), \"Mahmoody 외\", \"2013\", <mahmoody>),\n"
+"  idea((0, 4), \"Cohen-Pietrzak\", \"2018\", <cohen>, taken: true),\n"
+"  idea((0, 5), \"Blocki-Lee-Zhou\", \"2021\", <blocki>, taken: true),\n"
+"  idea((1, 2), \"Anubis\", \"중간 페이지\", <anubis>, taken: true),\n"
+"  idea((1, 3), \"Cloudflare\", \"호스팅형 엣지\", <cloudflare>, taken: true),\n"
+"  idea((1, 4), \"SafeLine\", \"의미 기반 WAF\", <safeline>, taken: true),\n"
+"  idea((2, 0), \"Aho-Corasick\", \"1975\", <aho>, taken: true),\n"
+"  idea((2, 1), \"GCRA\", \"ATM Forum 1996\", <gcra>, taken: true),\n"
+"  idea((2, 2), \"ModSecurity, CRS\", \"2002\", <modsec>),\n"
+"  idea((2, 3), \"libinjection\", \"2012\", <libinj>, taken: true),\n"
+"  idea((2, 4), \"Hyperscan\", \"2019\", <hyperscan>),\n"
+"  group((<dwork>, <blocki>), name: <puzzles>),\n"
+"  group((<anubis>, <safeline>), name: <products>),\n"
+"  group((<aho>, <hyperscan>), name: <systems>),\n"
+"  sibuna((1, 6.6), text(weight: \"semibold\", \"Sibuna\"), \"Gate, "
+"Shield, Edge\", width: 46mm,\n"
+"    stroke: bold + green, name: <sibuna>),\n"
+"  edge(<dwork>, <hashcash>, \"-|>\"),\n"
+"  edge(<hashcash>, <juels>, \"-|>\"),\n"
+"  edge(<juels>, <mahmoody>, \"-|>\"),\n"
+"  edge(<mahmoody>, <cohen>, \"-|>\"),\n"
+"  edge(<cohen>, <blocki>, \"-|>\"),\n"
+"  edge(<modsec>, <libinj>, \"-|>\"),\n"
+"  edge(<aho>, (2.8, 0), (2.8, 4), <hyperscan>, \"-|>\", corner-radius: "
+"4pt),\n"
+"  edge(<hashcash>, <anubis>, \"-|>\"),\n"
+"  edge(<libinj>, <safeline>, \"-|>\"),\n"
+"  main-edge(<puzzles>, <sibuna>, \"-|>\"),\n"
+"  main-edge(<products>, <sibuna>, \"-|>\"),\n"
+"  main-edge(<systems>, <sibuna>, \"-|>\"),\n"
+")\n"
 
 #: ../../prior-art.rst:21
 msgid ""
@@ -287,11 +238,11 @@ msgstr ""
 "색이 채워진 상자는 Sibuna가 직접 가져온 아이디어입니다. 이전 저장소 설계는 Multi-Paxos(Lamport 1998; "
 "SID 0005)를 바탕으로 했습니다. 지금 Sibuna는 상태를 SQLite나 PostgreSQL에 저장합니다(SID 0011)."
 
-#: ../../prior-art.rst:79
+#: ../../prior-art.rst:24
 msgid "Application Firewalls"
 msgstr "애플리케이션 방화벽"
 
-#: ../../prior-art.rst:82
+#: ../../prior-art.rst:27
 msgid ""
 "The first generation of web application firewalls matched request bytes "
 "against regular expressions. ModSecurity (2002) and the OWASP Core Rule "
@@ -315,11 +266,11 @@ msgstr ""
 "리터럴 매칭을 어디까지 밀어붙일 수 있는지 보여 주었습니다. 제VI부는 Sibuna가 검사하는 짧은 필드에 정규 표현식이나 SIMD "
 "엔진 대신 밀집 오토마톤과 작은 구조 토크나이저를 고른 이유를 설명합니다."
 
-#: ../../prior-art.rst:84
+#: ../../prior-art.rst:29
 msgid "Interstitials and Edges"
 msgstr "중간 페이지와 엣지"
 
-#: ../../prior-art.rst:87
+#: ../../prior-art.rst:32
 msgid ""
 "The proof-of-work interstitial in front of a website became common in "
 "2025, when scraper traffic feeding language-model training made ordinary "
@@ -336,7 +287,7 @@ msgstr ""
 "Sibuna의 Gate 구성은 상태 없는 챌린지, 대칭 토큰, 두 번째 작업 계층으로 같은 문제를 풉니다. 아래 비교는 둘이 어디서 "
 "다른지 기록합니다."
 
-#: ../../prior-art.rst:89
+#: ../../prior-art.rst:34
 msgid ""
 "At the other end of the scale, hosted edges such as Cloudflare place "
 "inspection, rate limiting, and bot scoring in hundreds of points of "
@@ -352,11 +303,11 @@ msgstr ""
 "호스팅을 유지합니다. 그래서 저장소 계층은 서비스 호출이 아니라 운영자가 직접 운영하는 데이터베이스(노드 하나에서는 SQLite "
 "파일, 클러스터에서는 공유하는 PostgreSQL 데이터베이스 하나)이며, 요청 경로 밖의 저장소 스레드가 이를 읽습니다."
 
-#: ../../prior-art.rst:91
+#: ../../prior-art.rst:36
 msgid "Three Ideas in One Binary"
 msgstr "하나의 바이너리에 담은 세 가지 아이디어"
 
-#: ../../prior-art.rst:94
+#: ../../prior-art.rst:39
 msgid ""
 "Sibuna combines a browser work challenge for admission, bounded "
 "application-payload inspection, and a shared control plane that publishes "
@@ -367,71 +318,71 @@ msgstr ""
 "게시하는 공유 제어 평면을 결합합니다. Gate와 Shield는 두 가지 운영 구성이며, 저장소와 분산 배포는 어느 쪽에서든 선택할 "
 "수 있습니다."
 
-#: ../../prior-art.rst:100
+#: ../../prior-art.rst:45
 msgid "**Property**"
 msgstr "**속성**"
 
-#: ../../prior-art.rst:101
+#: ../../prior-art.rst:46
 msgid "**Gate**"
 msgstr "**Gate**"
 
-#: ../../prior-art.rst:102
+#: ../../prior-art.rst:47
 msgid "**Shield**"
 msgstr "**Shield**"
 
-#: ../../prior-art.rst:103
+#: ../../prior-art.rst:48
 msgid "Admission"
 msgstr "요청 허용"
 
-#: ../../prior-art.rst:104
+#: ../../prior-art.rst:49
 msgid "Native Hashcash or sequential-work verification"
 msgstr "네이티브 Hashcash 또는 순차 작업 검증"
 
-#: ../../prior-art.rst:105 ../../prior-art.rst:108 ../../prior-art.rst:111
+#: ../../prior-art.rst:50 ../../prior-art.rst:53 ../../prior-art.rst:56
 msgid "Same"
 msgstr "같음"
 
-#: ../../prior-art.rst:106
+#: ../../prior-art.rst:51
 msgid "Session"
 msgstr "세션"
 
-#: ../../prior-art.rst:107
+#: ../../prior-art.rst:52
 msgid "Keyed BLAKE3; optional Ed25519"
 msgstr "키 기반 BLAKE3, 선택적으로 Ed25519"
 
-#: ../../prior-art.rst:109
+#: ../../prior-art.rst:54
 msgid "Local controls"
 msgstr "로컬 제어"
 
-#: ../../prior-art.rst:110
+#: ../../prior-art.rst:55
 msgid "Rules, CIDRs, GCRA, bans"
 msgstr "규칙, CIDR, GCRA, 차단"
 
-#: ../../prior-art.rst:112
+#: ../../prior-art.rst:57
 msgid "Inspection"
 msgstr "검사"
 
-#: ../../prior-art.rst:113
+#: ../../prior-art.rst:58
 msgid "Disabled"
 msgstr "꺼짐"
 
-#: ../../prior-art.rst:114
+#: ../../prior-art.rst:59
 msgid "Bounded signatures and structural tokenizers"
 msgstr "범위가 제한된 시그니처와 구조 토크나이저"
 
-#: ../../prior-art.rst:115
+#: ../../prior-art.rst:60
 msgid "State"
 msgstr "상태"
 
-#: ../../prior-art.rst:116
+#: ../../prior-art.rst:61
 msgid "Optional persistent policy and reputation, shared across a cluster"
 msgstr "선택적인 영속 정책과 평판(클러스터 전체에서 공유)"
 
-#: ../../prior-art.rst:117
+#: ../../prior-art.rst:62
 msgid "Also inspection forensics"
 msgstr "검사 포렌식도 포함"
 
-#: ../../prior-art.rst:119
+#: ../../prior-art.rst:64
 msgid ""
 "The browser solver compiles from the same proof sources as the native "
 "verifier. Dense literal matching avoids backtracking and keeps scan work "
@@ -446,45 +397,45 @@ msgstr ""
 "보편적인 알고리즘 최적성을 보장하지는 않습니다. 짧은 헤더, 긴 본문, 패턴의 다양성, 코어 수, 캐시 크기에 따라 절충점이 "
 "달라집니다."
 
-#: ../../prior-art.rst:121
+#: ../../prior-art.rst:66
 msgid "Design constraints adopted"
 msgstr "채택한 설계 제약"
 
-#: ../../prior-art.rst:123
+#: ../../prior-art.rst:68
 msgid ""
 "No heap allocation on the request path; every table has a fixed capacity "
 "and a stated saturation behaviour."
 msgstr "요청 경로에서 힙 할당을 하지 않습니다. 모든 테이블에는 고정된 용량과 명시된 포화 시 동작이 있습니다."
 
-#: ../../prior-art.rst:124
+#: ../../prior-art.rst:69
 msgid ""
 "Issuing a challenge writes nothing; only a paid-for solution occupies "
 "memory."
 msgstr "챌린지를 발급해도 아무것도 기록하지 않습니다. 대가를 치른 풀이만 메모리를 차지합니다."
 
-#: ../../prior-art.rst:125
+#: ../../prior-art.rst:70
 msgid ""
 "A session admits; it never exempts a request from inspection or an "
 "explicit denial."
 msgstr "세션은 요청을 허용할 뿐, 검사나 명시적 거부에서 요청을 면제하지는 않습니다."
 
-#: ../../prior-art.rst:126
+#: ../../prior-art.rst:71
 msgid ""
 "Every claimed number is either measured by a committed harness or "
 "labelled as a model."
 msgstr "주장하는 모든 숫자는 커밋된 하니스로 측정했거나 모델이라고 표시합니다."
 
-#: ../../prior-art.rst:127
+#: ../../prior-art.rst:72
 msgid ""
 "Cryptographic choices cite a venue and a proof, and state their quantum "
 "posture."
 msgstr "암호학적 선택은 발표 학회와 증명을 인용하고, 양자 공격에 대한 안전성 입장을 밝힙니다."
 
-#: ../../prior-art.rst:129
+#: ../../prior-art.rst:74
 msgid "Feature Comparison"
 msgstr "기능 비교"
 
-#: ../../prior-art.rst:132
+#: ../../prior-art.rst:77
 msgid ""
 "The four tables below compare Sibuna with the three tools most often "
 "mentioned alongside it. Facts about the other products were read from "
@@ -509,40 +460,40 @@ msgstr ""
 "기록(1.21.0, 1.26.0), SafeLine 릴리스 노트(8.10.0, 9.2.0), Cloudflare의 \"JA3/JA4 "
 "fingerprint\" 페이지와 대조해 확인했습니다."
 
-#: ../../prior-art.rst:134
+#: ../../prior-art.rst:79
 msgid "Feature comparison, part 1: deployment"
 msgstr "기능 비교 1부: 배포"
 
-#: ../../prior-art.rst:139 ../../prior-art.rst:170 ../../prior-art.rst:211
-#: ../../prior-art.rst:247 ../../prior-art.rst:341
+#: ../../prior-art.rst:84 ../../prior-art.rst:115 ../../prior-art.rst:156
+#: ../../prior-art.rst:192 ../../prior-art.rst:260
 msgid "Feature"
 msgstr "기능"
 
-#: ../../prior-art.rst:140 ../../prior-art.rst:171 ../../prior-art.rst:212
-#: ../../prior-art.rst:248
+#: ../../prior-art.rst:85 ../../prior-art.rst:116 ../../prior-art.rst:157
+#: ../../prior-art.rst:193
 msgid "Sibuna"
 msgstr "Sibuna"
 
-#: ../../prior-art.rst:141 ../../prior-art.rst:172 ../../prior-art.rst:213
-#: ../../prior-art.rst:249
+#: ../../prior-art.rst:86 ../../prior-art.rst:117 ../../prior-art.rst:158
+#: ../../prior-art.rst:194
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../prior-art.rst:142 ../../prior-art.rst:173 ../../prior-art.rst:214
-#: ../../prior-art.rst:250
+#: ../../prior-art.rst:87 ../../prior-art.rst:118 ../../prior-art.rst:159
+#: ../../prior-art.rst:195
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../prior-art.rst:143 ../../prior-art.rst:174 ../../prior-art.rst:215
-#: ../../prior-art.rst:251
+#: ../../prior-art.rst:88 ../../prior-art.rst:119 ../../prior-art.rst:160
+#: ../../prior-art.rst:196
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
-#: ../../prior-art.rst:144
+#: ../../prior-art.rst:89
 msgid "Runs as"
 msgstr "실행 형태"
 
-#: ../../prior-art.rst:145
+#: ../../prior-art.rst:90
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database; or an edge load balancer with the firewall per route "
@@ -551,66 +502,66 @@ msgstr ""
 "바이너리 하나; 리버스 프록시 또는 forward-auth; 선택적으로 SQLite 파일 또는 공유 PostgreSQL "
 "데이터베이스; 또는 경로마다 방화벽을 두는 엣지 로드 밸런서(제VIII부)"
 
-#: ../../prior-art.rst:146
+#: ../../prior-art.rst:91
 msgid "One Go binary; reverse proxy or forward auth"
 msgstr "Go 바이너리 하나; 리버스 프록시 또는 forward-auth"
 
-#: ../../prior-art.rst:147
+#: ../../prior-art.rst:92
 msgid ""
 "Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
 msgstr ""
 "Docker 컨테이너 일곱 개(tengine, detector, mgt, luigi, fvm, chaos, PostgreSQL)"
 
-#: ../../prior-art.rst:148
+#: ../../prior-art.rst:93
 msgid "Hosted network; DNS points at Cloudflare"
 msgstr "호스팅형 네트워크; DNS가 Cloudflare를 가리킴"
 
-#: ../../prior-art.rst:149
+#: ../../prior-art.rst:94
 msgid "Language, runtime"
 msgstr "언어, 런타임"
 
-#: ../../prior-art.rst:150
+#: ../../prior-art.rst:95
 msgid "Rust, no garbage collector; no external crate when storage is off"
 msgstr "Rust, 가비지 컬렉터 없음; 저장소를 끄면 외부 crate 없음"
 
-#: ../../prior-art.rst:151
+#: ../../prior-art.rst:96
 msgid "Go, garbage collected"
 msgstr "Go, 가비지 컬렉션 사용"
 
-#: ../../prior-art.rst:152
+#: ../../prior-art.rst:97
 msgid "C/C++ proxy and detector, Go management, PostgreSQL"
 msgstr "C/C++ 프록시와 탐지기, Go 관리 코드, PostgreSQL"
 
-#: ../../prior-art.rst:153
+#: ../../prior-art.rst:98
 msgid "Proprietary edge software"
 msgstr "독점 엣지 소프트웨어"
 
-#: ../../prior-art.rst:154
+#: ../../prior-art.rst:99
 msgid "Licence"
 msgstr "라이선스"
 
-#: ../../prior-art.rst:155
+#: ../../prior-art.rst:100
 msgid "LGPL-3.0-or-later"
 msgstr "LGPL-3.0-or-later"
 
-#: ../../prior-art.rst:156
+#: ../../prior-art.rst:101
 msgid "MIT"
 msgstr "MIT"
 
-#: ../../prior-art.rst:157
+#: ../../prior-art.rst:102
 msgid "GPL-3.0 management code; closed detector images"
 msgstr "GPL-3.0 관리 코드; 비공개 탐지기 이미지"
 
-#: ../../prior-art.rst:158
+#: ../../prior-art.rst:103
 msgid "Proprietary service"
 msgstr "독점 서비스"
 
-#: ../../prior-art.rst:159
+#: ../../prior-art.rst:104
 msgid "Host footprint"
 msgstr "호스트 자원 사용량"
 
-#: ../../prior-art.rst:160
+#: ../../prior-art.rst:105
 msgid ""
 "35.7 MiB binary (``benchmarks/results/comparison-latest.json``); 5.9 MiB "
 "idle RSS (``benchmarks/results/primitives-latest.json``); at most 16.0 "
@@ -620,27 +571,27 @@ msgstr ""
 "MiB(``benchmarks/results/primitives-latest.json``); 부하 시 최대 RSS 16.0 MiB "
 "이하(``benchmarks/results/product-latest.md``)"
 
-#: ../../prior-art.rst:161
+#: ../../prior-art.rst:106
 msgid "38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off"
 msgstr "바이너리 38.1 MiB; 유휴 RSS 21 MiB; Linux 테스트 환경, 콘솔 꺼짐"
 
-#: ../../prior-art.rst:162
+#: ../../prior-art.rst:107
 msgid "1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+"
 msgstr "최소 CPU 코어 1개, RAM 1 GB, 디스크 5 GB, Docker 20.10 이상"
 
-#: ../../prior-art.rst:163
+#: ../../prior-art.rst:108
 msgid "None on premises"
 msgstr "온프레미스에는 없음"
 
-#: ../../prior-art.rst:165
+#: ../../prior-art.rst:110
 msgid "Feature comparison, part 2: admission and sessions"
 msgstr "기능 비교 2부: 요청 허용과 세션"
 
-#: ../../prior-art.rst:175
+#: ../../prior-art.rst:120
 msgid "Proof-of-work admission"
 msgstr "작업 증명 요청 허용"
 
-#: ../../prior-art.rst:176
+#: ../../prior-art.rst:121
 msgid ""
 "Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule; "
 "WebAssembly with JavaScript fallback"
@@ -648,7 +599,7 @@ msgstr ""
 "Hashcash(비트 단위)와 Cohen-Pietrzak 순차 작업, 규칙마다 선택; WebAssembly와 JavaScript "
 "대체 경로"
 
-#: ../../prior-art.rst:177
+#: ../../prior-art.rst:122
 msgid ""
 "SHA-256 Hashcash in hex nibbles (``fast``, ``slow``); non-work "
 "``metarefresh`` and ``preact`` challenges"
@@ -656,79 +607,79 @@ msgstr ""
 "16진수 니블 단위의 SHA-256 Hashcash(``fast``, ``slow``); 작업이 없는 "
 "``metarefresh``\\ 와 ``preact`` 챌린지"
 
-#: ../../prior-art.rst:178
+#: ../../prior-art.rst:123
 msgid "JavaScript anti-bot challenge and CAPTCHA; not work-bound"
 msgstr "JavaScript 봇 방지 챌린지와 CAPTCHA; 작업 증명 방식 아님"
 
-#: ../../prior-art.rst:179
+#: ../../prior-art.rst:124
 msgid ""
 "Managed challenge, JS challenge, Turnstile; Bot Fight Mode issues a "
 "compute challenge"
 msgstr "관리형 챌린지, JS 챌린지, Turnstile; Bot Fight Mode는 계산 챌린지를 발급"
 
-#: ../../prior-art.rst:180
+#: ../../prior-art.rst:125
 msgid "Challenge state on the server"
 msgstr "서버의 챌린지 상태"
 
-#: ../../prior-art.rst:181
+#: ../../prior-art.rst:126
 msgid "None until solved; solved tags in a fixed Robin Hood table"
 msgstr "풀리기 전에는 없음; 풀린 태그는 고정 Robin Hood 테이블에 저장"
 
-#: ../../prior-art.rst:182
+#: ../../prior-art.rst:127
 msgid "Store backend: memory, bbolt, Valkey, or S3"
 msgstr "저장소 백엔드: memory, bbolt, Valkey, S3 중 하나"
 
-#: ../../prior-art.rst:183
+#: ../../prior-art.rst:128
 msgid "Managed by the stack"
 msgstr "스택이 관리"
 
-#: ../../prior-art.rst:184
+#: ../../prior-art.rst:129
 msgid "Managed by Cloudflare"
 msgstr "Cloudflare가 관리"
 
-#: ../../prior-art.rst:185
+#: ../../prior-art.rst:130
 msgid "Session token"
 msgstr "세션 토큰"
 
-#: ../../prior-art.rst:186
+#: ../../prior-art.rst:131
 msgid ""
 "Keyed BLAKE3 tag, 75-character cookie bound to the work paid; Ed25519 "
 "optional"
 msgstr "키 기반 BLAKE3 태그, 치른 작업에 묶인 75자 쿠키; 선택적으로 Ed25519"
 
-#: ../../prior-art.rst:187
+#: ../../prior-art.rst:132
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
 msgstr "Ed25519로 서명한 JSON Web Token; 선택적으로 HS512"
 
-#: ../../prior-art.rst:188
+#: ../../prior-art.rst:133
 msgid "Cookie issued by the stack"
 msgstr "스택이 발급하는 쿠키"
 
-#: ../../prior-art.rst:189
+#: ../../prior-art.rst:134
 msgid "``cf_clearance`` cookie"
 msgstr "``cf_clearance`` 쿠키"
 
-#: ../../prior-art.rst:190
+#: ../../prior-art.rst:135
 msgid "Post-quantum posture of the default token"
 msgstr "기본 토큰의 양자 내성"
 
-#: ../../prior-art.rst:191
+#: ../../prior-art.rst:136
 msgid "Symmetric: only Grover's quadratic speedup applies"
 msgstr "대칭 방식: Grover 알고리즘의 이차 가속만 적용됨"
 
-#: ../../prior-art.rst:192
+#: ../../prior-art.rst:137
 msgid "Ed25519: broken by Shor's algorithm"
 msgstr "Ed25519: Shor 알고리즘으로 깨짐"
 
-#: ../../prior-art.rst:193 ../../prior-art.rst:194
+#: ../../prior-art.rst:138 ../../prior-art.rst:139
 msgid "Not documented"
 msgstr "문서화되지 않음"
 
-#: ../../prior-art.rst:195
+#: ../../prior-art.rst:140
 msgid "Policy language"
 msgstr "정책 언어"
 
-#: ../../prior-art.rst:196
+#: ../../prior-art.rst:141
 msgid ""
 "JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR, JA4 fingerprint; "
 "ALLOW, DENY, CHALLENGE, WEIGH with thresholds; dynamic rules from the "
@@ -737,26 +688,26 @@ msgstr ""
 "JSON 규칙: 경로, User-Agent, 헤더, IPv4/IPv6 CIDR, JA4 지문; 임계값이 있는 ALLOW, DENY, "
 "CHALLENGE, WEIGH; 데이터베이스의 동적 규칙"
 
-#: ../../prior-art.rst:197
+#: ../../prior-art.rst:142
 msgid ""
 "YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH "
 "with thresholds"
 msgstr "YAML/JSON 봇 정의: UA, 경로, 헤더에 대한 정규식; CIDR; CEL 표현식; 임계값이 있는 WEIGH"
 
-#: ../../prior-art.rst:198
+#: ../../prior-art.rst:143
 msgid "Console-defined custom rules, ACLs, IP groups"
 msgstr "콘솔에서 정의하는 사용자 지정 규칙, ACL, IP 그룹"
 
-#: ../../prior-art.rst:199
+#: ../../prior-art.rst:144
 msgid ""
 "Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*"
 msgstr "Rules language 표현식; *요금제별 사용자 지정 규칙 5 / 20 / 100 / 1000개*"
 
-#: ../../prior-art.rst:200
+#: ../../prior-art.rst:145
 msgid "TLS fingerprint (JA4)"
 msgstr "TLS 지문(JA4)"
 
-#: ../../prior-art.rst:201
+#: ../../prior-art.rst:146
 msgid ""
 "Rules match a JA4 fingerprint exactly or by prefix; a trusted ingress "
 "computes it and forwards it in a header (``--ja4-header``); Sibuna does "
@@ -765,7 +716,7 @@ msgstr ""
 "규칙이 JA4 지문을 정확히 일치 또는 접두사로 비교; 신뢰할 수 있는 인그레스가 지문을 계산해 헤더로 "
 "전달(``--ja4-header``); Sibuna는 직접 계산하지 않음"
 
-#: ../../prior-art.rst:202
+#: ../../prior-art.rst:147
 msgid ""
 "Not documented; policies may reference the HTTP fingerprint JA4H, which "
 "Anubis computes and adds as the header ``X-Http-Fingerprint-JA4H``"
@@ -773,7 +724,7 @@ msgstr ""
 "문서화되지 않음; 정책에서 HTTP 지문 JA4H를 참조할 수 있으며, Anubis가 이를 계산해 "
 "``X-Http-Fingerprint-JA4H`` 헤더로 추가함"
 
-#: ../../prior-art.rst:203
+#: ../../prior-art.rst:148
 msgid ""
 "Computed at its own TLS termination; shown in attack details; custom "
 "rules match it (equals, not equals); a built-in rule denies fingerprints "
@@ -782,109 +733,109 @@ msgstr ""
 "자체 TLS 종료 지점에서 계산; 공격 상세 정보에 표시; 사용자 지정 규칙으로 비교(같음, 같지 않음); 내장 규칙이 자체 악성 "
 "JA4 위협 정보에 있는 지문을 거부"
 
-#: ../../prior-art.rst:204
+#: ../../prior-art.rst:149
 msgid ""
 "JA3 and JA4 fingerprints in WAF custom rules and analytics *(Enterprise "
 "with Bot Management)*"
 msgstr ""
 "WAF 사용자 지정 규칙과 분석에서 JA3, JA4 지문 사용 *(Enterprise, Bot Management 포함)*"
 
-#: ../../prior-art.rst:206
+#: ../../prior-art.rst:151
 msgid "Feature comparison, part 3: inspection and state"
 msgstr "기능 비교 3부: 검사와 상태"
 
-#: ../../prior-art.rst:216
+#: ../../prior-art.rst:161
 msgid "SQLi, XSS, RCE, traversal inspection"
 msgstr "SQLi, XSS, RCE, 경로 탐색 검사"
 
-#: ../../prior-art.rst:217
+#: ../../prior-art.rst:162
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
 msgstr "Shield: 태그가 붙은 오토마톤과 구조 토크나이저, 본문의 처음 8 KB"
 
-#: ../../prior-art.rst:218 ../../prior-art.rst:264
+#: ../../prior-art.rst:163 ../../prior-art.rst:209
 msgid "\\-"
 msgstr "\\-"
 
-#: ../../prior-art.rst:219
+#: ../../prior-art.rst:164
 msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
 msgstr "OWASP 범주에 대한 의미 분석 엔진, SSRF, XXE, CRLF도 포함"
 
-#: ../../prior-art.rst:220
+#: ../../prior-art.rst:165
 msgid ""
 "Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
 "*(Business and above)*"
 msgstr "관리형 규칙 집합 *(Pro 이상)*; OWASP Core Ruleset; 공격 점수 *(Business 이상)*"
 
-#: ../../prior-art.rst:221
+#: ../../prior-art.rst:166
 msgid "Rate limiting"
 msgstr "속도 제한"
 
-#: ../../prior-art.rst:222
+#: ../../prior-art.rst:167
 msgid "GCRA per client, local to a node"
 msgstr "클라이언트별 GCRA, 노드 로컬"
 
-#: ../../prior-art.rst:223
+#: ../../prior-art.rst:168
 msgid "\\- (system load is exposed to CEL rules)"
 msgstr "\\- (CEL 규칙에서 시스템 부하를 참조할 수 있음)"
 
-#: ../../prior-art.rst:224
+#: ../../prior-art.rst:169
 msgid "Per IP, path, session"
 msgstr "IP, 경로, 세션별"
 
-#: ../../prior-art.rst:225
+#: ../../prior-art.rst:170
 msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
 msgstr "*요금제별 규칙 1 / 2 / 5 / 100개*; Enterprise 미만은 IP 전용 키"
 
-#: ../../prior-art.rst:226
+#: ../../prior-art.rst:171
 msgid "Bans and reputation"
 msgstr "차단과 평판"
 
-#: ../../prior-art.rst:227
+#: ../../prior-art.rst:172
 msgid ""
 "Honeypot bans; reputation trie loaded from the reputation table shared "
 "across the cluster"
 msgstr "허니팟 차단; 클러스터 전체가 공유하는 평판 테이블에서 불러온 평판 트라이"
 
-#: ../../prior-art.rst:228
+#: ../../prior-art.rst:173
 msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
 msgstr "DNSBL; Thoth를 통한 ASN과 GeoIP *(유료, 비공개)*"
 
-#: ../../prior-art.rst:229
+#: ../../prior-art.rst:174
 msgid "IP groups and blacklists; threat intelligence *(Pro)*"
 msgstr "IP 그룹과 차단 목록; 위협 인텔리전스 *(Pro)*"
 
-#: ../../prior-art.rst:230
+#: ../../prior-art.rst:175
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
 msgstr "IP 목록; 관리형 목록과 봇 점수 *(Enterprise)*"
 
-#: ../../prior-art.rst:231
+#: ../../prior-art.rst:176
 msgid "Forensics"
 msgstr "포렌식"
 
-#: ../../prior-art.rst:232
+#: ../../prior-art.rst:177
 msgid ""
 "SQLite or PostgreSQL: full-text search over incidents, vector campaign "
 "clustering"
 msgstr "SQLite 또는 PostgreSQL: 인시던트 전문 검색, 벡터 기반 캠페인 군집화"
 
-#: ../../prior-art.rst:233
+#: ../../prior-art.rst:178
 msgid "Prometheus metrics only"
 msgstr "Prometheus 지표만"
 
-#: ../../prior-art.rst:234
+#: ../../prior-art.rst:179
 msgid "PostgreSQL attack log with console"
 msgstr "PostgreSQL 공격 로그와 콘솔"
 
-#: ../../prior-art.rst:235
+#: ../../prior-art.rst:180
 msgid "Security Events; sampled on Free"
 msgstr "Security Events; Free 요금제에서는 표본만 표시"
 
-#: ../../prior-art.rst:236
+#: ../../prior-art.rst:181
 msgid "Multi-node"
 msgstr "다중 노드"
 
-#: ../../prior-art.rst:237
+#: ../../prior-art.rst:182
 msgid ""
 "Daemon: one PostgreSQL database shared by every node for policy and "
 "reputation; shared seed; sticky challenge verification. Edge: a mesh "
@@ -893,89 +844,89 @@ msgstr ""
 "데몬: 정책과 평판을 위해 모든 노드가 공유하는 PostgreSQL 데이터베이스 하나; 공유 시드; 발급 노드 고정 챌린지 검증. "
 "엣지: 메시가 차단을 공유(SID 0022)"
 
-#: ../../prior-art.rst:238
+#: ../../prior-art.rst:183
 msgid "Shared signing key; shared Valkey store"
 msgstr "공유 서명 키; 공유 Valkey 저장소"
 
-#: ../../prior-art.rst:239
+#: ../../prior-art.rst:184
 msgid "One stack per host"
 msgstr "호스트당 스택 하나"
 
-#: ../../prior-art.rst:240
+#: ../../prior-art.rst:185
 msgid "Global anycast"
 msgstr "전역 애니캐스트"
 
-#: ../../prior-art.rst:242
+#: ../../prior-art.rst:187
 msgid "Feature comparison, part 4: operations"
 msgstr "기능 비교 4부: 운영"
 
-#: ../../prior-art.rst:252
+#: ../../prior-art.rst:197
 msgid "Metrics"
 msgstr "지표"
 
-#: ../../prior-art.rst:253
+#: ../../prior-art.rst:198
 msgid "Prometheus at ``/__sibuna/metrics``"
 msgstr "``/__sibuna/metrics``\\ 에서 Prometheus 형식"
 
-#: ../../prior-art.rst:254
+#: ../../prior-art.rst:199
 msgid "Prometheus on a separate port"
 msgstr "별도 포트의 Prometheus"
 
-#: ../../prior-art.rst:255
+#: ../../prior-art.rst:200
 msgid "Console dashboards"
 msgstr "콘솔 대시보드"
 
-#: ../../prior-art.rst:256
+#: ../../prior-art.rst:201
 msgid "Dashboard and analytics"
 msgstr "대시보드와 분석"
 
-#: ../../prior-art.rst:257 ../../prior-art.rst:353
+#: ../../prior-art.rst:202 ../../prior-art.rst:272
 msgid "TLS termination"
 msgstr "TLS 종료"
 
-#: ../../prior-art.rst:258
+#: ../../prior-art.rst:203
 msgid ""
 "Daemon: \\- (ingress). Edge: **Yes**, with automatic HTTPS (SID 0021)"
 msgstr "데몬: \\- (인그레스). 엣지: **예**, 자동 HTTPS 포함(SID 0021)"
 
-#: ../../prior-art.rst:259
+#: ../../prior-art.rst:204
 msgid "\\- (ingress)"
 msgstr "\\- (인그레스)"
 
-#: ../../prior-art.rst:260 ../../prior-art.rst:261 ../../prior-art.rst:265
-#: ../../prior-art.rst:266 ../../prior-art.rst:269
+#: ../../prior-art.rst:205 ../../prior-art.rst:206 ../../prior-art.rst:210
+#: ../../prior-art.rst:211 ../../prior-art.rst:214
 msgid "**Yes**"
 msgstr "**예**"
 
-#: ../../prior-art.rst:262
+#: ../../prior-art.rst:207
 msgid "Management console"
 msgstr "관리 콘솔"
 
-#: ../../prior-art.rst:263
+#: ../../prior-art.rst:208
 msgid "Opt-in; SID 0007 Committed"
 msgstr "선택 사항; SID 0007 Committed"
 
-#: ../../prior-art.rst:267
+#: ../../prior-art.rst:212
 msgid "Measured on the benchmark host"
 msgstr "벤치마크 호스트에서 측정"
 
-#: ../../prior-art.rst:268
+#: ../../prior-art.rst:213
 msgid "**Yes** (Part X)"
 msgstr "**예** (제X부)"
 
-#: ../../prior-art.rst:270
+#: ../../prior-art.rst:215
 msgid "\\- (Docker only)"
 msgstr "\\- (Docker 전용)"
 
-#: ../../prior-art.rst:271
+#: ../../prior-art.rst:216
 msgid "\\- (hosted)"
 msgstr "\\- (호스팅형)"
 
-#: ../../prior-art.rst:273
+#: ../../prior-art.rst:218
 msgid "Three differences carry most of the weight in a selection decision."
 msgstr "제품을 고를 때는 세 가지 차이가 가장 큰 비중을 차지합니다."
 
-#: ../../prior-art.rst:275
+#: ../../prior-art.rst:220
 msgid ""
 "*Where the work goes.* Anubis and Sibuna Gate make the *client* pay "
 "before the origin does anything. SafeLine and Cloudflare inspect first "
@@ -988,7 +939,7 @@ msgstr ""
 "걸러 내는 것입니다. Sibuna Shield는 이 순서로 두 가지를 모두 합니다. 이미 유효한 세션을 가진 요청이라도 검사에서 "
 "거부될 수 있습니다."
 
-#: ../../prior-art.rst:276
+#: ../../prior-art.rst:221
 msgid ""
 "*What the server remembers.* Anubis keeps challenge state in a store "
 "(memory, bbolt, Valkey, or S3) and signs a JSON Web Token with Ed25519; "
@@ -1001,7 +952,7 @@ msgstr ""
 "기억합니다. SafeLine은 공격 로그를 PostgreSQL에 보관합니다. Cloudflare는 모든 것을 보관하지만, Free "
 "요금제에서는 표본만 볼 수 있습니다."
 
-#: ../../prior-art.rst:277
+#: ../../prior-art.rst:222
 msgid ""
 "*What an operator has to run.* Sibuna is one binary with an optional "
 "SQLite file, or a PostgreSQL database shared by a cluster; Anubis is one "
@@ -1014,11 +965,11 @@ msgstr ""
 "1기가바이트 이상, 디스크 5기가바이트 이상인 Linux 호스트에서 Docker 데몬 위에 실행되는 컨테이너 일곱 개입니다. "
 "Cloudflare는 DNS 변경과 구독만 하면 됩니다."
 
-#: ../../prior-art.rst:279
+#: ../../prior-art.rst:224
 msgid "Current product boundary"
 msgstr "현재 제품의 경계"
 
-#: ../../prior-art.rst:282
+#: ../../prior-art.rst:227
 msgid ""
 "The firewall daemon leaves TLS termination to the deployment proxy; the "
 "edge terminates TLS itself (Part VIII). Sibuna does not score bots with a "
@@ -1043,11 +994,11 @@ msgstr ""
 "대시보드 여덟 개를 활성화하고 부하를 건 상태의 공식 성능 격리 관문은 아직 측정하지 않았습니다. 측정한 내용은 제VIII부에 "
 "기록되어 있습니다."
 
-#: ../../prior-art.rst:284
+#: ../../prior-art.rst:229
 msgid "Load Balancers"
 msgstr "로드 밸런서"
 
-#: ../../prior-art.rst:287
+#: ../../prior-art.rst:232
 msgid ""
 "Since SID 0015 Sibuna is also an edge load balancer: it forwards TCP and "
 "UDP, terminates TLS, HTTP/2 and HTTP/3, and routes HTTP requests to pools "
@@ -1059,11 +1010,11 @@ msgstr ""
 "HTTP/3를 종료하며, HTTP 요청을 서버 풀로 라우팅하고, 방화벽을 요구하는 경로에는 방화벽을 둡니다. 이 절은 로드 밸런서가 "
 "무엇에 기대고 있는지 밝히고, 이를 두 개의 오픈 로드 밸런서와 비교합니다."
 
-#: ../../prior-art.rst:289
+#: ../../prior-art.rst:234
 msgid "Where the Load Balancer Comes From"
 msgstr "로드 밸런서의 뿌리"
 
-#: ../../prior-art.rst:292
+#: ../../prior-art.rst:237
 msgid ""
 "The vocabulary is HAProxy's. A *frontend* binds addresses, a *backend* is "
 "a pool of *servers*, and an operator drains a server through a local "
@@ -1085,11 +1036,11 @@ msgstr ""
 "확장하며, 컨트롤 플레인이 설정을 밀어 넣습니다. SID 0030의 훅도 세 계층으로 정해진 단계에 붙으며, 각 결정은 기한이 있는 "
 "호출 하나입니다."
 
-#: ../../prior-art.rst:294
+#: ../../prior-art.rst:239
 msgid "Four papers decide how the edge places a flow and what it remembers."
 msgstr "논문 네 편이 엣지가 플로를 어떻게 배치하고 무엇을 기억할지 정합니다."
 
-#: ../../prior-art.rst:296
+#: ../../prior-art.rst:241
 msgid ""
 "*Maglev* (Eisenbud et al., NSDI 2016) fills a table of a prime number of "
 "slots from one permutation per server, so a lookup is one hash and one "
@@ -1103,7 +1054,7 @@ msgstr ""
 "슬롯 65,537개짜리 가중 테이블을 만들며(``crates/lb/src/maglev.rs``), 지역 체제의 메시는 이것으로 "
 "클라이언트를 배치합니다(SID 0015)."
 
-#: ../../prior-art.rst:297
+#: ../../prior-art.rst:242
 msgid ""
 "*Consistent hashing with bounded loads* (Mirrokni, Thorup and "
 "Zadimoghaddam, SODA 2018) caps the load of the chosen server at a factor "
@@ -1117,7 +1068,7 @@ msgstr ""
 "``load_factor_pct``\\ (기본값 125)로 이런 상한을 적용합니다. HAProxy는 "
 "``hash-balance-factor``\\ 로 일관 해싱에 같은 아이디어를 적용합니다."
 
-#: ../../prior-art.rst:298
+#: ../../prior-art.rst:243
 msgid ""
 "*Rendezvous hashing* (Thaler and Ravishankar, IEEE/ACM Transactions on "
 "Networking 1998) gives each server a score from a hash of its name and "
@@ -1131,7 +1082,7 @@ msgstr ""
 "테이블이 필요 없습니다. 소스 고정은 이 방식으로 서버의 순위를 매기고(SID 0019), 동료 전달은 이 방식으로 노드들 가운데서 "
 "클라이언트의 소유 노드를 고릅니다(SID 0026)."
 
-#: ../../prior-art.rst:299
+#: ../../prior-art.rst:244
 msgid ""
 "*TinyLFU* (Einziger, Friedman and Manes, ACM Transactions on Storage "
 "2017) admits a new entry to a full cache only when a small frequency "
@@ -1142,7 +1093,7 @@ msgstr ""
 "2017)는 작은 빈도 스케치가 새 항목이 밀어낼 항목보다 더 자주 쓰인다고 말할 때에만 가득 찬 캐시에 새 항목을 허용합니다. "
 "SID 0027의 spill 캐시는 이 규칙으로 파일에 힌트를 허용합니다."
 
-#: ../../prior-art.rst:302
+#: ../../prior-art.rst:247
 msgid ""
 "HAProxy gives the vocabulary and the admin socket, nginx the event-driven "
 "workers, and Envoy shares the idea of hook stages. Maglev and bounded "
@@ -1155,78 +1106,107 @@ msgstr ""
 "Maglev와 부하 상한은 부하 상한 Maglev 풀을, 랑데부 해싱은 소스 고정과 클라이언트의 소유 노드를, TinyLFU는 "
 "spill 캐시의 허용을 줍니다. HAProxy의 hash-balance-factor와는 부하 상한이라는 아이디어를 공유합니다."
 
-#: ../../prior-art.rst:302
+#: ../../prior-art.rst:247
 msgid ""
-"digraph lb_lineage {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, "
-"fontname=\"Helvetica\", fontsize=9];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#ffffff\", color=\"#7c9cd6\", "
-"margin=\"0.08,0.04\"];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
+"// prior-art.rst: what the edge load balancer takes from earlier systems "
+"and papers.\n"
+"// Solid arrows are ideas taken directly; dashed lines are ideas shared.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
 "\n"
-"  haproxy [label=\"HAProxy\"];\n"
-"  nginx [label=\"nginx\"];\n"
-"  envoy [label=\"Envoy\"];\n"
-"  maglev [label=\"Maglev\\nEisenbud et al. 2016\"];\n"
-"  bounded [label=\"Bounded loads\\nMirrokni et al. 2018\"];\n"
-"  hrw [label=\"Rendezvous hashing\\nThaler-Ravishankar 1998\"];\n"
-"  tinylfu [label=\"TinyLFU\\nEinziger et al. 2017\"];\n"
+"#let source(at, title, detail, name) = step(at, title, detail, width: "
+"46mm, name: name)\n"
+"#let ours(at, title, detail, name) = sibuna(at, title, detail, width: "
+"52mm, name: name)\n"
 "\n"
-"  node [color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
-"  vocab [label=\"frontends, backends,\\nadmin socket (SID 0018)\"];\n"
-"  workers [label=\"event-driven HTTP\\nworkers (SID 0016)\"];\n"
-"  hooks [label=\"hook stages and\\ntiers (SID 0030)\"];\n"
-"  bmaglev [label=\"bounded_maglev\\n(SID 0015)\"];\n"
-"  sticky [label=\"source stickiness (SID 0019),\\nowner of a client (SID "
-"0026)\"];\n"
-"  spill [label=\"spill cache admission\\n(SID 0027)\"];\n"
-"\n"
-"  haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];\n"
-"  maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> "
-"spill;\n"
-"  haproxy -> bounded [style=dashed, dir=none, label=\" "
-"hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
-"}"
+"#flow(\n"
+"  spacing: (16mm, 3.5mm),\n"
+"  caption-node((0, -1), \"Earlier systems and papers\"),\n"
+"  caption-node((1, -1), \"In Sibuna\"),\n"
+"  source((0, 0), \"HAProxy\", none, <haproxy>),\n"
+"  source((0, 1), \"nginx\", none, <nginx>),\n"
+"  source((0, 2), \"Envoy\", none, <envoy>),\n"
+"  source((0, 3), \"Maglev\", \"Eisenbud et al. 2016\", <maglev>),\n"
+"  source((0, 4), \"Bounded loads\", \"Mirrokni et al. 2018\", "
+"<bounded>),\n"
+"  source((0, 5), \"Rendezvous hashing\", \"Thaler-Ravishankar 1998\", "
+"<hrw>),\n"
+"  source((0, 6), \"TinyLFU\", \"Einziger et al. 2017\", <tinylfu>),\n"
+"  ours((1, 0), \"Frontends, backends,\\nadmin socket\", \"SID 0018\", "
+"<vocab>),\n"
+"  ours((1, 1), \"Event-driven HTTP workers\", \"SID 0016\", <workers>),\n"
+"  ours((1, 2), \"Hook stages and tiers\", \"SID 0030\", <hooks>),\n"
+"  ours((1, 3.5), \"`bounded_maglev`\", \"SID 0015\", <bmaglev>),\n"
+"  ours((1, 5), \"Source stickiness, owner of a client\", \"SID 0019, SID "
+"0026\", <sticky>),\n"
+"  ours((1, 6), \"Spill cache admission\", \"SID 0027\", <spill>),\n"
+"  main-edge(<haproxy>, <vocab>, \"-|>\"),\n"
+"  main-edge(<nginx>, <workers>, \"-|>\"),\n"
+"  edge(<envoy>, <hooks>, \"-\", dash: \"dashed\"),\n"
+"  main-edge(<maglev>, <bmaglev>, \"-|>\"),\n"
+"  main-edge(<bounded>, <bmaglev>, \"-|>\"),\n"
+"  main-edge(<hrw>, <sticky>, \"-|>\"),\n"
+"  main-edge(<tinylfu>, <spill>, \"-|>\"),\n"
+"  edge(<haproxy>, (-0.72, 0), (-0.72, 4), <bounded>, \"-\", dash: "
+"\"dashed\",\n"
+"    corner-radius: 4pt, say(\"`hash-balance-factor`\"), label-side: left, "
+"label-angle: auto),\n"
+")\n"
 msgstr ""
-"digraph lb_lineage {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.25, ranksep=0.5, fontname=\"Helvetica\", fontsize=9];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", fontsize=8.5, fillcolor=\"#ffffff\", color=\"#7c9cd6\", margin=\"0.08,0.04\"];\n"
-"  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
+"// prior-art.rst: what the edge load balancer takes from earlier systems "
+"and papers.\n"
+"// Solid arrows are ideas taken directly; dashed lines are ideas shared.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"ko\")\n"
 "\n"
-"  haproxy [label=\"HAProxy\"];\n"
-"  nginx [label=\"nginx\"];\n"
-"  envoy [label=\"Envoy\"];\n"
-"  maglev [label=\"Maglev\\nEisenbud et al. 2016\"];\n"
-"  bounded [label=\"부하 상한\\nMirrokni 외 2018\"];\n"
-"  hrw [label=\"랑데부 해싱\\nThaler-Ravishankar 1998\"];\n"
-"  tinylfu [label=\"TinyLFU\\nEinziger et al. 2017\"];\n"
+"#let source(at, title, detail, name) = step(at, title, detail, width: "
+"46mm, name: name)\n"
+"#let ours(at, title, detail, name) = sibuna(at, title, detail, width: "
+"52mm, name: name)\n"
 "\n"
-"  node [color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
-"  vocab [label=\"프런트엔드, 백엔드,\\n관리 소켓 (SID 0018)\"];\n"
-"  workers [label=\"이벤트 기반 HTTP\\n워커 (SID 0016)\"];\n"
-"  hooks [label=\"훅의 단계와\\n계층 (SID 0030)\"];\n"
-"  bmaglev [label=\"bounded_maglev\\n(SID 0015)\"];\n"
-"  sticky [label=\"출발지 고정 (SID 0019),\\n클라이언트 담당 노드 (SID 0026)\"];\n"
-"  spill [label=\"스필 캐시 수용\\n(SID 0027)\"];\n"
-"\n"
-"  haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];\n"
-"  maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> spill;\n"
-"  haproxy -> bounded [style=dashed, dir=none, label=\" hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
-"}"
+"#flow(\n"
+"  spacing: (16mm, 3.5mm),\n"
+"  caption-node((0, -1), \"앞선 시스템과 논문\"),\n"
+"  caption-node((1, -1), \"Sibuna에서\"),\n"
+"  source((0, 0), \"HAProxy\", none, <haproxy>),\n"
+"  source((0, 1), \"nginx\", none, <nginx>),\n"
+"  source((0, 2), \"Envoy\", none, <envoy>),\n"
+"  source((0, 3), \"Maglev\", \"Eisenbud 외 2016\", <maglev>),\n"
+"  source((0, 4), \"부하 상한\", \"Mirrokni 외 2018\", <bounded>),\n"
+"  source((0, 5), \"랑데부 해싱\", \"Thaler-Ravishankar 1998\", <hrw>),\n"
+"  source((0, 6), \"TinyLFU\", \"Einziger 외 2017\", <tinylfu>),\n"
+"  ours((1, 0), \"프런트엔드, 백엔드,\\n관리 소켓\", \"SID 0018\", <vocab>),\n"
+"  ours((1, 1), \"이벤트 기반 HTTP 워커\", \"SID 0016\", <workers>),\n"
+"  ours((1, 2), \"훅의 단계와 계층\", \"SID 0030\", <hooks>),\n"
+"  ours((1, 3.5), \"`bounded_maglev`\", \"SID 0015\", <bmaglev>),\n"
+"  ours((1, 5), \"출발지 고정, 클라이언트 담당 노드\", \"SID 0019, SID 0026\", "
+"<sticky>),\n"
+"  ours((1, 6), \"스필 캐시 수용\", \"SID 0027\", <spill>),\n"
+"  main-edge(<haproxy>, <vocab>, \"-|>\"),\n"
+"  main-edge(<nginx>, <workers>, \"-|>\"),\n"
+"  edge(<envoy>, <hooks>, \"-\", dash: \"dashed\"),\n"
+"  main-edge(<maglev>, <bmaglev>, \"-|>\"),\n"
+"  main-edge(<bounded>, <bmaglev>, \"-|>\"),\n"
+"  main-edge(<hrw>, <sticky>, \"-|>\"),\n"
+"  main-edge(<tinylfu>, <spill>, \"-|>\"),\n"
+"  edge(<haproxy>, (-0.72, 0), (-0.72, 4), <bounded>, \"-\", dash: "
+"\"dashed\",\n"
+"    corner-radius: 4pt, say(\"`hash-balance-factor`\"), label-side: left, "
+"label-angle: auto),\n"
+")\n"
 
-#: ../../prior-art.rst:302
+#: ../../prior-art.rst:247
 msgid ""
 "What the edge load balancer takes from earlier systems and papers. Solid "
 "arrows are ideas taken directly; dashed lines are ideas shared."
 msgstr ""
 "엣지 로드 밸런서가 이전 시스템과 논문에서 가져온 것. 실선 화살표는 직접 가져온 아이디어이고, 점선은 공유하는 아이디어입니다."
 
-#: ../../prior-art.rst:331
+#: ../../prior-art.rst:250
 msgid "Load Balancing Compared"
 msgstr "로드 밸런싱 비교"
 
-#: ../../prior-art.rst:334
+#: ../../prior-art.rst:253
 msgid ""
 "The table compares the load balancing of Sibuna with HAProxy and Envoy. "
 "We read their public documentation on 25 November 2026: the HAProxy 3.4.8 "
@@ -1246,27 +1226,27 @@ msgstr ""
 "페이지로는 결론이 나지 않은 사실을 가리킵니다. Sibuna에 대해서는 코드와 SID 기록이 결정하며, 만들어지지 않은 기능은 "
 "그렇다고 밝힙니다."
 
-#: ../../prior-art.rst:336
+#: ../../prior-art.rst:255
 msgid "Load balancing: Sibuna, HAProxy and Envoy"
 msgstr "로드 밸런싱: Sibuna, HAProxy, Envoy"
 
-#: ../../prior-art.rst:342
+#: ../../prior-art.rst:261
 msgid "Sibuna edge"
 msgstr "Sibuna 엣지"
 
-#: ../../prior-art.rst:343
+#: ../../prior-art.rst:262
 msgid "HAProxy 3.4"
 msgstr ""
 
-#: ../../prior-art.rst:344
+#: ../../prior-art.rst:263
 msgid "Envoy 1.40"
 msgstr ""
 
-#: ../../prior-art.rst:345
+#: ../../prior-art.rst:264
 msgid "Protocols"
 msgstr "프로토콜"
 
-#: ../../prior-art.rst:346
+#: ../../prior-art.rst:265
 msgid ""
 "TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3 and gRPC, toward clients and toward "
 "servers; WebSocket, but not toward an HTTP/2 or HTTP/3 pool"
@@ -1274,7 +1254,7 @@ msgstr ""
 "클라이언트 쪽과 서버 쪽 모두 TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3, gRPC; WebSocket(단, "
 "HTTP/2나 HTTP/3 풀로는 불가)"
 
-#: ../../prior-art.rst:347
+#: ../../prior-art.rst:266
 msgid ""
 "TCP, HTTP/1.1, HTTP/2 and HTTP/3; QUIC toward servers is experimental; "
 "UDP listeners only in ``log-forward`` sections"
@@ -1282,23 +1262,23 @@ msgstr ""
 "TCP, HTTP/1.1, HTTP/2, HTTP/3; 서버 쪽 QUIC은 실험적; UDP 리스너는 ``log-forward`` "
 "절에서만"
 
-#: ../../prior-art.rst:348
+#: ../../prior-art.rst:267
 msgid ""
 "TCP, UDP (UDP proxy filter), HTTP/1.1, HTTP/2, and HTTP/3 toward clients "
 "and toward servers"
 msgstr "클라이언트 쪽과 서버 쪽 모두 TCP, UDP(UDP 프록시 필터), HTTP/1.1, HTTP/2, HTTP/3"
 
-#: ../../prior-art.rst:349
+#: ../../prior-art.rst:268
 msgid "Scheduling"
 msgstr "스케줄링"
 
-#: ../../prior-art.rst:350
+#: ../../prior-art.rst:269
 msgid ""
 "Least connections (default), round robin, power of two choices with peak "
 "EWMA, bounded Maglev; slow start"
 msgstr "최소 연결(기본값), 라운드 로빈, peak EWMA를 쓰는 두 선택의 힘, 부하 상한 Maglev; 슬로 스타트"
 
-#: ../../prior-art.rst:351
+#: ../../prior-art.rst:270
 msgid ""
 "``roundrobin``, ``static-rr``, ``leastconn``, ``first``, ``hash``, "
 "``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, "
@@ -1308,7 +1288,7 @@ msgstr ""
 "``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, "
 "``sticky``; ``hash-balance-factor``\\ 로 부하 상한; ``slowstart``"
 
-#: ../../prior-art.rst:352
+#: ../../prior-art.rst:271
 msgid ""
 "Weighted round robin, least request (power of two choices), ring hash, "
 "Maglev with 65,537 slots, random, client-side weighted round robin"
@@ -1316,25 +1296,25 @@ msgstr ""
 "가중 라운드 로빈, 최소 요청(두 선택의 힘), 링 해시, 슬롯 65,537개의 Maglev, 무작위, 클라이언트 측 가중 라운드 "
 "로빈"
 
-#: ../../prior-art.rst:354
+#: ../../prior-art.rst:273
 msgid ""
 "**Yes**: PEM bundles chosen by server name; HTTP/2 over TLS and HTTP/3 "
 "over QUIC"
 msgstr "**예**: 서버 이름으로 고르는 PEM 묶음; TLS 위의 HTTP/2와 QUIC 위의 HTTP/3"
 
-#: ../../prior-art.rst:355
+#: ../../prior-art.rst:274
 msgid "**Yes**: ``bind ... ssl crt``"
 msgstr "**예**: ``bind ... ssl crt``"
 
-#: ../../prior-art.rst:356
+#: ../../prior-art.rst:275
 msgid "**Yes**: certificates from files or the secret discovery service"
 msgstr "**예**: 파일 또는 비밀 디스커버리 서비스에서 받는 인증서"
 
-#: ../../prior-art.rst:357
+#: ../../prior-art.rst:276
 msgid "TLS passthrough"
 msgstr "TLS 패스스루"
 
-#: ../../prior-art.rst:358
+#: ../../prior-art.rst:277
 msgid ""
 "**Yes**: ``tcp`` frontends route or refuse by server name, ALPN or JA4 "
 "read from the ClientHello; QUIC is validated by connection ID (SID 0032); "
@@ -1343,21 +1323,21 @@ msgstr ""
 "**예**: ``tcp`` 프런트엔드가 ClientHello에서 읽은 서버 이름, ALPN, JA4로 라우팅하거나 거부; QUIC은 "
 "연결 ID로 검증(SID 0032); 엣지가 생성하는 Retry는 만들어지지 않음"
 
-#: ../../prior-art.rst:359
+#: ../../prior-art.rst:278
 msgid "**Yes**: ``mode tcp`` with content inspection of ``req.ssl_sni``"
 msgstr "**예**: ``req.ssl_sni``\\ 의 콘텐츠 검사를 쓰는 ``mode tcp``"
 
-#: ../../prior-art.rst:360
+#: ../../prior-art.rst:279
 msgid ""
 "**Yes**: the TLS Inspector reads server name and ALPN to choose a filter "
 "chain"
 msgstr "**예**: TLS Inspector가 서버 이름과 ALPN을 읽어 필터 체인을 고름"
 
-#: ../../prior-art.rst:361
+#: ../../prior-art.rst:280
 msgid "ACME"
 msgstr "ACME"
 
-#: ../../prior-art.rst:362
+#: ../../prior-art.rst:281
 msgid ""
 "**Built in**: HTTP-01, TLS-ALPN-01 and DNS-01 (hook, RFC 2136, "
 "Cloudflare), wildcards, issuance on demand, OCSP stapling, and a local "
@@ -1366,7 +1346,7 @@ msgstr ""
 "**내장**: HTTP-01, TLS-ALPN-01, DNS-01(훅, RFC 2136, Cloudflare), 와일드카드, 요청 "
 "시점 발급, OCSP 스테이플링, ACME로 다른 기계에 서비스할 수 있는 로컬 인증 기관(SID 0021)"
 
-#: ../../prior-art.rst:363
+#: ../../prior-art.rst:282
 msgid ""
 "**Experimental** ``acme`` section: HAProxy answers HTTP-01 itself; DNS-01 "
 "and dns-persist-01 need the Data Plane API or another tool"
@@ -1374,15 +1354,15 @@ msgstr ""
 "**실험적** ``acme`` 절: HAProxy가 HTTP-01에 직접 응답; DNS-01과 dns-persist-01에는 "
 "Data Plane API나 다른 도구가 필요"
 
-#: ../../prior-art.rst:364 ../../prior-art.rst:396
+#: ../../prior-art.rst:283 ../../prior-art.rst:315
 msgid "Not checked"
 msgstr "확인하지 않음"
 
-#: ../../prior-art.rst:365
+#: ../../prior-art.rst:284
 msgid "Health checks"
 msgstr "헬스 체크"
 
-#: ../../prior-art.rst:366
+#: ../../prior-art.rst:285
 msgid ""
 "Active TCP connect or HTTP ``GET`` with ``rise`` and ``fall``; passive "
 "ejection by real failures (SID 0019)"
@@ -1390,7 +1370,7 @@ msgstr ""
 "``rise``\\ 와 ``fall``\\ 을 쓰는 능동 TCP connect 또는 HTTP ``GET``; 실제 실패에 따른 수동 "
 "배제(SID 0019)"
 
-#: ../../prior-art.rst:367
+#: ../../prior-art.rst:286
 msgid ""
 "Active checks (``check``, ``option httpchk``); passive observation with "
 "``observe`` and ``error-limit``"
@@ -1398,17 +1378,17 @@ msgstr ""
 "능동 체크(``check``, ``option httpchk``); ``observe``\\ 와 ``error-limit``\\ 로 "
 "수동 관찰"
 
-#: ../../prior-art.rst:368
+#: ../../prior-art.rst:287
 msgid ""
 "Active HTTP, gRPC, L3/L4, Redis and Thrift checks; passive outlier "
 "detection"
 msgstr "능동 HTTP, gRPC, L3/L4, Redis, Thrift 체크; 수동 이상치 탐지"
 
-#: ../../prior-art.rst:369
+#: ../../prior-art.rst:288
 msgid "Sticky sessions"
 msgstr "스티키 세션"
 
-#: ../../prior-art.rst:370
+#: ../../prior-art.rst:289
 msgid ""
 "Keyed cookie, source address, or a learned table by source or cookie that "
 "a mesh replicates and a file can keep over a restart (SID 0025, SID 0027)"
@@ -1416,22 +1396,22 @@ msgstr ""
 "키 기반 쿠키, 출발지 주소, 또는 출발지나 쿠키에 따른 학습 테이블(메시가 복제하고 파일로 재시작 너머까지 유지 가능)(SID "
 "0025, SID 0027)"
 
-#: ../../prior-art.rst:371
+#: ../../prior-art.rst:290
 msgid ""
 "``cookie`` (insert, rewrite, prefix); stick tables (``stick on src``)"
 msgstr "``cookie``\\ (insert, rewrite, prefix); stick 테이블(``stick on src``)"
 
-#: ../../prior-art.rst:372
+#: ../../prior-art.rst:291
 msgid ""
 "A hash policy on the route with ring hash or Maglev; the stateful session "
 "filter with a cookie or a header"
 msgstr "경로의 해시 정책(링 해시 또는 Maglev); 쿠키나 헤더를 쓰는 상태 기반 세션 필터"
 
-#: ../../prior-art.rst:373
+#: ../../prior-art.rst:292
 msgid "Runtime API"
 msgstr "런타임 API"
 
-#: ../../prior-art.rst:374
+#: ../../prior-art.rst:293
 msgid ""
 "Unix admin socket and ``sibuna ctl``: drain, weight, add and remove "
 "servers, lift bans, reload, show; a subset in the operator console (SID "
@@ -1440,7 +1420,7 @@ msgstr ""
 "Unix 관리 소켓과 ``sibuna ctl``: 서버 드레인, 가중치, 추가와 제거, 차단 해제, 다시 불러오기, 조회; 그 "
 "일부는 운영자 콘솔에서(SID 0018, SID 0031)"
 
-#: ../../prior-art.rst:375
+#: ../../prior-art.rst:294
 msgid ""
 "Runtime API on the stats socket: ``set server ... state|weight``, ``add "
 "server``, ``del server``, ``show stat``, ``show table``, ``clear table``, "
@@ -1450,7 +1430,7 @@ msgstr ""
 "``del server``, ``show stat``, ``show table``, ``clear table``, ``acme "
 "renew``"
 
-#: ../../prior-art.rst:376
+#: ../../prior-art.rst:295
 msgid ""
 "Admin interface: stats, ``config_dump``, ``drain_listeners``, "
 "``healthcheck/fail``, ``runtime_modify``; endpoints and listeners change "
@@ -1459,11 +1439,11 @@ msgstr ""
 "관리 인터페이스: stats, ``config_dump``, ``drain_listeners``, "
 "``healthcheck/fail``, ``runtime_modify``; 엔드포인트와 리스너는 컨트롤 플레인의 xDS로 변경"
 
-#: ../../prior-art.rst:377
+#: ../../prior-art.rst:296
 msgid "Hot reload"
 msgstr "핫 리로드"
 
-#: ../../prior-art.rst:378
+#: ../../prior-art.rst:297
 msgid ""
 "In the same process by SIGHUP, ``reload`` or a file watcher; established "
 "flows keep their server; ``reload cluster`` for a mesh; a database "
@@ -1472,22 +1452,22 @@ msgstr ""
 "SIGHUP, ``reload``, 파일 감시로 같은 프로세스 안에서; 수립된 플로는 서버를 유지; 메시에는 ``reload "
 "cluster``; 영속 모드에서는 데이터베이스 리비전(SID 0023, SID 0028)"
 
-#: ../../prior-art.rst:379
+#: ../../prior-art.rst:298
 msgid ""
 "A reload starts a new worker that takes the listening sockets of the old "
 "one (``-x``; automatic in master-worker mode)"
 msgstr ""
 "다시 불러오기는 이전 워커의 리스닝 소켓을 넘겨받는 새 워커를 시작(``-x``; master-worker 모드에서는 자동)"
 
-#: ../../prior-art.rst:380
+#: ../../prior-art.rst:299
 msgid "Dynamic configuration through xDS without a restart"
 msgstr "재시작 없이 xDS로 동적 설정"
 
-#: ../../prior-art.rst:381
+#: ../../prior-art.rst:300
 msgid "Binary replacement"
 msgstr "바이너리 교체"
 
-#: ../../prior-art.rst:382
+#: ../../prior-art.rst:301
 msgid ""
 "``global.upgrade_socket``: the listening sockets and the live UDP "
 "mappings pass to the new process, and TCP streams drain in the old one; "
@@ -1496,22 +1476,22 @@ msgstr ""
 "``global.upgrade_socket``: 리스닝 소켓과 살아 있는 UDP 매핑이 새 프로세스로 넘어가고, TCP 스트림은 "
 "이전 프로세스에서 드레인; Linux 전용(SID 0029). 또는 ``global.reuse_port``"
 
-#: ../../prior-art.rst:383
+#: ../../prior-art.rst:302
 msgid "The same reload passes the listening sockets to the new process"
 msgstr "같은 다시 불러오기가 리스닝 소켓을 새 프로세스로 넘김"
 
-#: ../../prior-art.rst:384
+#: ../../prior-art.rst:303
 msgid ""
 "Hot restart passes the listening sockets over a Unix socket; existing "
 "connections are not transferred; HTTP/3 is not handled gracefully yet"
 msgstr ""
 "핫 리스타트가 Unix 소켓으로 리스닝 소켓을 넘김; 기존 연결은 옮기지 않음; HTTP/3는 아직 우아하게 처리하지 않음"
 
-#: ../../prior-art.rst:385
+#: ../../prior-art.rst:304
 msgid "Clustering of state"
 msgstr "상태의 클러스터 공유"
 
-#: ../../prior-art.rst:386
+#: ../../prior-art.rst:305
 msgid ""
 "A mesh of at most 64 nodes shares bans, server commands, the sticky table "
 "and fleet-wide ``max_flows``, and forwards each client to its owner node "
@@ -1520,24 +1500,24 @@ msgstr ""
 "노드 최대 64개의 메시가 차단, 서버 명령, 스티키 테이블, 플릿 전체 ``max_flows``\\ 를 공유하고, 각 클라이언트를 "
 "소유 노드로 전달(SID 0022, SID 0025, SID 0026); 요청 제한기는 노드마다 셈"
 
-#: ../../prior-art.rst:387
+#: ../../prior-art.rst:306
 msgid ""
 "``peers`` sections push stick-table entries between instances over TCP, "
 "multi-master; values overwrite without aggregation"
 msgstr ""
 "``peers`` 절이 TCP로 인스턴스 사이에 stick 테이블 항목을 밀어 넣음(멀티 마스터); 값은 집계 없이 덮어씀"
 
-#: ../../prior-art.rst:388
+#: ../../prior-art.rst:307
 msgid ""
 "Global rate limits through an external gRPC rate limit service; other "
 "shared state not checked"
 msgstr "외부 gRPC 속도 제한 서비스를 통한 전역 속도 제한; 그 밖의 공유 상태는 확인하지 않음"
 
-#: ../../prior-art.rst:389
+#: ../../prior-art.rst:308
 msgid "Extension mechanism"
 msgstr "확장 메커니즘"
 
-#: ../../prior-art.rst:390
+#: ../../prior-art.rst:309
 msgid ""
 "Native Rust hooks, WebAssembly on an in-house metered interpreter, and "
 "agents on a Unix socket, at the connection, request and telemetry stages; "
@@ -1546,23 +1526,23 @@ msgstr ""
 "연결, 요청, 텔레메트리 단계의 네이티브 Rust 훅, 자체 계량 인터프리터 위의 WebAssembly, Unix 소켓 위의 "
 "agent; 응답이나 본문에 대한 훅은 없음(SID 0030)"
 
-#: ../../prior-art.rst:391
+#: ../../prior-art.rst:310
 msgid ""
 "Lua (``lua-load``); filters, among them the Stream Processing Offload "
 "Engine (SPOE)"
 msgstr "Lua(``lua-load``); Stream Processing Offload Engine(SPOE)을 포함한 필터"
 
-#: ../../prior-art.rst:392
+#: ../../prior-art.rst:311
 msgid ""
 "Filters, among them Lua, external authorization and external processing; "
 "WebAssembly through the Proxy-Wasm ABI"
 msgstr "Lua, 외부 인가, 외부 처리를 포함한 필터; Proxy-Wasm ABI를 통한 WebAssembly"
 
-#: ../../prior-art.rst:393
+#: ../../prior-art.rst:312
 msgid "Built-in bot protection"
 msgstr "내장 봇 보호"
 
-#: ../../prior-art.rst:394
+#: ../../prior-art.rst:313
 msgid ""
 "Proof-of-work admission (Gate) and the semantic firewall (Shield), chosen "
 "per frontend and per route; off in ``sibuna lb`` unless asked"
@@ -1570,15 +1550,15 @@ msgstr ""
 "작업 증명 요청 허용(Gate)과 의미 기반 방화벽(Shield), 프런트엔드와 경로마다 선택; ``sibuna lb``\\ 에서는 "
 "요청하지 않으면 꺼짐"
 
-#: ../../prior-art.rst:395
+#: ../../prior-art.rst:314
 msgid "None in the Configuration Manual; stick-table rates and deny rules"
 msgstr "Configuration Manual에는 없음; stick 테이블 속도와 거부 규칙"
 
-#: ../../prior-art.rst:398
+#: ../../prior-art.rst:317
 msgid "Three differences matter most when we choose."
 msgstr "고를 때는 세 가지 차이가 가장 중요합니다."
 
-#: ../../prior-art.rst:400
+#: ../../prior-art.rst:319
 msgid ""
 "*What changes at run time.* HAProxy and Sibuna both change servers "
 "through a local socket. Envoy expects a control plane: its admin "
@@ -1590,7 +1570,7 @@ msgstr ""
 "기대합니다. 그 관리 인터페이스는 조회하고 드레인하며, 설정은 xDS가 바꿉니다. Sibuna의 소켓은 서버, 차단, 로컬 인증 "
 "기관의 인증서를 바꿉니다. 프런트엔드, 경로, 정책은 다시 불러오기로 바뀝니다(SID 0018)."
 
-#: ../../prior-art.rst:401
+#: ../../prior-art.rst:320
 msgid ""
 "*What a cluster shares.* HAProxy replicates stick tables between peers. "
 "Sibuna's mesh replicates more kinds of state, each with its own merge "
@@ -1602,7 +1582,7 @@ msgstr ""
 "상태를 각자의 병합 규칙으로 복제하고, 플릿 전체 상한과 동료 전달을 더하지만, 최대 64개 노드의 고정된 명단 하나 안에서만, "
 "그리고 신뢰하는 네트워크에서만 그렇습니다. 메시는 인증할 뿐 암호화하지 않기 때문입니다(SID 0026)."
 
-#: ../../prior-art.rst:402
+#: ../../prior-art.rst:321
 msgid ""
 "*What a replacement keeps.* All three keep the listening sockets. Sibuna "
 "also passes live UDP mappings, so a UDP client keeps its server; none of "
@@ -1611,29 +1591,30 @@ msgstr ""
 "*교체가 유지하는 것.* 셋 모두 리스닝 소켓을 유지합니다. Sibuna는 살아 있는 UDP 매핑도 넘기므로, UDP 클라이언트가 "
 "자기 서버를 유지합니다. 셋 중 어느 것도 수립된 TCP 연결을 새 프로세스로 옮기지 않습니다."
 
-#: ../../prior-art.rst:404
+#: ../../prior-art.rst:323
 msgid "Current boundary of the load balancer"
 msgstr "로드 밸런서의 현재 경계"
 
-#: ../../prior-art.rst:407
+#: ../../prior-art.rst:326
 msgid ""
 "The edge is new. HAProxy and Envoy have served production traffic for "
 "years; Sibuna's edge has run in tests and in benchmarks on up to three "
 "hosts (Part X). Its known gaps are listed in each SID: among them, TCP "
 "and UDP frontends do not consult the ban table, the admin socket cannot "
-"change frontends or routes, the spill cache missed the retention target at 50 million distinct keys"
-", and an agent call at the request stage holds its thread."
+"change frontends or routes, the spill cache missed the retention target "
+"at 50 million distinct keys, and an agent call at the request stage holds "
+"its thread."
 msgstr ""
 "엣지는 새롭습니다. HAProxy와 Envoy는 여러 해 동안 프로덕션 트래픽을 처리해 왔습니다. Sibuna의 엣지는 테스트와 "
 "최대 세 호스트의 벤치마크에서 실행되었습니다(제X부). 알려진 빈틈은 각 SID에 나열되어 있습니다. 그중에는 TCP와 UDP "
-"프런트엔드가 차단 테이블을 참조하지 않는다는 것, 관리 소켓이 프런트엔드나 경로를 바꿀 수 없다는 것, spill 캐시가 서로 다른 키 5천만 개에서 유지율 목표에 미치지 못했다는 것"
-", 요청 단계의 agent 호출이 자기 스레드를 붙잡는다는 것이 있습니다."
+"프런트엔드가 차단 테이블을 참조하지 않는다는 것, 관리 소켓이 프런트엔드나 경로를 바꿀 수 없다는 것, spill 캐시가 서로 다른 "
+"키 5천만 개에서 유지율 목표에 미치지 못했다는 것, 요청 단계의 agent 호출이 자기 스레드를 붙잡는다는 것이 있습니다."
 
-#: ../../prior-art.rst:409
+#: ../../prior-art.rst:328
 msgid "Exercise 2.1"
 msgstr "연습 문제 2.1"
 
-#: ../../prior-art.rst:411
+#: ../../prior-art.rst:330
 msgid ""
 "Explain why compiling one verifier source to native code and WebAssembly "
 "reduces protocol drift. Which properties still require independent "
@@ -1642,11 +1623,11 @@ msgstr ""
 "검증자 소스 하나를 네이티브 코드와 WebAssembly로 함께 컴파일하면 프로토콜의 어긋남이 줄어드는 이유를 설명하세요. 그래도 "
 "독립적인 테스트나 암호학적 검토가 필요한 속성은 무엇일까요?"
 
-#: ../../prior-art.rst:413
+#: ../../prior-art.rst:332
 msgid "Exercise 2.2"
 msgstr "연습 문제 2.2"
 
-#: ../../prior-art.rst:415
+#: ../../prior-art.rst:334
 msgid ""
 "Using only the comparison tables, write down the smallest deployment that "
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
@@ -1655,15 +1636,15 @@ msgstr ""
 "비교 표만 사용해서, 정적 사이트에 (a) 작업 증명 게이트, (b) SQL 인젝션 검사, (c) 클러스터 전체 차단을 제공하는 "
 "가장 작은 배포를 적어 보세요. 각 선택은 어느 행 때문에 정해졌을까요?"
 
-#: ../../prior-art.rst:417
+#: ../../prior-art.rst:336
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
 msgstr "힌트: \"실행 형태\"와 \"다중 노드\" 행에서 시작하세요."
 
-#: ../../prior-art.rst:419
+#: ../../prior-art.rst:338
 msgid "Exercise 2.3"
 msgstr "연습 문제 2.3"
 
-#: ../../prior-art.rst:421
+#: ../../prior-art.rst:340
 msgid ""
 "A pool has four servers of equal weight and 1,000 clients. Using only the "
 "descriptions of Maglev and rendezvous hashing above, say how many clients "
@@ -1674,18 +1655,18 @@ msgstr ""
 "방식에서 서버 하나를 제거할 때 클라이언트가 몇 개 옮겨 가는지 말하고, 동료 전달(SID 0026)이 클라이언트의 소유 노드에 "
 "랑데부 해싱을 택한 이유를 말하세요."
 
-#: ../../prior-art.rst:423
+#: ../../prior-art.rst:342
 msgid ""
 "Hint: Ask which clients a removal must move, and which ones a rebuilt "
 "table may move as well."
 msgstr ""
 "힌트: 제거가 어느 클라이언트를 옮겨야 하는지, 그리고 다시 만든 테이블이 어느 클라이언트를 함께 옮길 수 있는지 물어보세요."
 
-#: ../../prior-art.rst:425
+#: ../../prior-art.rst:344
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../prior-art.rst:427
+#: ../../prior-art.rst:346
 msgid ""
 "Describe how Gate, Shield, and optional shared storage divide admission, "
 "inspection and policy distribution. Then name one row of the comparison "
@@ -1694,6 +1675,222 @@ msgid ""
 msgstr ""
 "Gate, Shield, 선택적 공유 저장소가 요청 허용, 검사, 정책 배포를 어떻게 나누는지 설명하세요. 그런 다음 고객에게 "
 "인용하기 전에 다시 검증하고 싶은 비교 표의 행 하나를 고르고, 그것을 어떻게 검증할지 말하세요."
+
+#~ msgid ""
+#~ "digraph lineage {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
+#~ "compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, "
+#~ "fontname=\"Helvetica\", fontsize=9.5, fontcolor=\"#172033\"];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=9, fontcolor=\"#172033\", fillcolor=\"#ffffff\", "
+#~ "penwidth=1.0, width=1.35, height=0.4, margin=\"0.08,0.04\"];\n"
+#~ "  edge [color=\"#94a3b8\", arrowsize=0.55, penwidth=1.0];\n"
+#~ "\n"
+#~ "  subgraph cluster_puzzles {\n"
+#~ "    label=<<b>Client puzzles and<br/>sequential work</b>>; "
+#~ "style=\"rounded,filled\"; color=\"#fde68a\"; fillcolor=\"#fffdf5\"; "
+#~ "margin=10;\n"
+#~ "    node [color=\"#d6a35c\"];\n"
+#~ "    dwork [label=\"Dwork-Naor\\n1992\"];\n"
+#~ "    hashcash [label=\"Hashcash\\n1997\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "    juels [label=\"Juels-Brainard\\n1999\"];\n"
+#~ "    mahmoody [label=\"Mahmoody et al.\\n2013\"];\n"
+#~ "    cohen [label=\"Cohen-Pietrzak\\n2018\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "    blocki [label=\"Blocki-Lee-Zhou\\n2021\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "  }\n"
+#~ "  subgraph cluster_products {\n"
+#~ "    label=<<b>Products in<br/>the same space</b>>; "
+#~ "style=\"rounded,filled\"; color=\"#ddd6fe\"; fillcolor=\"#fbfaff\"; "
+#~ "margin=10;\n"
+#~ "    node [color=\"#6d28d9\", fillcolor=\"#ddd6fe\", penwidth=1.3];\n"
+#~ "    p0 [style=invis, label=\"\"];\n"
+#~ "    p1 [style=invis, label=\"\"];\n"
+#~ "    anubis [label=\"Anubis\\ninterstitial\"];\n"
+#~ "    cloudflare [label=\"Cloudflare\\nhosted edge\"];\n"
+#~ "    safeline [label=\"SafeLine\\nsemantic WAF\"];\n"
+#~ "  }\n"
+#~ "  subgraph cluster_systems {\n"
+#~ "    label=<<b>Algorithms and<br/>systems</b>>; "
+#~ "style=\"rounded,filled\"; color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; "
+#~ "margin=10;\n"
+#~ "    node [color=\"#7c9cd6\"];\n"
+#~ "    aho [label=\"Aho-Corasick\\n1975\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    gcra [label=\"GCRA\\nATM Forum 1996\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+#~ "    libinj [label=\"libinjection\\n2012\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+#~ "  }\n"
+#~ "  sibuna [label=<<b>Sibuna</b><br/><font point-size=\"9\">Gate, "
+#~ "Shield, Edge</font>>, fontsize=11, color=\"#15803d\", "
+#~ "fillcolor=\"#bbf7d0\", penwidth=1.8, width=2.2, height=0.5];\n"
+#~ "\n"
+#~ "  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki "
+#~ "[color=\"#d6a35c\"];\n"
+#~ "  aho -> gcra [style=invis];\n"
+#~ "  gcra -> modsec [style=invis];\n"
+#~ "  modsec -> libinj [color=\"#7c9cd6\"];\n"
+#~ "  libinj -> hyperscan [style=invis];\n"
+#~ "  aho -> hyperscan [color=\"#7c9cd6\", constraint=false];\n"
+#~ "  hashcash -> anubis [color=\"#d6a35c\", constraint=false];\n"
+#~ "  libinj -> safeline [color=\"#7c9cd6\", constraint=false];\n"
+#~ "  { rank=same; dwork; p0; aho; }\n"
+#~ "  { rank=same; hashcash; p1; gcra; }\n"
+#~ "  { rank=same; juels; anubis; modsec; }\n"
+#~ "  { rank=same; mahmoody; cloudflare; libinj; }\n"
+#~ "  { rank=same; cohen; safeline; hyperscan; }\n"
+#~ "  p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];\n"
+#~ "\n"
+#~ "  blocki -> sibuna [ltail=cluster_puzzles, color=\"#b45309\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "  safeline -> sibuna [ltail=cluster_products, color=\"#6d28d9\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "  hyperscan -> sibuna [ltail=cluster_systems, color=\"#1e40af\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph lineage {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", newrank=true, "
+#~ "compound=true, nodesep=0.3, ranksep=0.2, pad=0.1, "
+#~ "fontname=\"Helvetica\", fontsize=9.5, fontcolor=\"#172033\"];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=9, fontcolor=\"#172033\", fillcolor=\"#ffffff\", "
+#~ "penwidth=1.0, width=1.35, height=0.4, margin=\"0.08,0.04\"];\n"
+#~ "  edge [color=\"#94a3b8\", arrowsize=0.55, penwidth=1.0];\n"
+#~ "\n"
+#~ "  subgraph cluster_puzzles {\n"
+#~ "    label=<<b>클라이언트 퍼즐과<br/>순차 작업</b>>; style=\"rounded,filled\"; "
+#~ "color=\"#fde68a\"; fillcolor=\"#fffdf5\"; margin=10;\n"
+#~ "    node [color=\"#d6a35c\"];\n"
+#~ "    dwork [label=\"Dwork-Naor\\n1992\"];\n"
+#~ "    hashcash [label=\"Hashcash\\n1997\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "    juels [label=\"Juels-Brainard\\n1999\"];\n"
+#~ "    mahmoody [label=\"Mahmoody 외\\n2013\"];\n"
+#~ "    cohen [label=\"Cohen-Pietrzak\\n2018\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "    blocki [label=\"Blocki-Lee-Zhou\\n2021\", color=\"#b45309\", "
+#~ "fillcolor=\"#fde68a\", penwidth=1.3];\n"
+#~ "  }\n"
+#~ "  subgraph cluster_products {\n"
+#~ "    label=<<b>같은 영역의<br/>제품</b>>; style=\"rounded,filled\"; "
+#~ "color=\"#ddd6fe\"; fillcolor=\"#fbfaff\"; margin=10;\n"
+#~ "    node [color=\"#6d28d9\", fillcolor=\"#ddd6fe\", penwidth=1.3];\n"
+#~ "    p0 [style=invis, label=\"\"];\n"
+#~ "    p1 [style=invis, label=\"\"];\n"
+#~ "    anubis [label=\"Anubis\\n중간 페이지\"];\n"
+#~ "    cloudflare [label=\"Cloudflare\\n호스팅형 엣지\"];\n"
+#~ "    safeline [label=\"SafeLine\\n의미 기반 WAF\"];\n"
+#~ "  }\n"
+#~ "  subgraph cluster_systems {\n"
+#~ "    label=<<b>알고리즘과<br/>시스템</b>>; style=\"rounded,filled\"; "
+#~ "color=\"#bfdbfe\"; fillcolor=\"#f8fbff\"; margin=10;\n"
+#~ "    node [color=\"#7c9cd6\"];\n"
+#~ "    aho [label=\"Aho-Corasick\\n1975\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    gcra [label=\"GCRA\\nATM Forum 1996\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    modsec [label=\"ModSecurity, CRS\\n2002\"];\n"
+#~ "    libinj [label=\"libinjection\\n2012\", color=\"#1e40af\", "
+#~ "fillcolor=\"#bfdbfe\", penwidth=1.3];\n"
+#~ "    hyperscan [label=\"Hyperscan\\n2019\"];\n"
+#~ "  }\n"
+#~ "  sibuna [label=<<b>Sibuna</b><br/><font point-size=\"9\">Gate, "
+#~ "Shield, Edge</font>>, fontsize=11, color=\"#15803d\", "
+#~ "fillcolor=\"#bbf7d0\", penwidth=1.8, width=2.2, height=0.5];\n"
+#~ "\n"
+#~ "  dwork -> hashcash -> juels -> mahmoody -> cohen -> blocki "
+#~ "[color=\"#d6a35c\"];\n"
+#~ "  aho -> gcra [style=invis];\n"
+#~ "  gcra -> modsec [style=invis];\n"
+#~ "  modsec -> libinj [color=\"#7c9cd6\"];\n"
+#~ "  libinj -> hyperscan [style=invis];\n"
+#~ "  aho -> hyperscan [color=\"#7c9cd6\", constraint=false];\n"
+#~ "  hashcash -> anubis [color=\"#d6a35c\", constraint=false];\n"
+#~ "  libinj -> safeline [color=\"#7c9cd6\", constraint=false];\n"
+#~ "  { rank=same; dwork; p0; aho; }\n"
+#~ "  { rank=same; hashcash; p1; gcra; }\n"
+#~ "  { rank=same; juels; anubis; modsec; }\n"
+#~ "  { rank=same; mahmoody; cloudflare; libinj; }\n"
+#~ "  { rank=same; cohen; safeline; hyperscan; }\n"
+#~ "  p0 -> p1 -> anubis -> cloudflare -> safeline [style=invis];\n"
+#~ "\n"
+#~ "  blocki -> sibuna [ltail=cluster_puzzles, color=\"#b45309\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "  safeline -> sibuna [ltail=cluster_products, color=\"#6d28d9\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "  hyperscan -> sibuna [ltail=cluster_systems, color=\"#1e40af\", "
+#~ "penwidth=1.3, minlen=2];\n"
+#~ "}"
+
+#~ msgid ""
+#~ "digraph lb_lineage {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.25, "
+#~ "ranksep=0.5, fontname=\"Helvetica\", fontsize=9];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#ffffff\", color=\"#7c9cd6\", "
+#~ "margin=\"0.08,0.04\"];\n"
+#~ "  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
+#~ "\n"
+#~ "  haproxy [label=\"HAProxy\"];\n"
+#~ "  nginx [label=\"nginx\"];\n"
+#~ "  envoy [label=\"Envoy\"];\n"
+#~ "  maglev [label=\"Maglev\\nEisenbud et al. 2016\"];\n"
+#~ "  bounded [label=\"Bounded loads\\nMirrokni et al. 2018\"];\n"
+#~ "  hrw [label=\"Rendezvous hashing\\nThaler-Ravishankar 1998\"];\n"
+#~ "  tinylfu [label=\"TinyLFU\\nEinziger et al. 2017\"];\n"
+#~ "\n"
+#~ "  node [color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
+#~ "  vocab [label=\"frontends, backends,\\nadmin socket (SID 0018)\"];\n"
+#~ "  workers [label=\"event-driven HTTP\\nworkers (SID 0016)\"];\n"
+#~ "  hooks [label=\"hook stages and\\ntiers (SID 0030)\"];\n"
+#~ "  bmaglev [label=\"bounded_maglev\\n(SID 0015)\"];\n"
+#~ "  sticky [label=\"source stickiness (SID 0019),\\nowner of a client "
+#~ "(SID 0026)\"];\n"
+#~ "  spill [label=\"spill cache admission\\n(SID 0027)\"];\n"
+#~ "\n"
+#~ "  haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];\n"
+#~ "  maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> "
+#~ "spill;\n"
+#~ "  haproxy -> bounded [style=dashed, dir=none, label=\" "
+#~ "hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph lb_lineage {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", nodesep=0.25, "
+#~ "ranksep=0.5, fontname=\"Helvetica\", fontsize=9];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#ffffff\", color=\"#7c9cd6\", "
+#~ "margin=\"0.08,0.04\"];\n"
+#~ "  edge [color=\"#94a3b8\", arrowsize=0.55];\n"
+#~ "\n"
+#~ "  haproxy [label=\"HAProxy\"];\n"
+#~ "  nginx [label=\"nginx\"];\n"
+#~ "  envoy [label=\"Envoy\"];\n"
+#~ "  maglev [label=\"Maglev\\nEisenbud et al. 2016\"];\n"
+#~ "  bounded [label=\"부하 상한\\nMirrokni 외 2018\"];\n"
+#~ "  hrw [label=\"랑데부 해싱\\nThaler-Ravishankar 1998\"];\n"
+#~ "  tinylfu [label=\"TinyLFU\\nEinziger et al. 2017\"];\n"
+#~ "\n"
+#~ "  node [color=\"#15803d\", fillcolor=\"#f0fdf4\"];\n"
+#~ "  vocab [label=\"프런트엔드, 백엔드,\\n관리 소켓 (SID 0018)\"];\n"
+#~ "  workers [label=\"이벤트 기반 HTTP\\n워커 (SID 0016)\"];\n"
+#~ "  hooks [label=\"훅의 단계와\\n계층 (SID 0030)\"];\n"
+#~ "  bmaglev [label=\"bounded_maglev\\n(SID 0015)\"];\n"
+#~ "  sticky [label=\"출발지 고정 (SID 0019),\\n클라이언트 담당 노드 (SID 0026)\"];\n"
+#~ "  spill [label=\"스필 캐시 수용\\n(SID 0027)\"];\n"
+#~ "\n"
+#~ "  haproxy -> vocab; nginx -> workers; envoy -> hooks [style=dashed];\n"
+#~ "  maglev -> bmaglev; bounded -> bmaglev; hrw -> sticky; tinylfu -> "
+#~ "spill;\n"
+#~ "  haproxy -> bounded [style=dashed, dir=none, label=\" "
+#~ "hash-balance-factor\", fontsize=7.5, fontcolor=\"#475569\"];\n"
+#~ "}"
 
 #~ msgid "Source in the repository"
 #~ msgstr "저장소에 소스 공개"

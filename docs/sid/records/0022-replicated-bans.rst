@@ -53,7 +53,7 @@ The mesh already sends probes of 44 bytes: ``S``, ``E``, a version, a kind, the 
 
 .. typst-diagram:: ../diagrams/ban-datagram.typ
    :caption: Ban datagram fields in wire order.
-   :alt: A 28-byte header precedes the count and variable-length ban entries. The last 16 bytes authenticate everything before them.
+   :alt: A strip of fields with their offsets in bytes. The magic SE, version 1 and kind 3 take 4 bytes at offset 0, the sender boot nonce 16 bytes at offset 4 and the sequence 8 bytes at offset 20. The count k takes 1 byte at offset 28. The k entries of variable length follow at offset 29, and the 16-byte tag ends the datagram at n - 16. One entry is the end in 8 bytes, the key length in 1 byte and the key of at most 64 bytes.
 
 The tag is the keyed BLAKE3 hash of the bytes before it, cut to 16 bytes, under the key that the probes use. The kind byte is inside the hashed part, so a probe cannot be turned into a ban datagram.
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -245,8 +245,8 @@ msgstr ""
 "サーバーを選び、一回のアトミックな加算でそのサーバーに自分を数え、それからカウントを確認します。その間に別のスレッドが最後の枠を取っていれば、枠を返して選び直します。これは最大8回までです。そのため、サーバーが\\ "
 "``max_flows``\\ を超えて受け持つことはありません。\\ ``crates/lb/src/pool.rs``\\ にあります。"
 
-#: ../../edge.rst:60 ../../edge.rst:145 ../../edge.rst:265
-#: ../../edge.rst:332 ../../edge.rst:378 ../../edge.rst:453
+#: ../../edge.rst:60 ../../edge.rst:112 ../../edge.rst:232
+#: ../../edge.rst:278 ../../edge.rst:324 ../../edge.rst:399
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
@@ -297,90 +297,110 @@ msgstr ""
 
 #: ../../edge.rst:73
 msgid ""
-"digraph edge_path {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", fontname=\"Helvetica\", "
-"fontsize=9, nodesep=0.3, ranksep=0.32];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
-"margin=\"0.1,0.05\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#475569\", arrowsize=0.6];\n"
-"  client [label=\"Client\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
-"  kernel [label=\"Kernel listener\\ndefer_accept, backlog\"];\n"
-"  edgew [label=\"Edge worker\\nconnection rate, flow budget,\\nconnection "
-"hooks\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  inspect [label=\"TCP: ClientHello inspection\\nfive classes, "
-"fallback\"];\n"
-"  udp [label=\"UDP: QUIC screen,\\nmapping, reply bound\"];\n"
-"  relay [label=\"Relay thread\\nbyte pipe\"];\n"
-"  worker [label=\"HTTP worker\\nTLS for HTTP/1.1\", "
-"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  runtime [label=\"Protocol runtime\\nHTTP/2, HTTP/3\", "
-"fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  decide [label=\"Bans, limiter, traffic policy,\\ngate or shield, "
-"request hooks\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  choose [label=\"Choose a server\\nfrom the snapshot\"];\n"
-"  shared [label=\"Shared: routing snapshot,\\nserver loads, health "
-"flags\", fillcolor=\"#f8fafc\", color=\"#64748b\"];\n"
-"  server [label=\"Server\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
-"  client -> kernel;\n"
-"  kernel -> edgew;\n"
-"  edgew -> inspect [label=\"tcp\"];\n"
-"  edgew -> udp [label=\"udp\"];\n"
-"  edgew -> worker [label=\"http, fewest\"];\n"
-"  worker -> runtime [label=\"offers h2\"];\n"
-"  inspect -> relay [label=\"reserve, connect\"];\n"
-"  udp -> server;\n"
-"  relay -> server;\n"
-"  worker -> decide;\n"
-"  runtime -> decide [label=\"Decide\"];\n"
-"  decide -> choose;\n"
-"  choose -> server [label=\"exchange\"];\n"
-"  choose -> shared [style=dashed];\n"
-"  inspect -> shared [style=dashed];\n"
-"}"
+"// edge.rst: the path of a connection through a node. Each box is owned "
+"by one thread or\n"
+"// one group of threads; the dashed edges are the shared, read-mostly "
+"state.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#flow(\n"
+"  spacing: (6mm, 7mm),\n"
+"  party((1.5, 0), \"Client\", name: <client>),\n"
+"  step((1.5, 1), \"Kernel listener\", \"`defer_accept`, backlog\", name: "
+"<kernel>),\n"
+"  sibuna((1.5, 2), \"Edge worker\", \"connection rate, flow "
+"budget,\\nconnection hooks\", name: <edge>),\n"
+"  step((0, 3), \"TCP: ClientHello inspection\", \"five classes, "
+"fallback\", width: 36mm,\n"
+"    name: <inspect>),\n"
+"  step((1, 3), \"UDP: QUIC screen\", \"mapping, reply bound\", name: "
+"<udp>),\n"
+"  sibuna((2, 3), \"HTTP worker\", \"TLS for HTTP/1.1\", name: <worker>),\n"
+"  sibuna((3.7, 3), \"Protocol runtime\", \"HTTP/2, HTTP/3\", name: "
+"<runtime>),\n"
+"  step((0, 4), \"Relay thread\", \"byte pipe\", name: <relay>),\n"
+"  step((2.5, 4), \"Bans, limiter, traffic policy,\\ngate or shield, "
+"request hooks\", kind: \"decision\",\n"
+"    name: <decide>),\n"
+"  step((2.5, 5), \"Choose a server\", \"from the snapshot\", name: "
+"<choose>),\n"
+"  data((0, 5.5), \"Shared state\", \"routing snapshot, server "
+"loads,\\nhealth flags\", kind: \"quiet\",\n"
+"    name: <shared>),\n"
+"  party((1.5, 6.5), \"Server\", name: <server>),\n"
+"  edge(<client>, <kernel>, \"-|>\"),\n"
+"  edge(<kernel>, <edge>, \"-|>\"),\n"
+"  edge(<edge>, <inspect>, \"-|>\", say(\"TCP\"), label-side: right),\n"
+"  edge(<edge>, <udp>, \"-|>\", say(\"UDP\"), label-side: right, "
+"label-pos: 0.55),\n"
+"  main-edge(<edge>, <worker>, \"-|>\", say(\"HTTP, fewest\"), label-side: "
+"left),\n"
+"  edge(<worker>, <runtime>, \"-|>\", say(\"offers h2\"), label-side: "
+"left),\n"
+"  edge(<inspect>, <relay>, \"-|>\", say(\"reserve, connect\"), "
+"label-side: right),\n"
+"  main-edge(<worker>, <decide>, \"-|>\"),\n"
+"  edge(<runtime>, <decide>, \"-|>\", say(\"`Decide`\"), label-side: "
+"left),\n"
+"  main-edge(<decide>, <choose>, \"-|>\"),\n"
+"  edge(<relay>, <server>, \"-|>\"),\n"
+"  edge(<udp>, <server>, \"-|>\"),\n"
+"  main-edge(<choose>, <server>, \"-|>\", say(\"exchange\"), label-side: "
+"left),\n"
+"  edge(<inspect>, (-0.75, 3), (-0.75, 5.5), <shared>, \"-\", dash: "
+"\"dashed\"),\n"
+"  edge(<choose>, <shared>, \"-\", dash: \"dashed\", crossing: true),\n"
+")\n"
 msgstr ""
-"digraph edge_path {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", fontname=\"Helvetica\", "
-"fontsize=9, nodesep=0.3, ranksep=0.32];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
-"margin=\"0.1,0.05\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#475569\", arrowsize=0.6];\n"
-"  client [label=\"クライアント\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
-"  kernel [label=\"カーネルのリスナー\\ndefer_accept, backlog\"];\n"
-"  edgew [label=\"エッジワーカー\\n接続レート、フローの予算、\\n接続フック\", "
-"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  inspect [label=\"TCP：ClientHelloの検査\\n五つのクラス、フォールバック\"];\n"
-"  udp [label=\"UDP：QUICの選別、\\nマッピング、応答の上限\"];\n"
-"  relay [label=\"中継スレッド\\nバイトのパイプ\"];\n"
-"  worker [label=\"HTTPワーカー\\nHTTP/1.1のTLS\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  runtime [label=\"プロトコルランタイム\\nHTTP/2、HTTP/3\", fillcolor=\"#f5f3ff\", "
-"color=\"#6d28d9\"];\n"
-"  decide [label=\"禁止、リミッター、トラフィックポリシー、\\nゲートまたはシールド、リクエストフック\", "
-"fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  choose [label=\"スナップショットから\\nサーバーを選択\"];\n"
-"  shared [label=\"共有：ルーティングスナップショット、\\nサーバーの負荷、ヘルスのフラグ\", "
-"fillcolor=\"#f8fafc\", color=\"#64748b\"];\n"
-"  server [label=\"サーバー\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
-"  client -> kernel;\n"
-"  kernel -> edgew;\n"
-"  edgew -> inspect [label=\"tcp\"];\n"
-"  edgew -> udp [label=\"udp\"];\n"
-"  edgew -> worker [label=\"http、最少\"];\n"
-"  worker -> runtime [label=\"h2を提示\"];\n"
-"  inspect -> relay [label=\"予約、接続\"];\n"
-"  udp -> server;\n"
-"  relay -> server;\n"
-"  worker -> decide;\n"
-"  runtime -> decide [label=\"Decide\"];\n"
-"  decide -> choose;\n"
-"  choose -> server [label=\"交換\"];\n"
-"  choose -> shared [style=dashed];\n"
-"  inspect -> shared [style=dashed];\n"
-"}"
+"// edge.rst: the path of a connection through a node. Each box is owned "
+"by one thread or\n"
+"// one group of threads; the dashed edges are the shared, read-mostly "
+"state.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"ja\")\n"
+"\n"
+"#flow(\n"
+"  spacing: (6mm, 7mm),\n"
+"  party((1.5, 0), \"クライアント\", name: <client>),\n"
+"  step((1.5, 1), \"カーネルのリスナー\", \"`defer_accept`、バックログ\", name: "
+"<kernel>),\n"
+"  sibuna((1.5, 2), \"エッジワーカー\", \"接続レート、フローの予算、\\n接続フック\", name: "
+"<edge>),\n"
+"  step((0, 3), \"TCP：ClientHelloの検査\", \"五つのクラス、フォールバック\", width: 36mm,\n"
+"    name: <inspect>),\n"
+"  step((1, 3), \"UDP：QUICの選別\", \"マッピング、応答の上限\", name: <udp>),\n"
+"  sibuna((2, 3), \"HTTPワーカー\", \"HTTP/1.1のTLS\", name: <worker>),\n"
+"  sibuna((3.7, 3), \"プロトコルランタイム\", \"HTTP/2、HTTP/3\", name: <runtime>),\n"
+"  step((0, 4), \"中継スレッド\", \"バイトのパイプ\", name: <relay>),\n"
+"  step((2.5, 4), \"禁止、リミッター、トラフィックポリシー、\\nゲートまたはシールド、リクエストフック\", kind: "
+"\"decision\",\n"
+"    name: <decide>),\n"
+"  step((2.5, 5), \"サーバーを選択\", \"スナップショットから\", name: <choose>),\n"
+"  data((0, 5.5), \"共有の状態\", \"ルーティングスナップショット、サーバーの負荷、\\nヘルスのフラグ\", kind: "
+"\"quiet\",\n"
+"    name: <shared>),\n"
+"  party((1.5, 6.5), \"サーバー\", name: <server>),\n"
+"  edge(<client>, <kernel>, \"-|>\"),\n"
+"  edge(<kernel>, <edge>, \"-|>\"),\n"
+"  edge(<edge>, <inspect>, \"-|>\", say(\"TCP\"), label-side: right),\n"
+"  edge(<edge>, <udp>, \"-|>\", say(\"UDP\"), label-side: right, "
+"label-pos: 0.55),\n"
+"  main-edge(<edge>, <worker>, \"-|>\", say(\"HTTP、最少\"), label-side: "
+"left),\n"
+"  edge(<worker>, <runtime>, \"-|>\", say(\"h2を提示\"), label-side: left),\n"
+"  edge(<inspect>, <relay>, \"-|>\", say(\"予約、接続\"), label-side: right),\n"
+"  main-edge(<worker>, <decide>, \"-|>\"),\n"
+"  edge(<runtime>, <decide>, \"-|>\", say(\"`Decide`\"), label-side: "
+"left),\n"
+"  main-edge(<decide>, <choose>, \"-|>\"),\n"
+"  edge(<relay>, <server>, \"-|>\"),\n"
+"  edge(<udp>, <server>, \"-|>\"),\n"
+"  main-edge(<choose>, <server>, \"-|>\", say(\"交換\"), label-side: left),\n"
+"  edge(<inspect>, (-0.75, 3), (-0.75, 5.5), <shared>, \"-\", dash: "
+"\"dashed\"),\n"
+"  edge(<choose>, <shared>, \"-\", dash: \"dashed\", crossing: true),\n"
+")\n"
 
 #: ../../edge.rst:73
 msgid ""
@@ -389,7 +409,7 @@ msgid ""
 "state."
 msgstr "ノードを通る接続の経路です。各箱は一つのスレッドまたは一つのスレッド群が所有します。破線の辺は、共有され、主に読まれる状態です。"
 
-#: ../../edge.rst:109
+#: ../../edge.rst:76
 msgid ""
 "A QUIC client of an HTTP/3 frontend does not pass the edge worker: the "
 "protocol runtime accepts it, applies the per-client bound through an "
@@ -399,11 +419,11 @@ msgstr ""
 "HTTP/3フロントエンドのQUICクライアントはエッジワーカーを通りません。プロトコルランタイムがそれを受け付け、許可関数を通してクライアントごとの上限を適用し、ClientHelloを読んだときに接続フックに問い合わせます（SID "
 "0017、SID 0030）。"
 
-#: ../../edge.rst:111
+#: ../../edge.rst:78
 msgid "Readiness and the Cost of Waiting"
 msgstr "レディネスと待機のコスト"
 
-#: ../../edge.rst:114
+#: ../../edge.rst:81
 msgid ""
 "The edge starts one HTTP worker for each processor the process may use, "
 "up to 64. A worker is one thread with one poller (``epoll`` on Linux). "
@@ -418,7 +438,7 @@ msgstr ""
 "``epoll_wait``\\ の呼び出し一回だけです。ワーカーには、どのソケットが\\ *レディ*\\ "
 "か、つまり今読めるか書けるかが知らされます。ワーカーはそのバイトで可能な仕事をして、ループに戻ります。遅いクライアントを待つスレッドは一つもありません。"
 
-#: ../../edge.rst:116
+#: ../../edge.rst:83
 msgid ""
 "A connection is a record in the worker and a socket in the kernel. While "
 "it is idle it holds no buffer. When its socket becomes readable the "
@@ -438,7 +458,7 @@ msgstr ""
 "0015によれば、アイドルなHTTP接続はプロセス内で約0.4 KiBで、スレッドの経路では約145 "
 "KiBです。そうなると、バッファーを持つ前の約3.4 KiBのカーネルのソケットメモリのほうが大きなコストになります。"
 
-#: ../../edge.rst:118
+#: ../../edge.rst:85
 msgid ""
 "The firewall decision did not become asynchronous. It needs no I/O, so it "
 "stays the synchronous function of the earlier Parts. The worker calls it "
@@ -455,17 +475,17 @@ msgstr ""
 "*プラン*\\ "
 "を返します。サーバーの予約、エンコードしたヘッド、アップロードのフレーミングです。その後、三つのsans-I/Oの機械が交換を運びます。リクエストのエンコーダー、アップロードの中継、応答の中継です。それぞれバイトを消費してバイトを生成し、ソケットには触れません。それぞれ、置き換え前のブロッキングの中継と比べてテストしています。150,000個の変異させた応答を、まとめて、ランダムな断片で、1バイトずつ与えたとき、バイトも結果も等しくなります。"
 
-#: ../../edge.rst:120
+#: ../../edge.rst:87
 msgid "Every resource has a bound, and every state has a deadline:"
 msgstr "すべての資源には上限があり、すべての状態には期限があります。"
 
-#: ../../edge.rst:122
+#: ../../edge.rst:89
 msgid ""
 "The worker reads from a socket only while the buffer toward the other "
 "side is below 64 KiB. A slow reader thereby stops the reads of its peer."
 msgstr "ワーカーがソケットから読むのは、相手側へのバッファーが64 KiB未満の間だけです。これにより、遅い読み手は相手の読み込みを止めます。"
 
-#: ../../edge.rst:123
+#: ../../edge.rst:90
 msgid ""
 "One readiness event reads each socket of a connection at most once, at "
 "most 64 KiB, and causes at most eight rounds of work. A bulk transfer "
@@ -474,7 +494,7 @@ msgstr ""
 "一つのレディネスイベントは、接続の各ソケットを高々一回、高々64 "
 "KiB読み、高々8ラウンドの仕事を起こします。大量転送が同じワーカーの小さなリクエストを飢えさせることはありません。"
 
-#: ../../edge.rst:124
+#: ../../edge.rst:91
 msgid ""
 "A timer wheel with one-second slots holds one deadline per connection: "
 "the idle timeout, a slow head, a slow body, a connect of five seconds, "
@@ -482,14 +502,14 @@ msgid ""
 msgstr ""
 "1秒のスロットを持つタイマーホイールが、接続ごとに一つの期限を保持します。アイドルタイムアウト、遅いヘッド、遅いボディー、5秒の接続確立、サーバーの無応答、進まない書き込みです。"
 
-#: ../../edge.rst:125
+#: ../../edge.rst:92
 msgid ""
 "A connection serves at most 4,096 requests. A worker keeps at most 64 "
 "idle server sockets per address and 1,024 in all."
 msgstr ""
 "一つの接続が処理するリクエストは最大4,096件です。ワーカーが保持するアイドルなサーバーソケットは、アドレスごとに最大64個、全体で最大1,024個です。"
 
-#: ../../edge.rst:127
+#: ../../edge.rst:94
 msgid ""
 "With these workers, plaintext HTTP at 256 connections reached 229,139 "
 "requests per second against HAProxy's 243,864, which is 94%, with a 99th "
@@ -498,11 +518,11 @@ msgstr ""
 "これらのワーカーにより、256接続での平文のHTTPは毎秒229,139リクエストに達しました。HAProxyの243,864に対して94%で、99パーセンタイルは2.60 "
 "msでした（SID 0016）。"
 
-#: ../../edge.rst:129
+#: ../../edge.rst:96
 msgid "Implementation: ``Workers::submit``"
 msgstr "実装：\\ ``Workers::submit``"
 
-#: ../../edge.rst:131
+#: ../../edge.rst:98
 msgid ""
 "Gives an accepted connection to the worker that serves the fewest "
 "connections, raises that worker's count and wakes its poller. The "
@@ -512,11 +532,11 @@ msgstr ""
 "受け付けた接続を、受け持つ接続が最も少ないワーカーに渡し、そのワーカーのカウントを上げ、そのポーラーを起こします。以後、接続はそのワーカーに留まります。\\ "
 "``cmd/sibuna/src/edge/workers.rs``\\ （クレート\\ ``sibuna``\\ ）にあります。"
 
-#: ../../edge.rst:133
+#: ../../edge.rst:100
 msgid "One Hop Fewer for HTTP/2 and HTTP/3"
 msgstr "HTTP/2とHTTP/3では一ホップ少なく"
 
-#: ../../edge.rst:136
+#: ../../edge.rst:103
 msgid ""
 "HTTP/2 and HTTP/3 are terminated by a protocol runtime that uses "
 "maintained libraries (rustls, hyper, quinn with h3). At first the runtime "
@@ -530,7 +550,7 @@ msgstr ""
 "0017の測定では、HTTP/2のリクエスト一件のCPU時間は76 usでした。ワーカーがリクエストを見る前にランタイムで46 "
 "us、同じリクエストをソケットから読んで判断するためにワーカーでさらに30 usです。"
 
-#: ../../edge.rst:138
+#: ../../edge.rst:105
 msgid ""
 "The repair is to call the decision as a function on the thread that "
 "decoded the stream. The ingress crate defines plain data, ``Offer`` (the "
@@ -554,11 +574,11 @@ msgstr ""
 "0017はそれを見送っています。そうすると、rapid "
 "reset、CONTINUATIONの大量送信、HPACKの膨張に対する防御が自分たちの仕事になるからです。"
 
-#: ../../edge.rst:140
+#: ../../edge.rst:107
 msgid "TLS on the Workers"
 msgstr "ワーカー上のTLS"
 
-#: ../../edge.rst:143
+#: ../../edge.rst:110
 msgid ""
 "HTTPS kept one crossing: the runtime ended TLS and copied the clear bytes "
 "to a worker through a socket pair. SID 0024 lets the worker end the TLS "
@@ -580,7 +600,7 @@ msgstr ""
 "を提示したり、証明書をまずオンデマンドで取得しなければならないホストを指定したりした場合、ワーカーはソケットと読んだバイトをランタイムに渡します。そうでなければ接続を保持し、自分ではI/Oを行わずにTLSライブラリを駆動します。ワーカーが結果ではなく提示内容から判断するのは、応答を返したセッションは別のスレッドへ移れないからです。ハンドシェイクを終えていないクライアントのための仕事は、最初のメッセージ16 "
 "KiBと15秒で上限が決まります。ベンチマークのホストでは、256接続でのHTTPSが毎秒149,168から174,901リクエストに上がりました。同じヘッダーを書くHAProxyは153,080を処理します。"
 
-#: ../../edge.rst:147
+#: ../../edge.rst:114
 msgid ""
 "\"A worker never waits for a peer.\" Explain how this sentence, together "
 "with the 64 KiB high-water mark, guarantees that a client which stops "
@@ -591,11 +611,11 @@ msgstr ""
 "「ワーカーは決してピアを待たない。」この文が、64 "
 "KiBの高水位線とあわせて、応答を読むのをやめたクライアントがワーカーに上限のない量のメモリを保持させられないことをどう保証するか説明してください。次に、それでもワーカーを往復一回の間拘束する、ただ一種類の呼び出しを挙げてください（フックの節を参照）。"
 
-#: ../../edge.rst:149
+#: ../../edge.rst:116
 msgid "Choosing a Server"
 msgstr "サーバーの選択"
 
-#: ../../edge.rst:152
+#: ../../edge.rst:119
 msgid ""
 "A new flow first filters the servers of its pool. A server is *eligible* "
 "when it is not the frontend's own address, not drained, healthy by its "
@@ -610,7 +630,7 @@ msgstr ""
 "であるのは、フロントエンド自身のアドレスではなく、ドレインされておらず、最後のプローブで正常で、\\ ``max_flows``\\ "
 "未満で、フリート全体の上限のうち自分の割り当ての範囲内にあり、直近2秒以内に失敗した接続確立で印が付いておらず、このリクエストでまだ試していないときです。パッシブヘルスで除外されたサーバーが除かれるのは、他に適格なサーバーがある間だけです。メッシュの広域体制では、適格なローカルのサーバーがあればそれを優先します。バックアップが選ばれるのは、適格なプライマリーサーバーがないときだけです。"
 
-#: ../../edge.rst:154
+#: ../../edge.rst:121
 msgid ""
 "Among the eligible servers the choice is made in a fixed order: a server "
 "named by a sticky cookie or by the learned table, then the server that "
@@ -624,11 +644,11 @@ msgstr ""
 "of two "
 "choices、重み付き最少接続）です。どのスケジューラーも1/256を単位とする整数の重みで動くので、スロースタートは重みを細かい刻みで下げられます。"
 
-#: ../../edge.rst:156
+#: ../../edge.rst:123
 msgid "Weighted Round Robin"
 msgstr "重み付きラウンドロビン"
 
-#: ../../edge.rst:159
+#: ../../edge.rst:126
 msgid ""
 "Round robin is the smooth weighted round robin of nginx (SID 0019). Each "
 "eligible server holds a credit. At each choice every server gains its "
@@ -642,11 +662,11 @@ msgstr ""
 ":math:`W`\\ を支払います。\\ :math:`W`\\ 回の選択の後、クレジットは出発点に戻り、サーバー\\ :math:`i`\\ "
 "はちょうど\\ :math:`w_i`\\ 回選ばれています。"
 
-#: ../../edge.rst:161
+#: ../../edge.rst:128
 msgid "Worked example: three servers of weights 5, 1 and 1"
 msgstr "例題：重み5、1、1の三つのサーバー"
 
-#: ../../edge.rst:163
+#: ../../edge.rst:130
 msgid ""
 ":math:`W = 7`. All credits start at 0. The table shows the credits after "
 "the gain, the choice, and the chosen server's credit after it pays 7. "
@@ -655,116 +675,116 @@ msgstr ""
 ":math:`W = 7`\\ "
 "です。すべてのクレジットは0から始まります。表は、獲得後のクレジット、選択、そして選ばれたサーバーが7を支払った後のクレジットを示します。同点のときは先頭のサーバーを選びます。"
 
-#: ../../edge.rst:166
+#: ../../edge.rst:133
 msgid "Step"
 msgstr "ステップ"
 
-#: ../../edge.rst:166
+#: ../../edge.rst:133
 msgid "a, b, c"
 msgstr ""
 
-#: ../../edge.rst:166
+#: ../../edge.rst:133
 msgid "Chosen"
 msgstr "選択"
 
-#: ../../edge.rst:168
+#: ../../edge.rst:135
 msgid "1"
 msgstr ""
 
-#: ../../edge.rst:168
+#: ../../edge.rst:135
 msgid "5, 1, 1"
 msgstr ""
 
-#: ../../edge.rst:168 ../../edge.rst:169 ../../edge.rst:171
-#: ../../edge.rst:173 ../../edge.rst:174
+#: ../../edge.rst:135 ../../edge.rst:136 ../../edge.rst:138
+#: ../../edge.rst:140 ../../edge.rst:141
 msgid "a"
 msgstr ""
 
-#: ../../edge.rst:168
+#: ../../edge.rst:135
 msgid "-2, 1, 1"
 msgstr ""
 
-#: ../../edge.rst:169
+#: ../../edge.rst:136
 msgid "2"
 msgstr ""
 
-#: ../../edge.rst:169
+#: ../../edge.rst:136
 msgid "3, 2, 2"
 msgstr ""
 
-#: ../../edge.rst:169
+#: ../../edge.rst:136
 msgid "-4, 2, 2"
 msgstr ""
 
-#: ../../edge.rst:170
+#: ../../edge.rst:137
 msgid "3"
 msgstr ""
 
-#: ../../edge.rst:170
+#: ../../edge.rst:137
 msgid "1, 3, 3"
 msgstr ""
 
-#: ../../edge.rst:170
+#: ../../edge.rst:137
 msgid "b"
 msgstr ""
 
-#: ../../edge.rst:170
+#: ../../edge.rst:137
 msgid "1, -4, 3"
 msgstr ""
 
-#: ../../edge.rst:171
+#: ../../edge.rst:138
 msgid "4"
 msgstr ""
 
-#: ../../edge.rst:171
+#: ../../edge.rst:138
 msgid "6, -3, 4"
 msgstr ""
 
-#: ../../edge.rst:171
+#: ../../edge.rst:138
 msgid "-1, -3, 4"
 msgstr ""
 
-#: ../../edge.rst:172
+#: ../../edge.rst:139
 msgid "5"
 msgstr ""
 
-#: ../../edge.rst:172
+#: ../../edge.rst:139
 msgid "4, -2, 5"
 msgstr ""
 
-#: ../../edge.rst:172
+#: ../../edge.rst:139
 msgid "c"
 msgstr ""
 
-#: ../../edge.rst:172
+#: ../../edge.rst:139
 msgid "4, -2, -2"
 msgstr ""
 
-#: ../../edge.rst:173
+#: ../../edge.rst:140
 msgid "6"
 msgstr ""
 
-#: ../../edge.rst:173
+#: ../../edge.rst:140
 msgid "9, -1, -1"
 msgstr ""
 
-#: ../../edge.rst:173
+#: ../../edge.rst:140
 msgid "2, -1, -1"
 msgstr ""
 
-#: ../../edge.rst:174
+#: ../../edge.rst:141
 msgid "7"
 msgstr ""
 
-#: ../../edge.rst:174
+#: ../../edge.rst:141
 msgid "7, 0, 0"
 msgstr ""
 
-#: ../../edge.rst:174
+#: ../../edge.rst:141
 msgid "0, 0, 0"
 msgstr ""
 
-#: ../../edge.rst:177
+#: ../../edge.rst:144
 msgid ""
 "The sequence is ``a a b a c a a``: five turns for ``a``, one each for "
 "``b`` and ``c``, and the light servers are spread between the heavy "
@@ -774,11 +794,11 @@ msgstr ""
 "列は\\ ``a a b a c a a``\\ です。\\ ``a``\\ が5回、\\ ``b``\\ と\\ ``c``\\ "
 "がそれぞれ1回で、軽いサーバーは最後にまとまるのではなく、重いサーバーの番の間に散らばります。ステップ7の後のクレジットは開始時と同じなので、このパターンが繰り返されます。"
 
-#: ../../edge.rst:179
+#: ../../edge.rst:146
 msgid "Least Connections and Two Choices"
 msgstr "最少接続とtwo choices"
 
-#: ../../edge.rst:182
+#: ../../edge.rst:149
 msgid ""
 "Weighted least connections, the default of a standalone pool, chooses the "
 "server with the fewest active flows per unit of weight. The comparison "
@@ -792,7 +812,7 @@ msgstr ""
 ":math:`i`\\ をサーバー\\ :math:`j`\\ "
 "より優先します。同点は、プールを読み込んでから許可したリクエストの数で、やはり重みの単位あたりで決めます。バックアップは常にプライマリーの後に順位付けられます。"
 
-#: ../../edge.rst:184
+#: ../../edge.rst:151
 msgid ""
 "The power of two choices with a peak-weighted moving latency "
 "(``p2c_pewma``) hashes the flow to two distinct eligible servers and "
@@ -810,11 +830,11 @@ msgstr ""
 "\\leftarrow \\max(s, (7\\ell + s)/8)`\\ "
 "と設定し、アイドルなサーバーの推定値は、サンプルのない1秒ごとに、休止時の値1 msへ半分ずつ戻ります。"
 
-#: ../../edge.rst:186
+#: ../../edge.rst:153
 msgid "Consistent Hashing: the Problem"
 msgstr "コンシステントハッシュ：問題"
 
-#: ../../edge.rst:189
+#: ../../edge.rst:156
 msgid ""
 "Several nodes of a cluster should send the same flow to the same server "
 "without talking to each other, and a change of the server set should move "
@@ -824,11 +844,11 @@ msgstr ""
 "クラスターの複数のノードは、互いに通信せずに、同じフローを同じサーバーへ送るべきです。また、サーバーの集合が変わったときに移るフローはできるだけ少なくあるべきです。素朴な方法、つまりフローのハッシュ\\ "
 ":math:`h`\\ に対してサーバー\\ :math:`h \\bmod N`\\ を選ぶ方法は、二つ目の要件をひどく満たしません。"
 
-#: ../../edge.rst:191
+#: ../../edge.rst:158
 msgid "Worked example: one of five servers leaves"
 msgstr "例題：五つのサーバーのうち一つが離脱する"
 
-#: ../../edge.rst:193
+#: ../../edge.rst:160
 msgid ""
 "Under modulo hashing, a flow with hash :math:`h` goes to position "
 ":math:`h \\bmod 5`, and after the departure to position :math:`h \\bmod "
@@ -851,7 +871,7 @@ msgstr ""
 "。移る必要があったのは、離脱したサーバーが持っていた20%だけなのにです。一般に、\\ :math:`N`\\ 個から\\ :math:`N - "
 "1`\\ 個のサーバーへの変化で留まるのは、フローの\\ :math:`(N-1)/(N(N-1)) = 1/N`\\ です。"
 
-#: ../../edge.rst:195
+#: ../../edge.rst:162
 msgid ""
 "A consistent method moves only the departed server's flows: :math:`1/5 = "
 "20\\%`. Rendezvous hashing, below, achieves exactly that. Sibuna's Maglev "
@@ -870,11 +890,11 @@ msgstr ""
 "``maglev.rs``\\ の構築ループの写しと同じハッシュを使い、等しい重みの\\ ``s1``\\ から\\ ``s5``\\ "
 "という五つのサーバーでテーブルを作り直し、各サーバーを順に取り除きました（ベンチマークではなく、私たち自身の実行です）。離脱したサーバーは65,537個のスロットの19.999%から20.001%を持っており、さらに51から121個の他のスロット、つまりテーブルの0.08%から0.19%の所有者も変わりました。六つ目のサーバーを加えると、そのサーバーはスロットの16.665%を得て、古いサーバーの間で64個のスロット（0.10%）が移りました。十個のサーバーでは、離脱したサーバーはスロットの9.999%から10.000%を持ち、他の120から181個のスロット（0.18%から0.28%）の所有者が変わりました。"
 
-#: ../../edge.rst:197
+#: ../../edge.rst:164
 msgid "Maglev as Sibuna Builds It"
 msgstr "SibunaにおけるMaglevの構築"
 
-#: ../../edge.rst:200
+#: ../../edge.rst:167
 msgid ""
 "Maglev (Eisenbud et al., 2016) fills a lookup table of :math:`M` slots. "
 "Each server derives two numbers from its name, an offset and a stride, "
@@ -897,11 +917,11 @@ msgstr ""
 ":math:`w_i`\\ のサーバーは、1スロットの誤差でスロットの\\ :math:`w_i/W`\\ "
 "を取ります。フローは、フロントエンドのアドレスとクライアントのアドレスとポートをハッシュして引きます。ハッシュ一回と読み込み一回です。"
 
-#: ../../edge.rst:202
+#: ../../edge.rst:169
 msgid "Implementation: ``Table::build`` and ``Table::primary``"
 msgstr "実装：\\ ``Table::build``\\ と\\ ``Table::primary``"
 
-#: ../../edge.rst:204
+#: ../../edge.rst:171
 msgid ""
 "``build`` fills the 65,537 slots from servers in stable name order, "
 "skipping backups, with smooth weighted turns. ``primary`` hashes the "
@@ -913,7 +933,7 @@ msgstr ""
 "``primary``\\ は、フロントエンドとクライアントのエンドポイント（IPv4はIPv6に写像）をハッシュしてスロットを求めます。\\ "
 "``crates/lb/src/maglev.rs``\\ にあります。"
 
-#: ../../edge.rst:206
+#: ../../edge.rst:173
 msgid ""
 "for _ in 0..SIZE {\n"
 "    let mut best = 0;\n"
@@ -933,7 +953,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:225
+#: ../../edge.rst:192
 msgid ""
 "Every node builds the same table from the same file, so every node sends "
 "a flow with the same addresses to the same server. This is why the "
@@ -946,11 +966,11 @@ msgstr ""
 "どのノードも同じファイルから同じテーブルを作るので、どのノードも同じアドレスのフローを同じサーバーへ送ります。Maglevのプールのメンバーと重みが再読み込みでしか変わらないのはこのためです。一つのノードで重みを変える管理コマンドは、そのノードをピアと食い違わせるので、管理ソケットはそれを拒否します（SID "
 "0018）。ドレインは許されます。各ノードは、もともと自分のヘルスチェックでサーバーを除外しているからです。"
 
-#: ../../edge.rst:227
+#: ../../edge.rst:194
 msgid "Bounded Loads"
 msgstr "負荷上限"
 
-#: ../../edge.rst:230
+#: ../../edge.rst:197
 msgid ""
 "A hash spreads flows evenly only on average. A popular client range can "
 "still crowd one server. Consistent hashing with bounded loads (Mirrokni, "
@@ -965,11 +985,11 @@ msgstr ""
 ":math:`L`\\ をプールのアクティブなフローの数、\\ :math:`a_p`\\ をプライマリー\\ :math:`p`\\ "
 "のアクティブなフローの数とします。新しいフローは、プライマリーが適格で、かつ次を満たすときにプライマリーへ送られます。"
 
-#: ../../edge.rst:232
+#: ../../edge.rst:199
 msgid "a_p < \\left\\lceil \\frac{c\\,(L + 1)\\, w_p}{W} \\right\\rceil,"
 msgstr ""
 
-#: ../../edge.rst:236
+#: ../../edge.rst:203
 msgid ""
 "with :math:`c` given in percent as ``load_factor_pct`` (125 by default, "
 "at least 100). Otherwise the flow goes to the pool's fallback: weighted "
@@ -980,11 +1000,11 @@ msgstr ""
 "として与えます（既定は125、最小は100）。それ以外のとき、フローはプールのフォールバックへ送られます。重み付き最少接続、または\\ "
 "``fallback``\\ が\\ ``pewma``\\ のときはpower of two choicesです。"
 
-#: ../../edge.rst:238
+#: ../../edge.rst:205
 msgid "Worked example: the bound with c = 1.25"
 msgstr "例題：c = 1.25での上限"
 
-#: ../../edge.rst:240
+#: ../../edge.rst:207
 msgid ""
 "Four servers of equal weight hold :math:`L = 99` flows, and a hundredth "
 "arrives. The bound is :math:`\\lceil 1.25 \\times 100 / 4 \\rceil = "
@@ -1005,7 +1025,7 @@ msgstr ""
 "\\lceil 37.5 \\rceil = 38`\\ と\\ :math:`\\lceil 1.25 \\times 40 / 4 "
 "\\rceil = \\lceil 12.5 \\rceil = 13`\\ です。"
 
-#: ../../edge.rst:242
+#: ../../edge.rst:209
 msgid ""
 "The overflow always finds a server below its bound. Suppose every server "
 ":math:`i` held at least :math:`c(L+1)w_i/W` flows. Summing over the "
@@ -1017,7 +1037,7 @@ msgstr ""
 "c(L+1) > L`\\ となり、矛盾します。\\ :math:`c = 1.25`\\ "
 "で等しい四つのサーバーなら、同時に上限に達しているのは高々三つです。"
 
-#: ../../edge.rst:244
+#: ../../edge.rst:211
 msgid ""
 "With the least-connections fallback, and all servers eligible, one "
 "admission keeps every server within its cap: the hash path admits only "
@@ -1039,11 +1059,11 @@ msgstr ""
 "です。同じ瞬間に許可する二つのスレッドは、どちらも古いカウントを読むことがあります。\\ ``pewma``\\ "
 "のフォールバックでも、ハッシュの経路は上限を守りますが、フォールバックはレイテンシーで選ぶので、そのときキャップは保証ではありません。あふれの処理は、もう一点で論文と異なります。コンシステントな順序の次のサーバーへ進まないので、二つのノードがあふれたフローを異なるサーバーに置くことがあります。"
 
-#: ../../edge.rst:246
+#: ../../edge.rst:213
 msgid "Rendezvous Hashing for Source Stickiness"
 msgstr "ソースのスティッキネスのためのランデブーハッシュ"
 
-#: ../../edge.rst:249
+#: ../../edge.rst:216
 msgid ""
 "A pool with ``sticky: \"source\"`` sends each client address to the same "
 "server. It uses weighted rendezvous hashing (SID 0019). For client "
@@ -1055,11 +1075,11 @@ msgstr ""
 ":math:`x`\\ とサーバー\\ :math:`i`\\ について、ハッシュは数\\ :math:`u_i \\in (0, 1]`\\ "
 "を与え、\\ *距離*\\ は次のとおりです。"
 
-#: ../../edge.rst:251
+#: ../../edge.rst:218
 msgid "d_i = \\frac{-\\log_2 u_i}{w_i}."
 msgstr ""
 
-#: ../../edge.rst:255
+#: ../../edge.rst:222
 msgid ""
 "The client goes to the nearest eligible server. The choice follows the "
 "weights exactly. Since :math:`-\\ln u_i` is exponentially distributed "
@@ -1075,7 +1095,7 @@ msgstr ""
 "\\sum_j w_j`\\ でサーバー\\ :math:`i`\\ "
 "において達成されます。対数の底を変えると、すべての距離が同じ係数倍になるだけで、順位は変わりません。"
 
-#: ../../edge.rst:257
+#: ../../edge.rst:224
 msgid ""
 "The disruption is exactly the minimum. When server :math:`k` leaves, a "
 "client whose nearest server was not :math:`k` keeps it, because removing "
@@ -1091,7 +1111,7 @@ msgstr ""
 "が戻ると戻ります。Sibunaは対数を小数部16ビットの固定小数点で計算し、\\ :math:`d_i < d_j`\\ を除算なしに\\ "
 ":math:`c_i w_j < c_j w_i`\\ として比較します。"
 
-#: ../../edge.rst:259
+#: ../../edge.rst:226
 msgid ""
 "Ranking every server for every request costs one hash and one logarithm "
 "per server. So the pool precomputes a table of 1,021 slots. A client "
@@ -1108,11 +1128,11 @@ msgstr ""
 "nsで、テーブルとロックフリーのスナップショットの導入前は3,443 nsでした（SID "
 "0019）。代償は粒度です。一つのスロットに入った二つのアドレスはサーバーを共有し、重みの合計が1,000のプールにある重み1のサーバーは、クライアントの1000分の1ではなく、一つのスロットを受け持ちます。"
 
-#: ../../edge.rst:261
+#: ../../edge.rst:228
 msgid "Implementation: ``Pool::home`` and ``sticky::distance``"
 msgstr "実装：\\ ``Pool::home``\\ と\\ ``sticky::distance``"
 
-#: ../../edge.rst:263
+#: ../../edge.rst:230
 msgid ""
 "``home`` hashes the client to a slot and returns the first eligible "
 "server of the slot's four, falling back to ranking the pool. ``distance`` "
@@ -1126,7 +1146,7 @@ msgstr ""
 "を計算します。\\ ``crates/lb/src/pool/extra.rs``\\ と\\ "
 "``crates/lb/src/sticky.rs``\\ にあります。"
 
-#: ../../edge.rst:267
+#: ../../edge.rst:234
 msgid ""
 "Rendezvous hashing moves exactly the departed server's clients; the "
 "Maglev table moves them and about 0.1% more. Explain where the excess "
@@ -1136,11 +1156,11 @@ msgid ""
 msgstr ""
 "ランデブーハッシュは、離脱したサーバーのクライアントだけを正確に移します。Maglevテーブルはそれらと、さらに約0.1%を移します。上の埋め込みループのどこから超過が生じるかを説明してください。また、Sibunaがアドレスとポートでハッシュするフローにはこれを受け入れ、明日も同じサーバーを見つけなければならないクライアントにはランデブーハッシュを使う理由を説明してください。"
 
-#: ../../edge.rst:269
+#: ../../edge.rst:236
 msgid "Health, Slow Start, Draining and Failover"
 msgstr "ヘルス、スロースタート、ドレイン、フェイルオーバー"
 
-#: ../../edge.rst:272
+#: ../../edge.rst:239
 msgid ""
 "A server can be out of rotation for five reasons, and each has its own "
 "way back. Active probes and passive health judge the server; a failed "
@@ -1149,7 +1169,7 @@ msgid ""
 msgstr ""
 "サーバーがローテーションから外れる理由は五つあり、それぞれに戻り方があります。アクティブプローブとパッシブヘルスはサーバーを判定します。失敗した接続確立は一回の試行を判定します。ドレインは運用者の指示です。スロースタートは復帰を制御します。"
 
-#: ../../edge.rst:275
+#: ../../edge.rst:242
 msgid ""
 "In service leads to Down after fall failed probes, to Ejected after "
 "consecutive request failures, to Marked after a failed connect, and to "
@@ -1160,71 +1180,83 @@ msgid ""
 msgstr ""
 "稼働中からは、fall回のプローブ失敗でダウンへ、連続したリクエストの失敗で除外へ、接続確立の失敗で印付きへ、運用者によってドレイン済みへ移ります。ダウンはrise回のプローブ成功の後に、除外は除外時間の後に、印付きは2秒後に、ドレイン済みは再び受け入れられたときに戻ります。どの復帰もランプ中へ移り、ランプの後に稼働中へ移ります。"
 
-#: ../../edge.rst:275
+#: ../../edge.rst:242
 msgid ""
-"digraph server_states {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", fontname=\"Helvetica\", "
-"fontsize=9, nodesep=0.3, ranksep=0.55];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
-"margin=\"0.1,0.05\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#475569\", arrowsize=0.6];\n"
-"  service [label=\"In service\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  down [label=\"Down\\n(active probe)\"];\n"
-"  ejected [label=\"Ejected\\n(passive health)\"];\n"
-"  marked [label=\"Marked\\n(connect failed)\"];\n"
-"  drained [label=\"Drained\\n(operator)\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  ramp [label=\"Ramping\\n(slow start)\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  service -> down [label=\"fall failures\"];\n"
-"  down -> ramp [label=\"rise passes\"];\n"
-"  service -> ejected [label=\"failures in a row\"];\n"
-"  ejected -> ramp [label=\"ejection ends\"];\n"
-"  service -> marked [label=\"connect fails\"];\n"
-"  marked -> ramp [label=\"2 s\"];\n"
-"  service -> drained [label=\"set state drain\"];\n"
-"  drained -> ramp [label=\"set state ready\"];\n"
-"  ramp -> service [label=\"ramp ends\"];\n"
-"}"
+"// edge.rst: the life of a server in a pool. Only \"In service\" and "
+"\"Ramping\" take new\n"
+"// flows; slow start applies when it is configured.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#flow(\n"
+"  spacing: (30mm, 5mm),\n"
+"  state((0, 1.5), \"In service\", kind: \"good\", name: <service>),\n"
+"  state((1, 0), \"Down\", \"active probe\", name: <down>),\n"
+"  state((1, 1), \"Ejected\", \"passive health\", name: <ejected>),\n"
+"  state((1, 2), \"Marked\", \"connect failed\", name: <marked>),\n"
+"  state((1, 3), \"Drained\", \"operator\", kind: \"wait\", name: "
+"<drained>),\n"
+"  state((2, 1.5), \"Ramping\", \"slow start\", kind: \"good\", name: "
+"<ramp>),\n"
+"  edge(<service>, <down>, \"-|>\", say(\"`fall` failures\"), label-side: "
+"left),\n"
+"  edge(<service>, <ejected>, \"-|>\", say(\"failures in a row\"), "
+"label-side: left),\n"
+"  edge(<service>, <marked>, \"-|>\", say(\"connect fails\"), label-side: "
+"right),\n"
+"  edge(<service>, <drained>, \"-|>\", say(\"`set state drain`\"), "
+"label-side: right),\n"
+"  edge(<down>, <ramp>, \"-|>\", say(\"`rise` passes\"), label-side: "
+"left),\n"
+"  edge(<ejected>, <ramp>, \"-|>\", say(\"ejection ends\"), label-side: "
+"left),\n"
+"  edge(<marked>, <ramp>, \"-|>\", say(\"2 s\"), label-side: right),\n"
+"  edge(<drained>, <ramp>, \"-|>\", say(\"`set state ready`\"), "
+"label-side: right),\n"
+"  main-edge(<ramp>, (2, 4), (0, 4), <service>, \"-|>\", say(\"ramp "
+"ends\"),\n"
+"    label-pos: 0.5, label-side: left, corner-radius: 6pt),\n"
+")\n"
 msgstr ""
-"digraph server_states {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", fontname=\"Helvetica\", "
-"fontsize=9, nodesep=0.3, ranksep=0.55];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
-"margin=\"0.1,0.05\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#475569\", arrowsize=0.6];\n"
-"  service [label=\"稼働中\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  down [label=\"ダウン\\n（アクティブプローブ）\"];\n"
-"  ejected [label=\"除外\\n（パッシブヘルス）\"];\n"
-"  marked [label=\"印付き\\n（接続確立の失敗）\"];\n"
-"  drained [label=\"ドレイン済み\\n（運用者）\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  ramp [label=\"ランプ中\\n（スロースタート）\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  service -> down [label=\"fall回の失敗\"];\n"
-"  down -> ramp [label=\"rise回の成功\"];\n"
-"  service -> ejected [label=\"連続した失敗\"];\n"
-"  ejected -> ramp [label=\"除外の終了\"];\n"
-"  service -> marked [label=\"接続確立の失敗\"];\n"
-"  marked -> ramp [label=\"2 s\"];\n"
-"  service -> drained [label=\"set state drain\"];\n"
-"  drained -> ramp [label=\"set state ready\"];\n"
-"  ramp -> service [label=\"ランプの終了\"];\n"
-"}"
+"// edge.rst: the life of a server in a pool. Only \"In service\" and "
+"\"Ramping\" take new\n"
+"// flows; slow start applies when it is configured.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"ja\")\n"
+"\n"
+"#flow(\n"
+"  spacing: (30mm, 5mm),\n"
+"  state((0, 1.5), \"稼働中\", kind: \"good\", name: <service>),\n"
+"  state((1, 0), \"ダウン\", \"アクティブプローブ\", name: <down>),\n"
+"  state((1, 1), \"除外\", \"パッシブヘルス\", name: <ejected>),\n"
+"  state((1, 2), \"印付き\", \"接続確立の失敗\", name: <marked>),\n"
+"  state((1, 3), \"ドレイン済み\", \"運用者\", kind: \"wait\", name: <drained>),\n"
+"  state((2, 1.5), \"ランプ中\", \"スロースタート\", kind: \"good\", name: <ramp>),\n"
+"  edge(<service>, <down>, \"-|>\", say(\"`fall` 回の失敗\"), label-side: "
+"left),\n"
+"  edge(<service>, <ejected>, \"-|>\", say(\"連続した失敗\"), label-side: "
+"left),\n"
+"  edge(<service>, <marked>, \"-|>\", say(\"接続確立の失敗\"), label-side: "
+"right),\n"
+"  edge(<service>, <drained>, \"-|>\", say(\"`set state drain`\"), "
+"label-side: right),\n"
+"  edge(<down>, <ramp>, \"-|>\", say(\"`rise` 回の成功\"), label-side: left),\n"
+"  edge(<ejected>, <ramp>, \"-|>\", say(\"除外の終了\"), label-side: left),\n"
+"  edge(<marked>, <ramp>, \"-|>\", say(\"2 秒\"), label-side: right),\n"
+"  edge(<drained>, <ramp>, \"-|>\", say(\"`set state ready`\"), "
+"label-side: right),\n"
+"  main-edge(<ramp>, (2, 4), (0, 4), <service>, \"-|>\", say(\"ランプの終了\"),\n"
+"    label-pos: 0.5, label-side: left, corner-radius: 6pt),\n"
+")\n"
 
-#: ../../edge.rst:275
+#: ../../edge.rst:242
 msgid ""
 "The life of a server in a pool. Only \"In service\" and \"Ramping\" take "
 "new flows; slow start applies when it is configured."
 msgstr ""
 "プールの中のサーバーの一生です。新しいフローを取るのは「稼働中」と「ランプ中」だけです。スロースタートは設定されているときに適用されます。"
 
-#: ../../edge.rst:299
+#: ../../edge.rst:245
 msgid ""
 "*Active probes* connect, or send ``GET``, at an interval. A server starts "
 "in service, leaves after ``fall`` failures in a row and returns after "
@@ -1250,7 +1282,7 @@ msgstr ""
 "は、確立済みのフローを終わらせながら、新しいフローについてサーバーを外します。ファイルが同じアドレスでそのサーバーを指定している限り、ドレインは再読み込みをまたいで残ります（SID "
 "0018）。"
 
-#: ../../edge.rst:301
+#: ../../edge.rst:247
 msgid ""
 "*Slow start* gives a returning server a ramp :math:`R`. A server of "
 "configured weight :math:`W` that entered service :math:`t` ago has the "
@@ -1259,14 +1291,14 @@ msgstr ""
 "*スロースタート*\\ は、復帰するサーバーにランプ\\ :math:`R`\\ を与えます。設定された重みが\\ :math:`W`\\ "
 "で、\\ :math:`t`\\ だけ前に稼働を始めたサーバーは、1/256を単位として次の実効的な重みを持ちます。"
 
-#: ../../edge.rst:303
+#: ../../edge.rst:249
 msgid ""
 "w(t) = \\max\\left(1, \\left\\lfloor \\frac{256\\, W\\, t}{R} "
 "\\right\\rfloor\\right) \\text{ for } t < R, \\qquad w(t) = 256\\, W "
 "\\text{ otherwise.}"
 msgstr ""
 
-#: ../../edge.rst:307
+#: ../../edge.rst:253
 msgid ""
 "The weight is never zero, never above the configured weight, and never "
 "decreases while the server stays in service. Servers first seen together, "
@@ -1283,11 +1315,11 @@ msgstr ""
 "、つまり重みの4分の1を持ちます。完全な重み（1,024単位）の重み4のピアと並ぶと、ラウンドロビンはそれに50%ではなく\\ "
 ":math:`256/1280 = 20\\%`\\ の番を与えます。"
 
-#: ../../edge.rst:309
+#: ../../edge.rst:255
 msgid "Failover"
 msgstr "フェイルオーバー"
 
-#: ../../edge.rst:312
+#: ../../edge.rst:258
 msgid ""
 "A request moves to another server only when sending it twice does no "
 "harm. A failed connect may always move: the server received nothing. "
@@ -1298,11 +1330,11 @@ msgstr ""
 "リクエストが別のサーバーへ移るのは、二度送っても害がないときだけです。失敗した接続確立は常に移れます。サーバーは何も受け取っていないからです。1バイトでも送った後は、一つの関数がすべての経路について判断します。ワーカー、スレッドの経路、ランタイムのHTTP/1.1、HTTP/2、HTTP/3のクライアントがすべてそれに問い合わせるので、互いにずれることはありません（SID "
 "0019）。"
 
-#: ../../edge.rst:314
+#: ../../edge.rst:260
 msgid "Implementation: ``recover``"
 msgstr "実装：\\ ``recover``"
 
-#: ../../edge.rst:316
+#: ../../edge.rst:262
 msgid ""
 "Decides what follows the loss of a server after the connection was made: "
 "reconnect to the same server, move to another, or fail. In "
@@ -1311,7 +1343,7 @@ msgstr ""
 "接続の確立後にサーバーを失ったとき、次に何をするかを決めます。同じサーバーに再接続するか、別のサーバーへ移るか、失敗するかです。\\ "
 "``crates/net/src/route.rs``\\ （クレート\\ ``sibuna-net``\\ ）にあります。"
 
-#: ../../edge.rst:318
+#: ../../edge.rst:264
 msgid ""
 "pub fn recover(lost: Lost) -> Recovery {\n"
 "    if !(lost.unanswered && lost.kept && (lost.idempotent || "
@@ -1325,7 +1357,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:330
+#: ../../edge.rst:276
 msgid ""
 "A request is sent again only while no response byte arrived, only when "
 "the node still holds all of it (a body of at most 64 KiB that ended "
@@ -1346,7 +1378,7 @@ msgstr ""
 "が、リクエストをルーティングしたリビジョンで、同じプールの別のサーバーを、リクエストが試したすべてのサーバーを除いて予約します。したがって、リクエストは同じサーバーを二度試さず、試すサーバーは最大\\ "
 "``retries + 1``\\ 個です。"
 
-#: ../../edge.rst:334
+#: ../../edge.rst:280
 msgid ""
 "A ``POST`` with a 2 KiB body loses its server after the request was "
 "written and before any response byte. Trace ``recover`` and explain why "
@@ -1359,11 +1391,11 @@ msgstr ""
 "をたどり、クライアントが黙った二回目の試行ではなく502を受け取る理由を説明してください。次に、サーバーがHTTP/2の\\ "
 "``REFUSED_STREAM``\\ で応答したという事実を一つ変えて、もう一度たどってください。"
 
-#: ../../edge.rst:336
+#: ../../edge.rst:282
 msgid "Admission at the Socket"
 msgstr "ソケットでの許可"
 
-#: ../../edge.rst:339
+#: ../../edge.rst:285
 msgid ""
 "An application filter can shed work only after the traffic reaches the "
 "host. The cheapest refusal is therefore the earliest one, and SID 0015 "
@@ -1373,7 +1405,7 @@ msgstr ""
 "アプリケーションのフィルターが仕事を減らせるのは、トラフィックがホストに届いてからです。したがって最も安い拒否は最も早い拒否で、SID "
 "0015は各段階が次の段階より安くなるように順序を決めています。SID 0032は、TCPとUDPのフロントエンドについてそれを完成させました。"
 
-#: ../../edge.rst:341
+#: ../../edge.rst:287
 msgid ""
 "*Kernel listener admission.* ``defer_accept`` sets ``TCP_DEFER_ACCEPT`` "
 "on Linux: the kernel gives the node a connection only when its first "
@@ -1388,7 +1420,7 @@ msgstr ""
 "はacceptキューの長さを設定します。どちらも権限を必要としません。プラットフォームがどちらかを拒否したとき、ノードは\\ "
 "``EDGE013``\\ を記録し、それなしで動きます。"
 
-#: ../../edge.rst:342
+#: ../../edge.rst:288
 msgid ""
 "*Connection rate.* ``rate_limit.conn_per_10s`` per source IPv4 address or "
 "IPv6 /64, and ``udp_defense.threshold_pps`` for datagrams."
@@ -1396,7 +1428,7 @@ msgstr ""
 "*接続レート。*\\ 送信元のIPv4アドレスまたはIPv6の/64ごとの\\ ``rate_limit.conn_per_10s``\\ "
 "、データグラムについては\\ ``udp_defense.threshold_pps``\\ です。"
 
-#: ../../edge.rst:343
+#: ../../edge.rst:289
 msgid ""
 "*The flow budget.* One slot per client connection or UDP mapping, "
 "node-wide, up to ``global.max_flows`` (8,192 by default, at most "
@@ -1409,13 +1441,13 @@ msgstr ""
 "``global.max_udp_flows``\\ までしか取りません。HTTPは\\ ``http.max_connections``\\ "
 "と\\ ``http.max_connections_per_ip``\\ を加えます。"
 
-#: ../../edge.rst:344
+#: ../../edge.rst:290
 msgid ""
 "*Bounded inspection*, of a TLS ClientHello on TCP, and of the QUIC header "
 "on UDP."
 msgstr "*上限付きの検査*\\ 。TCPではTLSのClientHello、UDPではQUICのヘッダーを検査します。"
 
-#: ../../edge.rst:345
+#: ../../edge.rst:291
 msgid ""
 "*The connection hooks*, then the pool: a server's ``max_flows`` and, in a "
 "cluster, its share of a fleet-wide limit (Part IX)."
@@ -1423,15 +1455,15 @@ msgstr ""
 "*接続フック*\\ 、次にプール。サーバーの\\ ``max_flows``\\ "
 "と、クラスターではフリート全体の上限のうちの割り当て（第IX部）です。"
 
-#: ../../edge.rst:346
+#: ../../edge.rst:292
 msgid "*The HTTP firewall*, for HTTP frontends only."
 msgstr "*HTTPファイアウォール*\\ 。HTTPフロントエンドだけです。"
 
-#: ../../edge.rst:348
+#: ../../edge.rst:294
 msgid "Implementation: ``FlowBudget::reserve``"
 msgstr "実装：\\ ``FlowBudget::reserve``"
 
-#: ../../edge.rst:350
+#: ../../edge.rst:296
 msgid ""
 "Takes one slot of the node-wide flow budget and returns a ``FlowPermit``, "
 "or nothing when the budget is full. The permit's ``Drop`` returns the "
@@ -1442,11 +1474,11 @@ msgstr ""
 "``Drop``\\ が取り消し、クローズ、期限切れのときに枠を返すので、どの経路も枠を漏らせません。ドレインは上限を0にします。\\ "
 "``crates/lb/src/budget.rs``\\ にあります。"
 
-#: ../../edge.rst:352
+#: ../../edge.rst:298
 msgid "ClientHello Inspection and Fallback Classes"
 msgstr "ClientHelloの検査とフォールバックのクラス"
 
-#: ../../edge.rst:355
+#: ../../edge.rst:301
 msgid ""
 "A TCP frontend with ``tcp_inspect: \"tls_client_hello\"`` reads the start "
 "of each connection before it selects a pool, within ``inspect_bytes`` "
@@ -1460,7 +1492,7 @@ msgstr ""
 "``inspect_bytes``\\ （1,024から32,768）と\\ ``inspect_delay``\\ "
 "（既定は2秒）の範囲で各接続の先頭を読みます。ルールは、サーバー名、提示されたALPNプロトコル、JA4フィンガープリントに一致させられます。その後ノードは、TLSに手を触れずに接続をサーバーへ通し、読んだバイトを、クライアントの後続のどのバイトよりも前に、ちょうど一度だけ再送します。失敗した接続確立はそれを一つも受け取りません。"
 
-#: ../../edge.rst:357
+#: ../../edge.rst:303
 msgid ""
 "The inspection ends in one of five classes, and every class has exactly "
 "one outcome, deny or one named pool (SID 0032). *Visible* is a whole "
@@ -1483,11 +1515,11 @@ msgstr ""
 "は拒否されます。既定値は、クラスができる前の動作を再現します。absentとencryptedには\\ ``rules``\\ 、他の二つには\\ "
 "``deny``\\ です。"
 
-#: ../../edge.rst:359
+#: ../../edge.rst:305
 msgid "Implementation: ``Plan::decide``"
 msgstr "実装：\\ ``Plan::decide``"
 
-#: ../../edge.rst:361
+#: ../../edge.rst:307
 msgid ""
 "Maps a class and the parsed ClientHello, if any, to a pool or to a "
 "refusal. The match is total, so no class is left without an outcome. In "
@@ -1496,7 +1528,7 @@ msgstr ""
 "クラスと、あればパースしたClientHelloを、プールまたは拒否に対応させます。マッチは網羅的なので、結果のないクラスは残りません。\\ "
 "``crates/lb/src/inspect.rs``\\ にあります。"
 
-#: ../../edge.rst:363
+#: ../../edge.rst:309
 msgid ""
 "Two cautions belong beside the feature. A JA4 fingerprint describes a "
 "handshake; any client can send the handshake of another, so it separates "
@@ -1509,11 +1541,11 @@ msgstr ""
 "ClientHello拡張をgreaseし、本当の名前を外側のフィールドに入れます。エッジはgreaseと本物のECHを区別できないので、\\ "
 "``encrypted: deny``\\ はほとんどのブラウザーを拒否します。"
 
-#: ../../edge.rst:365
+#: ../../edge.rst:311
 msgid "QUIC Address Validation"
 msgstr "QUICのアドレス検証"
 
-#: ../../edge.rst:368
+#: ../../edge.rst:314
 msgid ""
 "A UDP frontend bounds the replies of each mapping to three times the "
 "bytes the client sent. Without the bound, a spoofed source would turn the "
@@ -1533,7 +1565,7 @@ msgstr ""
 "Initialに見えるデータグラム、つまりロングヘッダーを持ち、収まる長さの接続IDを持ち、RFC "
 "9000がクライアントに詰め物を義務付けているとおり少なくとも1,200バイトあるデータグラムについてだけマッピングを開きます。その後、オリジンの応答を読みます。バージョンが0以外で、送信元接続IDが少なくとも8バイトある最初のロングヘッダーの応答から、そのIDを覚えます。ただし、そのIDがクライアントの送ったIDと等しい場合は除きます。クライアントの後のデータグラムがそのIDを宛先として運ぶと、アドレスは検証され、応答の上限は解除されます。"
 
-#: ../../edge.rst:370
+#: ../../edge.rst:316
 msgid ""
 "The argument is that of RFC 9000, section 8.1. The ID was chosen by the "
 "origin and sent only to the claimed address. A sender that spoofs the "
@@ -1551,12 +1583,12 @@ msgstr ""
 "MiBのダウンロードは検証ありで83から86 "
 "msかかりました。検証なしでは、3秒間に17,060バイトしか届きませんでした。これらの数字は効果の大きさを示すもので、ベンチマークではありません。"
 
-#: ../../edge.rst:372
+#: ../../edge.rst:318
 msgid ""
 "Implementation: ``Validation::see_reply`` and ``Validation::see_request``"
 msgstr "実装：\\ ``Validation::see_reply``\\ と\\ ``Validation::see_request``"
 
-#: ../../edge.rst:374
+#: ../../edge.rst:320
 msgid ""
 "``see_reply`` learns the origin's connection ID from a reply, refusing "
 "version zero, short IDs and echoes. ``see_request`` marks the mapping "
@@ -1568,7 +1600,7 @@ msgstr ""
 "は、クライアントがそのIDをロングヘッダーまたはショートヘッダーで繰り返したときに、マッピングを検証済みとします。\\ "
 "``crates/lb/src/quic_edge.rs``\\ にあります。"
 
-#: ../../edge.rst:376
+#: ../../edge.rst:322
 msgid ""
 "The edge does not send QUIC Retry itself. SID 0032 specifies the contract "
 "that edge and origin would have to share, a token format and key, an "
@@ -1580,7 +1612,7 @@ msgstr ""
 "エッジ自身はQUIC Retryを送りません。SID "
 "0032は、エッジとオリジンが共有しなければならない取り決め（トークンの形式と鍵、アドレスとの結び付け、トランスポートパラメーターの接続ID）を規定し、それを実装しない理由を記録しています。ワークスペースのQUICライブラリはトークンの形式を非公開にし、トークンをデータグラムの送信元に結び付けますが、エッジの背後では送信元はエッジ自身だからです。"
 
-#: ../../edge.rst:380
+#: ../../edge.rst:326
 msgid ""
 "\"Validation never happens on a value that an off-path sender can know.\" "
 "For each of the three conditions on the learned connection ID (version "
@@ -1589,11 +1621,11 @@ msgid ""
 msgstr ""
 "「経路外の送信者が知り得る値で検証が起こることはない。」学習した接続IDに対する三つの条件（バージョンが0でない、少なくとも8バイト、開始のデータグラムのIDと等しくない）のそれぞれについて、それが防ぐ攻撃を述べてください。"
 
-#: ../../edge.rst:382
+#: ../../edge.rst:328
 msgid "Traffic Policy, the Gate and the Shield"
 msgstr "トラフィックポリシー、ゲート、シールド"
 
-#: ../../edge.rst:385
+#: ../../edge.rst:331
 msgid ""
 "An HTTP request passes the cheap checks before the expensive ones, and a "
 "hook only after both. The ban table and the request limiter come first. "
@@ -1621,11 +1653,11 @@ msgstr ""
 "を設定できます。そのようなリクエストにも、プロトコルの検証、接続数の上限、禁止、リクエストのリミッターは残ります。リクエストフックはファイアウォールが許可したものを判断し、その後にだけサーバーが選ばれます。SID "
 "0019の残りは交換を形づくります。接続確立と応答のタイムアウト、再試行、パッシブヘルス、スティッキーセッション、ヘッダーの編集、HSTSです。TCPやUDPのフロントエンドは、ファイアウォールを呼び出しません。"
 
-#: ../../edge.rst:387
+#: ../../edge.rst:333
 msgid "Hooks"
 msgstr "フック"
 
-#: ../../edge.rst:390
+#: ../../edge.rst:336
 msgid ""
 "An operator sometimes needs a decision of his own on the path: a tenant "
 "check, an authorization service, a score. SID 0030 fixes where such a "
@@ -1646,7 +1678,7 @@ msgstr ""
 "``request``\\ （禁止、リミッター、ポリシーが許可したリクエストごとに一回、サーバーを選ぶ前）、\\ ``telemetry``\\ "
 "（リクエストごとに一回、応答の後）です。フックは許可、拒否、チャレンジの要求ができ、リクエストのフィールドを最大8個加えられます。ボディーを読むこと、メソッド、パス、ホストを変えること、サーバーを選ぶこと、フレーミングのフィールドやSibunaが自分の表明として書くフィールドを加えることはできません。"
 
-#: ../../edge.rst:392
+#: ../../edge.rst:338
 msgid ""
 "A hook runs in one of three *tiers*. A *native* hook is Rust compiled "
 "into the daemon: trusted, unbudgeted, 42 ns per call with the chain and "
@@ -1660,11 +1692,11 @@ msgstr ""
 "*Wasm*\\ フックは、この目的のために自前で書いたインタープリター（第VII部のブラウザーのエンジンではありません）で動き、JITも\\ "
 "``unsafe``\\ もありません。\\ *エージェント*\\ は、Unixソケット、期限、サーキットブレーカーの向こうにある別のプロセスです。"
 
-#: ../../edge.rst:394
+#: ../../edge.rst:340
 msgid "The Outcome Rule"
 msgstr "結果の規則"
 
-#: ../../edge.rst:397
+#: ../../edge.rst:343
 msgid ""
 "An invocation ends with a verdict or with one of four failures: "
 "``timeout``, ``overload``, ``trap`` or ``unavailable``. Each plugin has "
@@ -1676,7 +1708,7 @@ msgstr ""
 "``admit``\\ と書かない限り\\ ``deny``\\ です。段階\\ :math:`s`\\ 、書かれた選択\\ "
 ":math:`f`\\ 、結果\\ :math:`r`\\ について、次のとおりです。"
 
-#: ../../edge.rst:399
+#: ../../edge.rst:345
 msgid ""
 "\\mathit{outcome}(s, f, r) = \\begin{cases} \\mathrm{admit} & s = "
 "\\mathrm{telemetry} \\\\ v & r = \\mathrm{verdict}(v) \\\\ \\mathrm{deny} "
@@ -1684,7 +1716,7 @@ msgid ""
 "\\mathrm{failed},\\ f = \\mathrm{admit}. \\end{cases}"
 msgstr ""
 
-#: ../../edge.rst:403
+#: ../../edge.rst:349
 msgid ""
 "A chain admits only when every hook in it has the outcome admit; the "
 "first other verdict ends it. Hence a chain with a failing authorization "
@@ -1693,11 +1725,11 @@ msgid ""
 msgstr ""
 "チェーンが許可するのは、その中のすべてのフックの結果がadmitのときだけで、最初にそれ以外の判定が出たところで終わります。したがって、失敗する認可フックを含むチェーンは、他のフックが何と答えても決して許可しません。また、ファイルに書かれた選択によらない限り、どの失敗もトラフィックを許可しません。"
 
-#: ../../edge.rst:405
+#: ../../edge.rst:351
 msgid "Implementation: ``outcome`` and ``chain``"
 msgstr "実装：\\ ``outcome``\\ と\\ ``chain``"
 
-#: ../../edge.rst:407
+#: ../../edge.rst:353
 msgid ""
 "The rule above and its fold over a chain, as two small functions modelled "
 "in ``docs/sid/assets/plugin-tiers.lean``. In "
@@ -1707,7 +1739,7 @@ msgstr ""
 "でモデル化した二つの小さな関数として実装しています。\\ ``crates/plugin/src/verdict.rs``\\ （クレート\\ "
 "``sibuna-plugin``\\ ）にあります。"
 
-#: ../../edge.rst:409
+#: ../../edge.rst:355
 msgid ""
 "pub fn outcome(stage: Stage, on_failure: OnFailure, result: "
 "Result<Verdict, Failure>) -> Verdict {\n"
@@ -1720,11 +1752,11 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:420
+#: ../../edge.rst:366
 msgid "Fuel, Breakers and Parked Connections"
 msgstr "燃料、ブレーカー、保留された接続"
 
-#: ../../edge.rst:423
+#: ../../edge.rst:369
 msgid ""
 "A Wasm module is untrusted input, so every bound is set before it runs: "
 "at most 4 MiB of module, ``memory_pages`` pages of 64 KiB, 256 call "
@@ -1754,7 +1786,7 @@ msgstr ""
 "usです。wasmi 1.1.0は同じ呼び出しを0.77 usで実行します。SID 0030は、約96,000行と八つのクレートに対して、\\ "
 "``unsafe``\\ も新しいクレートもない2,324行のインタープリターのために、1.4 usの差を受け入れています。"
 
-#: ../../edge.rst:425
+#: ../../edge.rst:371
 msgid ""
 "An agent call waits at most ``deadline`` (5 ms by default). Each thread "
 "keeps a breaker for each agent: ``failures`` failures in a row open it, "
@@ -1768,11 +1800,11 @@ msgstr ""
 "``open``\\ の後に一つのプローブが送られ、それによってブレーカーは閉じるか再び開きます。\\ ``overload``\\ "
 "はエージェントのせいではないので数えません。"
 
-#: ../../edge.rst:427
+#: ../../edge.rst:373
 msgid "Worked example: what a dead agent costs"
 msgstr "例題：停止したエージェントのコスト"
 
-#: ../../edge.rst:429
+#: ../../edge.rst:375
 msgid ""
 "Eight workers call an agent with ``deadline`` 5 ms and the default "
 "breaker, five failures and ``1s`` open. In the worst case each worker "
@@ -1788,7 +1820,7 @@ msgstr ""
 "msのプローブを送ります。これはワーカーの高々0.5%です。その間、守られたフロントエンドのすべてのリクエストは、エージェントの\\ "
 "``on_failure``\\ の結果をとります。既定では拒否されます。"
 
-#: ../../edge.rst:431
+#: ../../edge.rst:377
 msgid ""
 "At the request stage an agent call holds the thread that serves the "
 "request, and on a worker the other connections of that worker wait for "
@@ -1807,73 +1839,73 @@ msgstr ""
 "``overload``\\ で失敗するものとして呼び出し側でチェーンを実行し、失敗の規則が決めます。保留のコストは約11 "
 "usで、スレッド間の引き渡し二回分です。呼び出し側のスレッドで同じ呼び出しをすると12 usのところ、22.8 usかかります。"
 
-#: ../../edge.rst:433
+#: ../../edge.rst:379
 msgid ""
 "Measured cost of one hook (SID 0030, one busy machine, optimized builds, "
 "loopback)"
 msgstr "フック一つの測定したコスト（SID 0030、負荷のかかった一台の機械、最適化ビルド、ループバック）"
 
-#: ../../edge.rst:437
+#: ../../edge.rst:383
 msgid "Case"
 msgstr "ケース"
 
-#: ../../edge.rst:438
+#: ../../edge.rst:384
 msgid "In process"
 msgstr "プロセス内"
 
-#: ../../edge.rst:439
+#: ../../edge.rst:385
 msgid "End to end per request"
 msgstr "リクエストごとのエンドツーエンド"
 
-#: ../../edge.rst:440
+#: ../../edge.rst:386
 msgid "No hook"
 msgstr "フックなし"
 
-#: ../../edge.rst:441
+#: ../../edge.rst:387
 msgid "1.1 ns (one load)"
 msgstr "1.1 ns（読み込み一回）"
 
-#: ../../edge.rst:442
+#: ../../edge.rst:388
 msgid "41.8 to 42.2 us"
 msgstr "41.8から42.2 us"
 
-#: ../../edge.rst:443
+#: ../../edge.rst:389
 msgid "Native ``require_header``"
 msgstr "ネイティブの\\ ``require_header``"
 
-#: ../../edge.rst:444
+#: ../../edge.rst:390
 msgid "42 ns"
 msgstr ""
 
-#: ../../edge.rst:445
+#: ../../edge.rst:391
 msgid "within the noise of about 2 us"
 msgstr "約2 usのノイズの範囲内"
 
-#: ../../edge.rst:446
+#: ../../edge.rst:392
 msgid "Wasm, the example module"
 msgstr "Wasm、例のモジュール"
 
-#: ../../edge.rst:447
+#: ../../edge.rst:393
 msgid "2.2 to 2.4 us"
 msgstr "2.2から2.4 us"
 
-#: ../../edge.rst:448
+#: ../../edge.rst:394
 msgid "+5.2 to +6.1 us"
 msgstr "+5.2から+6.1 us"
 
-#: ../../edge.rst:449
+#: ../../edge.rst:395
 msgid "Agent on a Unix socket"
 msgstr "Unixソケット上のエージェント"
 
-#: ../../edge.rst:450
+#: ../../edge.rst:396
 msgid "12 to 18 us"
 msgstr "12から18 us"
 
-#: ../../edge.rst:451
+#: ../../edge.rst:397
 msgid "+18.4 to +21.5 us"
 msgstr "+18.4から+21.5 us"
 
-#: ../../edge.rst:455
+#: ../../edge.rst:401
 msgid ""
 "\"A failure of an authorization hook denies.\" An attacker can make a "
 "Wasm hook fail with ``overload`` by sending a head larger than its input "
@@ -1886,11 +1918,11 @@ msgstr ""
 "を既定のままにしたときに何が起こるか、そして\\ ``on_failure: \"admit\"``\\ "
 "と書くことで運用者が何を手放すかを説明してください。"
 
-#: ../../edge.rst:457
+#: ../../edge.rst:403
 msgid "Automatic HTTPS"
 msgstr "自動HTTPS"
 
-#: ../../edge.rst:460
+#: ../../edge.rst:406
 msgid ""
 "A frontend that names its hosts, ``tls: { auto: [\"example.org\"] }``, "
 "obtains its certificates itself (SID 0021). The node registers an ACME "
@@ -1921,11 +1953,11 @@ msgstr ""
 "がなければ、名前をノードに向けられる人なら誰でも認証局の制限を使い果たせるからです。ガードがあれば、ハンドシェイクはメモリを読むだけの検査しか適用せず、スレッドが\\ "
 "``ask``\\ のURLに問い合わせ、1時間あたり\\ ``rate``\\ 件の注文のバケットからトークンを取ってから注文します。"
 
-#: ../../edge.rst:462
+#: ../../edge.rst:408
 msgid "Observation"
 msgstr "観測"
 
-#: ../../edge.rst:465
+#: ../../edge.rst:411
 msgid ""
 "The node counts what it does so that an operator can tell a refusal for "
 "lack of capacity from a refusal by policy (SID 0020). Each HTTP request "
@@ -1953,11 +1985,11 @@ msgstr ""
 "``rate_limit``\\ "
 "が増えていればクライアントを調べる必要があります。レディネスのルートは、ノードがドレインしている間は503に変わります。"
 
-#: ../../edge.rst:467
+#: ../../edge.rst:413
 msgid "The Measured Result"
 msgstr "測定した結果"
 
-#: ../../edge.rst:470
+#: ../../edge.rst:416
 msgid ""
 "Part X compares the edge with HAProxy 3.0.11 on one host and on three. "
 "After SID 0024, with both proxies writing the same headers, Sibuna "
@@ -1976,15 +2008,15 @@ msgstr ""
 "usかかります。この目的のためだけに書かれたHAProxyのマルチプレクサーは52 "
 "usです。これを変えられるのはより安価なHTTP/2の経路だけで、SID 0017は私たちがそれを書いていない理由を記録しています。"
 
-#: ../../edge.rst:472
+#: ../../edge.rst:418
 msgid "Exercises"
 msgstr "演習"
 
-#: ../../edge.rst:475
+#: ../../edge.rst:421
 msgid "Exercise 8.1"
 msgstr "演習8.1"
 
-#: ../../edge.rst:477
+#: ../../edge.rst:423
 msgid ""
 "A pool has ten servers of equal weight, and one leaves. What fraction of "
 "flows moves under modulo hashing, under rendezvous hashing, and, from the "
@@ -1993,17 +2025,17 @@ msgid ""
 msgstr ""
 "プールに等しい重みのサーバーが十個あり、一つが離脱します。剰余によるハッシュ、ランデブーハッシュでは、それぞれフローのどれだけの割合が移るでしょうか。また、上で十個のサーバーについて報告した実行から、SibunaのMaglevテーブルではおよそどれだけでしょうか。次に、四つのプールにサーバーが一つ加わる場合について同じ問いに答えてください。"
 
-#: ../../edge.rst:479
+#: ../../edge.rst:425
 msgid ""
 "Hint: Use the Chinese remainder theorem for modulo hashing, and the "
 "minimum of the other distances for rendezvous hashing."
 msgstr "ヒント：剰余によるハッシュには中国剰余定理を、ランデブーハッシュには他の距離の最小値を使います。"
 
-#: ../../edge.rst:481
+#: ../../edge.rst:427
 msgid "Exercise 8.2"
 msgstr "演習8.2"
 
-#: ../../edge.rst:483
+#: ../../edge.rst:429
 msgid ""
 "A bounded-Maglev pool has servers ``a``, ``b`` and ``c`` with weights 2, "
 "1 and 1, ``load_factor_pct`` 125, and 19 active flows. Compute the bound "
@@ -2018,18 +2050,18 @@ msgstr ""
 "``b``\\ を指します。\\ ``a``\\ が9個、\\ ``c``\\ "
 "が3個持つとき、最少接続のフォールバックではフローはどこへ行くでしょうか。どれかのサーバーが常に上限未満であることを示してください。"
 
-#: ../../edge.rst:485
+#: ../../edge.rst:431
 msgid ""
 "Hint: The bound is :math:`\\lceil c (L+1) w_p / W \\rceil`, and the "
 "contradiction argument of the worked example applies with weights."
 msgstr ""
 "ヒント：上限は\\ :math:`\\lceil c (L+1) w_p / W \\rceil`\\ で、例題の背理法は重み付きでも成り立ちます。"
 
-#: ../../edge.rst:487
+#: ../../edge.rst:433
 msgid "Exercise 8.3"
 msgstr "演習8.3"
 
-#: ../../edge.rst:489
+#: ../../edge.rst:435
 msgid ""
 "An HTTP frontend has the request chain ``[tenant, score, authz]``: a "
 "native ``require_header`` hook, a Wasm hook with ``on_failure: "
@@ -2045,17 +2077,17 @@ msgstr ""
 "のエージェントです。エージェントのプロセスは停止しており、すべてのブレーカーが開いています。テナントのフィールドを運ぶリクエストの判定は何でしょうか。それを欠くリクエストではどうでしょうか。各リクエストは、エージェントのためにワーカーにどれだけのコストをかけるでしょうか。\\ "
 "``authz``\\ を\\ ``on_failure: \"admit\"``\\ と書くと何が変わるでしょうか。"
 
-#: ../../edge.rst:491
+#: ../../edge.rst:437
 msgid ""
 "Hint: Apply the outcome rule to each hook, then the chain rule. An open "
 "breaker costs no system call."
 msgstr "ヒント：各フックに結果の規則を適用し、次にチェーンの規則を適用します。開いたブレーカーはシステムコールのコストがかかりません。"
 
-#: ../../edge.rst:493
+#: ../../edge.rst:439
 msgid "Exercise 8.4"
 msgstr "演習8.4"
 
-#: ../../edge.rst:495
+#: ../../edge.rst:441
 msgid ""
 "A QUIC client sends one Initial of 1,200 bytes through a frontend with "
 "``udp_inspect: \"quic\"``, and the origin answers with eight datagrams of "
@@ -2068,30 +2100,30 @@ msgstr ""
 "のフロントエンドを通して1,200バイトのInitialを一つ送り、オリジンは1,200バイトのデータグラム八つで応答します。検証の前にクライアントに届くのはいくつでしょうか。クライアントのどのデータグラムがマッピングを検証するでしょうか。また、クライアントのアドレスを偽装する送信者がそれを作れないのはなぜでしょうか。Version "
 "Negotiationパケットから学ぶと論法が崩れるのはなぜでしょうか。"
 
-#: ../../edge.rst:497
+#: ../../edge.rst:443
 msgid ""
 "Hint: The bound is three times the bytes received. Compare what the "
 "origin chose with what the client chose."
 msgstr "ヒント：上限は受け取ったバイト数の3倍です。オリジンが選んだものとクライアントが選んだものを比べてください。"
 
-#: ../../edge.rst:499
+#: ../../edge.rst:445
 msgid "Limits"
 msgstr "制約"
 
-#: ../../edge.rst:502
+#: ../../edge.rst:448
 msgid ""
 "The known gaps of these records, and one consequence of the design, "
 "stated where an operator meets them:"
 msgstr "これらの記録の既知の欠落と、設計による帰結の一つを、運用者が出会う場所に記します。"
 
-#: ../../edge.rst:504
+#: ../../edge.rst:450
 msgid ""
 "*Ownership balances counts, not work.* A connection stays on the worker "
 "it was given; the assignment equalizes connection counts only."
 msgstr ""
 "*所有権が釣り合わせるのは数であって仕事ではない。*\\ 接続は与えられたワーカーに留まります。割り当てが等しくするのは接続数だけです。"
 
-#: ../../edge.rst:505
+#: ../../edge.rst:451
 msgid ""
 "*A reload that changes binds, the mesh roster or the spill section needs "
 "a restart.* Two reloads within the decision time of one request still "
@@ -2104,7 +2136,7 @@ msgstr ""
 "一つのリクエストの判断時間の中で二回の再読み込みが起こると、そのリクエストは引き続き拒否されます。また、再読み込みの後10秒以内に命じたドレインは、退いたリビジョンには届きません（SID "
 "0018）。実行時の変更は再起動をまたいで残らず、Maglevのプールが実行時に受け付けるのは\\ ``drain``\\ だけです。"
 
-#: ../../edge.rst:506
+#: ../../edge.rst:452
 msgid ""
 "*HTTP/2 runs on the runtime, not on the workers.* It carries 0.67 to 0.74 "
 "of HAProxy's rate on one host. HTTP/1.1 over TLS from a client that "
@@ -2121,7 +2153,7 @@ msgstr ""
 "0016）。ランタイムが使うスレッドは、\\ ``http.workers``\\ "
 "の値にかかわらず最大8個で、そのアイドルプールは一つのロックです。平文のHTTP/2クライアントからのgRPCは受け付けません。"
 
-#: ../../edge.rst:507
+#: ../../edge.rst:453
 msgid ""
 "*The choice of a server still writes shared memory:* reference counts and "
 "the chosen server's counters, about a microsecond per call under eight "
@@ -2132,7 +2164,7 @@ msgstr ""
 "参照カウントと、選ばれたサーバーのカウンターです。8スレッドの下で呼び出しあたり約1マイクロ秒です。同じ瞬間に選ぶ二つのリクエストが、同じ最も負荷の低いサーバーを取ることがあります。上限は引き続き守られます（SID "
 "0019）。"
 
-#: ../../edge.rst:508
+#: ../../edge.rst:454
 msgid ""
 "*Bounded loads with the pewma fallback are not a guarantee,* and the "
 "overflow is not placed consistently across nodes. The slot table of "
@@ -2141,7 +2173,7 @@ msgstr ""
 "*pewmaのフォールバックでの負荷上限は保証ではなく、*\\ "
 "あふれたフローはノード間で一貫して置かれません。ソースのスティッキネスのスロットテーブルの粒度は1,021スロットです。"
 
-#: ../../edge.rst:509
+#: ../../edge.rst:455
 msgid ""
 "*Failover cannot move everything.* A body longer than 64 KiB is streamed "
 "and cannot be sent again. A non-idempotent request to an HTTP/3 server "
@@ -2152,7 +2184,7 @@ msgstr ""
 "KiBより長いボディーはストリーミングされ、再送できません。HTTP/3サーバーへの非冪等なリクエストは、送信後に移ることはありません。クライアントライブラリが、私たちが読める形で拒否を報告しないからです（SID "
 "0019）。"
 
-#: ../../edge.rst:510
+#: ../../edge.rst:456
 msgid ""
 "*Admission at the socket is incomplete for TCP and UDP.* TCP and UDP "
 "frontends do not consult the ban table. Per-prefix byte budgets for UDP "
@@ -2169,7 +2201,7 @@ msgstr ""
 "ClientHelloと本物のそれは一つのクラスです。カーネルでの許可はLinuxにのみ実装されており、満杯のキューに対する\\ "
 "``backlog``\\ の効果は測定していません（SID 0032）。"
 
-#: ../../edge.rst:511
+#: ../../edge.rst:457
 msgid ""
 "*An agent call at the request stage holds its thread.* A QUIC "
 "connection's verdict does not stop its handshake. Parked flows cost two "
@@ -2183,7 +2215,7 @@ msgstr ""
 "QUIC接続の判定は、そのハンドシェイクを止めません。保留されたフローは、スレッド間の引き渡し二回分のコストがかかり、UDPのデータグラムを一つ保持し、どのメトリクスにも数えられません。各スレッドは自分のWasmインスタンスを持ち、再読み込みはすべてのインスタンスを作り直します。インタープリターはwasmiより2から3倍遅く、外部のレビューを受けていません。フックの測定は負荷のかかった機械で行いました（SID "
 "0030）。"
 
-#: ../../edge.rst:512
+#: ../../edge.rst:458
 msgid ""
 "*Observation has holes.* Chunk framing is not counted in ``bytes_in``; "
 "``tls_cipher`` is ``-`` for HTTP/3; a long-lived TCP connection writes "
@@ -2192,7 +2224,7 @@ msgstr ""
 "*観測には穴がある。*\\ チャンクのフレーミングは\\ ``bytes_in``\\ に数えられません。HTTP/3では\\ "
 "``tls_cipher``\\ は\\ ``-``\\ です。長く続くTCP接続は、終了時にだけ行を書きます（SID 0020）。"
 
-#: ../../edge.rst:513
+#: ../../edge.rst:459
 msgid ""
 "*Automatic HTTPS* has no bound per client for issuance on demand beyond "
 "its guards and its bucket; the local authority's ACME server has no limit "
@@ -2203,7 +2235,7 @@ msgstr ""
 "には、オンデマンドの発行について、ガードとバケット以外にクライアントごとの上限がありません。ローカルの認証局のACMEサーバーにはアドレスごとの制限がなく、注文を一つのノードのメモリに保持します。CloudflareのDNSプロバイダーは、実際のCloudflareに対して一度も実行していません（SID "
 "0021）。"
 
-#: ../../edge.rst:514
+#: ../../edge.rst:460
 msgid ""
 "*Scale is not yet qualified.* The flow table is configurable to one "
 "million entries; the ten-million-flow experiment and cooperative platform "
@@ -2213,3 +2245,149 @@ msgstr ""
 "*規模はまだ検証されていない。*\\ "
 "フローテーブルは100万エントリーまで設定できます。1,000万フローの実験と協調的なプラットフォームのバッチ処理は提案の段階にとどまり、SID "
 "0015の検証項目の一覧はすべて未完了です。"
+
+#~ msgid ""
+#~ "digraph edge_path {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", fontname=\"Helvetica\", "
+#~ "fontsize=9, nodesep=0.3, ranksep=0.32];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
+#~ "margin=\"0.1,0.05\"];\n"
+#~ "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
+#~ "fontcolor=\"#475569\", arrowsize=0.6];\n"
+#~ "  client [label=\"Client\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  kernel [label=\"Kernel listener\\ndefer_accept, backlog\"];\n"
+#~ "  edgew [label=\"Edge worker\\nconnection rate, flow "
+#~ "budget,\\nconnection hooks\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  inspect [label=\"TCP: ClientHello inspection\\nfive classes, "
+#~ "fallback\"];\n"
+#~ "  udp [label=\"UDP: QUIC screen,\\nmapping, reply bound\"];\n"
+#~ "  relay [label=\"Relay thread\\nbyte pipe\"];\n"
+#~ "  worker [label=\"HTTP worker\\nTLS for HTTP/1.1\", "
+#~ "fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
+#~ "  runtime [label=\"Protocol runtime\\nHTTP/2, HTTP/3\", "
+#~ "fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
+#~ "  decide [label=\"Bans, limiter, traffic policy,\\ngate or shield, "
+#~ "request hooks\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+#~ "  choose [label=\"Choose a server\\nfrom the snapshot\"];\n"
+#~ "  shared [label=\"Shared: routing snapshot,\\nserver loads, health "
+#~ "flags\", fillcolor=\"#f8fafc\", color=\"#64748b\"];\n"
+#~ "  server [label=\"Server\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  client -> kernel;\n"
+#~ "  kernel -> edgew;\n"
+#~ "  edgew -> inspect [label=\"tcp\"];\n"
+#~ "  edgew -> udp [label=\"udp\"];\n"
+#~ "  edgew -> worker [label=\"http, fewest\"];\n"
+#~ "  worker -> runtime [label=\"offers h2\"];\n"
+#~ "  inspect -> relay [label=\"reserve, connect\"];\n"
+#~ "  udp -> server;\n"
+#~ "  relay -> server;\n"
+#~ "  worker -> decide;\n"
+#~ "  runtime -> decide [label=\"Decide\"];\n"
+#~ "  decide -> choose;\n"
+#~ "  choose -> server [label=\"exchange\"];\n"
+#~ "  choose -> shared [style=dashed];\n"
+#~ "  inspect -> shared [style=dashed];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph edge_path {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", fontname=\"Helvetica\", "
+#~ "fontsize=9, nodesep=0.3, ranksep=0.32];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
+#~ "margin=\"0.1,0.05\"];\n"
+#~ "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
+#~ "fontcolor=\"#475569\", arrowsize=0.6];\n"
+#~ "  client [label=\"クライアント\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  kernel [label=\"カーネルのリスナー\\ndefer_accept, backlog\"];\n"
+#~ "  edgew [label=\"エッジワーカー\\n接続レート、フローの予算、\\n接続フック\", "
+#~ "fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
+#~ "  inspect [label=\"TCP：ClientHelloの検査\\n五つのクラス、フォールバック\"];\n"
+#~ "  udp [label=\"UDP：QUICの選別、\\nマッピング、応答の上限\"];\n"
+#~ "  relay [label=\"中継スレッド\\nバイトのパイプ\"];\n"
+#~ "  worker [label=\"HTTPワーカー\\nHTTP/1.1のTLS\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  runtime [label=\"プロトコルランタイム\\nHTTP/2、HTTP/3\", "
+#~ "fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
+#~ "  decide [label=\"禁止、リミッター、トラフィックポリシー、\\nゲートまたはシールド、リクエストフック\", "
+#~ "fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+#~ "  choose [label=\"スナップショットから\\nサーバーを選択\"];\n"
+#~ "  shared [label=\"共有：ルーティングスナップショット、\\nサーバーの負荷、ヘルスのフラグ\", "
+#~ "fillcolor=\"#f8fafc\", color=\"#64748b\"];\n"
+#~ "  server [label=\"サーバー\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
+#~ "  client -> kernel;\n"
+#~ "  kernel -> edgew;\n"
+#~ "  edgew -> inspect [label=\"tcp\"];\n"
+#~ "  edgew -> udp [label=\"udp\"];\n"
+#~ "  edgew -> worker [label=\"http、最少\"];\n"
+#~ "  worker -> runtime [label=\"h2を提示\"];\n"
+#~ "  inspect -> relay [label=\"予約、接続\"];\n"
+#~ "  udp -> server;\n"
+#~ "  relay -> server;\n"
+#~ "  worker -> decide;\n"
+#~ "  runtime -> decide [label=\"Decide\"];\n"
+#~ "  decide -> choose;\n"
+#~ "  choose -> server [label=\"交換\"];\n"
+#~ "  choose -> shared [style=dashed];\n"
+#~ "  inspect -> shared [style=dashed];\n"
+#~ "}"
+
+#~ msgid ""
+#~ "digraph server_states {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", fontname=\"Helvetica\", "
+#~ "fontsize=9, nodesep=0.3, ranksep=0.55];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
+#~ "margin=\"0.1,0.05\"];\n"
+#~ "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
+#~ "fontcolor=\"#475569\", arrowsize=0.6];\n"
+#~ "  service [label=\"In service\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  down [label=\"Down\\n(active probe)\"];\n"
+#~ "  ejected [label=\"Ejected\\n(passive health)\"];\n"
+#~ "  marked [label=\"Marked\\n(connect failed)\"];\n"
+#~ "  drained [label=\"Drained\\n(operator)\", fillcolor=\"#fffbeb\", "
+#~ "color=\"#b45309\"];\n"
+#~ "  ramp [label=\"Ramping\\n(slow start)\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  service -> down [label=\"fall failures\"];\n"
+#~ "  down -> ramp [label=\"rise passes\"];\n"
+#~ "  service -> ejected [label=\"failures in a row\"];\n"
+#~ "  ejected -> ramp [label=\"ejection ends\"];\n"
+#~ "  service -> marked [label=\"connect fails\"];\n"
+#~ "  marked -> ramp [label=\"2 s\"];\n"
+#~ "  service -> drained [label=\"set state drain\"];\n"
+#~ "  drained -> ramp [label=\"set state ready\"];\n"
+#~ "  ramp -> service [label=\"ramp ends\"];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph server_states {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", fontname=\"Helvetica\", "
+#~ "fontsize=9, nodesep=0.3, ranksep=0.55];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
+#~ "margin=\"0.1,0.05\"];\n"
+#~ "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
+#~ "fontcolor=\"#475569\", arrowsize=0.6];\n"
+#~ "  service [label=\"稼働中\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
+#~ "  down [label=\"ダウン\\n（アクティブプローブ）\"];\n"
+#~ "  ejected [label=\"除外\\n（パッシブヘルス）\"];\n"
+#~ "  marked [label=\"印付き\\n（接続確立の失敗）\"];\n"
+#~ "  drained [label=\"ドレイン済み\\n（運用者）\", fillcolor=\"#fffbeb\", "
+#~ "color=\"#b45309\"];\n"
+#~ "  ramp [label=\"ランプ中\\n（スロースタート）\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  service -> down [label=\"fall回の失敗\"];\n"
+#~ "  down -> ramp [label=\"rise回の成功\"];\n"
+#~ "  service -> ejected [label=\"連続した失敗\"];\n"
+#~ "  ejected -> ramp [label=\"除外の終了\"];\n"
+#~ "  service -> marked [label=\"接続確立の失敗\"];\n"
+#~ "  marked -> ramp [label=\"2 s\"];\n"
+#~ "  service -> drained [label=\"set state drain\"];\n"
+#~ "  drained -> ramp [label=\"set state ready\"];\n"
+#~ "  ramp -> service [label=\"ランプの終了\"];\n"
+#~ "}"

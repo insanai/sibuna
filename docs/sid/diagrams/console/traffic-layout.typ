@@ -49,7 +49,7 @@
   }
 }
 
-#let landing-page() = cetz.canvas(length: 1mm, {
+#let landing-page() = pad(4pt, cetz.canvas(length: 1mm, {
   import cetz.draw: *
   let H = 178
   let navy = rgb("102b46")
@@ -147,4 +147,4 @@
   }
   label(42,171,[Geo sample p = 1/64 · loss 0 · known country 96% · blue: traffic / red: attacks · table includes hidden hemisphere],size:5.6pt,color:muted)
   label(42,176,[Wireframe only · illustrative traffic and simplified geography · example data],size:5pt,color:muted)
-})
+}))

@@ -189,7 +189,7 @@ On a worker the server owes us bytes when the request body is complete and the c
 Failover
 ~~~~~~~~
 
-.. graphviz:: ../diagrams/failover.dot
+.. typst-diagram:: ../diagrams/failover.typ
    :caption: One request and its attempts. A server is tried once, and the count of attempts is bounded.
    :alt: A request selects a server. A failed connect, or a failed safe buffered request, selects another server that was not tried while attempts remain. Otherwise the client receives 502.
 
@@ -327,7 +327,7 @@ The choice of a server without a lock
 
 The routing table was one mutex, taken by every request for the choice of its server. Under contention the lock, not the choice, was the cost. Now a request reads an immutable snapshot.
 
-.. graphviz:: ../diagrams/snapshot.dot
+.. typst-diagram:: ../diagrams/snapshot.typ
    :caption: Writers build a snapshot under the mutex and raise the generation. A reader compares one number and uses the snapshot its thread already has.
    :alt: A reload or a command changes the master table under a mutex, builds a snapshot from it, stores it and raises a generation counter. Each worker thread keeps its own reference to a snapshot together with the generation it was read at. A request compares that generation with the counter. When they are equal it uses the cached snapshot without any lock. When they differ the thread takes the mutex once and fetches the new snapshot.
 

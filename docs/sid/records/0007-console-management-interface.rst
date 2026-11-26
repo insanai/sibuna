@@ -269,7 +269,7 @@ Non-Goals
 Architecture Overview
 ---------------------
 
-.. graphviz:: ../diagrams/modules.dot
+.. typst-diagram:: ../diagrams/modules.typ
    :caption: Proposed modules and runtime interfaces. The daemon owns database access; console work uses its bounded mailbox. Dashed telemetry reads do not take engine or request-state locks.
    :alt: The daemon apps/sibuna starts libs/console and passes counters to it, depends on libs/store, libs/policy, libs/crypto and libs/net, and issues SQL to Zaxonlite. libs/console uses the kernel libs/serve, embeds the wasm32 interface module apps/console-ui, sends storage and control requests to the daemon's mailbox, and reads the daemon's counters through atomic loads.
 

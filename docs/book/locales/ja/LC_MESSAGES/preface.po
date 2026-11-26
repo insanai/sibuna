@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,18 +22,31 @@ msgid "Preface"
 msgstr "序文"
 
 #: ../../preface.rst:4
-msgid "Why put another program in front of an application? Running two copies lets us keep serving while one restarts. Both copies are still vulnerable to an expensive request repeated a thousand times. Sibuna grew out of these two problems. This book asks what a program at the entrance can decide, what each decision costs, and how we can check that it was right."
-msgstr "なぜアプリケーションの手前にもう一つプログラムを置くのでしょうか。アプリケーションを2台で動かせば、片方が再起動しても運行情報を返せます。しかし、処理の重いリクエストが千回繰り返されれば、どちらのサーバーにも負担がかかります。Sibuna の出発点はこの二つの問題です。入口で何を判断できるか、その判断にどれだけのコストがかかり、結果をどう確かめるかを考えます。"
+msgid ""
+"Why put another program in front of an application? Running two copies "
+"lets us keep serving while one restarts. Both copies are still vulnerable "
+"to an expensive request repeated a thousand times. Sibuna grew out of "
+"these two problems. This book asks what a program at the entrance can "
+"decide, what each decision costs, and how we can check that it was right."
+msgstr ""
+"なぜアプリケーションの手前にもう一つプログラムを置くのでしょうか。アプリケーションを2台で動かせば、片方が再起動しても運行情報を返せます。しかし、処理の重いリクエストが千回繰り返されれば、どちらのサーバーにも負担がかかります。Sibuna "
+"の出発点はこの二つの問題です。入口で何を判断できるか、その判断にどれだけのコストがかかり、結果をどう確かめるかを考えます。"
 
 #: ../../preface.rst:6
-msgid "We begin with a journey that needs no knowledge of Rust, cryptography or configuration. In the design chapters we follow the same decisions into algorithms and code. The measurements and operating procedures come later, once we know what the system is trying to achieve."
-msgstr "最初の例を読むのに Rust や暗号、設定ファイルの知識はいりません。設計の章では、同じ判断をアルゴリズムやコードの中まで追います。システムの目的が分かったところで、測定と運用に進みます。"
+msgid ""
+"We begin with a journey that needs no knowledge of Rust, cryptography or "
+"configuration. In the design chapters we follow the same decisions into "
+"algorithms and code. The measurements and operating procedures come "
+"later, once we know what the system is trying to achieve."
+msgstr ""
+"最初の例を読むのに Rust "
+"や暗号、設定ファイルの知識はいりません。設計の章では、同じ判断をアルゴリズムやコードの中まで追います。システムの目的が分かったところで、測定と運用に進みます。"
 
-#: ../../preface.rst:20
+#: ../../preface.rst:8
 msgid "Sibuna 1.0.0-rc.3, November 2026"
 msgstr "Sibuna 1.0.0-rc.3、2026年11月"
 
-#: ../../preface.rst:22
+#: ../../preface.rst:10
 msgid ""
 "Sources, exercises, and reproducible measurements accompany the Sibuna "
 "repository."

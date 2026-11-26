@@ -1,40 +1,50 @@
 digraph edge_crates {
-  graph [rankdir=BT, bgcolor="transparent", fontname="Helvetica", fontsize=10, nodesep=0.32, ranksep=0.55];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fillcolor="#eff6ff", color="#1e40af", penwidth=1.0];
-  edge [color="#64748b", arrowsize=0.65];
+  graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.12, ranksep=0.42, pad=0.2, fontname="Helvetica", fontsize=9, fontcolor="#55665e"];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.9, height=0.32, margin="0.12,0.05"];
+  edge [color="#6a7c73", arrowsize=0.55, penwidth=0.9];
+
+  daemon [label=<cmd/sibuna<BR/><FONT POINT-SIZE="8" COLOR="#55665e">edge LB, WAF and console</FONT>>, color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c", penwidth=1.4];
+  console [label="sibuna-console"];
+  net [label="sibuna-net"];
+  jlv [label=<sibuna-jlv<BR/><FONT POINT-SIZE="8" COLOR="#55665e">off-path JLV/2<BR/>transform</FONT>>, color="#8f5512", fillcolor="#fbf4e4"];
+  cluster [label=<sibuna-cluster<BR/><FONT POINT-SIZE="8" COLOR="#55665e">ATDP, SWIM,<BR/>CRDT, CPF</FONT>>, color="#8f5512", fillcolor="#fbf4e4"];
+  storage [label=<sibuna-storage<BR/><FONT POINT-SIZE="8" COLOR="#55665e">SQLite or<BR/>PostgreSQL</FONT>>, color="#8f5512", fillcolor="#fbf4e4", shape=cylinder, style=filled];
+  policy [label="sibuna-policy"];
+  core [label="sibuna-core"];
 
   subgraph cluster_reusable {
-    label="Worker and schema crates";
-    style="dashed,rounded"; color="#94a3b8"; bgcolor="#f8fafc";
+    label="worker and schema crates"; labelloc=b; labeljust=r; style="dashed,rounded,filled"; color="#c3cec0"; fillcolor="#f7f6f1"; margin=8;
+    node [color="#176a4b"];
+    io [label=<sibuna-io<BR/><FONT POINT-SIZE="8" COLOR="#55665e">epoll, io_uring,<BR/>kqueue, IOCP</FONT>>];
+    kv [label=<sibuna-kv<BR/><FONT POINT-SIZE="8" COLOR="#55665e">worker RAM,<BR/>off-path mmap</FONT>>];
+    lb [label=<sibuna-lb<BR/><FONT POINT-SIZE="8" COLOR="#55665e">Maglev, P2C,<BR/>PROXY v2, SNI, JA4</FONT>>];
+    conf [label=<sibuna-conf<BR/><FONT POINT-SIZE="8" COLOR="#55665e">EdgeConfig<BR/>schema, JSON</FONT>>];
+    plugin [label=<sibuna-plugin<BR/><FONT POINT-SIZE="8" COLOR="#55665e">traits, fuel WASM,<BR/>SPOE</FONT>>];
+    node [color="#6a7c73"];
     crypto [label="sibuna-crypto"];
     cidr [label="sibuna-cidr"];
     store [label="sibuna-store"];
     http [label="sibuna-http"];
-    io [label="sibuna-io\n(epoll/io_uring/kqueue/IOCP)", fillcolor="#dcfce7", color="#15803d"];
-    kv [label="sibuna-kv\n(Worker RAM + off-path mmap)", fillcolor="#dcfce7", color="#15803d"];
-    lb [label="sibuna-lb\n(Maglev, P2C, PROXYv2, SNI/JA4)", fillcolor="#dcfce7", color="#15803d"];
-    conf [label="sibuna-conf\n(EdgeConfig Schema & JSON)", fillcolor="#dcfce7", color="#15803d"];
-    plugin [label="sibuna-plugin\n(Traits, Fuel WASM, SPOE)", fillcolor="#dcfce7", color="#15803d"];
   }
 
-  core [label="sibuna-core"];
-  policy [label="sibuna-policy"];
-  jlv [label="sibuna-jlv\n(Off-Path JLV/2 Transform)", fillcolor="#fef3c7", color="#b45309"];
-  net [label="sibuna-net"];
-  cluster [label="sibuna-cluster\n(ATDP, SWIM, CRDT, CPF)", fillcolor="#fef3c7", color="#b45309"];
-  storage [label="sibuna-storage\n(SQLite / PostgreSQL)"];
-  console [label="sibuna-console"];
-  daemon [label="cmd/sibuna\n(Edge LB + WAF + Console)", fillcolor="#ede9fe", color="#6d28d9"];
+  { rank=same; console; net; }
+  { rank=same; storage; cluster; jlv; }
+  { rank=same; policy; conf; lb; kv; io; plugin; }
+  { rank=same; core; cidr; crypto; http; store; }
 
-  kv -> crypto;
-  lb -> crypto; lb -> cidr;
-  conf -> cidr;
-  plugin -> http; plugin -> crypto;
-  policy -> core; policy -> cidr;
-  jlv -> conf;
-  net -> io; net -> lb; net -> http; net -> core;
-  cluster -> lb; cluster -> kv; cluster -> crypto; cluster -> core;
-  storage -> conf; storage -> policy; storage -> core;
+  daemon -> net [color="#176a4b", penwidth=1.2]; daemon -> cluster [color="#176a4b", penwidth=1.2];
+  daemon -> kv [color="#176a4b", penwidth=1.2]; daemon -> conf [color="#176a4b", penwidth=1.2];
+  daemon -> jlv [color="#176a4b", penwidth=1.2]; daemon -> plugin [color="#176a4b", penwidth=1.2];
+  daemon -> policy [color="#176a4b", penwidth=1.2]; daemon -> storage [color="#176a4b", penwidth=1.2];
+  daemon -> console [color="#176a4b", penwidth=1.2];
   console -> storage; console -> cluster; console -> jlv;
-  daemon -> net; daemon -> cluster; daemon -> kv; daemon -> conf; daemon -> jlv; daemon -> plugin; daemon -> policy; daemon -> storage; daemon -> console;
+  storage -> conf; storage -> policy; storage -> core;
+  cluster -> lb; cluster -> kv; cluster -> crypto; cluster -> core;
+  net -> io; net -> lb; net -> http; net -> core;
+  jlv -> conf;
+  policy -> core; policy -> cidr;
+  plugin -> http; plugin -> crypto;
+  conf -> cidr;
+  lb -> crypto; lb -> cidr;
+  kv -> crypto;
 }

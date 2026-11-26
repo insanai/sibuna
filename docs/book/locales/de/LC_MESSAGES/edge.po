@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 03:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -316,8 +316,8 @@ msgstr ""
 "achtmal. So bedient ein Server nie mehr als sein ``max_flows``. In "
 "``crates/lb/src/pool.rs``."
 
-#: ../../edge.rst:60 ../../edge.rst:145 ../../edge.rst:265
-#: ../../edge.rst:332 ../../edge.rst:378 ../../edge.rst:453
+#: ../../edge.rst:60 ../../edge.rst:112 ../../edge.rst:232
+#: ../../edge.rst:278 ../../edge.rst:324 ../../edge.rst:399
 msgid "Explain the invariant"
 msgstr "Die Invariante erklären"
 
@@ -382,92 +382,117 @@ msgstr ""
 
 #: ../../edge.rst:73
 msgid ""
-"digraph edge_path {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", fontname=\"Helvetica\", "
-"fontsize=9, nodesep=0.3, ranksep=0.32];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
-"margin=\"0.1,0.05\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#475569\", arrowsize=0.6];\n"
-"  client [label=\"Client\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
-"  kernel [label=\"Kernel listener\\ndefer_accept, backlog\"];\n"
-"  edgew [label=\"Edge worker\\nconnection rate, flow budget,\\nconnection "
-"hooks\", fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  inspect [label=\"TCP: ClientHello inspection\\nfive classes, "
-"fallback\"];\n"
-"  udp [label=\"UDP: QUIC screen,\\nmapping, reply bound\"];\n"
-"  relay [label=\"Relay thread\\nbyte pipe\"];\n"
-"  worker [label=\"HTTP worker\\nTLS for HTTP/1.1\", "
-"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  runtime [label=\"Protocol runtime\\nHTTP/2, HTTP/3\", "
-"fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  decide [label=\"Bans, limiter, traffic policy,\\ngate or shield, "
-"request hooks\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  choose [label=\"Choose a server\\nfrom the snapshot\"];\n"
-"  shared [label=\"Shared: routing snapshot,\\nserver loads, health "
-"flags\", fillcolor=\"#f8fafc\", color=\"#64748b\"];\n"
-"  server [label=\"Server\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
-"  client -> kernel;\n"
-"  kernel -> edgew;\n"
-"  edgew -> inspect [label=\"tcp\"];\n"
-"  edgew -> udp [label=\"udp\"];\n"
-"  edgew -> worker [label=\"http, fewest\"];\n"
-"  worker -> runtime [label=\"offers h2\"];\n"
-"  inspect -> relay [label=\"reserve, connect\"];\n"
-"  udp -> server;\n"
-"  relay -> server;\n"
-"  worker -> decide;\n"
-"  runtime -> decide [label=\"Decide\"];\n"
-"  decide -> choose;\n"
-"  choose -> server [label=\"exchange\"];\n"
-"  choose -> shared [style=dashed];\n"
-"  inspect -> shared [style=dashed];\n"
-"}"
+"// edge.rst: the path of a connection through a node. Each box is owned "
+"by one thread or\n"
+"// one group of threads; the dashed edges are the shared, read-mostly "
+"state.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#flow(\n"
+"  spacing: (6mm, 7mm),\n"
+"  party((1.5, 0), \"Client\", name: <client>),\n"
+"  step((1.5, 1), \"Kernel listener\", \"`defer_accept`, backlog\", name: "
+"<kernel>),\n"
+"  sibuna((1.5, 2), \"Edge worker\", \"connection rate, flow "
+"budget,\\nconnection hooks\", name: <edge>),\n"
+"  step((0, 3), \"TCP: ClientHello inspection\", \"five classes, "
+"fallback\", width: 36mm,\n"
+"    name: <inspect>),\n"
+"  step((1, 3), \"UDP: QUIC screen\", \"mapping, reply bound\", name: "
+"<udp>),\n"
+"  sibuna((2, 3), \"HTTP worker\", \"TLS for HTTP/1.1\", name: <worker>),\n"
+"  sibuna((3.7, 3), \"Protocol runtime\", \"HTTP/2, HTTP/3\", name: "
+"<runtime>),\n"
+"  step((0, 4), \"Relay thread\", \"byte pipe\", name: <relay>),\n"
+"  step((2.5, 4), \"Bans, limiter, traffic policy,\\ngate or shield, "
+"request hooks\", kind: \"decision\",\n"
+"    name: <decide>),\n"
+"  step((2.5, 5), \"Choose a server\", \"from the snapshot\", name: "
+"<choose>),\n"
+"  data((0, 5.5), \"Shared state\", \"routing snapshot, server "
+"loads,\\nhealth flags\", kind: \"quiet\",\n"
+"    name: <shared>),\n"
+"  party((1.5, 6.5), \"Server\", name: <server>),\n"
+"  edge(<client>, <kernel>, \"-|>\"),\n"
+"  edge(<kernel>, <edge>, \"-|>\"),\n"
+"  edge(<edge>, <inspect>, \"-|>\", say(\"TCP\"), label-side: right),\n"
+"  edge(<edge>, <udp>, \"-|>\", say(\"UDP\"), label-side: right, "
+"label-pos: 0.55),\n"
+"  main-edge(<edge>, <worker>, \"-|>\", say(\"HTTP, fewest\"), label-side: "
+"left),\n"
+"  edge(<worker>, <runtime>, \"-|>\", say(\"offers h2\"), label-side: "
+"left),\n"
+"  edge(<inspect>, <relay>, \"-|>\", say(\"reserve, connect\"), "
+"label-side: right),\n"
+"  main-edge(<worker>, <decide>, \"-|>\"),\n"
+"  edge(<runtime>, <decide>, \"-|>\", say(\"`Decide`\"), label-side: "
+"left),\n"
+"  main-edge(<decide>, <choose>, \"-|>\"),\n"
+"  edge(<relay>, <server>, \"-|>\"),\n"
+"  edge(<udp>, <server>, \"-|>\"),\n"
+"  main-edge(<choose>, <server>, \"-|>\", say(\"exchange\"), label-side: "
+"left),\n"
+"  edge(<inspect>, (-0.75, 3), (-0.75, 5.5), <shared>, \"-\", dash: "
+"\"dashed\"),\n"
+"  edge(<choose>, <shared>, \"-\", dash: \"dashed\", crossing: true),\n"
+")\n"
 msgstr ""
-"digraph edge_path {\n"
-"  graph [rankdir=TB, bgcolor=\"transparent\", fontname=\"Helvetica\", "
-"fontsize=9, nodesep=0.3, ranksep=0.32];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
-"margin=\"0.1,0.05\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#475569\", arrowsize=0.6];\n"
-"  client [label=\"Client\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
-"  kernel [label=\"Listener des Kernels\\ndefer_accept, backlog\"];\n"
-"  edgew [label=\"Edge-Worker\\nVerbindungsrate, "
-"Flussbudget,\\nVerbindungs-Hooks\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  inspect [label=\"TCP: ClientHello-Untersuchung\\nfünf Klassen, "
-"Ausweichweg\"];\n"
-"  udp [label=\"UDP: QUIC-Screening,\\nZuordnung, Antwortgrenze\"];\n"
-"  relay [label=\"Relay-Thread\\nByte-Röhre\"];\n"
-"  worker [label=\"HTTP-Worker\\nTLS für HTTP/1.1\", "
-"fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
-"  runtime [label=\"Protokoll-Laufzeit\\nHTTP/2, HTTP/3\", "
-"fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
-"  decide [label=\"Sperren, Begrenzer, Verkehrsrichtlinie,\\nGate oder "
-"Shield, Anfrage-Hooks\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
-"  choose [label=\"Server aus dem\\nSchnappschuss wählen\"];\n"
-"  shared [label=\"Gemeinsam: Routing-Schnappschuss,\\nServerlasten, "
-"Zustandsflags\", fillcolor=\"#f8fafc\", color=\"#64748b\"];\n"
-"  server [label=\"Server\", fillcolor=\"#ffffff\", color=\"#172033\"];\n"
-"  client -> kernel;\n"
-"  kernel -> edgew;\n"
-"  edgew -> inspect [label=\"tcp\"];\n"
-"  edgew -> udp [label=\"udp\"];\n"
-"  edgew -> worker [label=\"http, wenigste\"];\n"
-"  worker -> runtime [label=\"bietet h2 an\"];\n"
-"  inspect -> relay [label=\"reservieren, verbinden\"];\n"
-"  udp -> server;\n"
-"  relay -> server;\n"
-"  worker -> decide;\n"
-"  runtime -> decide [label=\"Decide\"];\n"
-"  decide -> choose;\n"
-"  choose -> server [label=\"Austausch\"];\n"
-"  choose -> shared [style=dashed];\n"
-"  inspect -> shared [style=dashed];\n"
-"}"
+"// edge.rst: the path of a connection through a node. Each box is owned "
+"by one thread or\n"
+"// one group of threads; the dashed edges are the shared, read-mostly "
+"state.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"de\")\n"
+"\n"
+"#flow(\n"
+"  spacing: (6mm, 7mm),\n"
+"  party((1.5, 0), \"Client\", name: <client>),\n"
+"  step((1.5, 1), \"Listener des Kernels\", \"`defer_accept`, Backlog\", "
+"name: <kernel>),\n"
+"  sibuna((1.5, 2), \"Edge-Worker\", \"Verbindungsrate, "
+"Flussbudget,\\nVerbindungs-Hooks\", name: <edge>),\n"
+"  step((0, 3), \"TCP: ClientHello-Untersuchung\", \"fünf Klassen, "
+"Ausweichweg\", width: 36mm,\n"
+"    name: <inspect>),\n"
+"  step((1, 3), \"UDP: QUIC-Screening\", \"Zuordnung, Antwortgrenze\", "
+"name: <udp>),\n"
+"  sibuna((2, 3), \"HTTP-Worker\", \"TLS für HTTP/1.1\", name: <worker>),\n"
+"  sibuna((3.7, 3), \"Protokoll-Laufzeit\", \"HTTP/2, HTTP/3\", name: "
+"<runtime>),\n"
+"  step((0, 4), \"Relay-Thread\", \"Byte-Röhre\", name: <relay>),\n"
+"  step((2.5, 4), \"Sperren, Begrenzer, Verkehrsrichtlinie,\\nGate oder "
+"Shield, Anfrage-Hooks\", kind: \"decision\",\n"
+"    name: <decide>),\n"
+"  step((2.5, 5), \"Server wählen\", \"aus dem Schnappschuss\", name: "
+"<choose>),\n"
+"  data((0, 5.5), \"Gemeinsamer Zustand\", \"Routing-Schnappschuss, "
+"Serverlasten,\\nZustandsflags\", kind: \"quiet\",\n"
+"    name: <shared>),\n"
+"  party((1.5, 6.5), \"Server\", name: <server>),\n"
+"  edge(<client>, <kernel>, \"-|>\"),\n"
+"  edge(<kernel>, <edge>, \"-|>\"),\n"
+"  edge(<edge>, <inspect>, \"-|>\", say(\"TCP\"), label-side: right),\n"
+"  edge(<edge>, <udp>, \"-|>\", say(\"UDP\"), label-side: right, "
+"label-pos: 0.55),\n"
+"  main-edge(<edge>, <worker>, \"-|>\", say(\"HTTP, wenigste\"), "
+"label-side: left),\n"
+"  edge(<worker>, <runtime>, \"-|>\", say(\"bietet h2 an\"), label-side: "
+"left),\n"
+"  edge(<inspect>, <relay>, \"-|>\", say(\"reservieren, verbinden\"), "
+"label-side: right),\n"
+"  main-edge(<worker>, <decide>, \"-|>\"),\n"
+"  edge(<runtime>, <decide>, \"-|>\", say(\"`Decide`\"), label-side: "
+"left),\n"
+"  main-edge(<decide>, <choose>, \"-|>\"),\n"
+"  edge(<relay>, <server>, \"-|>\"),\n"
+"  edge(<udp>, <server>, \"-|>\"),\n"
+"  main-edge(<choose>, <server>, \"-|>\", say(\"Austausch\"), label-side: "
+"left),\n"
+"  edge(<inspect>, (-0.75, 3), (-0.75, 5.5), <shared>, \"-\", dash: "
+"\"dashed\"),\n"
+"  edge(<choose>, <shared>, \"-\", dash: \"dashed\", crossing: true),\n"
+")\n"
 
 #: ../../edge.rst:73
 msgid ""
@@ -479,7 +504,7 @@ msgstr ""
 "Thread oder einer Gruppe von Threads; die gestrichelten Kanten sind der "
 "gemeinsame, überwiegend gelesene Zustand."
 
-#: ../../edge.rst:109
+#: ../../edge.rst:76
 msgid ""
 "A QUIC client of an HTTP/3 frontend does not pass the edge worker: the "
 "protocol runtime accepts it, applies the per-client bound through an "
@@ -491,11 +516,11 @@ msgstr ""
 "eine Zulassungsfunktion an und befragt die Verbindungs-Hooks, sobald der "
 "ClientHello gelesen ist (SID 0017, SID 0030)."
 
-#: ../../edge.rst:111
+#: ../../edge.rst:78
 msgid "Readiness and the Cost of Waiting"
 msgstr "Bereitschaft und die Kosten des Wartens"
 
-#: ../../edge.rst:114
+#: ../../edge.rst:81
 msgid ""
 "The edge starts one HTTP worker for each processor the process may use, "
 "up to 64. A worker is one thread with one poller (``epoll`` on Linux). "
@@ -514,7 +539,7 @@ msgstr ""
 "Arbeit, die diese Bytes erlauben, und kehrt in die Schleife zurück. Kein "
 "Thread wartet je auf einen langsamen Client."
 
-#: ../../edge.rst:116
+#: ../../edge.rst:83
 msgid ""
 "A connection is a record in the worker and a socket in the kernel. While "
 "it is idle it holds no buffer. When its socket becomes readable the "
@@ -539,7 +564,7 @@ msgstr ""
 "des Kernels, etwa 3,4 KiB vor jedem Puffer, ist dann der größere "
 "Kostenfaktor."
 
-#: ../../edge.rst:118
+#: ../../edge.rst:85
 msgid ""
 "The firewall decision did not become asynchronous. It needs no I/O, so it "
 "stays the synchronous function of the earlier Parts. The worker calls it "
@@ -564,11 +589,11 @@ msgstr ""
 "Antworten, im Ganzen, in zufälligen Stücken und byteweise eingespeist, "
 "sind die Bytes und die Ergebnisse gleich."
 
-#: ../../edge.rst:120
+#: ../../edge.rst:87
 msgid "Every resource has a bound, and every state has a deadline:"
 msgstr "Jede Ressource hat eine Grenze, und jeder Zustand hat eine Frist:"
 
-#: ../../edge.rst:122
+#: ../../edge.rst:89
 msgid ""
 "The worker reads from a socket only while the buffer toward the other "
 "side is below 64 KiB. A slow reader thereby stops the reads of its peer."
@@ -577,7 +602,7 @@ msgstr ""
 "anderen Seite unter 64 KiB liegt. Ein langsamer Leser hält damit das "
 "Lesen seines Gegenübers an."
 
-#: ../../edge.rst:123
+#: ../../edge.rst:90
 msgid ""
 "One readiness event reads each socket of a connection at most once, at "
 "most 64 KiB, and causes at most eight rounds of work. A bulk transfer "
@@ -588,7 +613,7 @@ msgstr ""
 "Massenübertragung kann die kleinen Anfragen desselben Workers nicht "
 "aushungern."
 
-#: ../../edge.rst:124
+#: ../../edge.rst:91
 msgid ""
 "A timer wheel with one-second slots holds one deadline per connection: "
 "the idle timeout, a slow head, a slow body, a connect of five seconds, "
@@ -599,7 +624,7 @@ msgstr ""
 "Verbindungsaufbau von fünf Sekunden, Schweigen des Servers, einen "
 "Schreibvorgang ohne Fortschritt."
 
-#: ../../edge.rst:125
+#: ../../edge.rst:92
 msgid ""
 "A connection serves at most 4,096 requests. A worker keeps at most 64 "
 "idle server sockets per address and 1,024 in all."
@@ -607,7 +632,7 @@ msgstr ""
 "Eine Verbindung bedient höchstens 4.096 Anfragen. Ein Worker hält "
 "höchstens 64 untätige Server-Sockets pro Adresse und insgesamt 1.024."
 
-#: ../../edge.rst:127
+#: ../../edge.rst:94
 msgid ""
 "With these workers, plaintext HTTP at 256 connections reached 229,139 "
 "requests per second against HAProxy's 243,864, which is 94%, with a 99th "
@@ -617,11 +642,11 @@ msgstr ""
 "229.139 Anfragen pro Sekunde gegenüber 243.864 bei HAProxy, also 94 %, "
 "mit einem 99. Perzentil von 2,60 ms (SID 0016)."
 
-#: ../../edge.rst:129
+#: ../../edge.rst:96
 msgid "Implementation: ``Workers::submit``"
 msgstr "Implementierung: ``Workers::submit``"
 
-#: ../../edge.rst:131
+#: ../../edge.rst:98
 msgid ""
 "Gives an accepted connection to the worker that serves the fewest "
 "connections, raises that worker's count and wakes its poller. The "
@@ -633,11 +658,11 @@ msgstr ""
 "Verbindung bleibt dann auf diesem Worker. In "
 "``cmd/sibuna/src/edge/workers.rs`` (Crate ``sibuna``)."
 
-#: ../../edge.rst:133
+#: ../../edge.rst:100
 msgid "One Hop Fewer for HTTP/2 and HTTP/3"
 msgstr "Ein Hop weniger für HTTP/2 und HTTP/3"
 
-#: ../../edge.rst:136
+#: ../../edge.rst:103
 msgid ""
 "HTTP/2 and HTTP/3 are terminated by a protocol runtime that uses "
 "maintained libraries (rustls, hyper, quinn with h3). At first the runtime "
@@ -655,7 +680,7 @@ msgstr ""
 "Laufzeit, bevor ein Worker die Anfrage sah, und weitere 30 us im Worker, "
 "um dieselbe Anfrage von einem Socket zu lesen und zu entscheiden."
 
-#: ../../edge.rst:138
+#: ../../edge.rst:105
 msgid ""
 "The repair is to call the decision as a function on the thread that "
 "decoded the stream. The ingress crate defines plain data, ``Offer`` (the "
@@ -687,11 +712,11 @@ msgstr ""
 "CONTINUATION-Fluten und HPACK-Expansion dann zu unserer eigenen Arbeit "
 "würde."
 
-#: ../../edge.rst:140
+#: ../../edge.rst:107
 msgid "TLS on the Workers"
 msgstr "TLS auf den Workern"
 
-#: ../../edge.rst:143
+#: ../../edge.rst:110
 msgid ""
 "HTTPS kept one crossing: the runtime ended TLS and copied the clear bytes "
 "to a worker through a socket pair. SID 0024 lets the worker end the TLS "
@@ -723,7 +748,7 @@ msgstr ""
 "Anfragen pro Sekunde, während HAProxy mit denselben Headern 153.080 "
 "schafft."
 
-#: ../../edge.rst:147
+#: ../../edge.rst:114
 msgid ""
 "\"A worker never waits for a peer.\" Explain how this sentence, together "
 "with the 64 KiB high-water mark, guarantees that a client which stops "
@@ -738,11 +763,11 @@ msgstr ""
 "einen Worker noch für einen Roundtrip festhält (siehe den Abschnitt über "
 "Hooks)."
 
-#: ../../edge.rst:149
+#: ../../edge.rst:116
 msgid "Choosing a Server"
 msgstr "Einen Server wählen"
 
-#: ../../edge.rst:152
+#: ../../edge.rst:119
 msgid ""
 "A new flow first filters the servers of its pool. A server is *eligible* "
 "when it is not the frontend's own address, not drained, healthy by its "
@@ -765,7 +790,7 @@ msgstr ""
 "wählbar ist. Backups werden nur gewählt, wenn kein primärer Server "
 "wählbar ist."
 
-#: ../../edge.rst:154
+#: ../../edge.rst:121
 msgid ""
 "Among the eligible servers the choice is made in a fixed order: a server "
 "named by a sticky cookie or by the learned table, then the server that "
@@ -784,11 +809,11 @@ msgstr ""
 "ganzzahligen Gewichten in Einheiten von 1/256, sodass Slow Start ein "
 "Gewicht in feinen Schritten senken kann."
 
-#: ../../edge.rst:156
+#: ../../edge.rst:123
 msgid "Weighted Round Robin"
 msgstr "Weighted Round Robin"
 
-#: ../../edge.rst:159
+#: ../../edge.rst:126
 msgid ""
 "Round robin is the smooth weighted round robin of nginx (SID 0019). Each "
 "eligible server holds a credit. At each choice every server gains its "
@@ -804,11 +829,11 @@ msgstr ""
 "Wahlen kehren die Guthaben zu ihrem Ausgangswert zurück, und Server "
 ":math:`i` wurde genau :math:`w_i`-mal gewählt."
 
-#: ../../edge.rst:161
+#: ../../edge.rst:128
 msgid "Worked example: three servers of weights 5, 1 and 1"
 msgstr "Durchgerechnetes Beispiel: drei Server mit den Gewichten 5, 1 und 1"
 
-#: ../../edge.rst:163
+#: ../../edge.rst:130
 msgid ""
 ":math:`W = 7`. All credits start at 0. The table shows the credits after "
 "the gain, the choice, and the chosen server's credit after it pays 7. "
@@ -819,116 +844,116 @@ msgstr ""
 "Servers, nachdem er 7 gezahlt hat. Bei Gleichstand gewinnt der erste "
 "Server."
 
-#: ../../edge.rst:166
+#: ../../edge.rst:133
 msgid "Step"
 msgstr "Schritt"
 
-#: ../../edge.rst:166
+#: ../../edge.rst:133
 msgid "a, b, c"
 msgstr ""
 
-#: ../../edge.rst:166
+#: ../../edge.rst:133
 msgid "Chosen"
 msgstr "Gewählt"
 
-#: ../../edge.rst:168
+#: ../../edge.rst:135
 msgid "1"
 msgstr ""
 
-#: ../../edge.rst:168
+#: ../../edge.rst:135
 msgid "5, 1, 1"
 msgstr ""
 
-#: ../../edge.rst:168 ../../edge.rst:169 ../../edge.rst:171
-#: ../../edge.rst:173 ../../edge.rst:174
+#: ../../edge.rst:135 ../../edge.rst:136 ../../edge.rst:138
+#: ../../edge.rst:140 ../../edge.rst:141
 msgid "a"
 msgstr ""
 
-#: ../../edge.rst:168
+#: ../../edge.rst:135
 msgid "-2, 1, 1"
 msgstr ""
 
-#: ../../edge.rst:169
+#: ../../edge.rst:136
 msgid "2"
 msgstr ""
 
-#: ../../edge.rst:169
+#: ../../edge.rst:136
 msgid "3, 2, 2"
 msgstr ""
 
-#: ../../edge.rst:169
+#: ../../edge.rst:136
 msgid "-4, 2, 2"
 msgstr ""
 
-#: ../../edge.rst:170
+#: ../../edge.rst:137
 msgid "3"
 msgstr ""
 
-#: ../../edge.rst:170
+#: ../../edge.rst:137
 msgid "1, 3, 3"
 msgstr ""
 
-#: ../../edge.rst:170
+#: ../../edge.rst:137
 msgid "b"
 msgstr ""
 
-#: ../../edge.rst:170
+#: ../../edge.rst:137
 msgid "1, -4, 3"
 msgstr ""
 
-#: ../../edge.rst:171
+#: ../../edge.rst:138
 msgid "4"
 msgstr ""
 
-#: ../../edge.rst:171
+#: ../../edge.rst:138
 msgid "6, -3, 4"
 msgstr ""
 
-#: ../../edge.rst:171
+#: ../../edge.rst:138
 msgid "-1, -3, 4"
 msgstr ""
 
-#: ../../edge.rst:172
+#: ../../edge.rst:139
 msgid "5"
 msgstr ""
 
-#: ../../edge.rst:172
+#: ../../edge.rst:139
 msgid "4, -2, 5"
 msgstr ""
 
-#: ../../edge.rst:172
+#: ../../edge.rst:139
 msgid "c"
 msgstr ""
 
-#: ../../edge.rst:172
+#: ../../edge.rst:139
 msgid "4, -2, -2"
 msgstr ""
 
-#: ../../edge.rst:173
+#: ../../edge.rst:140
 msgid "6"
 msgstr ""
 
-#: ../../edge.rst:173
+#: ../../edge.rst:140
 msgid "9, -1, -1"
 msgstr ""
 
-#: ../../edge.rst:173
+#: ../../edge.rst:140
 msgid "2, -1, -1"
 msgstr ""
 
-#: ../../edge.rst:174
+#: ../../edge.rst:141
 msgid "7"
 msgstr ""
 
-#: ../../edge.rst:174
+#: ../../edge.rst:141
 msgid "7, 0, 0"
 msgstr ""
 
-#: ../../edge.rst:174
+#: ../../edge.rst:141
 msgid "0, 0, 0"
 msgstr ""
 
-#: ../../edge.rst:177
+#: ../../edge.rst:144
 msgid ""
 "The sequence is ``a a b a c a a``: five turns for ``a``, one each for "
 "``b`` and ``c``, and the light servers are spread between the heavy "
@@ -940,11 +965,11 @@ msgstr ""
 "Servers verteilt, statt sich am Ende zu ballen. Die Guthaben nach Schritt "
 "7 sind die des Anfangs, sodass sich das Muster wiederholt."
 
-#: ../../edge.rst:179
+#: ../../edge.rst:146
 msgid "Least Connections and Two Choices"
 msgstr "Least Connections und zwei Wahlen"
 
-#: ../../edge.rst:182
+#: ../../edge.rst:149
 msgid ""
 "Weighted least connections, the default of a standalone pool, chooses the "
 "server with the fewest active flows per unit of weight. The comparison "
@@ -961,7 +986,7 @@ msgstr ""
 "zugelassenen Anfragen aufgelöst, wieder pro Gewichtseinheit, und ein "
 "Backup rangiert immer hinter einem primären Server."
 
-#: ../../edge.rst:184
+#: ../../edge.rst:151
 msgid ""
 "The power of two choices with a peak-weighted moving latency "
 "(``p2c_pewma``) hashes the flow to two distinct eligible servers and "
@@ -982,11 +1007,11 @@ msgstr ""
 "für jede Sekunde ohne Stichprobe auf halbem Weg zurück zu ihrem Ruhewert "
 "von 1 ms."
 
-#: ../../edge.rst:186
+#: ../../edge.rst:153
 msgid "Consistent Hashing: the Problem"
 msgstr "Konsistentes Hashing: das Problem"
 
-#: ../../edge.rst:189
+#: ../../edge.rst:156
 msgid ""
 "Several nodes of a cluster should send the same flow to the same server "
 "without talking to each other, and a change of the server set should move "
@@ -999,11 +1024,11 @@ msgstr ""
 "Server :math:`h \\bmod N` für einen Flusshash :math:`h`, verfehlt die "
 "zweite Anforderung deutlich."
 
-#: ../../edge.rst:191
+#: ../../edge.rst:158
 msgid "Worked example: one of five servers leaves"
 msgstr "Durchgerechnetes Beispiel: einer von fünf Servern scheidet aus"
 
-#: ../../edge.rst:193
+#: ../../edge.rst:160
 msgid ""
 "Under modulo hashing, a flow with hash :math:`h` goes to position "
 ":math:`h \\bmod 5`, and after the departure to position :math:`h \\bmod "
@@ -1030,7 +1055,7 @@ msgstr ""
 "mussten. Allgemein behält ein Schritt von :math:`N` auf :math:`N - 1` "
 "Server :math:`(N-1)/(N(N-1)) = 1/N` der Flüsse."
 
-#: ../../edge.rst:195
+#: ../../edge.rst:162
 msgid ""
 "A consistent method moves only the departed server's flows: :math:`1/5 = "
 "20\\%`. Rendezvous hashing, below, achieves exactly that. Sibuna's Maglev "
@@ -1058,11 +1083,11 @@ msgstr ""
 "Servern hielt der ausgeschiedene 9,999 % bis 10,000 % der Slots, und 120 "
 "bis 181 weitere Slots, 0,18 % bis 0,28 %, wechselten den Besitzer."
 
-#: ../../edge.rst:197
+#: ../../edge.rst:164
 msgid "Maglev as Sibuna Builds It"
 msgstr "Maglev, wie Sibuna es baut"
 
-#: ../../edge.rst:200
+#: ../../edge.rst:167
 msgid ""
 "Maglev (Eisenbud et al., 2016) fills a lookup table of :math:`M` slots. "
 "Each server derives two numbers from its name, an offset and a stride, "
@@ -1090,11 +1115,11 @@ msgstr ""
 "und die Clientadresse mit ihrem Port gehasht werden: ein Hash und ein "
 "Speicherzugriff."
 
-#: ../../edge.rst:202
+#: ../../edge.rst:169
 msgid "Implementation: ``Table::build`` and ``Table::primary``"
 msgstr "Implementierung: ``Table::build`` und ``Table::primary``"
 
-#: ../../edge.rst:204
+#: ../../edge.rst:171
 msgid ""
 "``build`` fills the 65,537 slots from servers in stable name order, "
 "skipping backups, with smooth weighted turns. ``primary`` hashes the "
@@ -1107,7 +1132,7 @@ msgstr ""
 "Client-Endpunkt, IPv4 in IPv6 abgebildet, auf einen Slot. In "
 "``crates/lb/src/maglev.rs``."
 
-#: ../../edge.rst:206
+#: ../../edge.rst:173
 msgid ""
 "for _ in 0..SIZE {\n"
 "    let mut best = 0;\n"
@@ -1127,7 +1152,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:225
+#: ../../edge.rst:192
 msgid ""
 "Every node builds the same table from the same file, so every node sends "
 "a flow with the same addresses to the same server. This is why the "
@@ -1146,11 +1171,11 @@ msgstr ""
 "jeder Knoten Server ohnehin nach seinen eigenen Zustandsprüfungen "
 "ausschließt."
 
-#: ../../edge.rst:227
+#: ../../edge.rst:194
 msgid "Bounded Loads"
 msgstr "Beschränkte Lasten"
 
-#: ../../edge.rst:230
+#: ../../edge.rst:197
 msgid ""
 "A hash spreads flows evenly only on average. A popular client range can "
 "still crowd one server. Consistent hashing with bounded loads (Mirrokni, "
@@ -1169,11 +1194,11 @@ msgstr ""
 "und :math:`a_p` die des Primärservers :math:`p`. Der neue Fluss geht an "
 "den Primärserver, wenn dieser wählbar ist und"
 
-#: ../../edge.rst:232
+#: ../../edge.rst:199
 msgid "a_p < \\left\\lceil \\frac{c\\,(L + 1)\\, w_p}{W} \\right\\rceil,"
 msgstr ""
 
-#: ../../edge.rst:236
+#: ../../edge.rst:203
 msgid ""
 "with :math:`c` given in percent as ``load_factor_pct`` (125 by default, "
 "at least 100). Otherwise the flow goes to the pool's fallback: weighted "
@@ -1185,11 +1210,11 @@ msgstr ""
 "Ausweichweg des Pools: Weighted Least Connections oder Power of Two "
 "Choices, wenn ``fallback`` den Wert ``pewma`` hat."
 
-#: ../../edge.rst:238
+#: ../../edge.rst:205
 msgid "Worked example: the bound with c = 1.25"
 msgstr "Durchgerechnetes Beispiel: die Grenze mit c = 1,25"
 
-#: ../../edge.rst:240
+#: ../../edge.rst:207
 msgid ""
 "Four servers of equal weight hold :math:`L = 99` flows, and a hundredth "
 "arrives. The bound is :math:`\\lceil 1.25 \\times 100 / 4 \\rceil = "
@@ -1211,7 +1236,7 @@ msgstr ""
 "1.25 \\times 40 \\times 3/4 \\rceil = \\lceil 37.5 \\rceil = 38` und "
 ":math:`\\lceil 1.25 \\times 40 / 4 \\rceil = \\lceil 12.5 \\rceil = 13`."
 
-#: ../../edge.rst:242
+#: ../../edge.rst:209
 msgid ""
 "The overflow always finds a server below its bound. Suppose every server "
 ":math:`i` held at least :math:`c(L+1)w_i/W` flows. Summing over the "
@@ -1224,7 +1249,7 @@ msgstr ""
 "Mit :math:`c = 1.25` und vier gleichen Servern können höchstens drei "
 "gleichzeitig an der Grenze stehen."
 
-#: ../../edge.rst:244
+#: ../../edge.rst:211
 msgid ""
 "With the least-connections fallback, and all servers eligible, one "
 "admission keeps every server within its cap: the hash path admits only "
@@ -1254,11 +1279,11 @@ msgstr ""
 "nächsten Server einer konsistenten Reihenfolge weiter, sodass zwei Knoten "
 "einen überlaufenden Fluss auf verschiedene Server setzen können."
 
-#: ../../edge.rst:246
+#: ../../edge.rst:213
 msgid "Rendezvous Hashing for Source Stickiness"
 msgstr "Rendezvous-Hashing für Quell-Stickiness"
 
-#: ../../edge.rst:249
+#: ../../edge.rst:216
 msgid ""
 "A pool with ``sticky: \"source\"`` sends each client address to the same "
 "server. It uses weighted rendezvous hashing (SID 0019). For client "
@@ -1270,11 +1295,11 @@ msgstr ""
 "Für Client :math:`x` und Server :math:`i` liefert der Hash eine Zahl "
 ":math:`u_i \\in (0, 1]`, und der *Abstand* ist"
 
-#: ../../edge.rst:251
+#: ../../edge.rst:218
 msgid "d_i = \\frac{-\\log_2 u_i}{w_i}."
 msgstr ""
 
-#: ../../edge.rst:255
+#: ../../edge.rst:222
 msgid ""
 "The client goes to the nearest eligible server. The choice follows the "
 "weights exactly. Since :math:`-\\ln u_i` is exponentially distributed "
@@ -1293,7 +1318,7 @@ msgstr ""
 ":math:`i` angenommen. Die Basis des Logarithmus ändert alle Abstände um "
 "denselben Faktor und keine Rangfolge."
 
-#: ../../edge.rst:257
+#: ../../edge.rst:224
 msgid ""
 "The disruption is exactly the minimum. When server :math:`k` leaves, a "
 "client whose nearest server was not :math:`k` keeps it, because removing "
@@ -1312,7 +1337,7 @@ msgstr ""
 "und vergleicht :math:`d_i < d_j` als :math:`c_i w_j < c_j w_i` ohne "
 "Division."
 
-#: ../../edge.rst:259
+#: ../../edge.rst:226
 msgid ""
 "Ranking every server for every request costs one hash and one logarithm "
 "per server. So the pool precomputes a table of 1,021 slots. A client "
@@ -1337,11 +1362,11 @@ msgstr ""
 "Gewicht 1 in einem Pool mit Gewicht 1.000 bedient einen Slot, nicht ein "
 "Tausendstel der Clients."
 
-#: ../../edge.rst:261
+#: ../../edge.rst:228
 msgid "Implementation: ``Pool::home`` and ``sticky::distance``"
 msgstr "Implementierung: ``Pool::home`` und ``sticky::distance``"
 
-#: ../../edge.rst:263
+#: ../../edge.rst:230
 msgid ""
 "``home`` hashes the client to a slot and returns the first eligible "
 "server of the slot's four, falling back to ranking the pool. ``distance`` "
@@ -1355,7 +1380,7 @@ msgstr ""
 "\\log_2(\\mathrm{draw})` mit ihrem Gewicht. In "
 "``crates/lb/src/pool/extra.rs`` und ``crates/lb/src/sticky.rs``."
 
-#: ../../edge.rst:267
+#: ../../edge.rst:234
 msgid ""
 "Rendezvous hashing moves exactly the departed server's clients; the "
 "Maglev table moves them and about 0.1% more. Explain where the excess "
@@ -1370,11 +1395,11 @@ msgstr ""
 "aber, die morgen denselben Server finden müssen, Rendezvous-Hashing "
 "verwendet."
 
-#: ../../edge.rst:269
+#: ../../edge.rst:236
 msgid "Health, Slow Start, Draining and Failover"
 msgstr "Zustand, Slow Start, Draining und Failover"
 
-#: ../../edge.rst:272
+#: ../../edge.rst:239
 msgid ""
 "A server can be out of rotation for five reasons, and each has its own "
 "way back. Active probes and passive health judge the server; a failed "
@@ -1387,7 +1412,7 @@ msgstr ""
 "Verbindungsaufbau beurteilt einen Versuch; ein Draining ist das Wort des "
 "Betreibers; Slow Start regelt die Rückkehr."
 
-#: ../../edge.rst:275
+#: ../../edge.rst:242
 msgid ""
 "In service leads to Down after fall failed probes, to Ejected after "
 "consecutive request failures, to Marked after a failed connect, and to "
@@ -1404,65 +1429,83 @@ msgstr ""
 "nach zwei Sekunden, „Im Draining“ bei erneuter Zulassung. Jede Rückkehr "
 "führt zu „Hochfahren“, das nach der Rampe zu „In Betrieb“ führt."
 
-#: ../../edge.rst:275
+#: ../../edge.rst:242
 msgid ""
-"digraph server_states {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", fontname=\"Helvetica\", "
-"fontsize=9, nodesep=0.3, ranksep=0.55];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
-"margin=\"0.1,0.05\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#475569\", arrowsize=0.6];\n"
-"  service [label=\"In service\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  down [label=\"Down\\n(active probe)\"];\n"
-"  ejected [label=\"Ejected\\n(passive health)\"];\n"
-"  marked [label=\"Marked\\n(connect failed)\"];\n"
-"  drained [label=\"Drained\\n(operator)\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  ramp [label=\"Ramping\\n(slow start)\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  service -> down [label=\"fall failures\"];\n"
-"  down -> ramp [label=\"rise passes\"];\n"
-"  service -> ejected [label=\"failures in a row\"];\n"
-"  ejected -> ramp [label=\"ejection ends\"];\n"
-"  service -> marked [label=\"connect fails\"];\n"
-"  marked -> ramp [label=\"2 s\"];\n"
-"  service -> drained [label=\"set state drain\"];\n"
-"  drained -> ramp [label=\"set state ready\"];\n"
-"  ramp -> service [label=\"ramp ends\"];\n"
-"}"
+"// edge.rst: the life of a server in a pool. Only \"In service\" and "
+"\"Ramping\" take new\n"
+"// flows; slow start applies when it is configured.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"en\")\n"
+"\n"
+"#flow(\n"
+"  spacing: (30mm, 5mm),\n"
+"  state((0, 1.5), \"In service\", kind: \"good\", name: <service>),\n"
+"  state((1, 0), \"Down\", \"active probe\", name: <down>),\n"
+"  state((1, 1), \"Ejected\", \"passive health\", name: <ejected>),\n"
+"  state((1, 2), \"Marked\", \"connect failed\", name: <marked>),\n"
+"  state((1, 3), \"Drained\", \"operator\", kind: \"wait\", name: "
+"<drained>),\n"
+"  state((2, 1.5), \"Ramping\", \"slow start\", kind: \"good\", name: "
+"<ramp>),\n"
+"  edge(<service>, <down>, \"-|>\", say(\"`fall` failures\"), label-side: "
+"left),\n"
+"  edge(<service>, <ejected>, \"-|>\", say(\"failures in a row\"), "
+"label-side: left),\n"
+"  edge(<service>, <marked>, \"-|>\", say(\"connect fails\"), label-side: "
+"right),\n"
+"  edge(<service>, <drained>, \"-|>\", say(\"`set state drain`\"), "
+"label-side: right),\n"
+"  edge(<down>, <ramp>, \"-|>\", say(\"`rise` passes\"), label-side: "
+"left),\n"
+"  edge(<ejected>, <ramp>, \"-|>\", say(\"ejection ends\"), label-side: "
+"left),\n"
+"  edge(<marked>, <ramp>, \"-|>\", say(\"2 s\"), label-side: right),\n"
+"  edge(<drained>, <ramp>, \"-|>\", say(\"`set state ready`\"), "
+"label-side: right),\n"
+"  main-edge(<ramp>, (2, 4), (0, 4), <service>, \"-|>\", say(\"ramp "
+"ends\"),\n"
+"    label-pos: 0.5, label-side: left, corner-radius: 6pt),\n"
+")\n"
 msgstr ""
-"digraph server_states {\n"
-"  graph [rankdir=LR, bgcolor=\"transparent\", fontname=\"Helvetica\", "
-"fontsize=9, nodesep=0.3, ranksep=0.55];\n"
-"  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
-"fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
-"margin=\"0.1,0.05\"];\n"
-"  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
-"fontcolor=\"#475569\", arrowsize=0.6];\n"
-"  service [label=\"In Betrieb\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  down [label=\"Ausgefallen\\n(aktive Prüfung)\"];\n"
-"  ejected [label=\"Ausgeschlossen\\n(passive Zustandsprüfung)\"];\n"
-"  marked [label=\"Markiert\\n(Verbindungsaufbau fehlgeschlagen)\"];\n"
-"  drained [label=\"Im Draining\\n(Betreiber)\", fillcolor=\"#fffbeb\", "
-"color=\"#b45309\"];\n"
-"  ramp [label=\"Hochfahren\\n(Slow Start)\", fillcolor=\"#f0fdf4\", "
-"color=\"#15803d\"];\n"
-"  service -> down [label=\"fall Fehlschläge\"];\n"
-"  down -> ramp [label=\"rise bestanden\"];\n"
-"  service -> ejected [label=\"Fehlschläge in Folge\"];\n"
-"  ejected -> ramp [label=\"Ausschluss endet\"];\n"
-"  service -> marked [label=\"Verbindungsaufbau scheitert\"];\n"
-"  marked -> ramp [label=\"2 s\"];\n"
-"  service -> drained [label=\"set state drain\"];\n"
-"  drained -> ramp [label=\"set state ready\"];\n"
-"  ramp -> service [label=\"Rampe endet\"];\n"
-"}"
+"// edge.rst: the life of a server in a pool. Only \"In service\" and "
+"\"Ramping\" take new\n"
+"// flows; slow start applies when it is configured.\n"
+"#import \"style.typ\": *\n"
+"#show: figure-frame.with(lang: \"de\")\n"
+"\n"
+"#flow(\n"
+"  spacing: (30mm, 5mm),\n"
+"  state((0, 1.5), \"In Betrieb\", kind: \"good\", name: <service>),\n"
+"  state((1, 0), \"Ausgefallen\", \"aktive Prüfung\", name: <down>),\n"
+"  state((1, 1), \"Ausgeschlossen\", \"passive Zustandsprüfung\", name: "
+"<ejected>),\n"
+"  state((1, 2), \"Markiert\", \"Verbindungsaufbau fehlgeschlagen\", name: "
+"<marked>),\n"
+"  state((1, 3), \"Im Draining\", \"Betreiber\", kind: \"wait\", name: "
+"<drained>),\n"
+"  state((2, 1.5), \"Hochfahren\", \"Slow Start\", kind: \"good\", name: "
+"<ramp>),\n"
+"  edge(<service>, <down>, \"-|>\", say(\"`fall` Fehlschläge\"), "
+"label-side: left),\n"
+"  edge(<service>, <ejected>, \"-|>\", say(\"Fehlschläge in Folge\"), "
+"label-side: left),\n"
+"  edge(<service>, <marked>, \"-|>\", say(\"Verbindungsaufbau "
+"scheitert\"), label-side: right),\n"
+"  edge(<service>, <drained>, \"-|>\", say(\"`set state drain`\"), "
+"label-side: right),\n"
+"  edge(<down>, <ramp>, \"-|>\", say(\"`rise` bestanden\"), label-side: "
+"left),\n"
+"  edge(<ejected>, <ramp>, \"-|>\", say(\"Ausschluss endet\"), label-side: "
+"left),\n"
+"  edge(<marked>, <ramp>, \"-|>\", say(\"2 s\"), label-side: right),\n"
+"  edge(<drained>, <ramp>, \"-|>\", say(\"`set state ready`\"), "
+"label-side: right),\n"
+"  main-edge(<ramp>, (2, 4), (0, 4), <service>, \"-|>\", say(\"Rampe "
+"endet\"),\n"
+"    label-pos: 0.5, label-side: left, corner-radius: 6pt),\n"
+")\n"
 
-#: ../../edge.rst:275
+#: ../../edge.rst:242
 msgid ""
 "The life of a server in a pool. Only \"In service\" and \"Ramping\" take "
 "new flows; slow start applies when it is configured."
@@ -1470,7 +1513,7 @@ msgstr ""
 "Das Leben eines Servers in einem Pool. Nur „In Betrieb“ und „Hochfahren“ "
 "nehmen neue Flüsse an; Slow Start gilt, wenn es konfiguriert ist."
 
-#: ../../edge.rst:299
+#: ../../edge.rst:245
 msgid ""
 "*Active probes* connect, or send ``GET``, at an interval. A server starts "
 "in service, leaves after ``fall`` failures in a row and returns after "
@@ -1505,7 +1548,7 @@ msgstr ""
 "laufen. Ein Draining überdauert ein Neuladen, solange die Datei den "
 "Server noch unter derselben Adresse nennt (SID 0018)."
 
-#: ../../edge.rst:301
+#: ../../edge.rst:247
 msgid ""
 "*Slow start* gives a returning server a ramp :math:`R`. A server of "
 "configured weight :math:`W` that entered service :math:`t` ago has the "
@@ -1515,7 +1558,7 @@ msgstr ""
 "Server mit konfiguriertem Gewicht :math:`W`, der vor :math:`t` in Betrieb "
 "gegangen ist, hat in Einheiten von 1/256 das effektive Gewicht"
 
-#: ../../edge.rst:303
+#: ../../edge.rst:249
 msgid ""
 "w(t) = \\max\\left(1, \\left\\lfloor \\frac{256\\, W\\, t}{R} "
 "\\right\\rfloor\\right) \\text{ for } t < R, \\qquad w(t) = 256\\, W "
@@ -1525,7 +1568,7 @@ msgstr ""
 "\\right\\rfloor\\right) \\text{ für } t < R, \\qquad w(t) = 256\\, W "
 "\\text{ sonst.}"
 
-#: ../../edge.rst:307
+#: ../../edge.rst:253
 msgid ""
 "The weight is never zero, never above the configured weight, and never "
 "decreases while the server stays in service. Servers first seen together, "
@@ -1545,11 +1588,11 @@ msgstr ""
 "Gewicht 4 bei vollem Gewicht (1.024 Einheiten) gibt ihm Round Robin "
 ":math:`256/1280 = 20\\%` der Runden statt 50 %."
 
-#: ../../edge.rst:309
+#: ../../edge.rst:255
 msgid "Failover"
 msgstr "Failover"
 
-#: ../../edge.rst:312
+#: ../../edge.rst:258
 msgid ""
 "A request moves to another server only when sending it twice does no "
 "harm. A failed connect may always move: the server received nothing. "
@@ -1565,11 +1608,11 @@ msgstr ""
 "HTTP/3-Clients der Laufzeit fragen alle sie, sodass sie nicht "
 "auseinanderdriften können (SID 0019)."
 
-#: ../../edge.rst:314
+#: ../../edge.rst:260
 msgid "Implementation: ``recover``"
 msgstr "Implementierung: ``recover``"
 
-#: ../../edge.rst:316
+#: ../../edge.rst:262
 msgid ""
 "Decides what follows the loss of a server after the connection was made: "
 "reconnect to the same server, move to another, or fail. In "
@@ -1579,7 +1622,7 @@ msgstr ""
 "folgt: erneute Verbindung zum selben Server, Umzug zu einem anderen oder "
 "Fehlschlag. In ``crates/net/src/route.rs`` (Crate ``sibuna-net``)."
 
-#: ../../edge.rst:318
+#: ../../edge.rst:264
 msgid ""
 "pub fn recover(lost: Lost) -> Recovery {\n"
 "    if !(lost.unanswered && lost.kept && (lost.idempotent || "
@@ -1593,7 +1636,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:330
+#: ../../edge.rst:276
 msgid ""
 "A request is sent again only while no response byte arrived, only when "
 "the node still holds all of it (a body of at most 64 KiB that ended "
@@ -1619,7 +1662,7 @@ msgstr ""
 "Anfrage versucht daher keinen Server zweimal und höchstens ``retries + "
 "1`` Server."
 
-#: ../../edge.rst:334
+#: ../../edge.rst:280
 msgid ""
 "A ``POST`` with a 2 KiB body loses its server after the request was "
 "written and before any response byte. Trace ``recover`` and explain why "
@@ -1634,11 +1677,11 @@ msgstr ""
 "Server mit HTTP/2 ``REFUSED_STREAM`` geantwortet hat, und erneut "
 "nachverfolgen."
 
-#: ../../edge.rst:336
+#: ../../edge.rst:282
 msgid "Admission at the Socket"
 msgstr "Zulassung am Socket"
 
-#: ../../edge.rst:339
+#: ../../edge.rst:285
 msgid ""
 "An application filter can shed work only after the traffic reaches the "
 "host. The cheapest refusal is therefore the earliest one, and SID 0015 "
@@ -1650,7 +1693,7 @@ msgstr ""
 "und SID 0015 ordnet die Stufen so, dass jede weniger kostet als die "
 "nächste. SID 0032 hat sie für TCP- und UDP-Frontends vervollständigt."
 
-#: ../../edge.rst:341
+#: ../../edge.rst:287
 msgid ""
 "*Kernel listener admission.* ``defer_accept`` sets ``TCP_DEFER_ACCEPT`` "
 "on Linux: the kernel gives the node a connection only when its first "
@@ -1667,7 +1710,7 @@ msgstr ""
 "Privilegien; lehnt die Plattform eines ab, vermerkt der Knoten "
 "``EDGE013`` und arbeitet ohne."
 
-#: ../../edge.rst:342
+#: ../../edge.rst:288
 msgid ""
 "*Connection rate.* ``rate_limit.conn_per_10s`` per source IPv4 address or "
 "IPv6 /64, and ``udp_defense.threshold_pps`` for datagrams."
@@ -1675,7 +1718,7 @@ msgstr ""
 "*Verbindungsrate.* ``rate_limit.conn_per_10s`` pro IPv4-Quelladresse oder "
 "IPv6-/64-Netz und ``udp_defense.threshold_pps`` für Datagramme."
 
-#: ../../edge.rst:343
+#: ../../edge.rst:289
 msgid ""
 "*The flow budget.* One slot per client connection or UDP mapping, "
 "node-wide, up to ``global.max_flows`` (8,192 by default, at most "
@@ -1690,7 +1733,7 @@ msgstr ""
 "HTTP fügt ``http.max_connections`` und ``http.max_connections_per_ip`` "
 "hinzu."
 
-#: ../../edge.rst:344
+#: ../../edge.rst:290
 msgid ""
 "*Bounded inspection*, of a TLS ClientHello on TCP, and of the QUIC header "
 "on UDP."
@@ -1698,7 +1741,7 @@ msgstr ""
 "*Begrenzte Untersuchung*, eines TLS-ClientHello bei TCP und des "
 "QUIC-Headers bei UDP."
 
-#: ../../edge.rst:345
+#: ../../edge.rst:291
 msgid ""
 "*The connection hooks*, then the pool: a server's ``max_flows`` and, in a "
 "cluster, its share of a fleet-wide limit (Part IX)."
@@ -1706,15 +1749,15 @@ msgstr ""
 "*Die Verbindungs-Hooks*, dann der Pool: das ``max_flows`` eines Servers "
 "und im Cluster sein Anteil an einem flottenweiten Limit (Teil IX)."
 
-#: ../../edge.rst:346
+#: ../../edge.rst:292
 msgid "*The HTTP firewall*, for HTTP frontends only."
 msgstr "*Die HTTP-Firewall*, nur für HTTP-Frontends."
 
-#: ../../edge.rst:348
+#: ../../edge.rst:294
 msgid "Implementation: ``FlowBudget::reserve``"
 msgstr "Implementierung: ``FlowBudget::reserve``"
 
-#: ../../edge.rst:350
+#: ../../edge.rst:296
 msgid ""
 "Takes one slot of the node-wide flow budget and returns a ``FlowPermit``, "
 "or nothing when the budget is full. The permit's ``Drop`` returns the "
@@ -1727,11 +1770,11 @@ msgstr ""
 "zurück, sodass kein Pfad einen verlieren kann. Ein Draining setzt das "
 "Limit auf null. In ``crates/lb/src/budget.rs``."
 
-#: ../../edge.rst:352
+#: ../../edge.rst:298
 msgid "ClientHello Inspection and Fallback Classes"
 msgstr "ClientHello-Untersuchung und Ausweichklassen"
 
-#: ../../edge.rst:355
+#: ../../edge.rst:301
 msgid ""
 "A TCP frontend with ``tcp_inspect: \"tls_client_hello\"`` reads the start "
 "of each connection before it selects a pool, within ``inspect_bytes`` "
@@ -1750,7 +1793,7 @@ msgstr ""
 "gelesenen Bytes genau einmal erneut ein, vor jedem späteren Byte des "
 "Clients. Ein fehlgeschlagener Verbindungsaufbau erhält keines davon."
 
-#: ../../edge.rst:357
+#: ../../edge.rst:303
 msgid ""
 "The inspection ends in one of five classes, and every class has exactly "
 "one outcome, deny or one named pool (SID 0032). *Visible* is a whole "
@@ -1776,11 +1819,11 @@ msgstr ""
 "Die Standardwerte reproduzieren das Verhalten von vor den Klassen: "
 "``rules`` für fehlend und verschlüsselt, ``deny`` für die anderen beiden."
 
-#: ../../edge.rst:359
+#: ../../edge.rst:305
 msgid "Implementation: ``Plan::decide``"
 msgstr "Implementierung: ``Plan::decide``"
 
-#: ../../edge.rst:361
+#: ../../edge.rst:307
 msgid ""
 "Maps a class and the parsed ClientHello, if any, to a pool or to a "
 "refusal. The match is total, so no class is left without an outcome. In "
@@ -1790,7 +1833,7 @@ msgstr ""
 "einen Pool oder eine Ablehnung ab. Der Match ist total, sodass keine "
 "Klasse ohne Ergebnis bleibt. In ``crates/lb/src/inspect.rs``."
 
-#: ../../edge.rst:363
+#: ../../edge.rst:309
 msgid ""
 "Two cautions belong beside the feature. A JA4 fingerprint describes a "
 "handshake; any client can send the handshake of another, so it separates "
@@ -1807,11 +1850,11 @@ msgstr ""
 "Namen im äußeren Feld; der Edge kann GREASE nicht von echtem ECH "
 "unterscheiden, deshalb lehnt ``encrypted: deny`` die meisten Browser ab."
 
-#: ../../edge.rst:365
+#: ../../edge.rst:311
 msgid "QUIC Address Validation"
 msgstr "QUIC-Adressvalidierung"
 
-#: ../../edge.rst:368
+#: ../../edge.rst:314
 msgid ""
 "A UDP frontend bounds the replies of each mapping to three times the "
 "bytes the client sent. Without the bound, a spoofed source would turn the "
@@ -1841,7 +1884,7 @@ msgstr ""
 "Clients diese ID als Ziel trägt, ist die Adresse validiert, und die "
 "Antwortgrenze endet."
 
-#: ../../edge.rst:370
+#: ../../edge.rst:316
 msgid ""
 "The argument is that of RFC 9000, section 8.1. The ID was chosen by the "
 "origin and sent only to the claimed address. A sender that spoofs the "
@@ -1864,13 +1907,13 @@ msgstr ""
 "Validierung 83 bis 86 ms; ohne sie kamen in 3 Sekunden 17.060 Bytes an. "
 "Diese Zahlen zeigen die Größe des Effekts und sind kein Benchmark."
 
-#: ../../edge.rst:372
+#: ../../edge.rst:318
 msgid ""
 "Implementation: ``Validation::see_reply`` and ``Validation::see_request``"
 msgstr ""
 "Implementierung: ``Validation::see_reply`` und ``Validation::see_request``"
 
-#: ../../edge.rst:374
+#: ../../edge.rst:320
 msgid ""
 "``see_reply`` learns the origin's connection ID from a reply, refusing "
 "version zero, short IDs and echoes. ``see_request`` marks the mapping "
@@ -1882,7 +1925,7 @@ msgstr ""
 "markiert die Zuordnung als validiert, wenn der Client diese ID in einem "
 "langen oder kurzen Header wiederholt. In ``crates/lb/src/quic_edge.rs``."
 
-#: ../../edge.rst:376
+#: ../../edge.rst:322
 msgid ""
 "The edge does not send QUIC Retry itself. SID 0032 specifies the contract "
 "that edge and origin would have to share, a token format and key, an "
@@ -1898,7 +1941,7 @@ msgstr ""
 "QUIC-Bibliothek des Workspace hält ihr Tokenformat privat und bindet das "
 "Token an die Quelle des Datagramms, und die ist hinter dem Edge der Edge."
 
-#: ../../edge.rst:380
+#: ../../edge.rst:326
 msgid ""
 "\"Validation never happens on a value that an off-path sender can know.\" "
 "For each of the three conditions on the learned connection ID (version "
@@ -1911,11 +1954,11 @@ msgstr ""
 "ID des eröffnenden Datagramms) den Angriff beschreiben, den sie "
 "verhindert."
 
-#: ../../edge.rst:382
+#: ../../edge.rst:328
 msgid "Traffic Policy, the Gate and the Shield"
 msgstr "Verkehrsrichtlinie, Gate und Shield"
 
-#: ../../edge.rst:385
+#: ../../edge.rst:331
 msgid ""
 "An HTTP request passes the cheap checks before the expensive ones, and a "
 "hook only after both. The ban table and the request limiter come first. "
@@ -1952,11 +1995,11 @@ msgstr ""
 "Header-Änderungen und HSTS. Ein TCP- oder UDP-Frontend ruft die Firewall "
 "nie auf."
 
-#: ../../edge.rst:387
+#: ../../edge.rst:333
 msgid "Hooks"
 msgstr "Hooks"
 
-#: ../../edge.rst:390
+#: ../../edge.rst:336
 msgid ""
 "An operator sometimes needs a decision of his own on the path: a tenant "
 "check, an authorization service, a score. SID 0030 fixes where such a "
@@ -1984,7 +2027,7 @@ msgstr ""
 "ändern, keinen Server wählen und kein Feld der Rahmung hinzufügen oder "
 "eines, das Sibuna als eigene Aussage schreibt."
 
-#: ../../edge.rst:392
+#: ../../edge.rst:338
 msgid ""
 "A hook runs in one of three *tiers*. A *native* hook is Rust compiled "
 "into the daemon: trusted, unbudgeted, 42 ns per call with the chain and "
@@ -2000,11 +2043,11 @@ msgstr ""
 "Teil VII), ohne JIT und ohne ``unsafe``. Ein *Agent* ist ein anderer "
 "Prozess hinter einem Unix-Socket, einer Frist und einem Circuit Breaker."
 
-#: ../../edge.rst:394
+#: ../../edge.rst:340
 msgid "The Outcome Rule"
 msgstr "Die Ergebnisregel"
 
-#: ../../edge.rst:397
+#: ../../edge.rst:343
 msgid ""
 "An invocation ends with a verdict or with one of four failures: "
 "``timeout``, ``overload``, ``trap`` or ``unavailable``. Each plugin has "
@@ -2017,7 +2060,7 @@ msgstr ""
 "``admit`` schreibt. Für Stufe :math:`s`, geschriebene Wahl :math:`f` und "
 "Ergebnis :math:`r` gilt"
 
-#: ../../edge.rst:399
+#: ../../edge.rst:345
 msgid ""
 "\\mathit{outcome}(s, f, r) = \\begin{cases} \\mathrm{admit} & s = "
 "\\mathrm{telemetry} \\\\ v & r = \\mathrm{verdict}(v) \\\\ \\mathrm{deny} "
@@ -2025,7 +2068,7 @@ msgid ""
 "\\mathrm{failed},\\ f = \\mathrm{admit}. \\end{cases}"
 msgstr ""
 
-#: ../../edge.rst:403
+#: ../../edge.rst:349
 msgid ""
 "A chain admits only when every hook in it has the outcome admit; the "
 "first other verdict ends it. Hence a chain with a failing authorization "
@@ -2038,11 +2081,11 @@ msgstr ""
 "anderen antworten, und kein Fehlschlag lässt Datenverkehr zu, außer durch "
 "eine in der Datei geschriebene Wahl."
 
-#: ../../edge.rst:405
+#: ../../edge.rst:351
 msgid "Implementation: ``outcome`` and ``chain``"
 msgstr "Implementierung: ``outcome`` und ``chain``"
 
-#: ../../edge.rst:407
+#: ../../edge.rst:353
 msgid ""
 "The rule above and its fold over a chain, as two small functions modelled "
 "in ``docs/sid/assets/plugin-tiers.lean``. In "
@@ -2052,7 +2095,7 @@ msgstr ""
 "Funktionen, modelliert in ``docs/sid/assets/plugin-tiers.lean``. In "
 "``crates/plugin/src/verdict.rs`` (Crate ``sibuna-plugin``)."
 
-#: ../../edge.rst:409
+#: ../../edge.rst:355
 msgid ""
 "pub fn outcome(stage: Stage, on_failure: OnFailure, result: "
 "Result<Verdict, Failure>) -> Verdict {\n"
@@ -2065,11 +2108,11 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:420
+#: ../../edge.rst:366
 msgid "Fuel, Breakers and Parked Connections"
 msgstr "Fuel, Breaker und geparkte Verbindungen"
 
-#: ../../edge.rst:423
+#: ../../edge.rst:369
 msgid ""
 "A Wasm module is untrusted input, so every bound is set before it runs: "
 "at most 4 MiB of module, ``memory_pages`` pages of 64 KiB, 256 call "
@@ -2104,7 +2147,7 @@ msgstr ""
 "Interpreter von 2.324 Zeilen ohne ``unsafe`` und ohne neues Crate, "
 "gegenüber etwa 96.000 Zeilen und acht Crates."
 
-#: ../../edge.rst:425
+#: ../../edge.rst:371
 msgid ""
 "An agent call waits at most ``deadline`` (5 ms by default). Each thread "
 "keeps a breaker for each agent: ``failures`` failures in a row open it, "
@@ -2119,11 +2162,11 @@ msgstr ""
 "ihn schließt oder wieder öffnet. Ein ``overload`` ist nicht die Schuld "
 "des Agents und zählt nicht."
 
-#: ../../edge.rst:427
+#: ../../edge.rst:373
 msgid "Worked example: what a dead agent costs"
 msgstr "Durchgerechnetes Beispiel: was ein toter Agent kostet"
 
-#: ../../edge.rst:429
+#: ../../edge.rst:375
 msgid ""
 "Eight workers call an agent with ``deadline`` 5 ms and the default "
 "breaker, five failures and ``1s`` open. In the worst case each worker "
@@ -2142,7 +2185,7 @@ msgstr ""
 "Anfrage des geschützten Frontends das ``on_failure``-Ergebnis des Agents: "
 "Mit dem Standard wird sie abgelehnt."
 
-#: ../../edge.rst:431
+#: ../../edge.rst:377
 msgid ""
 "At the request stage an agent call holds the thread that serves the "
 "request, and on a worker the other connections of that worker wait for "
@@ -2168,7 +2211,7 @@ msgstr ""
 "Thread-Übergaben: 22,8 us gegenüber 12 us für denselben Aufruf auf dem "
 "aufrufenden Thread."
 
-#: ../../edge.rst:433
+#: ../../edge.rst:379
 msgid ""
 "Measured cost of one hook (SID 0030, one busy machine, optimized builds, "
 "loopback)"
@@ -2176,67 +2219,67 @@ msgstr ""
 "Gemessene Kosten eines Hooks (SID 0030, eine ausgelastete Maschine, "
 "optimierte Builds, Loopback)"
 
-#: ../../edge.rst:437
+#: ../../edge.rst:383
 msgid "Case"
 msgstr "Fall"
 
-#: ../../edge.rst:438
+#: ../../edge.rst:384
 msgid "In process"
 msgstr "Im Prozess"
 
-#: ../../edge.rst:439
+#: ../../edge.rst:385
 msgid "End to end per request"
 msgstr "Ende zu Ende pro Anfrage"
 
-#: ../../edge.rst:440
+#: ../../edge.rst:386
 msgid "No hook"
 msgstr "Kein Hook"
 
-#: ../../edge.rst:441
+#: ../../edge.rst:387
 msgid "1.1 ns (one load)"
 msgstr "1,1 ns (ein Speicherzugriff)"
 
-#: ../../edge.rst:442
+#: ../../edge.rst:388
 msgid "41.8 to 42.2 us"
 msgstr "41,8 bis 42,2 us"
 
-#: ../../edge.rst:443
+#: ../../edge.rst:389
 msgid "Native ``require_header``"
 msgstr "Nativ ``require_header``"
 
-#: ../../edge.rst:444
+#: ../../edge.rst:390
 msgid "42 ns"
 msgstr ""
 
-#: ../../edge.rst:445
+#: ../../edge.rst:391
 msgid "within the noise of about 2 us"
 msgstr "im Rauschen von etwa 2 us"
 
-#: ../../edge.rst:446
+#: ../../edge.rst:392
 msgid "Wasm, the example module"
 msgstr "Wasm, das Beispielmodul"
 
-#: ../../edge.rst:447
+#: ../../edge.rst:393
 msgid "2.2 to 2.4 us"
 msgstr "2,2 bis 2,4 us"
 
-#: ../../edge.rst:448
+#: ../../edge.rst:394
 msgid "+5.2 to +6.1 us"
 msgstr "+5,2 bis +6,1 us"
 
-#: ../../edge.rst:449
+#: ../../edge.rst:395
 msgid "Agent on a Unix socket"
 msgstr "Agent an einem Unix-Socket"
 
-#: ../../edge.rst:450
+#: ../../edge.rst:396
 msgid "12 to 18 us"
 msgstr "12 bis 18 us"
 
-#: ../../edge.rst:451
+#: ../../edge.rst:397
 msgid "+18.4 to +21.5 us"
 msgstr "+18,4 bis +21,5 us"
 
-#: ../../edge.rst:455
+#: ../../edge.rst:401
 msgid ""
 "\"A failure of an authorization hook denies.\" An attacker can make a "
 "Wasm hook fail with ``overload`` by sending a head larger than its input "
@@ -2251,11 +2294,11 @@ msgstr ""
 "``on_failure`` auf dem Standard bleibt, und was der Betreiber aufgibt, "
 "wenn er ``on_failure: \"admit\"`` schreibt."
 
-#: ../../edge.rst:457
+#: ../../edge.rst:403
 msgid "Automatic HTTPS"
 msgstr "Automatisches HTTPS"
 
-#: ../../edge.rst:460
+#: ../../edge.rst:406
 msgid ""
 "A frontend that names its hosts, ``tls: { auto: [\"example.org\"] }``, "
 "obtains its certificates itself (SID 0021). The node registers an ACME "
@@ -2297,11 +2340,11 @@ msgstr ""
 "Speicher lesen, und ein Thread fragt die ``ask``-URL und nimmt ein Token "
 "aus einem Bucket von ``rate`` Bestellungen pro Stunde, bevor er bestellt."
 
-#: ../../edge.rst:462
+#: ../../edge.rst:408
 msgid "Observation"
 msgstr "Beobachtung"
 
-#: ../../edge.rst:465
+#: ../../edge.rst:411
 msgid ""
 "The node counts what it does so that an operator can tell a refusal for "
 "lack of capacity from a refusal by policy (SID 0020). Each HTTP request "
@@ -2335,11 +2378,11 @@ msgstr ""
 "``rate_limit`` nach einem Blick auf die Clients. Eine Bereitschaftsroute "
 "wechselt auf 503, während der Knoten im Draining ist."
 
-#: ../../edge.rst:467
+#: ../../edge.rst:413
 msgid "The Measured Result"
 msgstr "Das gemessene Ergebnis"
 
-#: ../../edge.rst:470
+#: ../../edge.rst:416
 msgid ""
 "Part X compares the edge with HAProxy 3.0.11 on one host and on three. "
 "After SID 0024, with both proxies writing the same headers, Sibuna "
@@ -2367,15 +2410,15 @@ msgstr ""
 "billigerer HTTP/2-Pfad würde das ändern, und SID 0017 hält fest, warum "
 "wir keinen geschrieben haben."
 
-#: ../../edge.rst:472
+#: ../../edge.rst:418
 msgid "Exercises"
 msgstr "Übungen"
 
-#: ../../edge.rst:475
+#: ../../edge.rst:421
 msgid "Exercise 8.1"
 msgstr "Übung 8.1"
 
-#: ../../edge.rst:477
+#: ../../edge.rst:423
 msgid ""
 "A pool has ten servers of equal weight, and one leaves. What fraction of "
 "flows moves under modulo hashing, under rendezvous hashing, and, from the "
@@ -2388,7 +2431,7 @@ msgstr ""
 "etwa wie viele bei Sibunas Maglev-Tabelle? Dann dieselbe Frage für einen "
 "Server, der einem Pool von vier beitritt."
 
-#: ../../edge.rst:479
+#: ../../edge.rst:425
 msgid ""
 "Hint: Use the Chinese remainder theorem for modulo hashing, and the "
 "minimum of the other distances for rendezvous hashing."
@@ -2396,11 +2439,11 @@ msgstr ""
 "Hinweis: Für das Modulo-Hashing den Chinesischen Restsatz verwenden und "
 "für das Rendezvous-Hashing das Minimum der anderen Abstände."
 
-#: ../../edge.rst:481
+#: ../../edge.rst:427
 msgid "Exercise 8.2"
 msgstr "Übung 8.2"
 
-#: ../../edge.rst:483
+#: ../../edge.rst:429
 msgid ""
 "A bounded-Maglev pool has servers ``a``, ``b`` and ``c`` with weights 2, "
 "1 and 1, ``load_factor_pct`` 125, and 19 active flows. Compute the bound "
@@ -2416,7 +2459,7 @@ msgstr ""
 "Least-Connections-Ausweichweg, wenn ``a`` 9 und ``c`` 3 hält? Zeigen, "
 "dass stets ein Server unter seiner Grenze liegt."
 
-#: ../../edge.rst:485
+#: ../../edge.rst:431
 msgid ""
 "Hint: The bound is :math:`\\lceil c (L+1) w_p / W \\rceil`, and the "
 "contradiction argument of the worked example applies with weights."
@@ -2424,11 +2467,11 @@ msgstr ""
 "Hinweis: Die Grenze ist :math:`\\lceil c (L+1) w_p / W \\rceil`, und das "
 "Widerspruchsargument des durchgerechneten Beispiels gilt mit Gewichten."
 
-#: ../../edge.rst:487
+#: ../../edge.rst:433
 msgid "Exercise 8.3"
 msgstr "Übung 8.3"
 
-#: ../../edge.rst:489
+#: ../../edge.rst:435
 msgid ""
 "An HTTP frontend has the request chain ``[tenant, score, authz]``: a "
 "native ``require_header`` hook, a Wasm hook with ``on_failure: "
@@ -2446,7 +2489,7 @@ msgstr ""
 "fehlt? Was kostet jede Anfrage den Worker für den Agent? Was ändert sich, "
 "wenn ``authz`` mit ``on_failure: \"admit\"`` geschrieben wird?"
 
-#: ../../edge.rst:491
+#: ../../edge.rst:437
 msgid ""
 "Hint: Apply the outcome rule to each hook, then the chain rule. An open "
 "breaker costs no system call."
@@ -2454,11 +2497,11 @@ msgstr ""
 "Hinweis: Die Ergebnisregel auf jeden Hook anwenden, dann die Kettenregel. "
 "Ein offener Breaker kostet keinen Systemaufruf."
 
-#: ../../edge.rst:493
+#: ../../edge.rst:439
 msgid "Exercise 8.4"
 msgstr "Übung 8.4"
 
-#: ../../edge.rst:495
+#: ../../edge.rst:441
 msgid ""
 "A QUIC client sends one Initial of 1,200 bytes through a frontend with "
 "``udp_inspect: \"quic\"``, and the origin answers with eight datagrams of "
@@ -2475,7 +2518,7 @@ msgstr ""
 "erzeugen? Warum würde das Lernen aus einem Version-Negotiation-Paket das "
 "Argument brechen?"
 
-#: ../../edge.rst:497
+#: ../../edge.rst:443
 msgid ""
 "Hint: The bound is three times the bytes received. Compare what the "
 "origin chose with what the client chose."
@@ -2483,11 +2526,11 @@ msgstr ""
 "Hinweis: Die Grenze ist das Dreifache der empfangenen Bytes. Vergleichen, "
 "was der Ursprungsserver gewählt hat, mit dem, was der Client gewählt hat."
 
-#: ../../edge.rst:499
+#: ../../edge.rst:445
 msgid "Limits"
 msgstr "Grenzen"
 
-#: ../../edge.rst:502
+#: ../../edge.rst:448
 msgid ""
 "The known gaps of these records, and one consequence of the design, "
 "stated where an operator meets them:"
@@ -2495,7 +2538,7 @@ msgstr ""
 "Die bekannten Lücken dieser Dokumente und eine Folge des Entwurfs, "
 "genannt dort, wo ein Betreiber auf sie trifft:"
 
-#: ../../edge.rst:504
+#: ../../edge.rst:450
 msgid ""
 "*Ownership balances counts, not work.* A connection stays on the worker "
 "it was given; the assignment equalizes connection counts only."
@@ -2504,7 +2547,7 @@ msgstr ""
 "dem Worker, dem sie gegeben wurde; die Zuweisung gleicht nur die "
 "Verbindungszahlen an."
 
-#: ../../edge.rst:505
+#: ../../edge.rst:451
 msgid ""
 "*A reload that changes binds, the mesh roster or the spill section needs "
 "a restart.* Two reloads within the decision time of one request still "
@@ -2521,7 +2564,7 @@ msgstr ""
 "Laufzeit überdauern keinen Neustart, und ein Maglev-Pool nimmt zur "
 "Laufzeit nur ``drain`` an."
 
-#: ../../edge.rst:506
+#: ../../edge.rst:452
 msgid ""
 "*HTTP/2 runs on the runtime, not on the workers.* It carries 0.67 to 0.74 "
 "of HAProxy's rate on one host. HTTP/1.1 over TLS from a client that "
@@ -2541,7 +2584,7 @@ msgstr ""
 "einzige Sperre. gRPC von einem HTTP/2-Client im Klartext wird nicht "
 "angenommen."
 
-#: ../../edge.rst:507
+#: ../../edge.rst:453
 msgid ""
 "*The choice of a server still writes shared memory:* reference counts and "
 "the chosen server's counters, about a microsecond per call under eight "
@@ -2554,7 +2597,7 @@ msgstr ""
 "Moment wählen, können denselben am wenigsten belasteten Server nehmen; "
 "die Limits gelten weiterhin (SID 0019)."
 
-#: ../../edge.rst:508
+#: ../../edge.rst:454
 msgid ""
 "*Bounded loads with the pewma fallback are not a guarantee,* and the "
 "overflow is not placed consistently across nodes. The slot table of "
@@ -2564,7 +2607,7 @@ msgstr ""
 "der Überlauf wird nicht knotenübergreifend konsistent platziert. Die "
 "Slot-Tabelle der Quell-Stickiness hat eine Granularität von 1.021 Slots."
 
-#: ../../edge.rst:509
+#: ../../edge.rst:455
 msgid ""
 "*Failover cannot move everything.* A body longer than 64 KiB is streamed "
 "and cannot be sent again. A non-idempotent request to an HTTP/3 server "
@@ -2576,7 +2619,7 @@ msgstr ""
 "Anfrage an einen HTTP/3-Server zieht nach dem Senden nie um, weil die "
 "Client-Bibliothek keine Ablehnung meldet, die wir lesen können (SID 0019)."
 
-#: ../../edge.rst:510
+#: ../../edge.rst:456
 msgid ""
 "*Admission at the socket is incomplete for TCP and UDP.* TCP and UDP "
 "frontends do not consult the ban table. Per-prefix byte budgets for UDP "
@@ -2597,7 +2640,7 @@ msgstr ""
 "für Linux gebaut, und die Wirkung von ``backlog`` auf eine volle "
 "Warteschlange ist nicht gemessen (SID 0032)."
 
-#: ../../edge.rst:511
+#: ../../edge.rst:457
 msgid ""
 "*An agent call at the request stage holds its thread.* A QUIC "
 "connection's verdict does not stop its handshake. Parked flows cost two "
@@ -2615,7 +2658,7 @@ msgstr ""
 "langsamer als wasmi und wurde nicht extern begutachtet. Die "
 "Hook-Messungen wurden auf einer ausgelasteten Maschine gemacht (SID 0030)."
 
-#: ../../edge.rst:512
+#: ../../edge.rst:458
 msgid ""
 "*Observation has holes.* Chunk framing is not counted in ``bytes_in``; "
 "``tls_cipher`` is ``-`` for HTTP/3; a long-lived TCP connection writes "
@@ -2625,7 +2668,7 @@ msgstr ""
 "nicht gezählt; ``tls_cipher`` ist ``-`` für HTTP/3; eine langlebige "
 "TCP-Verbindung schreibt ihre Zeile erst an ihrem Ende (SID 0020)."
 
-#: ../../edge.rst:513
+#: ../../edge.rst:459
 msgid ""
 "*Automatic HTTPS* has no bound per client for issuance on demand beyond "
 "its guards and its bucket; the local authority's ACME server has no limit "
@@ -2638,7 +2681,7 @@ msgstr ""
 "und hält seine Bestellungen im Speicher auf einem Knoten; der "
 "Cloudflare-DNS-Provider wurde nie gegen Cloudflare ausgeführt (SID 0021)."
 
-#: ../../edge.rst:514
+#: ../../edge.rst:460
 msgid ""
 "*Scale is not yet qualified.* The flow table is configurable to one "
 "million entries; the ten-million-flow experiment and cooperative platform "
@@ -2650,3 +2693,153 @@ msgstr ""
 "Millionen Flüssen und das kooperative Batching der Plattform bleiben "
 "Vorschläge, und die vollständige Qualifizierungsliste von SID 0015 ist "
 "offen."
+
+#~ msgid ""
+#~ "digraph edge_path {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", fontname=\"Helvetica\", "
+#~ "fontsize=9, nodesep=0.3, ranksep=0.32];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
+#~ "margin=\"0.1,0.05\"];\n"
+#~ "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
+#~ "fontcolor=\"#475569\", arrowsize=0.6];\n"
+#~ "  client [label=\"Client\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  kernel [label=\"Kernel listener\\ndefer_accept, backlog\"];\n"
+#~ "  edgew [label=\"Edge worker\\nconnection rate, flow "
+#~ "budget,\\nconnection hooks\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  inspect [label=\"TCP: ClientHello inspection\\nfive classes, "
+#~ "fallback\"];\n"
+#~ "  udp [label=\"UDP: QUIC screen,\\nmapping, reply bound\"];\n"
+#~ "  relay [label=\"Relay thread\\nbyte pipe\"];\n"
+#~ "  worker [label=\"HTTP worker\\nTLS for HTTP/1.1\", "
+#~ "fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
+#~ "  runtime [label=\"Protocol runtime\\nHTTP/2, HTTP/3\", "
+#~ "fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
+#~ "  decide [label=\"Bans, limiter, traffic policy,\\ngate or shield, "
+#~ "request hooks\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+#~ "  choose [label=\"Choose a server\\nfrom the snapshot\"];\n"
+#~ "  shared [label=\"Shared: routing snapshot,\\nserver loads, health "
+#~ "flags\", fillcolor=\"#f8fafc\", color=\"#64748b\"];\n"
+#~ "  server [label=\"Server\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  client -> kernel;\n"
+#~ "  kernel -> edgew;\n"
+#~ "  edgew -> inspect [label=\"tcp\"];\n"
+#~ "  edgew -> udp [label=\"udp\"];\n"
+#~ "  edgew -> worker [label=\"http, fewest\"];\n"
+#~ "  worker -> runtime [label=\"offers h2\"];\n"
+#~ "  inspect -> relay [label=\"reserve, connect\"];\n"
+#~ "  udp -> server;\n"
+#~ "  relay -> server;\n"
+#~ "  worker -> decide;\n"
+#~ "  runtime -> decide [label=\"Decide\"];\n"
+#~ "  decide -> choose;\n"
+#~ "  choose -> server [label=\"exchange\"];\n"
+#~ "  choose -> shared [style=dashed];\n"
+#~ "  inspect -> shared [style=dashed];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph edge_path {\n"
+#~ "  graph [rankdir=TB, bgcolor=\"transparent\", fontname=\"Helvetica\", "
+#~ "fontsize=9, nodesep=0.3, ranksep=0.32];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
+#~ "margin=\"0.1,0.05\"];\n"
+#~ "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
+#~ "fontcolor=\"#475569\", arrowsize=0.6];\n"
+#~ "  client [label=\"Client\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  kernel [label=\"Listener des Kernels\\ndefer_accept, backlog\"];\n"
+#~ "  edgew [label=\"Edge-Worker\\nVerbindungsrate, "
+#~ "Flussbudget,\\nVerbindungs-Hooks\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  inspect [label=\"TCP: ClientHello-Untersuchung\\nfünf Klassen, "
+#~ "Ausweichweg\"];\n"
+#~ "  udp [label=\"UDP: QUIC-Screening,\\nZuordnung, Antwortgrenze\"];\n"
+#~ "  relay [label=\"Relay-Thread\\nByte-Röhre\"];\n"
+#~ "  worker [label=\"HTTP-Worker\\nTLS für HTTP/1.1\", "
+#~ "fillcolor=\"#f0fdf4\", color=\"#15803d\"];\n"
+#~ "  runtime [label=\"Protokoll-Laufzeit\\nHTTP/2, HTTP/3\", "
+#~ "fillcolor=\"#f5f3ff\", color=\"#6d28d9\"];\n"
+#~ "  decide [label=\"Sperren, Begrenzer, Verkehrsrichtlinie,\\nGate oder "
+#~ "Shield, Anfrage-Hooks\", fillcolor=\"#fffbeb\", color=\"#b45309\"];\n"
+#~ "  choose [label=\"Server aus dem\\nSchnappschuss wählen\"];\n"
+#~ "  shared [label=\"Gemeinsam: Routing-Schnappschuss,\\nServerlasten, "
+#~ "Zustandsflags\", fillcolor=\"#f8fafc\", color=\"#64748b\"];\n"
+#~ "  server [label=\"Server\", fillcolor=\"#ffffff\", "
+#~ "color=\"#172033\"];\n"
+#~ "  client -> kernel;\n"
+#~ "  kernel -> edgew;\n"
+#~ "  edgew -> inspect [label=\"tcp\"];\n"
+#~ "  edgew -> udp [label=\"udp\"];\n"
+#~ "  edgew -> worker [label=\"http, wenigste\"];\n"
+#~ "  worker -> runtime [label=\"bietet h2 an\"];\n"
+#~ "  inspect -> relay [label=\"reservieren, verbinden\"];\n"
+#~ "  udp -> server;\n"
+#~ "  relay -> server;\n"
+#~ "  worker -> decide;\n"
+#~ "  runtime -> decide [label=\"Decide\"];\n"
+#~ "  decide -> choose;\n"
+#~ "  choose -> server [label=\"Austausch\"];\n"
+#~ "  choose -> shared [style=dashed];\n"
+#~ "  inspect -> shared [style=dashed];\n"
+#~ "}"
+
+#~ msgid ""
+#~ "digraph server_states {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", fontname=\"Helvetica\", "
+#~ "fontsize=9, nodesep=0.3, ranksep=0.55];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
+#~ "margin=\"0.1,0.05\"];\n"
+#~ "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
+#~ "fontcolor=\"#475569\", arrowsize=0.6];\n"
+#~ "  service [label=\"In service\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  down [label=\"Down\\n(active probe)\"];\n"
+#~ "  ejected [label=\"Ejected\\n(passive health)\"];\n"
+#~ "  marked [label=\"Marked\\n(connect failed)\"];\n"
+#~ "  drained [label=\"Drained\\n(operator)\", fillcolor=\"#fffbeb\", "
+#~ "color=\"#b45309\"];\n"
+#~ "  ramp [label=\"Ramping\\n(slow start)\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  service -> down [label=\"fall failures\"];\n"
+#~ "  down -> ramp [label=\"rise passes\"];\n"
+#~ "  service -> ejected [label=\"failures in a row\"];\n"
+#~ "  ejected -> ramp [label=\"ejection ends\"];\n"
+#~ "  service -> marked [label=\"connect fails\"];\n"
+#~ "  marked -> ramp [label=\"2 s\"];\n"
+#~ "  service -> drained [label=\"set state drain\"];\n"
+#~ "  drained -> ramp [label=\"set state ready\"];\n"
+#~ "  ramp -> service [label=\"ramp ends\"];\n"
+#~ "}"
+#~ msgstr ""
+#~ "digraph server_states {\n"
+#~ "  graph [rankdir=LR, bgcolor=\"transparent\", fontname=\"Helvetica\", "
+#~ "fontsize=9, nodesep=0.3, ranksep=0.55];\n"
+#~ "  node [shape=box, style=\"rounded,filled\", fontname=\"Helvetica\", "
+#~ "fontsize=8.5, fillcolor=\"#eff6ff\", color=\"#1e40af\", penwidth=1.0, "
+#~ "margin=\"0.1,0.05\"];\n"
+#~ "  edge [color=\"#64748b\", fontname=\"Helvetica\", fontsize=7.5, "
+#~ "fontcolor=\"#475569\", arrowsize=0.6];\n"
+#~ "  service [label=\"In Betrieb\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  down [label=\"Ausgefallen\\n(aktive Prüfung)\"];\n"
+#~ "  ejected [label=\"Ausgeschlossen\\n(passive Zustandsprüfung)\"];\n"
+#~ "  marked [label=\"Markiert\\n(Verbindungsaufbau fehlgeschlagen)\"];\n"
+#~ "  drained [label=\"Im Draining\\n(Betreiber)\", fillcolor=\"#fffbeb\", "
+#~ "color=\"#b45309\"];\n"
+#~ "  ramp [label=\"Hochfahren\\n(Slow Start)\", fillcolor=\"#f0fdf4\", "
+#~ "color=\"#15803d\"];\n"
+#~ "  service -> down [label=\"fall Fehlschläge\"];\n"
+#~ "  down -> ramp [label=\"rise bestanden\"];\n"
+#~ "  service -> ejected [label=\"Fehlschläge in Folge\"];\n"
+#~ "  ejected -> ramp [label=\"Ausschluss endet\"];\n"
+#~ "  service -> marked [label=\"Verbindungsaufbau scheitert\"];\n"
+#~ "  marked -> ramp [label=\"2 s\"];\n"
+#~ "  service -> drained [label=\"set state drain\"];\n"
+#~ "  drained -> ramp [label=\"set state ready\"];\n"
+#~ "  ramp -> service [label=\"Rampe endet\"];\n"
+#~ "}"

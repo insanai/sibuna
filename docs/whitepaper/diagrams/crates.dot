@@ -1,17 +1,14 @@
 digraph crates {
-  graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.14, ranksep=0.42, pad=0.1, fontname="Helvetica", fontsize=8.5, fontcolor="#475569"];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, fontcolor="#172033", color="#0369a1", fillcolor="#f0f9ff", penwidth=1.0, height=0.3, width=0.6, margin="0.08,0.03"];
-  edge [color="#94a3b8", arrowsize=0.5, penwidth=0.9];
+  graph [rankdir=TB, bgcolor="transparent", newrank=true, nodesep=0.16, ranksep=0.42, pad=0.2, fontname="Helvetica", fontsize=9, fontcolor="#55665e"];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.9, height=0.32, width=0.6, margin="0.12,0.05"];
+  edge [color="#6a7c73", arrowsize=0.55, penwidth=0.9];
 
-  sibuna [label="sibuna (daemon)", color="#15803d", fillcolor="#bbf7d0", penwidth=1.6];
-  wasm [label="browser prover (WebAssembly)", color="#15803d", fillcolor="#f0fdf4"];
-  storage [label="storage (sqlx)", color="#b45309", fillcolor="#fffbeb"];
-  policy [color="#6d28d9", fillcolor="#f5f3ff"];
-  challenge [color="#6d28d9", fillcolor="#f5f3ff"];
-  net [color="#6d28d9", fillcolor="#f5f3ff"];
-  core [color="#6d28d9", fillcolor="#f5f3ff"];
+  sibuna [label="sibuna (daemon)", color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c", penwidth=1.4];
+  wasm [label="browser prover (WebAssembly)", color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c"];
+  storage [label="storage (sqlx)", color="#8f5512", fillcolor="#fbf4e4", shape=cylinder, style=filled];
+  policy; challenge; net; core;
   subgraph cluster_reusable {
-    label="reusable libraries, no third-party code"; labelloc=b; labeljust=r; style="dashed,rounded,filled"; color="#7dd3fc"; fillcolor="#fafdff"; margin=10;
+    label="reusable libraries, no third-party code"; labelloc=b; labeljust=r; style="dashed,rounded,filled"; color="#c3cec0"; fillcolor="#f7f6f1"; margin=10;
     geoip; inflate; cidr; json; patterns; http; encoding; crypto; pow; store;
   }
   { rank=same; wasm; sibuna; }
@@ -19,7 +16,8 @@ digraph crates {
   { rank=same; geoip; cidr; json; patterns; http; pow; }
   { rank=same; inflate; encoding; crypto; store; }
 
-  sibuna -> policy; sibuna -> storage; sibuna -> net; sibuna -> challenge;
+  sibuna -> policy [color="#176a4b", penwidth=1.2]; sibuna -> storage [color="#176a4b", penwidth=1.2];
+  sibuna -> net [color="#176a4b", penwidth=1.2]; sibuna -> challenge [color="#176a4b", penwidth=1.2];
   storage -> policy; storage -> core;
   policy -> cidr; policy -> json; policy -> patterns; policy -> core;
   core -> net [dir=back];
@@ -28,5 +26,5 @@ digraph crates {
   geoip -> inflate; geoip -> crypto;
   challenge -> encoding; challenge -> crypto; challenge -> pow; challenge -> store;
   pow -> crypto;
-  wasm -> pow [color="#15803d"];
+  wasm -> pow [color="#176a4b"];
 }

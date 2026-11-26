@@ -49,7 +49,7 @@ Invariants
 #. A PROXY header is read with a bound on its size and on the wait, and only from a trusted proxy. A connection without a valid header is closed before any byte reaches TLS or HTTP.
 #. Counters survive a reload. A server keeps its counters while its backend and its name stay in the topology.
 
-.. graphviz:: ../diagrams/observe.dot
+.. typst-diagram:: ../diagrams/observe.typ
    :caption: One request and the three places that observe it. The log queue is the only shared structure on the path.
    :alt: A connection passes the optional PROXY stage and reaches one of three request paths. Each path fills one entry. A finished entry updates the counters and is offered to the bounded queue. One writer thread takes entries from the queue and writes lines.
 
@@ -326,7 +326,7 @@ Readiness and access control
 
 A shutdown has three steps:
 
-.. graphviz:: ../diagrams/drain-timing.dot
+.. typst-diagram:: ../diagrams/drain-timing.typ
    :caption: Readiness changes before the listeners stop admitting flows.
    :alt: SIGTERM makes readiness return 503. The drain delay lets new arrivals through. During the shutdown timeout established flows finish. Remaining flows close at exit.
 
@@ -441,7 +441,7 @@ The first implementation left gaps that this section closes. Each paragraph is t
 
 **Flow lines.** A TCP connection and a UDP mapping write one line when they end. The worker and the relay threads of the load balancer offer a ``FlowEnd`` to a bounded channel with ``try_send``. A full channel drops the line and counts it in ``sibuna_edge_flow_log_dropped_total``. The loop of the edge takes the lines after each step and offers them to the queue of the access log, which is bounded too. So no thread of the data path waits. Without a log the load balancer builds no line at all. A topology without an HTTP frontend has the log too, and ``sibuna lb --access-log`` works with ``--proto tcp`` and ``--proto udp``. At the end of a shutdown the flows that are still open are closed, and their lines say ``shutdown``.
 
-.. graphviz:: ../diagrams/flow-log-queues.dot
+.. typst-diagram:: ../diagrams/flow-log-queues.typ
    :caption: Two bounded queues carry completed flows to the access log.
    :alt: Relay threads and the worker try to enqueue flow ends. The edge loop moves them to the log queue for the writer. Either queue can drop and count a line when full.
 
