@@ -417,8 +417,8 @@ msgstr "يعيد Sibuna تحديًا إلى العميل."
 msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods."
 msgstr "يوجّه Sibuna حركة TCP وUDP وHTTP إلى خوادم سليمة من عقدة طرفية واحدة أو شبكة من العقد المترابطة. ويمكنه إنهاء TLS وفحص مسارات HTTP محددة والمساعدة في حماية الخوادم الخلفية من هجمات حجب الخدمة الموزعة (DDoS)."
 
-msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
-msgstr "ينهي Sibuna اتصالات TLS ويخدم HTTP/1.1 وHTTP/2 وHTTP/3 وWebSocket. ويوجّه كل طلب بحسب اسم المضيف والمسار. وتأتي الشهادات من Let's Encrypt أو من سلطة ACME أخرى، وتغطي سلطة محلية الأسماء الداخلية."
+msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name, by a wildcard such as *.example.org, and by path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
+msgstr "ينهي Sibuna اتصالات TLS ويخدم HTTP/1.1 وHTTP/2 وHTTP/3 وWebSocket. ويوجّه كل طلب بحسب اسم المضيف، وبحسب حرف بدل مثل *.example.org، وبحسب المسار. وتأتي الشهادات من Let's Encrypt أو من سلطة ACME أخرى، وتغطي سلطة محلية الأسماء الداخلية."
 
 msgid "Singapore"
 msgstr "سنغافورة"

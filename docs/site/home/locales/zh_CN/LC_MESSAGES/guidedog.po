@@ -417,8 +417,8 @@ msgstr "Sibuna 向客户端返回挑战。"
 msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods."
 msgstr "Sibuna 可通过单个边缘节点或网状集群将 TCP、UDP 和 HTTP 流量分发到健康的服务器。它可以在边缘终止 TLS、检查指定的 HTTP 路由，并帮助后端抵御 DDoS 流量洪泛。"
 
-msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
-msgstr "Sibuna 终止 TLS，并提供 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket 服务。它按主机名和路径路由每个请求。证书来自 Let's Encrypt 或其他 ACME 证书颁发机构，本地证书颁发机构负责内部名称。"
+msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name, by a wildcard such as *.example.org, and by path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
+msgstr "Sibuna 终止 TLS，并提供 HTTP/1.1、HTTP/2、HTTP/3 和 WebSocket 服务。它按主机名、*.example.org 这样的通配符以及路径路由每个请求。证书来自 Let's Encrypt 或其他 ACME 证书颁发机构，本地证书颁发机构负责内部名称。"
 
 msgid "Singapore"
 msgstr "新加坡"

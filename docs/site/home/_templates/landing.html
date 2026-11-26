@@ -96,7 +96,7 @@
     <article><span class="label">{{ _("01 / Forward") }}</span><h3>{{ _("Connections and datagrams.") }}</h3>
     <p>{{ _("TCP streams and UDP mappings go to a pool of servers. A TLS connection can pass through undecrypted, routed by its server name. QUIC can pass through too. The PROXY protocol carries the address of the client.") }}</p></article>
     <article><span class="label">{{ _("02 / Terminate and route") }}</span><h3>{{ _("HTTPS without a second proxy.") }}</h3>
-    <p>{{ _("Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names.") }}</p></article>
+    <p>{{ _("Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name, by a wildcard such as *.example.org, and by path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names.") }}</p></article>
     <article><span class="label">{{ _("03 / Stay up") }}</span><h3>{{ _("Change it while it runs.") }}</h3>
     <p>{{ _("A checked reload applies new routes to new work. Established TCP streams keep their backend. Linux also supports listener handoff during a binary upgrade.") }}</p></article>
     <article><span class="label">{{ _("04 / Scale out") }}</span><h3>{{ _("Several nodes, one behaviour.") }}</h3>

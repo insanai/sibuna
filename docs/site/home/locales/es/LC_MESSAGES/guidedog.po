@@ -417,8 +417,8 @@ msgstr "Sibuna devuelve un desafío al cliente."
 msgid "Sibuna routes TCP, UDP and HTTP to healthy servers from one edge node or a mesh. It can terminate TLS, inspect selected HTTP routes and help protect backends from DDoS floods."
 msgstr "Sibuna distribuye el tráfico TCP, UDP y HTTP entre servidores en buen estado desde un nodo de borde o una malla. Puede terminar TLS, inspeccionar rutas HTTP seleccionadas y ayudar a proteger los servidores de destino frente a ataques DDoS."
 
-msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name and path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
-msgstr "Sibuna termina TLS y sirve HTTP/1.1, HTTP/2, HTTP/3 y WebSocket. Enruta cada petición por nombre de host y ruta. Los certificados provienen de Let's Encrypt o de otra autoridad ACME, y una autoridad local cubre los nombres internos."
+msgid "Sibuna terminates TLS and serves HTTP/1.1, HTTP/2, HTTP/3 and WebSocket. It routes each request by host name, by a wildcard such as *.example.org, and by path. Certificates come from Let's Encrypt or another ACME authority, and a local authority covers internal names."
+msgstr "Sibuna termina TLS y sirve HTTP/1.1, HTTP/2, HTTP/3 y WebSocket. Enruta cada petición por nombre de host, por un comodín como *.example.org y por ruta. Los certificados provienen de Let's Encrypt o de otra autoridad ACME, y una autoridad local cubre los nombres internos."
 
 msgid "Singapore"
 msgstr "Singapur"
