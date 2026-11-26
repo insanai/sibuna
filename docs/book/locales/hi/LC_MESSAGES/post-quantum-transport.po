@@ -1,0 +1,87 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the The Sibuna Book package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
+"PO-Revision-Date: 2026-10-16 05:37+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: hi\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Migrating a website to post-quantum transport"
+msgstr "वेबसाइट के ट्रांसपोर्ट को क्वांटम-प्रतिरोधी बनाना"
+
+msgid "A hospital wants to protect appointment requests that must stay confidential for years. Its portal can move to a new web address, but a device behind it still runs an older web server. We can keep the public name and point it at Sibuna. A compatible browser negotiates hybrid TLS with Sibuna. Sibuna reads the request and opens a second connection to the device. Each connection has its own keys."
+msgstr "एक अस्पताल चाहता है कि अपॉइंटमेंट के अनुरोध वर्षों तक गोपनीय रहें। उसका पोर्टल नए नेटवर्क पते पर जा सकता है, पर उसके पीछे एक उपकरण अब भी पुराना वेब सर्वर चलाता है। हम सार्वजनिक नाम बनाए रख सकते हैं और उसे Sibuna के पते पर भेज सकते हैं। संगत ब्राउज़र Sibuna से हाइब्रिड TLS पर सहमत होता है। Sibuna अनुरोध पढ़ता है और उपकरण तक दूसरा कनेक्शन खोलता है। दोनों कनेक्शन की अपनी कुंजियाँ होती हैं।"
+
+msgid "What the change protects"
+msgstr "बदलाव से किसे सुरक्षा मिलती है"
+
+msgid "In TLS 1.3, X25519MLKEM768 combines X25519 with ML-KEM-768. When the endpoints negotiate this group, a recording of that connection stays confidential while either component remains secure. The certificate still authenticates the handshake with a classical signature. A client that offers only X25519 can still connect. A TCP passthrough listener leaves TLS negotiation to the origin. If a CDN terminates TLS first, the CDN controls the browser's handshake. See `RFC 10024`_."
+msgstr "TLS 1.3 में X25519MLKEM768, X25519 और ML-KEM-768 को जोड़ता है। जब दोनों छोर इस समूह को चुनते हैं, तब दोनों में से किसी एक घटक के सुरक्षित रहने तक उस कनेक्शन की रिकॉर्डिंग गोपनीय रहती है। प्रमाणपत्र अब भी पारंपरिक हस्ताक्षर से हैंडशेक को प्रमाणित करता है। केवल X25519 प्रस्तुत करने वाला क्लाइंट भी जुड़ सकता है। TCP पासथ्रू में TLS का चुनाव मूल सर्वर करता है। यदि CDN पहले TLS को समाप्त करता है, तो ब्राउज़र का हैंडशेक उसी के नियंत्रण में है। `RFC 10024`_ देखें।"
+
+msgid "Deadlines at a glance"
+msgstr "समयसीमा एक नज़र में"
+
+msgid "The OpenSSL survey is a starting point. We match each service to its owner, jurisdiction and contract before choosing a deadline. These examples were checked on 26 November 2026. See the `OpenSSL survey`_."
+msgstr "OpenSSL का सर्वेक्षण एक शुरुआती संदर्भ है। समयसीमा चुनने से पहले हम प्रत्येक सेवा के स्वामी, क्षेत्राधिकार और अनुबंध की पहचान करते हैं। इन उदाहरणों की जाँच 26 नवंबर 2026 को हुई थी। `OpenSSL survey`_ देखें।"
+
+msgid "**United States.** Executive Order 14412 directs federal agencies to migrate designated high-value assets and high-impact systems to post-quantum key establishment by 31 December 2030 and digital signatures by 31 December 2031. National Security Systems follow separate requirements. A supplier checks the clauses in its contract. See `EO 14412`_ and `OMB M-26-15`_."
+msgstr "**संयुक्त राज्य अमेरिका।** कार्यकारी आदेश 14412 संघीय एजेंसियों को निर्देश देता है कि वे निर्दिष्ट उच्च-मूल्य परिसंपत्तियों और उच्च-प्रभाव प्रणालियों की कुंजी स्थापना को 31 दिसंबर 2030 तक और डिजिटल हस्ताक्षरों को 31 दिसंबर 2031 तक क्वांटम-प्रतिरोधी बनाएँ। राष्ट्रीय सुरक्षा प्रणालियों के लिए अलग आवश्यकताएँ हैं। आपूर्तिकर्ता अपने अनुबंध की शर्तें जाँचता है। `EO 14412`_ और `OMB M-26-15`_ देखें।"
+
+msgid "**European Union.** The NIS Cooperation Group roadmap recommends that Member States start the transition by the end of 2026. It targets high-risk uses by the end of 2030, medium-risk uses by the end of 2035 and as many low-risk uses as feasible by then. We identify the risk class and the national or sector rules for our service. See the `EU roadmap`_."
+msgstr "**यूरोपीय संघ।** NIS सहयोग समूह का रोडमैप सदस्य देशों को 2026 के अंत तक बदलाव शुरू करने की सलाह देता है। उच्च जोखिम वाले उपयोगों का लक्ष्य 2030 का अंत है। मध्यम जोखिम वाले उपयोगों और यथासंभव अधिक कम जोखिम वाले उपयोगों का लक्ष्य 2035 का अंत है। हम अपनी सेवा के जोखिम वर्ग और लागू राष्ट्रीय या क्षेत्रीय नियमों की पहचान करते हैं। `EU roadmap`_ देखें।"
+
+msgid "**Singapore.** CSA expects designated Critical Information Infrastructure owners to submit plans by 31 March 2027 and complete migration by 31 December 2031. Its public advisory encourages other exposed organisations to plan by the end of 2027 and migrate by 2035. We record which category applies to the system. See the `CSA advisory`_ and `CSA CII guidance`_."
+msgstr "**सिंगापुर।** CSA अपेक्षा करता है कि निर्दिष्ट महत्वपूर्ण सूचना अवसंरचना के स्वामी 31 मार्च 2027 तक योजनाएँ प्रस्तुत करें और 31 दिसंबर 2031 तक बदलाव पूरा करें। सार्वजनिक परामर्श में वह जोखिम का सामना कर रहे अन्य संगठनों को 2027 के अंत तक योजना बनाने और 2035 तक बदलाव पूरा करने की सलाह देता है। हम दर्ज करते हैं कि हमारी प्रणाली किस श्रेणी में आती है। `CSA advisory`_ और `CSA CII guidance`_ देखें।"
+
+msgid "Three deployments"
+msgstr "परिनियोजन के तीन उदाहरण"
+
+msgid "The examples use HTTP/1.1 to make both connections easy to inspect. We run each file separately from the directory containing its policy and certificates. The policy permits the diagnostic path and challenges other requests. We substitute our application policy before deployment."
+msgstr "दोनों कनेक्शन को आसानी से जाँचने के लिए उदाहरणों में HTTP/1.1 का उपयोग किया गया है। हम हर फ़ाइल को उसकी नीति और प्रमाणपत्रों वाली डायरेक्टरी से अलग चलाते हैं। नीति जाँच के लिए एक पथ की अनुमति देती है और बाकी अनुरोधों पर चुनौती देती है। परिनियोजन से पहले हम अपने अनुप्रयोग की नीति लगाते हैं।"
+
+msgid "A website with a local HTTP origin"
+msgstr "स्थानीय HTTP मूल सर्वर वाली वेबसाइट"
+
+msgid "We save this file as ``website.jlv`` and the policy above as ``probe-policy.json``. The file ``edge.pem`` contains the certificate chain for ``edge.example.test`` and its private key. Our HTTP application answers ``/status`` on port 29443. Plaintext stays on loopback. For a remote device we place the gateway on its host or identify and protect the private link separately."
+msgstr "हम इस फ़ाइल को ``website.jlv`` और ऊपर की नीति को ``probe-policy.json`` नाम से सहेजते हैं। ``edge.pem`` में ``edge.example.test`` की प्रमाणपत्र शृंखला और उसकी निजी कुंजी है। हमारा HTTP अनुप्रयोग पोर्ट 29443 पर ``/status`` का उत्तर देता है। सादा पाठ लूपबैक तक सीमित रहता है। दूरस्थ उपकरण के लिए हम गेटवे उसी होस्ट पर रखते हैं या निजी लिंक की पहचान कर उसे अलग से सुरक्षित करते हैं।"
+
+msgid "An organisation with an HTTPS origin"
+msgstr "HTTPS मूल सर्वर वाला संगठन"
+
+msgid "We save this file as ``secure-origin.jlv``. The origin serves HTTPS on port 29443. Its certificate names ``origin.example.test``, and ``ca.pem`` contains the issuing CA certificate. Sibuna verifies the origin and negotiates a separate key exchange. An older origin can use X25519 while the public connection uses the hybrid group. Once the origin supports the hybrid group, the same configuration can protect both connections."
+msgstr "हम इस फ़ाइल को ``secure-origin.jlv`` नाम से सहेजते हैं। मूल सर्वर पोर्ट 29443 पर HTTPS देता है। उसके प्रमाणपत्र में ``origin.example.test`` नाम है और ``ca.pem`` में जारीकर्ता CA का प्रमाणपत्र है। Sibuna मूल सर्वर को सत्यापित करता है और अलग कुंजी विनिमय तय करता है। सार्वजनिक कनेक्शन हाइब्रिड समूह चुन सकता है और पुराना मूल सर्वर X25519। जब मूल सर्वर भी हाइब्रिड समूह स्वीकार करने लगे, तो इसी सेटिंग से दोनों कनेक्शन सुरक्षित हो सकते हैं।"
+
+msgid "An older device that makes requests"
+msgstr "अनुरोध भेजने वाला पुराना उपकरण"
+
+msgid "Here the device is the client. We save the file as ``device-gateway.jlv`` and run Sibuna beside it. The device sends HTTP to the loopback listener. Sibuna opens authenticated TLS to the central service. Only that outgoing connection can negotiate the hybrid group. The listener must stay reachable only by the intended client. If the device already supports classical HTTPS, the preceding configuration also accepts it on the client side."
+msgstr "यहाँ उपकरण क्लाइंट है। हम फ़ाइल को ``device-gateway.jlv`` नाम से सहेजकर Sibuna को उपकरण के साथ चलाते हैं। उपकरण लूपबैक लिसनर को HTTP अनुरोध भेजता है। Sibuna केंद्रीय सेवा से प्रमाणित TLS कनेक्शन खोलता है। हाइब्रिड समूह केवल उस बाहर जाने वाले कनेक्शन पर चुना जा सकता है। लिसनर तक केवल निर्धारित क्लाइंट की पहुँच होनी चाहिए। यदि उपकरण पारंपरिक HTTPS स्वीकार करता है, तो पिछले उदाहरण की सेटिंग भी इसे क्लाइंट के रूप में स्वीकार करती है।"
+
+msgid "Verify the negotiated group"
+msgstr "चुने गए समूह की जाँच"
+
+msgid "We use OpenSSL 3.5 or later to make a fresh connection to the website. Here ``ca.pem`` also trusts the issuer of the public test certificate. Restricting the probe to one group makes the result unambiguous. We check the certificate verification, the negotiated group and the HTTP response."
+msgstr "हम OpenSSL 3.5 या बाद के संस्करण से वेबसाइट का नया कनेक्शन खोलते हैं। यहाँ ``ca.pem`` में सार्वजनिक परीक्षण प्रमाणपत्र का जारीकर्ता भी विश्वसनीय है। जाँच को एक समूह तक सीमित रखने से परिणाम स्पष्ट रहता है। हम प्रमाणपत्र सत्यापन, चुने गए समूह और HTTP उत्तर को जाँचते हैं।"
+
+msgid "For RC6, OpenSSL 3.5.7 reported ``Verification: OK`` and ``Negotiated TLS1.3 group: X25519MLKEM768``. We observed the origin separately with an OpenSSL test server restricted first to the hybrid group and then to X25519. Both returned HTTP 200. A mismatched origin certificate name returned 502. The older client example also returned 200 on a hybrid-only origin."
+msgstr "RC6 के साथ OpenSSL 3.5.7 ने ``Verification: OK`` और ``Negotiated TLS1.3 group: X25519MLKEM768`` दिखाया। मूल सर्वर को अलग से जाँचने के लिए हमने OpenSSL परीक्षण सर्वर को पहले हाइब्रिड समूह और फिर X25519 तक सीमित किया। दोनों ने HTTP 200 लौटाया। मूल सर्वर के प्रमाणपत्र का नाम मेल न खाने पर 502 मिला। पुराने क्लाइंट के उदाहरण में भी केवल हाइब्रिड समूह स्वीकार करने वाले मूल सर्वर से 200 मिला।"
+
+msgid "We record the date, endpoints, certificate identities, negotiated groups and any plaintext segments for each service. Offering the group permits classical fallback. A policy that requires hybrid-only sessions needs enforcement and evidence on every covered connection. Post-quantum signatures, FIPS 140 module validation and SQLx database TLS each need separate evidence. An edge handshake establishes one item in that inventory."
+msgstr "हम प्रत्येक सेवा की तारीख, कनेक्शन के दोनों छोर, प्रमाणपत्रों की पहचान, चुने गए समूह और सादे पाठ वाले हिस्से दर्ज करते हैं। समूह प्रस्तुत करने पर भी पारंपरिक विकल्प उपलब्ध रहता है। केवल हाइब्रिड सत्र की नीति के लिए प्रत्येक संबंधित कनेक्शन पर उसे लागू करने का तरीका और प्रमाण चाहिए। क्वांटम-प्रतिरोधी हस्ताक्षर, FIPS 140 मॉड्यूल सत्यापन और SQLx डेटाबेस TLS के अलग-अलग प्रमाण चाहिए। एज का हैंडशेक उस सूची की एक प्रविष्टि की पुष्टि करता है।"
+
+msgid "Milestones"
+msgstr "प्रमुख वर्ष"
+
+msgid "Systems covered"
+msgstr "संबंधित प्रणालियाँ"

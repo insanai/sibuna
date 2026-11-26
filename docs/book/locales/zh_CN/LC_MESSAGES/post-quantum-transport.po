@@ -1,0 +1,247 @@
+# The Sibuna Book
+# Copyright (C) 2026, Vikrant Rathore and Sibuna contributors
+# This file is distributed under the same license as the book.
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: post-quantum-transport.rst:1
+msgid "Migrating a website to post-quantum transport"
+msgstr "将网站迁移到抗量子传输"
+
+#: post-quantum-transport.rst:4
+msgid "A hospital wants to protect appointment requests that must stay confidential for years. Its portal can move to a new web address, but a device behind it still runs an older web server. We can keep the public name and point it at Sibuna. A compatible browser negotiates hybrid TLS with Sibuna. Sibuna reads the request and opens a second connection to the device. Each connection has its own keys."
+msgstr "一家医院希望保护需要保密多年的预约请求。门户网站可以更换服务地址，但后端的一台设备仍在运行旧版 Web 服务器。我们可以保留对外域名，将它指向 Sibuna。支持混合密钥交换的浏览器与 Sibuna 协商 TLS。Sibuna 读取请求，再向设备建立第二条连接。两条连接各有自己的密钥。"
+
+#: post-quantum-transport.rst:6
+msgid "What the change protects"
+msgstr "迁移能保护哪些链路"
+
+#: post-quantum-transport.rst:9
+msgid "In TLS 1.3, X25519MLKEM768 combines X25519 with ML-KEM-768. When the endpoints negotiate this group, a recording of that connection stays confidential while either component remains secure. The certificate still authenticates the handshake with a classical signature. A client that offers only X25519 can still connect. A TCP passthrough listener leaves TLS negotiation to the origin. If a CDN terminates TLS first, the CDN controls the browser's handshake. See `RFC 10024`_."
+msgstr "在 TLS 1.3 中，X25519MLKEM768 将 X25519 与 ML-KEM-768 结合。双方协商使用该组后，只要两种算法中至少一种仍然安全，即使有人记录了通信，内容也仍然保密。证书仍使用经典签名认证握手。只提供 X25519 的客户端也能连接。TCP 透传监听端将 TLS 协商交给源站。如果 CDN 在更前面终止 TLS，浏览器的握手就由 CDN 控制。参见 `RFC 10024`_ 。"
+
+#: post-quantum-transport.rst:11
+msgid "Deadlines at a glance"
+msgstr "各地迁移时间表"
+
+#: post-quantum-transport.rst:14
+msgid "The OpenSSL survey is a starting point. We match each service to its owner, jurisdiction and contract before choosing a deadline. These examples were checked on 26 November 2026. See the `OpenSSL survey`_."
+msgstr "我们从 OpenSSL 的调查入手，逐项核对服务的所有者、管辖地区及合同，再确定适用的期限。以下示例核实于 2026 年 11 月 26 日。参见 `OpenSSL survey`_ 。"
+
+#: post-quantum-transport.rst:16
+msgid "**United States.** Executive Order 14412 directs federal agencies to migrate designated high-value assets and high-impact systems to post-quantum key establishment by 31 December 2030 and digital signatures by 31 December 2031. National Security Systems follow separate requirements. A supplier checks the clauses in its contract. See `EO 14412`_ and `OMB M-26-15`_."
+msgstr "**美国。** 第 14412 号行政命令指示联邦机构，对指定的高价值资产和高影响系统，在 2030 年 12 月 31 日前将密钥建立迁移到抗量子方式，并在 2031 年 12 月 31 日前完成数字签名迁移。国家安全系统遵循单独的要求。供应商应查阅自身的合同条款。参见 `EO 14412`_ 和 `OMB M-26-15`_ 。"
+
+#: post-quantum-transport.rst:18
+msgid "**European Union.** The NIS Cooperation Group roadmap recommends that Member States start the transition by the end of 2026. It targets high-risk uses by the end of 2030, medium-risk uses by the end of 2035 and as many low-risk uses as feasible by then. We identify the risk class and the national or sector rules for our service. See the `EU roadmap`_."
+msgstr "**欧盟。** NIS 合作小组的路线图建议成员国到 2026 年底启动过渡。目标是到 2030 年底完成高风险用途的迁移，到 2035 年底完成中风险用途的迁移，并在届时尽可能多地完成低风险用途的迁移。我们需要确定服务的风险等级以及适用的国家或行业规则。参见 `EU roadmap`_ 。"
+
+#: post-quantum-transport.rst:20
+msgid "**Singapore.** CSA expects designated Critical Information Infrastructure owners to submit plans by 31 March 2027 and complete migration by 31 December 2031. Its public advisory encourages other exposed organisations to plan by the end of 2027 and migrate by 2035. We record which category applies to the system. See the `CSA advisory`_ and `CSA CII guidance`_."
+msgstr "**新加坡。** 网络安全局（CSA）期望获指定的关键信息基础设施所有者在 2027 年 3 月 31 日前提交计划，并在 2031 年 12 月 31 日前完成迁移。其公开通告鼓励面临此类风险的其他组织在 2027 年底前制定计划，并到 2035 年完成迁移。我们应记录系统属于哪一类。参见 `CSA advisory`_ 和 `CSA CII guidance`_ 。"
+
+#: post-quantum-transport.rst:22
+msgid "Three deployments"
+msgstr "三种部署方式"
+
+#: post-quantum-transport.rst:25
+msgid "The examples use HTTP/1.1 to make both connections easy to inspect. We run each file separately from the directory containing its policy and certificates. The policy permits the diagnostic path and challenges other requests. We substitute our application policy before deployment."
+msgstr "示例使用 HTTP/1.1，便于分别检查两条连接。我们从存放策略和证书的目录逐个运行这些配置。示例策略放行诊断路径，对其他请求发起挑战。部署前应换成应用自己的策略。"
+
+#: post-quantum-transport.rst:27
+msgid "{\"default_action\":\"CHALLENGE\",\"rules\":[{\"name\":\"status\",\"path\":\"/status\",\"action\":\"ALLOW\"}]}"
+msgstr "{\"default_action\":\"CHALLENGE\",\"rules\":[{\"name\":\"status\",\"path\":\"/status\",\"action\":\"ALLOW\"}]}"
+
+#: post-quantum-transport.rst:30
+msgid "A website with a local HTTP origin"
+msgstr "使用本机 HTTP 源站的网站"
+
+#: post-quantum-transport.rst:33
+msgid "We save this file as ``website.jlv`` and the policy above as ``probe-policy.json``. The file ``edge.pem`` contains the certificate chain for ``edge.example.test`` and its private key. Our HTTP application answers ``/status`` on port 29443. Plaintext stays on loopback. For a remote device we place the gateway on its host or identify and protect the private link separately."
+msgstr "将此配置保存为 ``website.jlv`` ，将上面的策略保存为 ``probe-policy.json`` 。文件 ``edge.pem`` 包含 ``edge.example.test`` 的证书链及其私钥。HTTP 应用在端口 29443 上响应 ``/status`` 请求。明文仅经过回环链路。如果设备位于远端，我们可以在设备所在主机上部署网关，或识别网关与设备之间的专用链路并单独保护。"
+
+#: post-quantum-transport.rst:35
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: post-quantum-transport.rst:38
+msgid ""
+"sibuna check -f website.jlv\n"
+"sibuna --config-file website.jlv"
+msgstr ""
+"sibuna check -f website.jlv\n"
+"sibuna --config-file website.jlv"
+
+#: post-quantum-transport.rst:43
+msgid "An organisation with an HTTPS origin"
+msgstr "使用 HTTPS 源站的组织"
+
+#: post-quantum-transport.rst:46
+msgid "We save this file as ``secure-origin.jlv``. The origin serves HTTPS on port 29443. Its certificate names ``origin.example.test``, and ``ca.pem`` contains the issuing CA certificate. Sibuna verifies the origin and negotiates a separate key exchange. An older origin can use X25519 while the public connection uses the hybrid group. Once the origin supports the hybrid group, the same configuration can protect both connections."
+msgstr "将此配置保存为 ``secure-origin.jlv`` 。源站在端口 29443 提供 HTTPS，其证书上的域名为 ``origin.example.test`` 。文件 ``ca.pem`` 包含签发该证书的 CA 的证书。Sibuna 先验证源站身份，再为该连接单独协商密钥交换。公网连接使用混合组时，旧源站仍可使用 X25519。源站支持混合组后，同一份配置即可用混合密钥交换保护两条连接。"
+
+#: post-quantum-transport.rst:48
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: post-quantum-transport.rst:51
+msgid "An older device that makes requests"
+msgstr "主动发送请求的旧设备"
+
+#: post-quantum-transport.rst:54
+msgid "Here the device is the client. We save the file as ``device-gateway.jlv`` and run Sibuna beside it. The device sends HTTP to the loopback listener. Sibuna opens authenticated TLS to the central service. Only that outgoing connection can negotiate the hybrid group. The listener must stay reachable only by the intended client. If the device already supports classical HTTPS, the preceding configuration also accepts it on the client side."
+msgstr "本例中设备是客户端。将文件保存为 ``device-gateway.jlv`` ，在设备所在主机上运行 Sibuna。设备向回环监听端发送 HTTP 请求，Sibuna 验证中心服务的身份并与其建立 TLS 连接。只有这条出站连接可以协商混合组。监听端必须仅对预期的客户端可达。如果设备已经支持使用经典密钥交换的 HTTPS，上一种配置也可以接受该设备的客户端连接。"
+
+#: post-quantum-transport.rst:56
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: post-quantum-transport.rst:59
+msgid "Verify the negotiated group"
+msgstr "验证协商的密钥交换组"
+
+#: post-quantum-transport.rst:62
+msgid "We use OpenSSL 3.5 or later to make a fresh connection to the website. Here ``ca.pem`` also trusts the issuer of the public test certificate. Restricting the probe to one group makes the result unambiguous. We check the certificate verification, the negotiated group and the HTTP response."
+msgstr "使用 OpenSSL 3.5 或更高版本与网站建立新连接。本例中， ``ca.pem`` 也包含用于信任公网侧测试证书签发者的 CA 证书。探测时只提供一个组，结果就没有歧义。我们检查证书验证结果、协商的组和 HTTP 响应。"
+
+#: post-quantum-transport.rst:64
+msgid ""
+"printf 'GET /status HTTP/1.1\\r\\nHost: edge.example.test\\r\\nConnection: close\\r\\n\\r\\n' |\n"
+"  openssl s_client -connect 127.0.0.1:28443 -servername edge.example.test \\\n"
+"    -verify_hostname edge.example.test -CAfile ca.pem -verify_return_error \\\n"
+"    -tls1_3 -groups X25519MLKEM768 -alpn http/1.1 -brief -ign_eof"
+msgstr ""
+"printf 'GET /status HTTP/1.1\\r\\nHost: edge.example.test\\r\\nConnection: close\\r\\n\\r\\n' |\n"
+"  openssl s_client -connect 127.0.0.1:28443 -servername edge.example.test \\\n"
+"    -verify_hostname edge.example.test -CAfile ca.pem -verify_return_error \\\n"
+"    -tls1_3 -groups X25519MLKEM768 -alpn http/1.1 -brief -ign_eof"
+
+#: post-quantum-transport.rst:71
+msgid "For RC6, OpenSSL 3.5.7 reported ``Verification: OK`` and ``Negotiated TLS1.3 group: X25519MLKEM768``. We observed the origin separately with an OpenSSL test server restricted first to the hybrid group and then to X25519. Both returned HTTP 200. A mismatched origin certificate name returned 502. The older client example also returned 200 on a hybrid-only origin."
+msgstr "测试 RC6 时，OpenSSL 3.5.7 报告 ``Verification: OK`` 和 ``Negotiated TLS1.3 group: X25519MLKEM768`` 。我们也单独检查了源站连接。让 OpenSSL 测试服务器先仅支持混合组，再仅支持 X25519，两次请求都返回 HTTP 200。源站证书名称不匹配时返回 502。旧客户端示例连接只支持混合组的源站时也收到了 200。"
+
+#: post-quantum-transport.rst:73
+msgid "We record the date, endpoints, certificate identities, negotiated groups and any plaintext segments for each service. Offering the group permits classical fallback. A policy that requires hybrid-only sessions needs enforcement and evidence on every covered connection. Post-quantum signatures, FIPS 140 module validation and SQLx database TLS each need separate evidence. An edge handshake establishes one item in that inventory."
+msgstr "我们逐项记录服务的检查日期、两端地址、证书标识、协商的组，以及传输明文的链路。提供混合组仍允许回退到经典密钥交换。如果策略只允许混合会话，就需要对每一条受约束的连接强制执行并留存证据。抗量子签名、FIPS 140 密码模块验证以及 SQLx 数据库 TLS 连接都需要单独的证据。一次边缘握手只能验证这份清单上的一项。"
+
+msgid "Milestones"
+msgstr "里程碑"
+
+msgid "Systems covered"
+msgstr "适用系统"

@@ -1,0 +1,19 @@
+fn edge() -> Map<Value> {
+    return {
+        http: { policy_file: "probe-policy.json" },
+        frontends: {
+            web: {
+                binds: ["127.0.0.1:28443"],
+                tls: { crt: "edge.pem" },
+                default_backend: "app",
+            },
+        },
+        backends: {
+            app: {
+                http_version: "1.1",
+                tls: { ca_file: "ca.pem", sni: "origin.example.test" },
+                servers: ["127.0.0.1:29443"],
+            },
+        },
+    }
+}

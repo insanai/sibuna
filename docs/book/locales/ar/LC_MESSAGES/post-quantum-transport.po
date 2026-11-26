@@ -1,0 +1,247 @@
+# The Sibuna Book: post-quantum transport (ar).
+msgid ""
+msgstr ""
+"Project-Id-Version: The Sibuna Book 1.0\n"
+"Language-Team: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ar\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
+"n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+
+#: post-quantum-transport.rst:1
+msgid "Migrating a website to post-quantum transport"
+msgstr "نقل موقع ويب إلى اتصال مقاوم للحوسبة الكمّية"
+
+#: post-quantum-transport.rst:4
+msgid "A hospital wants to protect appointment requests that must stay confidential for years. Its portal can move to a new web address, but a device behind it still runs an older web server. We can keep the public name and point it at Sibuna. A compatible browser negotiates hybrid TLS with Sibuna. Sibuna reads the request and opens a second connection to the device. Each connection has its own keys."
+msgstr "يريد مستشفى حماية طلبات حجز المواعيد التي يجب أن تبقى سرية لسنوات. يمكن نقل بوابته إلى عنوان ويب جديد، لكن أحد الأجهزة خلفها ما زال يشغّل خادم ويب قديما. يمكننا الاحتفاظ بالاسم العام وتوجيهه إلى Sibuna. يتفاوض المتصفح المتوافق مع Sibuna لإنشاء اتصال TLS هجين. يقرأ Sibuna الطلب ويفتح اتصالا ثانيا بالجهاز. لكل اتصال مفاتيحه الخاصة."
+
+#: post-quantum-transport.rst:6
+msgid "What the change protects"
+msgstr "ما الذي تحميه هذه الخطوة؟"
+
+#: post-quantum-transport.rst:9
+msgid "In TLS 1.3, X25519MLKEM768 combines X25519 with ML-KEM-768. When the endpoints negotiate this group, a recording of that connection stays confidential while either component remains secure. The certificate still authenticates the handshake with a classical signature. A client that offers only X25519 can still connect. A TCP passthrough listener leaves TLS negotiation to the origin. If a CDN terminates TLS first, the CDN controls the browser's handshake. See `RFC 10024`_."
+msgstr "تجمع المجموعة X25519MLKEM768 في TLS 1.3 بين X25519 وML-KEM-768. عندما يتفق الطرفان على هذه المجموعة، تظل البيانات المسجلة من الاتصال سرية ما دام مكوّن واحد على الأقل آمنا. وتظل مصادقة الاتصال أثناء المصافحة معتمدة على شهادة بتوقيع تقليدي. ويمكن للعميل الذي لا يعرض سوى X25519 أن يتصل أيضا. إذا مرّر المستمِع اتصال TCP كما هو، فإن خادم الأصل هو الذي يتفاوض على TLS. وإذا أنهت شبكة توصيل المحتوى (CDN) اتصال TLS أولا، فهي التي تتحكم في المصافحة مع المتصفح. انظر `RFC 10024`_."
+
+#: post-quantum-transport.rst:11
+msgid "Deadlines at a glance"
+msgstr "المواعيد المستهدفة"
+
+#: post-quantum-transport.rst:14
+msgid "The OpenSSL survey is a starting point. We match each service to its owner, jurisdiction and contract before choosing a deadline. These examples were checked on 26 November 2026. See the `OpenSSL survey`_."
+msgstr "نبدأ من استعراض OpenSSL. قبل اختيار موعد لكل خدمة، نحدد الجهة المسؤولة عنها والولاية القضائية والعقد المطبقين عليها. تحققنا من هذه الأمثلة في 26 نوفمبر 2026. انظر `OpenSSL survey`_."
+
+#: post-quantum-transport.rst:16
+msgid "**United States.** Executive Order 14412 directs federal agencies to migrate designated high-value assets and high-impact systems to post-quantum key establishment by 31 December 2030 and digital signatures by 31 December 2031. National Security Systems follow separate requirements. A supplier checks the clauses in its contract. See `EO 14412`_ and `OMB M-26-15`_."
+msgstr "**الولايات المتحدة.** يوجّه الأمر التنفيذي 14412 الوكالات الفدرالية إلى استخدام آليات ما بعد الكم لإنشاء المفاتيح بحلول 31 ديسمبر 2030 وللتوقيعات الرقمية بحلول 31 ديسمبر 2031، وذلك للأصول المصنفة عالية القيمة وللأنظمة عالية التأثير. تخضع الأنظمة المصنفة ضمن أنظمة الأمن القومي لمتطلبات منفصلة. يراجع كل مورّد البنود الواردة في عقده. انظر `EO 14412`_ و `OMB M-26-15`_."
+
+#: post-quantum-transport.rst:18
+msgid "**European Union.** The NIS Cooperation Group roadmap recommends that Member States start the transition by the end of 2026. It targets high-risk uses by the end of 2030, medium-risk uses by the end of 2035 and as many low-risk uses as feasible by then. We identify the risk class and the national or sector rules for our service. See the `EU roadmap`_."
+msgstr "**الاتحاد الأوروبي.** توصي خريطة طريق مجموعة التعاون المعنية بأمن الشبكات والمعلومات بأن تبدأ الدول الأعضاء الانتقال بحلول نهاية 2026. وتستهدف إتمام الانتقال للاستخدامات عالية المخاطر بحلول نهاية 2030، وللاستخدامات متوسطة المخاطر بحلول نهاية 2035، ولأكبر عدد ممكن عمليا من الاستخدامات منخفضة المخاطر بحلول ذلك الحين. نحدد فئة المخاطر والقواعد الوطنية أو القطاعية التي تنطبق على خدمتنا. انظر `EU roadmap`_."
+
+#: post-quantum-transport.rst:20
+msgid "**Singapore.** CSA expects designated Critical Information Infrastructure owners to submit plans by 31 March 2027 and complete migration by 31 December 2031. Its public advisory encourages other exposed organisations to plan by the end of 2027 and migrate by 2035. We record which category applies to the system. See the `CSA advisory`_ and `CSA CII guidance`_."
+msgstr "**سنغافورة.** تتوقع وكالة الأمن السيبراني (CSA) من مالكي البنى التحتية المعلوماتية المصنفة حرجة تقديم خططهم بحلول 31 مارس 2027 وإتمام الانتقال بحلول 31 ديسمبر 2031. وتشجّع الوكالة في إرشاداتها العامة المؤسسات الأخرى المعرّضة للمخاطر على إعداد خطط بحلول نهاية 2027 وإتمام الانتقال بحلول 2035. ندوّن الفئة التي ينتمي إليها النظام. انظر `CSA advisory`_ و `CSA CII guidance`_."
+
+#: post-quantum-transport.rst:22
+msgid "Three deployments"
+msgstr "ثلاثة أمثلة للنشر"
+
+#: post-quantum-transport.rst:25
+msgid "The examples use HTTP/1.1 to make both connections easy to inspect. We run each file separately from the directory containing its policy and certificates. The policy permits the diagnostic path and challenges other requests. We substitute our application policy before deployment."
+msgstr "تستخدم الأمثلة HTTP/1.1 لسهولة فحص كلا الاتصالين. نشغّل كل ملف إعداد على حدة من الدليل الذي يحتوي على سياسته وشهاداته. تسمح السياسة بالطلبات المرسلة إلى مسار التشخيص وتطلب إثبات عمل لسائر الطلبات. وقبل النشر نستبدلها بسياسة تطبيقنا."
+
+#: post-quantum-transport.rst:27
+msgid "{\"default_action\":\"CHALLENGE\",\"rules\":[{\"name\":\"status\",\"path\":\"/status\",\"action\":\"ALLOW\"}]}"
+msgstr "{\"default_action\":\"CHALLENGE\",\"rules\":[{\"name\":\"status\",\"path\":\"/status\",\"action\":\"ALLOW\"}]}"
+
+#: post-quantum-transport.rst:30
+msgid "A website with a local HTTP origin"
+msgstr "موقع ويب له خادم أصل محلي يعمل عبر HTTP"
+
+#: post-quantum-transport.rst:33
+msgid "We save this file as ``website.jlv`` and the policy above as ``probe-policy.json``. The file ``edge.pem`` contains the certificate chain for ``edge.example.test`` and its private key. Our HTTP application answers ``/status`` on port 29443. Plaintext stays on loopback. For a remote device we place the gateway on its host or identify and protect the private link separately."
+msgstr "نحفظ هذا الملف باسم ``website.jlv`` والسياسة السابقة باسم ``probe-policy.json``. يحتوي الملف ``edge.pem`` على سلسلة شهادات ``edge.example.test`` والمفتاح الخاص المقابل لها. يستجيب تطبيق HTTP لطلبات المسار ``/status`` على المنفذ 29443. تبقى البيانات غير المشفرة على واجهة الاسترجاع المحلية. إذا كان الجهاز بعيدا، نضع البوابة على مضيفه أو نحدد الوصلة الخاصة ونؤمّنها على حدة."
+
+#: post-quantum-transport.rst:35
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: post-quantum-transport.rst:38
+msgid ""
+"sibuna check -f website.jlv\n"
+"sibuna --config-file website.jlv"
+msgstr ""
+"sibuna check -f website.jlv\n"
+"sibuna --config-file website.jlv"
+
+#: post-quantum-transport.rst:43
+msgid "An organisation with an HTTPS origin"
+msgstr "مؤسسة لها خادم أصل يعمل عبر HTTPS"
+
+#: post-quantum-transport.rst:46
+msgid "We save this file as ``secure-origin.jlv``. The origin serves HTTPS on port 29443. Its certificate names ``origin.example.test``, and ``ca.pem`` contains the issuing CA certificate. Sibuna verifies the origin and negotiates a separate key exchange. An older origin can use X25519 while the public connection uses the hybrid group. Once the origin supports the hybrid group, the same configuration can protect both connections."
+msgstr "نحفظ هذا الملف باسم ``secure-origin.jlv``. يقدّم خادم الأصل خدمة HTTPS على المنفذ 29443. تتضمن شهادته الاسم ``origin.example.test``، ويحتوي الملف ``ca.pem`` على شهادة جهة التصديق المصدرة. يتحقق Sibuna من هوية خادم الأصل ويتفاوض معه على تبادل مستقل للمفاتيح. يمكن لخادم قديم استخدام X25519 بينما يستخدم الاتصال العام المجموعة الهجينة. عندما يدعم خادم الأصل المجموعة الهجينة، يمكن للإعداد نفسه حماية كلا الاتصالين بها."
+
+#: post-quantum-transport.rst:48
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                tls: { crt: \"edge.pem\" },\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: post-quantum-transport.rst:51
+msgid "An older device that makes requests"
+msgstr "جهاز قديم يرسل الطلبات"
+
+#: post-quantum-transport.rst:54
+msgid "Here the device is the client. We save the file as ``device-gateway.jlv`` and run Sibuna beside it. The device sends HTTP to the loopback listener. Sibuna opens authenticated TLS to the central service. Only that outgoing connection can negotiate the hybrid group. The listener must stay reachable only by the intended client. If the device already supports classical HTTPS, the preceding configuration also accepts it on the client side."
+msgstr "يتصرف الجهاز هنا بصفته العميل. نحفظ الملف باسم ``device-gateway.jlv`` ونشغّل Sibuna على المضيف نفسه. يرسل الجهاز طلبات HTTP إلى المستمِع على واجهة الاسترجاع المحلية. يفتح Sibuna اتصال TLS بالخدمة المركزية ويتحقق من هويتها. وحده هذا الاتصال الصادر يستطيع التفاوض على المجموعة الهجينة. يجب أن يقتصر الوصول إلى المستمِع على العميل المقصود. إذا كان الجهاز يدعم HTTPS التقليدي أصلا، فيمكنه أيضا الاتصال بصفته عميلا في الإعداد السابق."
+
+#: post-quantum-transport.rst:56
+msgid ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+msgstr ""
+"fn edge() -> Map<Value> {\n"
+"    return {\n"
+"        http: { policy_file: \"probe-policy.json\" },\n"
+"        frontends: {\n"
+"            web: {\n"
+"                binds: [\"127.0.0.1:28443\"],\n"
+"                default_backend: \"app\",\n"
+"            },\n"
+"        },\n"
+"        backends: {\n"
+"            app: {\n"
+"                http_version: \"1.1\",\n"
+"                tls: { ca_file: \"ca.pem\", sni: \"origin.example.test\" },\n"
+"                servers: [\"127.0.0.1:29443\"],\n"
+"            },\n"
+"        },\n"
+"    }\n"
+"}"
+
+#: post-quantum-transport.rst:59
+msgid "Verify the negotiated group"
+msgstr "التحقق من المجموعة المتفق عليها"
+
+#: post-quantum-transport.rst:62
+msgid "We use OpenSSL 3.5 or later to make a fresh connection to the website. Here ``ca.pem`` also trusts the issuer of the public test certificate. Restricting the probe to one group makes the result unambiguous. We check the certificate verification, the negotiated group and the HTTP response."
+msgstr "نستخدم الإصدار 3.5 من OpenSSL أو إصدارا أحدث لفتح اتصال جديد بالموقع. في هذا المثال يتيح لنا الملف ``ca.pem`` أيضا الوثوق بالجهة التي أصدرت شهادة الاختبار للواجهة العامة. نقصر الاختبار على مجموعة واحدة حتى تكون النتيجة قاطعة. نراجع نتيجة التحقق من الشهادة والمجموعة المتفق عليها واستجابة HTTP."
+
+#: post-quantum-transport.rst:64
+msgid ""
+"printf 'GET /status HTTP/1.1\\r\\nHost: edge.example.test\\r\\nConnection: close\\r\\n\\r\\n' |\n"
+"  openssl s_client -connect 127.0.0.1:28443 -servername edge.example.test \\\n"
+"    -verify_hostname edge.example.test -CAfile ca.pem -verify_return_error \\\n"
+"    -tls1_3 -groups X25519MLKEM768 -alpn http/1.1 -brief -ign_eof"
+msgstr ""
+"printf 'GET /status HTTP/1.1\\r\\nHost: edge.example.test\\r\\nConnection: close\\r\\n\\r\\n' |\n"
+"  openssl s_client -connect 127.0.0.1:28443 -servername edge.example.test \\\n"
+"    -verify_hostname edge.example.test -CAfile ca.pem -verify_return_error \\\n"
+"    -tls1_3 -groups X25519MLKEM768 -alpn http/1.1 -brief -ign_eof"
+
+#: post-quantum-transport.rst:71
+msgid "For RC6, OpenSSL 3.5.7 reported ``Verification: OK`` and ``Negotiated TLS1.3 group: X25519MLKEM768``. We observed the origin separately with an OpenSSL test server restricted first to the hybrid group and then to X25519. Both returned HTTP 200. A mismatched origin certificate name returned 502. The older client example also returned 200 on a hybrid-only origin."
+msgstr "مع الإصدار RC6 أظهر OpenSSL 3.5.7 الرسالتين ``Verification: OK`` و ``Negotiated TLS1.3 group: X25519MLKEM768``. فحصنا اتصال الأصل على حدة باستخدام خادم اختبار OpenSSL قصرناه أولا على المجموعة الهجينة ثم على X25519. تلقينا استجابة HTTP 200 في الحالتين. وعندما لم يطابق الاسم شهادة خادم الأصل تلقينا الاستجابة 502. وتلقى مثال العميل القديم الاستجابة 200 أيضا من خادم أصل لا يقبل سوى المجموعة الهجينة."
+
+#: post-quantum-transport.rst:73
+msgid "We record the date, endpoints, certificate identities, negotiated groups and any plaintext segments for each service. Offering the group permits classical fallback. A policy that requires hybrid-only sessions needs enforcement and evidence on every covered connection. Post-quantum signatures, FIPS 140 module validation and SQLx database TLS each need separate evidence. An edge handshake establishes one item in that inventory."
+msgstr "نسجّل لكل خدمة التاريخ وطرفي الاتصال والهويات الواردة في الشهادات والمجموعات المتفق عليها وأي مقاطع تنقل بيانات غير مشفرة. يتيح عرض المجموعة الهجينة الرجوع إلى تبادل مفاتيح تقليدي. إذا اشترطت السياسة جلسات هجينة حصرا، فيجب فرض هذا الشرط وتوثيق تحققه في كل اتصال يشمله. وتحتاج توقيعات ما بعد الكم والتحقق من الوحدات وفق FIPS 140 واتصال SQLx بقاعدة البيانات عبر TLS إلى أدلة منفصلة لكل منها. توثّق المصافحة عند الحافة بندا واحدا من هذا الحصر."
+
+msgid "Milestones"
+msgstr "المواعيد الرئيسية"
+
+msgid "Systems covered"
+msgstr "الأنظمة المشمولة"
