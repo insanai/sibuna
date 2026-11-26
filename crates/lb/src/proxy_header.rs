@@ -43,13 +43,17 @@ pub enum ProxyHeaderError {
 /// [`ProxyHeaderError::Incomplete`] when `bytes` ends inside a header that may still be
 /// valid, and the other errors when no more bytes can make it one.
 pub fn parse_proxy_header(bytes: &[u8]) -> Result<ProxyHeader, ProxyHeaderError> {
-    if starts(bytes, V2_SIGNATURE) {
-        return parse_v2(bytes);
-    }
-    if starts(bytes, V1_PREFIX) {
-        return parse_v1(bytes);
-    }
-    Err(ProxyHeaderError::Malformed)
+    let header = if starts(bytes, V2_SIGNATURE) {
+        parse_v2(bytes)?
+    } else if starts(bytes, V1_PREFIX) {
+        parse_v1(bytes)?
+    } else {
+        return Err(ProxyHeaderError::Malformed);
+    };
+    // An IPv4-mapped source is the IPv4 client it maps (SID 0036).
+    let source =
+        header.source.map(|source| SocketAddr::new(source.ip().to_canonical(), source.port()));
+    Ok(ProxyHeader { source, ..header })
 }
 
 /// True when `bytes` and `prefix` agree as far as both go. Sets up `Incomplete` for a
@@ -245,6 +249,17 @@ mod tests {
         bytes.extend_from_slice(&(block.len() as u16).to_be_bytes());
         bytes.extend_from_slice(block);
         bytes
+    }
+
+    #[test]
+    fn an_ipv4_mapped_source_is_read_as_ipv4() {
+        let header = parse_proxy_header(b"PROXY TCP6 ::ffff:192.0.2.7 ::1 1 2\r\n").unwrap();
+        assert_eq!(header.source, Some("192.0.2.7:1".parse().unwrap()));
+        let mut block = [0u8; 36];
+        block[10..16].copy_from_slice(&[0xff, 0xff, 192, 0, 2, 7]);
+        block[32..34].copy_from_slice(&4000u16.to_be_bytes());
+        let header = parse_proxy_header(&v2(0x21, 0x21, &block)).unwrap();
+        assert_eq!(header.source, Some("192.0.2.7:4000".parse().unwrap()));
     }
 
     #[test]

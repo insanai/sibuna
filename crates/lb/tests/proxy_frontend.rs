@@ -32,6 +32,11 @@ impl Drop for Worker {
 /// Starts an edge with one TCP frontend. `front` and `pool` are members with a trailing
 /// comma. A listener port that another test took meanwhile is chosen again.
 fn start(front: &str, pool: &str, servers: &[SocketAddr]) -> Worker {
+    start_on("127.0.0.1", front, pool, servers)
+}
+
+/// As [`start`], with the listener on `host`, which may be `[::]` for a dual-stack one.
+fn start_on(host: &str, front: &str, pool: &str, servers: &[SocketAddr]) -> Worker {
     let servers = servers
         .iter()
         .enumerate()
@@ -39,7 +44,8 @@ fn start(front: &str, pool: &str, servers: &[SocketAddr]) -> Worker {
         .collect::<Vec<_>>()
         .join(",");
     for _ in 0..5 {
-        let vip = TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap();
+        let port = TcpListener::bind(format!("{host}:0")).unwrap().local_addr().unwrap().port();
+        let vip: SocketAddr = format!("{host}:{port}").parse().unwrap();
         let source = format!(
             r#"{{"frontends":{{"db":{{"proto":"tcp","binds":["{vip}"],{front}
             "default_backend":"db"}}}},
@@ -215,4 +221,55 @@ fn a_connection_without_a_header_or_from_an_unknown_peer_is_closed() {
     worker.stats.write_prometheus(&mut text).unwrap();
     assert!(text.contains("sibuna_edge_proxy_protocol_rejected_total 1\n"), "{text}");
     assert!(text.contains("sibuna_edge_refused_total{reason=\"rate_limit\"} 0\n"), "{text}");
+}
+
+/// The header that the first server of `worker` receives for a connection that begins
+/// with `header` and reaches `to`.
+fn forwarded_header(
+    worker: &Worker,
+    server: &TcpListener,
+    to: SocketAddr,
+    header: &str,
+) -> Vec<u8> {
+    let _client = send(to, header);
+    let mut bytes = Vec::new();
+    accepted(server, WAIT).unwrap().read_to_end(&mut bytes).unwrap();
+    assert!(bytes.ends_with(b"ping"));
+    assert_eq!(worker.stats.refusal_count(Refusal::RateLimit), 0);
+    bytes
+}
+
+#[test]
+fn a_client_of_the_other_family_is_passed_on_in_an_ipv6_block() {
+    let (server, address) = origin();
+    let pool = r#""proxy_v2":{"enabled":true},"#;
+    // An IPv4 listener that reads an IPv6 client: before SID 0036 the connection closed.
+    let worker = start(PROXIED, pool, &[address]);
+    let header = "PROXY TCP6 2001:db8::7 2001:db8::1 51234 443\r\n";
+    let bytes = forwarded_header(&worker, &server, worker.vip, header);
+    assert_eq!(bytes[13], 0x21, "TCP over IPv6");
+    let source: std::net::Ipv6Addr = "2001:db8::7".parse().unwrap();
+    let listener: std::net::Ipv6Addr = "::ffff:127.0.0.1".parse().unwrap();
+    assert_eq!(&bytes[16..32], &source.octets());
+    assert_eq!(&bytes[32..48], &listener.octets());
+    assert_eq!(&bytes[48..50], &51234u16.to_be_bytes());
+}
+
+#[test]
+fn a_dual_stack_listener_passes_an_ipv4_client_on_as_ipv4() {
+    let (server, address) = origin();
+    let pool = r#""proxy_v2":{"enabled":true},"#;
+    let worker = start_on("[::]", PROXIED, pool, &[address]);
+    let ipv4 = SocketAddr::from(([127, 0, 0, 1], worker.vip.port()));
+    // The usual setup behind an IPv4 load balancer: the header names an IPv4 client and
+    // the socket's own address is IPv4-mapped IPv6.
+    let bytes = forwarded_header(&worker, &server, ipv4, &v1("203.0.113.7", 51234));
+    assert_eq!(bytes[13], 0x11, "TCP over IPv4");
+    assert_eq!(&bytes[16..24], &[203, 0, 113, 7, 127, 0, 0, 1]);
+    // Without a header, an IPv4 client of the dual-stack listener is IPv4 too.
+    let worker = start_on("[::]", "", pool, &[address]);
+    let ipv4 = SocketAddr::from(([127, 0, 0, 1], worker.vip.port()));
+    let bytes = forwarded_header(&worker, &server, ipv4, "");
+    assert_eq!(bytes[13], 0x11, "TCP over IPv4");
+    assert_eq!(&bytes[16..20], &[127, 0, 0, 1]);
 }

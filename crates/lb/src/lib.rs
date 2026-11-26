@@ -884,10 +884,7 @@ impl Edge {
             return true;
         }
         let Some(pool) = self.pools.get(opening.pool.as_ref()) else { return false };
-        let Some(prefix) = proxy::prefix(pool.proxy_v2, peer, vip, None, Vec::new()) else {
-            return false;
-        };
-        opening.prefix = prefix;
+        opening.prefix = proxy::prefix(pool.proxy_v2, peer, vip, None, Vec::new());
         self.connect(id, opening)
     }
 

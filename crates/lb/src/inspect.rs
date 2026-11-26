@@ -303,10 +303,7 @@ impl Edge {
         flow.opening.pool = pool;
         let Some(pool) = self.pools.get(flow.opening.pool.as_ref()) else { return false };
         let (peer, vip) = (flow.opening.peer, flow.opening.vip);
-        let Some(prefix) = proxy::prefix(pool.proxy_v2, peer, vip, hello.as_ref(), wire) else {
-            return false;
-        };
-        flow.opening.prefix = prefix;
+        flow.opening.prefix = proxy::prefix(pool.proxy_v2, peer, vip, hello.as_ref(), wire);
         self.connect(id, flow.opening)
     }
 
