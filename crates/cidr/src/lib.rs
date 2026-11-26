@@ -41,8 +41,8 @@ mod parse;
 mod trie;
 
 pub use parse::{
-    IPV4_MAPPED_PREFIX, ParseError, Prefix, mapped_key, parse_cidr, parse_ip, parse_ipv4,
-    parse_ipv6,
+    IPV4_MAPPED_PREFIX, ParseError, Prefix, client_key, client_key_bytes, mapped_key, parse_cidr,
+    parse_ip, parse_ipv4, parse_ipv6,
 };
 pub use trie::{DEFAULT_MAX_NODES, PrefixTrie, TrieError};
 

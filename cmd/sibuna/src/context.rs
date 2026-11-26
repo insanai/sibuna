@@ -112,7 +112,7 @@ impl<'c, W: Write> Ctx<'c, W> {
         let front = link.trace.front.as_deref();
         let (client_ip, client_address) = resolve_client(server, front, &request, peer);
         let client_key = ClientKey::new(client_ip, client_address, server.config.ipv6_prefix);
-        let client_hash = server.client_hasher.hash(client_key.as_bytes());
+        let client_hash = server.defense.hasher().hash(client_key.as_bytes());
         let user_agent = request.header(b"user-agent").unwrap_or_default();
         let ja4 = resolve_ja4(server, &request);
         let wants_keep = request.wants_keep_alive() && !link.last;
@@ -248,14 +248,8 @@ impl<'c> ClientKey<'c> {
     /// IPv6 addresses (not IPv4-mapped ones) keep their first `ipv6_prefix` bits.
     pub(crate) fn new(text: &'c [u8], address: Option<IpAddr>, ipv6_prefix: u8) -> Self {
         let Some(address) = address else { return ClientKey::Text(text) };
-        let mut key = sibuna_cidr::mapped_key(address);
-        let ipv4_mapped = key >> 32 == sibuna_cidr::IPV4_MAPPED_PREFIX >> 32;
-        if !ipv4_mapped {
-            key &= u128::MAX.checked_shl(128 - u32::from(ipv6_prefix.min(128))).unwrap_or(0);
-        }
-        let mut bytes = [0u8; 17];
-        bytes[1..].copy_from_slice(&key.to_be_bytes());
-        ClientKey::Address(bytes)
+        // The packet worker keys bans by the same bytes (SID 0034).
+        ClientKey::Address(sibuna_cidr::client_key_bytes(address, ipv6_prefix))
     }
 
     /// Returns the key bytes.

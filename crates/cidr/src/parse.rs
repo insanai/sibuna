@@ -60,6 +60,26 @@ pub fn mapped_key(address: IpAddr) -> u128 {
     }
 }
 
+/// Returns the 128-bit key of `address` with an IPv6 address (not an IPv4-mapped one)
+/// cut to its first `ipv6_prefix` bits. Every spelling of one IPv4 address, and every
+/// address of one IPv6 prefix, has one key.
+pub fn client_key(address: IpAddr, ipv6_prefix: u8) -> u128 {
+    let key = mapped_key(address);
+    if is_ipv4_mapped(key) {
+        return key;
+    }
+    key & u128::MAX.checked_shl(128 - u32::from(ipv6_prefix.min(128))).unwrap_or(0)
+}
+
+/// Returns the bytes that the ban table and the rate limiters know a client address by:
+/// a zero byte followed by its [`client_key`] in big-endian order. A text key of a client
+/// never begins with a zero byte, so no text key equals an address key.
+pub fn client_key_bytes(address: IpAddr, ipv6_prefix: u8) -> [u8; 17] {
+    let mut bytes = [0u8; 17];
+    bytes[1..].copy_from_slice(&client_key(address, ipv6_prefix).to_be_bytes());
+    bytes
+}
+
 /// Returns true when `key` lies in `::ffff:0:0/96`, the IPv4-mapped addresses.
 pub(crate) fn is_ipv4_mapped(key: u128) -> bool {
     key >> 32 == IPV4_MAPPED_PREFIX >> 32
