@@ -423,7 +423,7 @@ A ``tls`` object takes three more members, all optional.
 
 The cipher suites are those of the TLS library, all with forward secrecy and authenticated encryption, and are not configurable.
 
-Every TLS 1.3 session also offers the hybrid key exchange X25519MLKEM768, which runs X25519 together with the post-quantum ML-KEM-768 of FIPS 203. A client that offers it, as current browsers, curl with OpenSSL 3.5 and Go do, gets a session that a recording cannot open even with a future quantum computer, since its key stays secret while either of the two holds. A client without it gets X25519 or a NIST curve, as before, with no extra round trip. HTTP/3, TLS on the workers, the TLS to pools and the console's outbound connections offer the same groups. There is no setting. SID 0035 explains the choice and measures the cost: about 70 microseconds of CPU more per handshake on the server.
+Sibuna offers X25519MLKEM768 for TLS 1.3 on its listeners and outbound HTTP connections, including HTTP/3, origin pools, ACME and the console. The client also sends an X25519 share so a peer that chooses X25519 can finish without a retry. SQLx manages TLS to PostgreSQL separately and uses classical key exchange. SID 0035 measured about 70 additional microseconds per hybrid handshake on the test server.
 
 When a client presents a certificate that verifies, the servers receive its identity in the request field ``X-Client-Cert-SHA256``: the SHA-256 digest of the certificate, in 64 lower-case hexadecimal digits. This is the value that ``openssl x509 -in client.pem -outform DER | sha256sum`` prints. A server keeps a list of the digests it accepts, or maps each digest to an account. Sibuna removes every field of that name from the request of a client, also when it is spelled with ``_``, so a server may trust the field as Sibuna's statement. A request without the field came from a client without a certificate. We do not pass the certificate itself or its subject name yet.
 
@@ -2548,6 +2548,11 @@ We sign in, replace the temporary password, and open the page *Edge*. The page s
    We check whether the node admits new flows at (1). If clients are refused, we read the counters by cause at (2).
 
 **The refusals by cause.** One row for each reason of the metrics: ``flow_limit``, ``draining``, ``rate_limit``, ``connection_limit``, ``task_limit`` and the others. A node that refuses for lack of capacity counts under ``flow_limit``, and a node that drains counts under ``draining``.
+
+.. figure:: /assets/images/console-pressure.png
+   :alt: The Edge console shows refusals at the per-client flow limit and lists the loopback client with the most refusals this minute.
+
+   At (1) we read the cumulative refusals for the per-client flow limit. At (2) we see which addresses were refused this minute and the last cause for each.
 
 **The frontends and the pools.** A frontend shows its requests, flows, bytes and the latency of a request: the mean and the 95th percentile. A pool shows the columns of ``show servers`` for each server, then its requests, failures, requests in flight and the wait for the first byte. A view carries at most 256 servers, and the page says how many it left out.
 

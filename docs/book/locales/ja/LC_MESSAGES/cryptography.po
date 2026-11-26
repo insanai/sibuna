@@ -574,21 +574,8 @@ msgstr ""
 "``--token-scheme ed25519``\\ ）として残しています。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:160
-msgid ""
-"The tokens and the challenge records were therefore safe against a "
-"quantum adversary before the transport that carries them was. Since SID "
-"0035, every TLS session that Sibuna ends or opens also offers the hybrid "
-"key exchange X25519MLKEM768. Its key comes from X25519 and from "
-"ML-KEM-768 (FIPS 203) together and stays secret as long as either holds, "
-"so a session recorded today cannot be read later with a quantum computer. "
-"Certificates still carry ECDSA or RSA signatures. No public authority "
-"issues post-quantum certificates and browsers do not accept them, and a "
-"signature matters only during its own handshake, so a recording does not "
-"expose it."
-msgstr ""
-"したがって、トークンとチャレンジレコードは、それを運ぶ通信路よりも先に量子攻撃者に対して安全でした。SID "
-"0035以降、Sibunaが終端または開始するすべてのTLSセッションは、ハイブリッド鍵交換X25519MLKEM768も提示します。その鍵はX25519とML-KEM-768（FIPS "
-"203）の両方から作られ、どちらかが破られない限り秘密のままです。そのため、今日録画されたセッションを後で量子コンピューターで読むことはできません。証明書には引き続きECDSAまたはRSAの署名を使います。耐量子証明書を発行する公的認証局はなく、ブラウザーも受け付けません。また、署名が意味を持つのはそのハンドシェイクの間だけなので、録画されても危険はありません。"
+msgid "X25519MLKEM768 combines X25519 with ML-KEM-768 for TLS 1.3. When the peers negotiate the hybrid group, the session key remains secret as long as either component remains secure. Certificate signatures still authenticate the handshake with classical algorithms such as ECDSA or RSA. SQLx selects the key exchange for the PostgreSQL connection separately."
+msgstr "TLS 1.3 の X25519MLKEM768 は X25519 と ML-KEM-768 を組み合わせます。両端がこのグループを選べば、どちらか一方が安全である限り、セッション鍵の機密性が保たれます。証明書の署名には引き続き ECDSA や RSA などの従来の方式を使ってハンドシェイクを認証します。PostgreSQL 接続の鍵交換は SQLx が独立して選びます。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:162
 msgid "The Key Schedule"

@@ -157,7 +157,7 @@ A digital signature lets *anyone* holding the public key verify, which is the ri
 
 A second consequence matters for the long term: Ed25519 rests on discrete logarithms in an elliptic-curve group, which Shor's algorithm breaks; a keyed hash rests only on the hash function, against which quantum algorithms give at most a quadratic speedup. Sibuna keeps Ed25519 as an option (``--token-scheme ed25519``) for deployments that need non-minting verifiers.
 
-The tokens and the challenge records were therefore safe against a quantum adversary before the transport that carries them was. Since SID 0035, every TLS session that Sibuna ends or opens also offers the hybrid key exchange X25519MLKEM768. Its key comes from X25519 and from ML-KEM-768 (FIPS 203) together and stays secret as long as either holds, so a session recorded today cannot be read later with a quantum computer. Certificates still carry ECDSA or RSA signatures. No public authority issues post-quantum certificates and browsers do not accept them, and a signature matters only during its own handshake, so a recording does not expose it.
+X25519MLKEM768 combines X25519 with ML-KEM-768 for TLS 1.3. When the peers negotiate the hybrid group, the session key remains secret as long as either component remains secure. Certificate signatures still authenticate the handshake with classical algorithms such as ECDSA or RSA. SQLx selects the key exchange for the PostgreSQL connection separately.
 
 The Key Schedule
 ~~~~~~~~~~~~~~~~
