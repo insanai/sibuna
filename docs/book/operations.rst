@@ -3101,13 +3101,17 @@ Schema
    * - Table
      - Purpose and key
    * - ``policy_revision``
-     - The policy revision, one row; triggers on the three policy tables advance it.
+     - The policy revision, one row; triggers on ``policies``, ``policy_inspection`` and the console's page templates advance it.
    * - ``policies``
      - Ordered dynamic rules, keyed by ``id``. The nullable ``ja4_pattern`` holds a rule's JA4 criterion, at most 37 bytes.
    * - ``policy_inspection``
      - The stored WAF mode per category, one row.
    * - ``ip_reputation``
      - Scores, hit counts and expiry, keyed by address or prefix.
+   * - ``reputation_clock``
+     - One row: the stamp of the last change of ``ip_reputation`` (SID 0033).
+   * - ``reputation_changes``
+     - The change log of ``ip_reputation``: the whole new state of one key per stamp, or its removal, keyed by stamp. The last 1,000,000 changes are kept.
    * - ``incident_receipts``
      - Each node's durable incident receipt (the next sequence after its last committed batch), keyed by node.
    * - ``security_incidents``
@@ -3117,7 +3121,7 @@ Schema
    * - ``sibuna_schema``
      - Every applied migration, keyed by component and version.
 
-The core schema is ``crates/storage/src/schema.rs``, written once per dialect. With the console the component ``console`` adds 33 tables whose names start with ``console_`` (SID 0013; ``crates/console-storage/src/schema/``). Migrations are numbered per component and compiled into the binary. Core migration 2 adds the two JA4 columns; a database created before it is migrated on start. All pending migrations run in one transaction, and a node refuses a database whose version of a component is newer than it knows. An abbreviated printed schema is not an upgrade script. SQLite tables are ``STRICT``, and ``CHECK`` constraints mirror the Rust types, so the database refuses a row the daemon could not represent. Enumerated values are stored in lowercase: a direct write of ``'DENY'`` is refused.
+The core schema is ``crates/storage/src/schema.rs``, written once per dialect. With the console the component ``console`` adds 33 tables whose names start with ``console_`` (SID 0013; ``crates/console-storage/src/schema/``). Migrations are numbered per component and compiled into the binary. Core migration 2 adds the two JA4 columns, and core migration 3 adds the reputation change log (SID 0033); a database created before them is migrated on start. All pending migrations run in one transaction, and a node refuses a database whose version of a component is newer than it knows. An abbreviated printed schema is not an upgrade script. SQLite tables are ``STRICT``, and ``CHECK`` constraints mirror the Rust types, so the database refuses a row the daemon could not represent. Enumerated values are stored in lowercase: a direct write of ``'DENY'`` is refused.
 
 Operating It
 ~~~~~~~~~~~~
@@ -3177,6 +3181,29 @@ A cluster is a set of nodes that share one PostgreSQL database. Build with the `
           --secret-file /etc/sibuna/secret
 
 Every member must use the same master secret and a unique ``--cluster-node`` from 1 to 8,388,607. The URL file holds one ``postgres://`` URL and must be readable by its owner only; the banner never prints the URL. Writes go to the PostgreSQL primary. Each node's storage thread sees the committed revision change (by ``NOTIFY`` or by polling) and rebuilds its engine.
+
+**How a change reaches the nodes.** A node's storage thread wakes at a ``NOTIFY`` or at its poll (``--storage-poll-ms``, 500 ms by default), and does two separate things. A change of policies, of the inspection modes or of a page template raises ``policy_revision``, and the node rebuilds its engine from the policy file and the stored rules. A change of reputation, such as a ban written by any node, does not touch the engine (SID 0033). Every write of ``ip_reputation`` is stamped by ``reputation_clock`` in commit order and recorded in ``reputation_changes``. The node reads the changes after the last one it applied and publishes a new reputation set beside the engine. Each node does this alone, and no request waits for it: request threads read the engine and the set without a lock, as before.
+
+.. list-table:: What a change costs a node
+   :header-rows: 1
+   :widths: 34 66
+
+   * - Change
+     - What the node does
+   * - A ban, a lift, an operator's reputation row, a country set
+     - Reads the new changes only, and publishes the set. One change to a set of a million entries costs about 2 microseconds, merges included.
+   * - A ban that ends
+     - Removes the entry at the next tick, without reading the database.
+   * - A policy, inspection or page change
+     - Rebuilds the engine (well under a millisecond with the default policy) and keeps the reputation set.
+   * - A node that was away longer than the log keeps, or a ``TRUNCATE`` of ``ip_reputation``
+     - Loads the whole table once, then follows the log again.
+
+Every writer of ``ip_reputation`` takes the counter row first and holds it until it commits, so writers of reputation run one at a time. Incident batches are short, so this costs little. A long transaction of our own that writes ``ip_reputation`` holds the other writers of reputation, on every node, until it ends.
+
+``NOTIFY`` does not pass through PgBouncer in transaction pooling mode, and a notification sent while a node is reconnecting is lost. The poll covers both cases, so a change still arrives within one poll.
+
+The set holds up to 1,048,576 exact addresses and ranges in a trie of 1,048,576 nodes. A million IPv4 addresses take about 50 MiB, and a merge briefly holds a second copy of the part that changed. A row that does not fit, or that does not parse, is refused alone and reported as ``storage: N reputation row(s) not applied``. Earlier versions rebuilt the engine for every reputation change and stopped applying policy changes once a few thousand addresses were banned.
 
 Nodes reach the shared database across the network, so we encrypt and verify that connection. We give the server a certificate signed by our own certificate authority, and we name that authority in the URL: ``postgres://sibuna:...@db.internal:5432/sibuna?sslmode=verify-full&sslrootcert=/etc/sibuna/db-ca.pem``. On the server we accept TCP only through ``hostssl`` lines in ``pg_hba.conf``.
 
