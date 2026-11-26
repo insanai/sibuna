@@ -117,5 +117,8 @@ Discussion registry
    * - 0035
      - :doc:`records/0035-post-quantum-key-exchange`
      - discussion
+   * - 0036
+     - :doc:`records/0036-host-wildcards`
+     - discussion
 
 .. sid-generated-end

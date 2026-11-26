@@ -41,5 +41,6 @@ Discussion reading order
    records/0033-reputation-deltas
    records/0034-admission-under-attack
    records/0035-post-quantum-key-exchange
+   records/0036-host-wildcards
 
 .. sid-generated-end
