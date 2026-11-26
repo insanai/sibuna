@@ -169,15 +169,9 @@ How a node follows
 
 A thread of its own, ``edge-authority``, owns the store. It looks at the head when PostgreSQL notifies, when ``poll`` has passed, when the operator runs ``reload`` and when the worker has settled a revision. A notification that was lost costs one poll. A database that did not answer is asked again after two seconds at most, whatever the poll is.
 
-.. code-block:: text
-
-   head = store.head()
-     unreachable -> keep the revision, log DBA012 once, look again later
-   head is new   -> read the revision, compose it with the file, check it
-     refused     -> keep the revision, log DBA011, remember the refusal
-     checked     -> leave it for the worker
-   worker serves it -> applied = revision, log DBA010, write the cache, report
-   worker refuses   -> keep the revision, log DBA011, remember the refusal
+.. typst-diagram:: ../diagrams/authority-follow.typ
+   :caption: How a node follows the head of the store.
+   :alt: A flow from top to bottom. The thread looks at the head with store.head(). When the database is unreachable, it keeps the revision, logs DBA012 once and looks again later. When the head is not new, there is nothing to do. A new head is read, composed with the file and checked. A refused revision keeps the served revision, logs DBA011 and is remembered. A checked revision is left for the worker. When the worker serves it, applied becomes the revision, and the node logs DBA010, writes the cache and reports. When the worker refuses it, the node keeps its revision, logs DBA011 and remembers the refusal.
 
 The node remembers the head that it refused and does not check it again at every poll. ``reload`` and SIGHUP check it again, so that a repair on the host, such as a certificate that was missing, takes effect. A reload in persistent mode reads the file again and composes it with the head. When the head is refused it composes the file with the revision that the node serves, so a change to the file still applies. A new revision is composed with the file as the worker last took it, and not with the file on the disk. The file changes the node at a reload only, so a file that is half edited does not stop the node from following.
 
