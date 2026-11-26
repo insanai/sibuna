@@ -161,5 +161,21 @@
   "Your browser": "متصفحك",
   "Your website": "موقعك",
   "on one host.": "على مضيف واحد.",
-  "· CHECK THE PROOF AT SIBUNA": "· التحقق من الإثبات في Sibuna"
+  "· CHECK THE PROOF AT SIBUNA": "· التحقق من الإثبات في Sibuna",
+  "Bring post-quantum TLS to an existing website": "إضافة TLS المقاوم للحوسبة الكمومية إلى موقع قائم",
+  "Browser": "المتصفح",
+  "Legacy device": "جهاز قديم",
+  "Public connection": "الاتصال العام",
+  "Hybrid TLS 1.3": "TLS 1.3 هجين",
+  "Origin connection": "الاتصال بالخادم الأصلي",
+  "Classical TLS in this example": "TLS تقليدي في هذا المثال",
+  "Deployment examples and migration timelines": "أمثلة النشر والمواعيد المستهدفة للانتقال",
+  "Deadlines at a glance": "المواعيد في لمحة",
+  "United States": "الولايات المتحدة",
+  "2030 · Key establishment for federal high-value assets and high-impact systems.": "2030 · إنشاء المفاتيح للأصول الفيدرالية عالية القيمة والأنظمة عالية الأثر.",
+  "European Union": "الاتحاد الأوروبي",
+  "2030 · Roadmap target for high-risk uses.": "2030 · الموعد المستهدف في خارطة الطريق للاستخدامات عالية المخاطر.",
+  "Singapore": "سنغافورة",
+  "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.": "يمكن لمتصفح متوافق الاتفاق مع Sibuna على مفتاح مقاوم للهجمات الكمومية. يفتح Sibuna اتصالا مستقلا بخادم الويب، فيبقى الجهاز القديم في الخدمة أثناء ترقيته.",
+  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031 · الموعد المستهدف للبنية التحتية الحيوية المحددة. وتُشجَّع المؤسسات الأخرى المعرضة للمخاطر على إتمام الانتقال بحلول 2035."
 }

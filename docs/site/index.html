@@ -49,6 +49,36 @@
     <article><h3><a href="/sibuna/book/cluster.html">A cluster of edge nodes</a></h3><p>Distribute a checked routing configuration across the mesh. Nodes can share bans and learned affinity while each node forwards traffic to its own backend pools.</p></article>
   </div>
 </section>
+<section class="quantum" aria-labelledby="quantum-title">
+  <div class="quantum-copy">
+    <h2 id="quantum-title">Bring post-quantum TLS to an existing website</h2>
+    <p>A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.</p>
+    <a href="/sibuna/book/post-quantum-transport.html">Deployment examples and migration timelines</a>
+  </div>
+  <figure class="quantum-route">
+    <div class="quantum-nodes">
+      <span dir="auto">Browser</span>
+      <strong translate="no">Sibuna</strong>
+      <span dir="auto">Legacy device</span>
+    </div>
+    <img src="/sibuna/assets/post-quantum-route.svg" alt="" loading="lazy" width="600" height="126">
+    <figcaption>
+      <div class="quantum-public"><b dir="auto">Public connection</b><span dir="auto">Hybrid TLS 1.3</span></div>
+      <div class="quantum-origin"><b dir="auto">Origin connection</b><span dir="auto">Classical TLS in this example</span></div>
+    </figcaption>
+  </figure>
+  <div class="quantum-dates">
+    <h3>Deadlines at a glance</h3>
+    <dl>
+      <div><dt><a href="https://www.federalregister.gov/documents/2026/06/25/2026-12909/securing-the-nation-against-advanced-cryptographic-attacks">United States</a></dt>
+        <dd>2030 · Key establishment for federal high-value assets and high-impact systems.</dd></div>
+      <div><dt><a href="https://digital-strategy.ec.europa.eu/en/library/coordinated-implementation-roadmap-transition-post-quantum-cryptography">European Union</a></dt>
+        <dd>2030 · Roadmap target for high-risk uses.</dd></div>
+      <div><dt><a href="https://www.csa.gov.sg/news-events/press-releases/csa-sets-out-quantum-safe-migration-timeline-for-organisations-and-launches-new-grant/">Singapore</a></dt>
+        <dd>2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.</dd></div>
+    </dl>
+  </div>
+</section>
 <section class="status" aria-label="Release status">
   <p><strong>Where each part stands.</strong> RC6 includes the load balancer, firewall and console in one executable.</p>
   <a href="#start">How to try it</a>

@@ -161,5 +161,21 @@
   "Your browser": "Tu navegador",
   "Your website": "Tu sitio web",
   "on one host.": "en un solo host.",
-  "· CHECK THE PROOF AT SIBUNA": "· SIBUNA VERIFICA LA PRUEBA"
+  "· CHECK THE PROOF AT SIBUNA": "· SIBUNA VERIFICA LA PRUEBA",
+  "Bring post-quantum TLS to an existing website": "TLS poscuántico para un sitio web existente",
+  "Browser": "Navegador",
+  "Legacy device": "Dispositivo antiguo",
+  "Public connection": "Conexión pública",
+  "Hybrid TLS 1.3": "TLS 1.3 híbrido",
+  "Origin connection": "Conexión al origen",
+  "Classical TLS in this example": "TLS clásico en este ejemplo",
+  "Deployment examples and migration timelines": "Ejemplos de despliegue y plazos de migración",
+  "Deadlines at a glance": "Plazos de un vistazo",
+  "United States": "Estados Unidos",
+  "2030 · Key establishment for federal high-value assets and high-impact systems.": "2030 · Establecimiento de claves en activos federales de alto valor y sistemas federales de alto impacto.",
+  "European Union": "Unión Europea",
+  "2030 · Roadmap target for high-risk uses.": "2030 · Objetivo de la hoja de ruta para usos de alto riesgo.",
+  "Singapore": "Singapur",
+  "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.": "Un navegador compatible puede acordar con Sibuna una clave resistente a los ataques cuánticos. Sibuna abre otra conexión con el servidor web, de modo que un dispositivo antiguo puede seguir en servicio durante la migración.",
+  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031 · Objetivo para la infraestructura crítica designada. Se recomienda que las demás organizaciones expuestas migren para 2035."
 }

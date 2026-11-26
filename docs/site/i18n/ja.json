@@ -161,5 +161,21 @@
   "Your browser": "ブラウザー",
   "Your website": "ウェブサイト",
   "on one host.": "1 台のホストで。",
-  "· CHECK THE PROOF AT SIBUNA": "· SIBUNA で証明を検証"
+  "· CHECK THE PROOF AT SIBUNA": "· SIBUNA で証明を検証",
+  "Bring post-quantum TLS to an existing website": "既存のウェブサイトに耐量子 TLS を導入する",
+  "Browser": "ブラウザー",
+  "Legacy device": "従来の機器",
+  "Public connection": "公開側の接続",
+  "Hybrid TLS 1.3": "ハイブリッド TLS 1.3",
+  "Origin connection": "オリジンへの接続",
+  "Classical TLS in this example": "この例では従来の TLS",
+  "Deployment examples and migration timelines": "導入例と移行の期限",
+  "Deadlines at a glance": "移行期限の一覧",
+  "United States": "米国",
+  "2030 · Key establishment for federal high-value assets and high-impact systems.": "2030年 · 連邦政府の高価値資産と高影響システムにおける鍵確立。",
+  "European Union": "欧州連合",
+  "2030 · Roadmap target for high-risk uses.": "2030年 · 高リスク用途に対するロードマップの目標。",
+  "Singapore": "シンガポール",
+  "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.": "対応するブラウザーは Sibuna と耐量子方式で鍵を共有できます。Sibuna はウェブサーバーに別の接続を開くため、古い機器を稼働させたまま移行を進められます。",
+  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031年 · 指定された重要インフラの移行目標。その他のリスクにさらされる組織には2035年までの移行を推奨。"
 }

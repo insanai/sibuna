@@ -161,5 +161,21 @@
   "Your browser": "브라우저",
   "Your website": "웹사이트",
   "on one host.": "한 호스트에서.",
-  "· CHECK THE PROOF AT SIBUNA": "· SIBUNA에서 증명 검증"
+  "· CHECK THE PROOF AT SIBUNA": "· SIBUNA에서 증명 검증",
+  "Bring post-quantum TLS to an existing website": "기존 웹사이트에 양자내성 TLS 적용하기",
+  "Browser": "브라우저",
+  "Legacy device": "구형 장치",
+  "Public connection": "공개 연결",
+  "Hybrid TLS 1.3": "하이브리드 TLS 1.3",
+  "Origin connection": "원본 서버 연결",
+  "Classical TLS in this example": "이 예에서는 기존 TLS",
+  "Deployment examples and migration timelines": "배포 예시와 전환 일정",
+  "Deadlines at a glance": "한눈에 보는 일정",
+  "United States": "미국",
+  "2030 · Key establishment for federal high-value assets and high-impact systems.": "2030년 · 연방 고가치 자산과 고영향 시스템의 키 설정.",
+  "European Union": "유럽연합",
+  "2030 · Roadmap target for high-risk uses.": "2030년 · 고위험 용도에 대한 로드맵 목표.",
+  "Singapore": "싱가포르",
+  "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.": "호환되는 브라우저는 Sibuna와 양자내성 방식으로 키를 합의할 수 있습니다. Sibuna는 웹 서버로 별도 연결을 열므로 구형 장치를 계속 운영하면서 전환할 수 있습니다.",
+  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031년 · 지정 핵심 기반 시설의 전환 목표. 위험에 노출된 다른 조직에는 2035년까지 전환을 권고합니다."
 }

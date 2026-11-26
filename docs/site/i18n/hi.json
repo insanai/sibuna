@@ -161,5 +161,21 @@
   "Your browser": "आपका ब्राउज़र",
   "Your website": "आपकी वेबसाइट",
   "on one host.": "एक ही होस्ट पर।",
-  "· CHECK THE PROOF AT SIBUNA": "· SIBUNA पर प्रमाण की जाँच"
+  "· CHECK THE PROOF AT SIBUNA": "· SIBUNA पर प्रमाण की जाँच",
+  "Bring post-quantum TLS to an existing website": "मौजूदा वेबसाइट पर क्वांटम-सुरक्षित TLS अपनाएँ",
+  "Browser": "ब्राउज़र",
+  "Legacy device": "पुराना उपकरण",
+  "Public connection": "सार्वजनिक कनेक्शन",
+  "Hybrid TLS 1.3": "हाइब्रिड TLS 1.3",
+  "Origin connection": "मूल सर्वर से कनेक्शन",
+  "Classical TLS in this example": "इस उदाहरण में पारंपरिक TLS",
+  "Deployment examples and migration timelines": "परिनियोजन के उदाहरण और समयसीमा",
+  "Deadlines at a glance": "समयसीमा एक नज़र में",
+  "United States": "संयुक्त राज्य अमेरिका",
+  "2030 · Key establishment for federal high-value assets and high-impact systems.": "2030 · संघीय उच्च-मूल्य परिसंपत्तियों और उच्च-प्रभाव प्रणालियों में कुंजी स्थापना।",
+  "European Union": "यूरोपीय संघ",
+  "2030 · Roadmap target for high-risk uses.": "2030 · उच्च जोखिम वाले उपयोगों के लिए रोडमैप का लक्ष्य।",
+  "Singapore": "सिंगापुर",
+  "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.": "संगत ब्राउज़र Sibuna के साथ क्वांटम हमलों का सामना करने वाली कुंजी तय कर सकता है। Sibuna वेब सर्वर से अलग कनेक्शन खोलता है, इसलिए पुराने उपकरण को चालू रखते हुए हम उसे उन्नत कर सकते हैं।",
+  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031 · निर्दिष्ट महत्वपूर्ण अवसंरचना के लिए लक्ष्य। जोखिम का सामना करने वाले अन्य संगठनों को 2035 तक बदलाव पूरा करने की सलाह है।"
 }

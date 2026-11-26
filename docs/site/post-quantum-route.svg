@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 126" fill="none">
+  <style>
+    .exchange {opacity:0;animation:pulse .85s ease-in-out .15s 1}
+    .return {animation-delay:1s;animation-direction:reverse}
+    .origin {animation-delay:2.1s;animation-duration:1.7s}
+    @keyframes pulse {
+      0% {opacity:0;transform:translateX(0)}
+      12%,88% {opacity:1}
+      100% {opacity:0;transform:translateX(120px)}
+    }
+    @media (prefers-reduced-motion:reduce) {.exchange {animation:none}}
+  </style>
+  <!-- The public and origin sessions end at distinct ports on the edge. -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#84d4ad" stroke-width="2">
+      <path d="M130 58H266 M130 66H266"/>
+      <path d="m253 54 7 4-7 4 m-111 0-7 4 7 4"/>
+    </g>
+    <path d="M334 62H470" stroke="#e1b670" stroke-width="2.5" stroke-dasharray="6 6"/>
+    <path d="m455 57 8 5-8 5" stroke="#e1b670" stroke-width="2"/>
+    <circle class="exchange" cx="139" cy="58" r="3.5" fill="#d6ffdb"/>
+    <circle class="exchange return" cx="139" cy="66" r="3.5" fill="#d6ffdb"/>
+    <circle class="exchange origin" cx="343" cy="62" r="4" fill="#ffe0a0"/>
+    <!-- Browser window with a short address bar. -->
+    <g stroke="#b7d4c4" stroke-width="2.4">
+      <rect x="69" y="40" width="61" height="44" rx="6" fill="#1d3b32"/>
+      <path d="M70 51h59"/>
+      <path d="M79 46h1m5 0h1m5 0h1" stroke-width="2.8"/>
+      <path d="M82 61h23m-23 8h15" stroke="#749d87"/>
+    </g>
+    <!-- A TLS terminator with a separate port for each connection. -->
+    <rect x="265" y="29" width="70" height="66" rx="12" fill="#284c3e" stroke="#8dc4a5" stroke-width="2"/>
+    <g stroke="#d5efdc" stroke-width="2.6">
+      <rect x="287" y="59" width="26" height="19" rx="4"/>
+      <path d="M292 59v-5a8 8 0 0 1 16 0v5m-8 7v5"/>
+    </g>
+    <circle cx="265" cy="62" r="4" fill="#84d4ad"/>
+    <circle cx="335" cy="62" r="4" fill="#e1b670"/>
+    <!-- Rack units of the legacy origin. -->
+    <g fill="#203a31" stroke="#dac29c" stroke-width="2.3">
+      <rect x="470" y="38" width="60" height="22" rx="4"/>
+      <rect x="470" y="64" width="60" height="22" rx="4"/>
+      <path d="M479 49h18m-18 26h18"/>
+    </g>
+    <g fill="#e1b670"><circle cx="520" cy="49" r="2.4"/><circle cx="520" cy="75" r="2.4"/></g>
+  </g>
+</svg>

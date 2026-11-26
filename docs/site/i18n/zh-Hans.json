@@ -161,5 +161,21 @@
   "Your browser": "你的浏览器",
   "Your website": "你的网站",
   "on one host.": "同一台主机。",
-  "· CHECK THE PROOF AT SIBUNA": "· 在 SIBUNA 验证证明"
+  "· CHECK THE PROOF AT SIBUNA": "· 在 SIBUNA 验证证明",
+  "Bring post-quantum TLS to an existing website": "为现有网站部署抗量子 TLS",
+  "Browser": "浏览器",
+  "Legacy device": "旧设备",
+  "Public connection": "公网连接",
+  "Hybrid TLS 1.3": "混合 TLS 1.3",
+  "Origin connection": "源站连接",
+  "Classical TLS in this example": "此例使用传统 TLS",
+  "Deployment examples and migration timelines": "部署示例与迁移时间表",
+  "Deadlines at a glance": "迁移期限一览",
+  "United States": "美国",
+  "2030 · Key establishment for federal high-value assets and high-impact systems.": "2030 年 · 联邦高价值资产和高影响系统的密钥建立。",
+  "European Union": "欧洲联盟",
+  "2030 · Roadmap target for high-risk uses.": "2030 年 · 路线图对高风险用途的迁移目标。",
+  "Singapore": "新加坡",
+  "A compatible browser can agree a quantum-resistant key with Sibuna. Sibuna opens a separate connection to the web server, so an older device can stay in service while we upgrade it.": "兼容的浏览器可以与 Sibuna 协商抗量子密钥。Sibuna 单独连接 Web 服务器，因此旧设备可以在升级期间继续提供服务。",
+  "2031 · Target for designated critical infrastructure. Other exposed organisations are encouraged to migrate by 2035.": "2031 年 · 指定关键信息基础设施的迁移目标。建议其他面临风险的组织在 2035 年前完成迁移。"
 }
