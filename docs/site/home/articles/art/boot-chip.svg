@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="285" viewBox="0 0 600 285"
+     role="img" aria-labelledby="title desc">
+  <title id="title">Microcontroller on a circuit board</title>
+  <desc id="desc">An isometric cutaway shows a small violet die inside the chip package. The leads meet individual traces on the board.</desc>
+  <defs>
+    <path id="lead" d="M0 0v8l5 5v7h6v-9l-5-5V0"/>
+    <g id="row">
+      <use href="#lead" x="21"/><use href="#lead" x="39"/>
+      <use href="#lead" x="57"/><use href="#lead" x="75"/><use href="#lead" x="93"/>
+    </g>
+  </defs>
+  <!-- Two board axes project onto the page at equal and opposite slopes. -->
+  <g transform="matrix(1 .54 -1 .54 295 51)" fill="none" stroke="#353936" stroke-width="2"
+     stroke-linejoin="round" stroke-linecap="round">
+    <g stroke="#656c66" stroke-width="1.35">
+      <path d="M30 153v32l-18 18v24m36-74v46l-13 13v32m31-91v36l21 21v26"/>
+      <path d="M153 30h43l19-19h18m-80 37h56l22-22h22m-100 40h34l16 16h22"/>
+      <path d="M29-14v-22L8-57H-9m56 43v-32l11-11v-18M-13 48h-36l-17 17h-20"/>
+      <g stroke-width="1.5">
+        <circle cx="12" cy="231" r="4"/><circle cx="35" cy="248" r="4"/><circle cx="87" cy="240" r="4"/>
+        <circle cx="237" cy="11" r="4"/><circle cx="257" cy="26" r="4"/><circle cx="229" cy="82" r="4"/>
+        <circle cx="-13" cy="-57" r="4"/><circle cx="58" cy="-79" r="4"/><circle cx="-90" cy="65" r="4"/>
+      </g>
+    </g>
+    <!-- Only the tips of the leads behind the package are visible. -->
+    <g stroke-width="1.45">
+      <path d="M23 0v-14h9V0m9 0v-14h9V0m9 0v-14h9V0m9 0v-14h9V0m9 0v-14h9V0"/>
+      <path d="M0 23h-14v9H0m0 9h-14v9H0m0 9h-14v9H0m0 9h-14v9H0m0 9h-14v9H0"/>
+      <use href="#row" transform="translate(0 133)"/>
+      <use href="#row" transform="matrix(0 1 1 0 133 0)"/>
+    </g>
+    <path d="M0 0h122v122H0z"/>
+    <path d="m0 122 11 11h122l-11-11zm122 0 11 11V11L122 0z"/>
+    <path stroke-width="1" d="m15 130 40 .5m71-102 .5 52"/>
+    <!-- The opening in the lid exposes the die and a few bonding wires. -->
+    <path d="M26 26h70v70H26z" stroke-width="1.6"/>
+    <path d="m26 26 6 6h64m-64 0v64" stroke-width="1.1"/>
+    <path d="M48 48h29v29H48z" fill="#a187b9" stroke-width="1.5"/>
+    <path d="m48 77 3 3h29l-3-3m3 3V51l-3-3" stroke-width="1.1"/>
+    <g stroke-width="1">
+      <path d="m52 48-5-9H36m24 9-2-12m14 12 5-9h10M48 58l-8-3-5 3m13 9-10 2-3 6m43-13 10-5m-26 21 3 11m7-11 8 7h7"/>
+    </g>
+    <circle cx="13" cy="13" r="3.7" fill="#ce83a8" stroke-width="1"/>
+  </g>
+</svg>

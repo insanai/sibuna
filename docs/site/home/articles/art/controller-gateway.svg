@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="350" viewBox="0 0 640 350"
+     role="img" aria-labelledby="title desc">
+  <title id="title">Industrial controller and network gateway</title>
+  <desc id="desc">A cable runs from the controller's side socket to a port on the low, finned gateway.</desc>
+  <g fill="none" stroke="#353936" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+    <!-- The display, buttons and terminal strip share the controller's front plane. -->
+    <path d="M54 100 157 45 289 114 289 248 187 303 54 233Z"/>
+    <path d="m54 100 133 70 102-56M187 170v133"/>
+    <g transform="matrix(1 .525 0 1 54 100)">
+      <path d="M13 16h106v63H13z"/>
+      <path stroke-width="1.1" d="M18 74V21h96"/>
+      <path stroke="#626963" stroke-width="1.3" d="M25 61h13l7-10 8 4 11-20 7 9h25"/>
+      <path stroke-width="1.4" d="M15 92h13v7H15zm22 0h13v7H37z"/>
+      <circle cx="111" cy="95" r="3.7" fill="#ce83a8" stroke-width="1.2"/>
+      <path d="M10 113h113v12H10z" stroke-width="1.4"/>
+      <path stroke-width="1.1" d="M26 114v10m17-10v10m17-10v10m17-10v10m17-10v10m17-10v10"/>
+    </g>
+    <g transform="matrix(1 -.54 0 1 187 170)" stroke-width="1.5">
+      <path d="M14 18h40m-40 6h40m-40 6h40"/>
+      <path d="M34 69h34v29H34z"/>
+    </g>
+    <path d="m225 224 23-12 17 9-23 12z"/>
+    <path d="m225 224 17 9v13l-17-9z" fill="#9276ac" stroke-width="1.5"/>
+    <path d="m242 233 23-12v13l-23 12z" fill="#494c49" stroke-width="1.5"/>
+    <path stroke="#666c67" stroke-width=".95" d="m62 99 94-51m-99 156 .4 25 35 18m99 33-.4 17 24-13"/>
+
+    <!-- The single curved cable joins the two projecting plugs. -->
+    <path d="M254 239c23 13 31 23 38 42 10 29 33 39 59 26 18-9 4-37 22-52l17-13"
+          stroke-width="3.4"/>
+    <path d="M377 194 457 150 587 217 507 262Z"/>
+    <path d="m377 194 130 68v40l-130-68zm130 68 80-45v41l-80 44"/>
+    <path stroke-width="1.35" d="m394 194 64-35m-46 44 63-35m-45 44 63-35m-46 44 64-35m-46 44 63-35"/>
+    <g transform="matrix(1 .522 0 1 377 194)" stroke-width="1.5">
+      <path d="M19 12h29v19H19zM60 12h24v16H60z"/>
+      <path d="M63 25v-9h17" stroke-width="1"/>
+      <circle cx="108" cy="21" r="3" fill="#ce83a8"/>
+    </g>
+    <path d="m398 220 21 11-18 10-21-11z" fill="#9276ac" stroke-width="1.5"/>
+    <path d="m380 230 21 11v11l-21-11z" fill="#494c49" stroke-width="1.5"/>
+    <path d="m401 241 18-10v10l-18 11z" stroke-width="1.5"/>
+    <path stroke="#666c67" stroke-width=".95" d="m510 286-.3 12 31-17m24-18 18-10v-10"/>
+  </g>
+</svg>

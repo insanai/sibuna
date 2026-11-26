@@ -7,7 +7,7 @@ If RSA breaks, what happens to an older device?
 
 An industrial controller can outlive the software that connects it to the network. Putting its web interface behind Sibuna can protect new traffic while the controller stays in service. Whether that helps depends on what the device uses RSA for.
 
-.. image:: art/controller-gateway.webp
+.. image:: art/controller-gateway.svg
    :alt: Pencil drawing of an industrial controller connected by cable to a small network gateway.
 
 .. more::
@@ -21,7 +21,7 @@ One algorithm, three different jobs
 
 **Deciding what may boot.** On supported ESP32 revisions, Espressif's Secure Boot v2 can use RSA-PSS with a 3072-bit key to verify the bootloader and application. A forged signature would undermine that decision. The manufacturer's update path and the device's hardware trust anchor determine how this risk can be addressed. See `Espressif Secure Boot v2`_ and `NIST IR 8259r1`_.
 
-.. figure:: art/boot-chip.webp
+.. figure:: art/boot-chip.svg
    :alt: Pencil detail of a microcontroller and the traces on its circuit board.
 
    AMD documents RSA-4096 in the hardware root of trust of the Zynq UltraScale+ MPSoC. For each device family we record the chip revision and the boot mode actually enabled. See `AMD UG1085`_.
