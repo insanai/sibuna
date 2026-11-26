@@ -646,7 +646,7 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
 }
 .editorial h1 {font-size:clamp(2.35rem,5vw,4.4rem);line-height:1.05;margin-block:0 .3em}
 .editorial h1 + p {color:var(--muted);font-size:clamp(1.125rem,1.6vw,1.35rem);margin-block:0}
-.editorial > section > section {inline-size:100%;border-block-start:1px solid var(--line);margin-block:2.5rem}
+.editorial > section > section {inline-size:100%;max-inline-size:none;border-block-start:1px solid var(--line);margin-block:2.5rem}
 .editorial h2 {margin-block:1.25rem .75rem;font-size:clamp(1.65rem,3vw,2.25rem)}
 .editorial section p {margin-block-end:1em}
 .editorial figure {margin:2rem 0}
@@ -702,6 +702,17 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
   .editorial > section:has(> h1 + p + img) > :is(h1,h1 + p) {grid-column:1;margin-inline:0}
   .editorial > section:has(> h1 + p + img) > h1 {align-self:end}
   .editorial > section > h1 + p + img {grid-column:2;grid-row:1 / 3;align-self:center}
+}
+/* Pair prose and illustrations across the article at reading widths.
+   Sections with code, tables or sequence diagrams use the entire row. */
+@media screen and (min-width:64rem) {
+  .editorial > section > section:has(> figure):not(:has(pre,table,.graphviz)) {
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:clamp(2rem,4vw,4rem);
+    align-items:start
+  }
+  .editorial > section > section > :not(p,figure),
+  .editorial > section > section > p:last-child {grid-column:1 / -1}
+  .editorial > section > section > figure {margin-block:1em}
 }
 .magazine h1 {font-size:clamp(3.1rem,8vw,7.1rem);line-height:1.02;letter-spacing:-.045em;margin:0}
 .magazine h1 + p {margin:.8rem 0 1.8rem;color:var(--muted);max-width:64ch}
