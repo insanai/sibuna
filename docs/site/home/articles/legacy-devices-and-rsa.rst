@@ -1,4 +1,6 @@
 :date: 2026-11-26
+:author: Vikrant Rathore
+:pdf: article
 :category: load balancing
 :tags: embedded systems, post-quantum cryptography, web application firewall
 
