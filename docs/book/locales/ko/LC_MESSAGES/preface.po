@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../preface.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:1
 msgid "Preface"
 msgstr "머리말"
 
-#: ../../preface.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:4
 msgid ""
 "Why put another program in front of an application? Running two copies "
 "lets us keep serving while one restarts. Both copies are still vulnerable "
@@ -33,7 +33,7 @@ msgstr ""
 "수 있습니다. 그러나 처리 비용이 큰 요청을 천 번 반복하면 두 복사본 모두 부담을 받습니다. Sibuna는 이 두 문제에서 "
 "출발했습니다. 입구에서 무엇을 판단할 수 있는지, 각 판단의 비용은 얼마인지, 판단이 옳았는지 어떻게 확인하는지 살펴봅니다."
 
-#: ../../preface.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:6
 msgid ""
 "We begin with a journey that needs no knowledge of Rust, cryptography or "
 "configuration. In the design chapters we follow the same decisions into "
@@ -43,11 +43,11 @@ msgstr ""
 "처음 예제를 읽는 데 Rust나 암호학, 설정 파일에 관한 지식은 필요하지 않습니다. 설계 장에서는 같은 판단을 알고리즘과 코드까지 "
 "따라갑니다. 시스템의 목적을 이해한 뒤에 측정과 운영 절차로 넘어갑니다."
 
-#: ../../preface.rst:8
-msgid "Sibuna 1.0.0-rc.3, November 2026"
-msgstr "Sibuna 1.0.0-rc.3, 2026년 11월"
+#: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:8
+msgid "Sibuna 1.0.0-rc.5, November 2026"
+msgstr "Sibuna 1.0.0-rc.5, 2026년 11월"
 
-#: ../../preface.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:10
 msgid ""
 "Sources, exercises, and reproducible measurements accompany the Sibuna "
 "repository."

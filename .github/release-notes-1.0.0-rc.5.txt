@@ -1,0 +1,17 @@
+Sibuna 1.0.0-rc.5 protects TCP and UDP frontends against floods from many real addresses, and makes every TLS connection post-quantum.
+
+Admission under attack (SID 0034). Seven protections, none of which needs privilege or a kernel program:
+- max_flows_per_ip and max_flows on a frontend cap the flows of one client address and of the frontend, so one address cannot hold the whole flow table and a flood on one port cannot starve the others.
+- The HTTP firewall and the packet worker share one ban table. A banned address is refused when its connection is accepted on a TCP frontend and before a UDP mapping opens, on every node of the mesh, also on an edge without an HTTP frontend. auto_ban bans an address that keeps breaking its rate or its cap.
+- A refused connection is reset by default, which costs one segment and leaves no TIME_WAIT state; refuse: "close" or "tarpit" choose otherwise.
+- Pressure mode, on by default above 90 percent of the flow table, admits addresses that proved a working flow first and new addresses at global.pressure.new_per_second. EDGE016 logs each switch.
+- Accept threads (global.accept_threads, one per CPU up to four) run the bans, the rate, the caps and pressure, so refusal is spread over several cores.
+- udp_defense.total_pps limits the datagrams of a UDP frontend and keeps half of the budget for confirmed mappings.
+- Five new refusal reasons, pressure and strike metrics, and the most refused addresses on the console's edge page.
+A Lean model proves the caps under any order of the threads, the hysteresis of pressure, the bound on new addresses and the reserve of confirmed datagrams. On the test hosts one address holding 9,000 connections took the whole table and refused every other client; with max_flows_per_ip it held 500 and every other client was served.
+
+Two defaults change: refused connections are reset instead of closed, and pressure mode is on. refuse: "close" and global.pressure: "off" restore the old behaviour.
+
+Post-quantum key exchange (SID 0035). Every TLS connection that Sibuna ends or opens, including HTTP/3, the console and ACME, offers the hybrid X25519MLKEM768 first, as current browsers do, and falls back to X25519 without an extra round trip. It uses rustls with ring and the pure-Rust ml-kem crate, mirrors the hybrid design of rustls 0.24, and costs the server about 70 microseconds per handshake. Shield and the gate were already safe against quantum computers, since they use only symmetric cryptography; now the transport is too.
+
+The release uses Rust 1.100.0. The optional OpenBSD 7.9 amd64 package uses the system Rust 1.94.1 and is attached after native package checks pass. SHA256SUMS lists the published assets.

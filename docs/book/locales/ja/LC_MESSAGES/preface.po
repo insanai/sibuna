@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../preface.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:1
 msgid "Preface"
 msgstr "序文"
 
-#: ../../preface.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:4
 msgid ""
 "Why put another program in front of an application? Running two copies "
 "lets us keep serving while one restarts. Both copies are still vulnerable "
@@ -32,7 +32,7 @@ msgstr ""
 "なぜアプリケーションの手前にもう一つプログラムを置くのでしょうか。アプリケーションを2台で動かせば、片方が再起動しても運行情報を返せます。しかし、処理の重いリクエストが千回繰り返されれば、どちらのサーバーにも負担がかかります。Sibuna "
 "の出発点はこの二つの問題です。入口で何を判断できるか、その判断にどれだけのコストがかかり、結果をどう確かめるかを考えます。"
 
-#: ../../preface.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:6
 msgid ""
 "We begin with a journey that needs no knowledge of Rust, cryptography or "
 "configuration. In the design chapters we follow the same decisions into "
@@ -42,11 +42,11 @@ msgstr ""
 "最初の例を読むのに Rust "
 "や暗号、設定ファイルの知識はいりません。設計の章では、同じ判断をアルゴリズムやコードの中まで追います。システムの目的が分かったところで、測定と運用に進みます。"
 
-#: ../../preface.rst:8
-msgid "Sibuna 1.0.0-rc.3, November 2026"
-msgstr "Sibuna 1.0.0-rc.3、2026年11月"
+#: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:8
+msgid "Sibuna 1.0.0-rc.5, November 2026"
+msgstr "Sibuna 1.0.0-rc.5、2026年11月"
 
-#: ../../preface.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:10
 msgid ""
 "Sources, exercises, and reproducible measurements accompany the Sibuna "
 "repository."

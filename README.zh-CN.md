@@ -54,7 +54,7 @@ Sibuna 将 TCP、UDP 和 HTTP 流量转发到健康的服务器。我们可以�
 
 ## 负载均衡
 
-Sibuna 1.0.0-rc.3 包含边缘模式。我们也可以[从源码构建候选版本](#build-from-source)。
+Sibuna 1.0.0-rc.5 包含边缘模式。我们也可以[从源码构建候选版本](#build-from-source)。
 
 ```sh
 sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80
@@ -84,7 +84,7 @@ Gate 或 Shield 只应用于需要它的名称，也可以不应用于任何名�
 
 ## 快速入门
 
-[下载适合所用平台的发行版](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.3)。默认安装包包含存储和控制台支持。控制台通过 `--console` 启动。
+[下载适合所用平台的发行版](https://github.com/insanai/sibuna/releases/tag/v1.0.0-rc.5)。默认安装包包含存储和控制台支持。控制台通过 `--console` 启动。
 
 | 平台 | 安装包 | 要求 |
 | --- | --- | --- |
@@ -93,8 +93,8 @@ Gate 或 Shield 只应用于需要它的名称，也可以不应用于任何名�
 | macOS Apple Silicon | `sibuna-macos-arm64.tar.gz` | macOS 12 或更高版本 |
 | macOS Intel | `sibuna-macos-amd64.tar.gz` | macOS 12 或更高版本 |
 | Windows x86-64 | `sibuna-windows-amd64.zip` | Windows 10 / Server 2016 或更高版本；原生 `sibuna.exe` |
-| FreeBSD x86-64 | `sibuna-1.0.0-rc.3-freebsd-15.1-amd64.pkg` | FreeBSD 15.1；CLI 软件包 |
-| OpenBSD x86-64 | `sibuna-1.0.0-rc.3.tgz` | OpenBSD 7.9；CLI 软件包 |
+| FreeBSD x86-64 | `sibuna-1.0.0-rc.5-freebsd-15.1-amd64.pkg` | FreeBSD 15.1；CLI 软件包 |
+| OpenBSD x86-64 | `sibuna-1.0.0-rc.5.tgz` | OpenBSD 7.9；CLI 软件包 |
 
 macOS 构建未签名。每个安装包都包含许可证、源码链接和构建清单。使用前，请对照 `SHA256SUMS` 校验压缩包。
 
@@ -111,8 +111,8 @@ sibuna --version
 在 Linux x86-64 上，假设应用监听 3000 端口：
 
 ```sh
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.3/sibuna-linux-amd64.tar.gz
-curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.3/SHA256SUMS
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.5/sibuna-linux-amd64.tar.gz
+curl -fLO https://github.com/insanai/sibuna/releases/download/v1.0.0-rc.5/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 tar -xzf sibuna-linux-amd64.tar.gz
 (umask 077; openssl rand -hex 32 > sibuna.seed)
