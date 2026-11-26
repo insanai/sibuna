@@ -54,7 +54,7 @@ DESCRIPTION = (
     "connect several in a mesh, terminate TLS at each edge and apply the firewall to selected HTTP routes."
 )
 # Files the landing page loads, copied to /sibuna/assets/.
-ASSETS = ("site.css", "favicon.svg", "tls-check.js", "post-quantum-route.svg", "admission-demo.css", "admission-model.js",
+ASSETS = ("site.css", "favicon.svg", "post-quantum-route.svg", "admission-demo.css", "admission-model.js",
           "admission-animation.js", "admission-scene.bundle.js", "three-LICENSE.txt",
           "language.css", "site-language.js")
 

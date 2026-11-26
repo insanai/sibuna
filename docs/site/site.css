@@ -589,12 +589,38 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
 .quantum-route figcaption span {color:#c1d2cb}
 .quantum-dates {grid-column:1/-1}
 .quantum-dates h3 {font-size:20px;font-weight:600;margin:0 0 14px}
-.quantum-dates dl {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin:0}
-.quantum-dates dl div {border-top:1px solid var(--line);padding-top:10px}
-.quantum-dates dt {font-weight:600}
-.quantum-dates dd {color:var(--muted);font-size:15px;margin:4px 0 0}
-@media(max-width:800px){.quantum{grid-template-columns:1fr}.quantum-route{max-width:640px;width:100%;justify-self:center}}
-@media(max-width:600px){.quantum-dates dl{grid-template-columns:1fr;gap:12px}}
+.guide-button {align-self:center;padding:.35rem .8rem;border:1px solid var(--green);border-radius:5px;font-size:14px;font-weight:600;text-decoration:none}
+.guide-button:hover {background:var(--pale)}
+.milestones {
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));list-style:none;
+  margin:0;padding:0;background:var(--pale);border-radius:12px;
+}
+.milestones li {position:relative;min-width:0;padding:1.1rem clamp(.75rem,1.35vw,1.4rem)}
+.milestones time {display:block;font:600 clamp(24px,3vw,42px)/1.25 ui-monospace,monospace;color:var(--ink)}
+.milestones time::after {
+  content:"";display:block;position:relative;z-index:1;width:10px;height:10px;
+  margin:.55rem 0 1rem;background:var(--green);border:2px solid var(--pale);border-radius:50%
+}
+.milestones li::before {
+  content:"";position:absolute;inset-inline:0;top:calc(1.1rem + clamp(30px,3.75vw,52.5px) + .55rem + 6px);
+  border-block-start:2px solid #9eb4a6;
+}
+.milestones li:first-child::before {inset-inline-start:clamp(.75rem,1.35vw,1.4rem)}
+.milestones li:last-child::before {inset-inline-end:calc(100% - clamp(.75rem,1.35vw,1.4rem) - 7px)}
+.milestones p {font-size:.91rem;line-height:1.5;margin:.7rem 0 0}
+.milestones b,.milestones span {display:block}
+.milestones b {color:var(--green)}
+@media(max-width:800px){
+  .quantum{grid-template-columns:1fr}.quantum-route{max-width:640px;width:100%;justify-self:center}
+  .milestones {display:block;padding:.35rem 1rem}
+  .milestones li {padding:1rem 0;padding-inline-start:1.6rem}
+  .milestones time::after {position:absolute;inset-inline-start:0;top:1.45rem;margin:0}
+  .milestones li::before,.milestones li:first-child::before,.milestones li:last-child::before {
+    inset-inline-start:6px;inset-inline-end:auto;inset-block:0;border:0;border-inline-start:2px solid #9eb4a6
+  }
+  .milestones li:first-child::before {inset-block-start:1.8rem}
+  .milestones li:last-child::before {inset-block-end:calc(100% - 1.8rem)}
+}
 .deployments h2 {font-size:clamp(25px,3vw,38px);margin:0 0 22px}
 .deployment-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px}
 .deployment-grid article {border-top:2px solid var(--green);padding-block-start:14px}
@@ -607,22 +633,3 @@ html:is(:lang(zh),:lang(ja),:lang(ko),:lang(hi),:lang(ar)) .measure thead th {
   .edge-map input,.edge-map label {display:none}
   .edge-map {padding-bottom:12px}
 }
-
-.tls-check {
-  grid-column:1/-1;
-  border:1px solid var(--line);
-  border-inline-start:4px solid var(--green);
-  border-radius:6px;
-  padding:clamp(18px,3vw,32px);
-  scroll-margin-top:2rem
-}
-.tls-check h3 {font-size:clamp(22px,2.4vw,32px);margin:0}
-.tls-check p {max-width:76ch;margin:.65rem 0 1rem}
-.tls-check label {display:block;font-weight:600;margin-bottom:.35rem}
-.check-fields {display:flex;flex-wrap:wrap;gap:.65rem}
-.check-fields input {flex:0 1 25rem;min-width:0;max-width:100%;padding:.55em .8em;border:1px solid var(--muted);border-radius:5px}
-.check-fields button {cursor:pointer}
-#tls-observation {margin-top:1.2rem;border-top:1px solid var(--line)}
-#tls-origin {overflow-wrap:anywhere;unicode-bidi:isolate}
-#tls-result p {border-inline-start:3px solid var(--gold);padding-inline-start:.75rem}
-#tls-result [data-outcome=hybrid] {border-color:var(--green)}
