@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 06:04+0000\n"
+"POT-Creation-Date: 2026-11-26 10:42+0000\n"
 "PO-Revision-Date: 2026-10-16 05:37+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -570,7 +570,7 @@ msgstr ""
 "विश्लेषण चाहिए। कोई भी चुनाव महँगे सत्यापन में प्रवेश से पहले विकृत "
 "प्रमाणों को अस्वीकार करने की आवश्यकता को नहीं हटाता।"
 
-#: ../../cryptography.rst:138 ../../cryptography.rst:208
+#: ../../cryptography.rst:138 ../../cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाएँ"
 
@@ -656,10 +656,34 @@ msgstr ""
 "जिन्हें टोकन न बना सकने वाले सत्यापनकर्ता चाहिए।"
 
 #: ../../cryptography.rst:160
+msgid ""
+"The tokens and the challenge records were therefore safe against a "
+"quantum adversary before the transport that carries them was. Since SID "
+"0035, every TLS session that Sibuna ends or opens also offers the hybrid "
+"key exchange X25519MLKEM768. Its key comes from X25519 and from "
+"ML-KEM-768 (FIPS 203) together and stays secret as long as either holds, "
+"so a session recorded today cannot be read later with a quantum computer. "
+"Certificates still carry ECDSA or RSA signatures. No public authority "
+"issues post-quantum certificates and browsers do not accept them, and a "
+"signature matters only during its own handshake, so a recording does not "
+"expose it."
+msgstr ""
+"इसलिए टोकन और चुनौती रिकॉर्ड क्वांटम विरोधी के सामने तब भी सुरक्षित थे, "
+"जब उन्हें ले जाने वाला परिवहन सुरक्षित नहीं था। SID 0035 से Sibuna जिस भी "
+"TLS सत्र को समाप्त करता है या खोलता है, वह हाइब्रिड की एक्सचेंज "
+"X25519MLKEM768 भी प्रस्तुत करता है। उसकी कुंजी X25519 और ML-KEM-768 (FIPS "
+"203) दोनों से मिलकर बनती है और तब तक गुप्त रहती है जब तक दोनों में से कोई "
+"एक सुरक्षित है, इसलिए आज रिकॉर्ड किया गया सत्र बाद में क्वांटम कंप्यूटर "
+"से नहीं पढ़ा जा सकता। प्रमाणपत्रों पर अब भी ECDSA या RSA हस्ताक्षर होते "
+"हैं। कोई सार्वजनिक प्राधिकरण पोस्ट-क्वांटम प्रमाणपत्र जारी नहीं करता और "
+"ब्राउज़र उन्हें स्वीकार नहीं करते; साथ ही हस्ताक्षर केवल अपने ही हैंडशेक "
+"के दौरान मायने रखता है, इसलिए रिकॉर्डिंग उसे उजागर नहीं करती।"
+
+#: ../../cryptography.rst:162
 msgid "The Key Schedule"
 msgstr "कुंजी अनुसूची (key schedule)"
 
-#: ../../cryptography.rst:163
+#: ../../cryptography.rst:165
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -671,11 +695,11 @@ msgstr ""
 "उद्देश्य की कुंजी निकालता है: टोकन, चैलेंज, Ed25519 और फ़िंगरप्रिंट "
 "कुंजियाँ, और वह आवश्यकता कुंजी जो आवश्यकता टिकट को सील करती है (भाग IV)।"
 
-#: ../../cryptography.rst:165
+#: ../../cryptography.rst:167
 msgid "Implementation: ``Keys::derive``"
 msgstr "इम्प्लीमेंटेशन: ``Keys::derive``"
 
-#: ../../cryptography.rst:167
+#: ../../cryptography.rst:169
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -687,7 +711,7 @@ msgstr ""
 "``Keys`` और ``Seed`` छोड़े जाने (drop) पर अपने बाइट शून्य कर देते हैं, और "
 "उनका ``Debug`` आउटपुट छिपाया (redact) जाता है।"
 
-#: ../../cryptography.rst:169
+#: ../../cryptography.rst:171
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -717,7 +741,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:185
+#: ../../cryptography.rst:187
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -729,7 +753,7 @@ msgstr ""
 "BLAKE3 से बदल देता है, इसलिए चैलेंज को उसी नोड पर लौटना होगा जिसने उसे "
 "जारी किया, जबकि सत्र टोकन और आवश्यकता टिकट हर सदस्य पर वैध रहते हैं।"
 
-#: ../../cryptography.rst:187
+#: ../../cryptography.rst:189
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
@@ -739,11 +763,11 @@ msgstr ""
 "सीड के लीक होने से हर व्युत्पन्न कुंजी लीक हो जाती है। क्लस्टर को केवल एक "
 "सीड पर सहमत होना होता है।"
 
-#: ../../cryptography.rst:189
+#: ../../cryptography.rst:191
 msgid "Stateless Challenges"
 msgstr "स्टेटलेस चैलेंज"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
 "byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
@@ -763,7 +787,7 @@ msgstr ""
 "BLAKE3 टैग आता है; कुल 56 बाइट, जो 75 URL-safe base64 अक्षरों के रूप में "
 "भेजे जाते हैं।"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/wire-formats.typ\": draw\n"
@@ -775,7 +799,7 @@ msgstr ""
 "#show: chart.with(lang: \"hi\")\n"
 "#draw()\n"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "Wire formats of the challenge identifier and the session token. The "
 "numbers above each record are byte offsets."
@@ -783,7 +807,7 @@ msgstr ""
 "चैलेंज पहचानकर्ता और सत्र टोकन के वायर प्रारूप। हर रिकॉर्ड के ऊपर की "
 "संख्याएँ बाइट ऑफ़सेट हैं।"
 
-#: ../../cryptography.rst:196
+#: ../../cryptography.rst:198
 msgid ""
 "A challenge identifier is a self-authenticating record: version, "
 "algorithm, difficulty, opening count, issue time, the client's keyed "
@@ -803,11 +827,11 @@ msgstr ""
 "क्लाइंट के विरुद्ध फ़िंगरप्रिंट जाँचता है, और उसके बाद ही प्रमाण की जाँच "
 "करता है।"
 
-#: ../../cryptography.rst:198
+#: ../../cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "लेम्मा 4 (अवस्था केवल चुकाए गए कार्य के साथ बढ़ती है)"
 
-#: ../../cryptography.rst:200
+#: ../../cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -827,7 +851,7 @@ msgstr ""
 "अस्वीकार कर सकता है। यह अवस्था की सीमा है, हर विरोधी की गणना-रणनीति पर "
 "निचली सीमा नहीं।"
 
-#: ../../cryptography.rst:202
+#: ../../cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -840,11 +864,11 @@ msgstr ""
 "और कुंजी-युक्त ताकि दूसरे क्लाइंट के फ़िंगरप्रिंट ऑफ़लाइन न निकाले जा "
 "सकें।"
 
-#: ../../cryptography.rst:204
+#: ../../cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "अभ्यास 3.3"
 
-#: ../../cryptography.rst:206
+#: ../../cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -854,7 +878,7 @@ msgstr ""
 "``fingerprint`` रखता है। समझाएँ कि हर फ़ील्ड क्या रोकता है, यानी उसे "
 "हटाने पर क्या संभव हो जाता, और टैग को पाँचों को क्यों ढकना चाहिए।"
 
-#: ../../cryptography.rst:210
+#: ../../cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "

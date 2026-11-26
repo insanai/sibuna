@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 06:04+0000\n"
+"POT-Creation-Date: 2026-11-26 10:42+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -501,7 +501,7 @@ msgid ""
 msgstr ""
 "Sibunaは、安価なハッシュによる検証と、ハッシュに基づく逐次作業の選択肢を保持しています。後者は証明のバイト数が多く、パラメーターをより慎重に解析する必要があります。どちらを選んでも、高価な検証に入る前に不正な形式の証明を拒否する必要はなくなりません。"
 
-#: ../../cryptography.rst:138 ../../cryptography.rst:208
+#: ../../cryptography.rst:138 ../../cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
@@ -572,10 +572,27 @@ msgstr ""
 "``--token-scheme ed25519``\\ ）として残しています。"
 
 #: ../../cryptography.rst:160
+msgid ""
+"The tokens and the challenge records were therefore safe against a "
+"quantum adversary before the transport that carries them was. Since SID "
+"0035, every TLS session that Sibuna ends or opens also offers the hybrid "
+"key exchange X25519MLKEM768. Its key comes from X25519 and from "
+"ML-KEM-768 (FIPS 203) together and stays secret as long as either holds, "
+"so a session recorded today cannot be read later with a quantum computer. "
+"Certificates still carry ECDSA or RSA signatures. No public authority "
+"issues post-quantum certificates and browsers do not accept them, and a "
+"signature matters only during its own handshake, so a recording does not "
+"expose it."
+msgstr ""
+"したがって、トークンとチャレンジレコードは、それを運ぶ通信路よりも先に量子攻撃者に対して安全でした。SID "
+"0035以降、Sibunaが終端または開始するすべてのTLSセッションは、ハイブリッド鍵交換X25519MLKEM768も提示します。その鍵はX25519とML-KEM-768（FIPS "
+"203）の両方から作られ、どちらかが破られない限り秘密のままです。そのため、今日録画されたセッションを後で量子コンピューターで読むことはできません。証明書には引き続きECDSAまたはRSAの署名を使います。耐量子証明書を発行する公的認証局はなく、ブラウザーも受け付けません。また、署名が意味を持つのはそのハンドシェイクの間だけなので、録画されても危険はありません。"
+
+#: ../../cryptography.rst:162
 msgid "The Key Schedule"
 msgstr "鍵スケジュール"
 
-#: ../../cryptography.rst:163
+#: ../../cryptography.rst:165
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -585,11 +602,11 @@ msgstr ""
 "32バイトのマスターシード一つ（\\ ``--secret-file``\\ 、\\ ``SIBUNA_SECRET``\\ "
 "、または新たに生成した乱数値から得ます）から、鍵付きBLAKE3とドメイン文字列によって用途ごとの鍵をすべて導きます。トークン鍵、チャレンジ鍵、Ed25519鍵、フィンガープリント鍵、そして要件チケットを封印する要件鍵です（第IV部）。"
 
-#: ../../cryptography.rst:165
+#: ../../cryptography.rst:167
 msgid "Implementation: ``Keys::derive``"
 msgstr "実装：\\ ``Keys::derive``"
 
-#: ../../cryptography.rst:167
+#: ../../cryptography.rst:169
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -600,7 +617,7 @@ msgstr ""
 "``sibuna-challenge``\\ ）にあります。\\ ``Keys``\\ と\\ ``Seed``\\ "
 "は破棄されるときにバイトをゼロにし、\\ ``Debug``\\ 出力は伏せ字になります。"
 
-#: ../../cryptography.rst:169
+#: ../../cryptography.rst:171
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -630,7 +647,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:185
+#: ../../cryptography.rst:187
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -641,7 +658,7 @@ msgstr ""
 "``sibuna/challenge-node/v1``\\ "
 "とノードIDに対して計算した鍵付きBLAKE3で置き換えます。これにより、チャレンジは発行したノードに戻らなければなりません。一方、セッショントークンと要件チケットはすべてのメンバーで有効なままです。"
 
-#: ../../cryptography.rst:187
+#: ../../cryptography.rst:189
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
@@ -649,11 +666,11 @@ msgid ""
 msgstr ""
 "ドメイン分離は、用途をまたぐ偶発的な再利用を防ぎます。マスターシードが漏れれば、導出したすべての鍵が漏れます。クラスターが合意すべきなのはシード一つだけです。"
 
-#: ../../cryptography.rst:189
+#: ../../cryptography.rst:191
 msgid "Stateless Challenges"
 msgstr "状態を持たないチャレンジ"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
 "byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
@@ -666,7 +683,7 @@ msgid ""
 msgstr ""
 "二つのバイト配置です。チャレンジ識別子では、1バイトずつのver、alg、diff、tと、8バイトずつのissued_at、fingerprint、nonce、rule_hashからなる36バイトのペイロードに、16バイトのBLAKE3タグが続きます。合計52バイトで、URL安全なbase64の70文字として送ります。セッショントークンでは、1バイトずつのver、alg、bits、5バイトのres、8バイトずつのtimestamp、expiry、rule_hash、fingerprintからなる40バイトのペイロードに、16バイトのBLAKE3タグが続きます。合計56バイトで、URL安全なbase64の75文字として送ります。"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/wire-formats.typ\": draw\n"
@@ -678,13 +695,13 @@ msgstr ""
 "#show: chart.with(lang: \"ja\")\n"
 "#draw()\n"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "Wire formats of the challenge identifier and the session token. The "
 "numbers above each record are byte offsets."
 msgstr "チャレンジ識別子とセッショントークンのワイヤーフォーマット。各レコードの上の数字はバイトオフセットです。"
 
-#: ../../cryptography.rst:196
+#: ../../cryptography.rst:198
 msgid ""
 "A challenge identifier is a self-authenticating record: version, "
 "algorithm, difficulty, opening count, issue time, the client's keyed "
@@ -697,11 +714,11 @@ msgid ""
 msgstr ""
 "チャレンジ識別子は自己認証するレコードです。バージョン、アルゴリズム、難易度、開示数、発行時刻、クライアントの鍵付きフィンガープリント、PRFで導いたnonce、チャレンジを要求したポリシールールのハッシュを持ち、その後にチャレンジ鍵による16バイトのタグが続きます。発行しても何も書き込みません。検証ではレコードをデコードし、タグを定数時間で確認し、経過時間をチャレンジのTTLと照合し、フィンガープリントを送信元のクライアントと照合し、その後で初めて証明を調べます。"
 
-#: ../../cryptography.rst:198
+#: ../../cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "補題4（状態は支払われた作業に比例してのみ増える）"
 
-#: ../../cryptography.rst:200
+#: ../../cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -717,7 +734,7 @@ msgstr ""
 ":math:`r`\\ とすると、\\ :math:`|S| \\le r \\cdot \\mathrm{TTL}`\\ "
 "です。無償のチャレンジ取得ではタグは割り当てられません。実装は容量も固定しており、満杯のときは有効な解答を拒否することがあります。これは状態の上限であり、あらゆる敵対者の計算戦略に対する下限ではありません。"
 
-#: ../../cryptography.rst:202
+#: ../../cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -727,11 +744,11 @@ msgstr ""
 "使用済み集合は、16バイトのタグに対するRobin "
 "Hoodオープンアドレス法の16個のシャードです（第V部）。フィンガープリントはクライアントのアドレスとUser-Agentの鍵付きハッシュです。連結によって二つの入力が衝突しないように長さで区切り、他のクライアントのフィンガープリントをオフラインで計算できないように鍵を付けています。"
 
-#: ../../cryptography.rst:204
+#: ../../cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "演習3.3"
 
-#: ../../cryptography.rst:206
+#: ../../cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -741,7 +758,7 @@ msgstr ""
 "、\\ ``fingerprint``\\ "
 "を持ちます。各フィールドを取り除いたら何が防げなくなるかを説明し、タグが五つすべてを覆わなければならない理由を説明してください。"
 
-#: ../../cryptography.rst:210
+#: ../../cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "

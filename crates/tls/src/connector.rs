@@ -35,7 +35,7 @@ impl Connector {
     pub fn load(trust: &Trust) -> Result<Connector, TlsError> {
         let roots = trust.load_roots()?;
         let root_count = roots.len();
-        let provider = Arc::new(rustls::crypto::ring::default_provider());
+        let provider = Arc::new(crate::provider());
         let config = ClientConfig::builder_with_provider(provider)
             .with_safe_default_protocol_versions()
             .map_err(TlsError::Handshake)?

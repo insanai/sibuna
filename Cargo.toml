@@ -86,9 +86,17 @@ rustls = { version = "0.23.46", default-features = false, features = ["std", "tl
 rustls-native-certs = { version = "0.8.5" }
 # ring: ECDSA P-256 key generation and signing for the ACME account key, the certificate
 # request and the TLS-ALPN-01 certificate. It is the crypto provider of rustls above, so it
-# is in the build already; an in-house P-256 was rejected as security-critical. Only
-# sibuna-acme names it. SID 0021.
+# is in the build already; an in-house P-256 was rejected as security-critical. sibuna-acme
+# names it, and sibuna-tls for the randomness of ML-KEM below. SID 0021, SID 0035.
 ring = { version = "0.17.14" }
+# ml-kem: ML-KEM-768 (FIPS 203), the post-quantum half of the X25519MLKEM768 key exchange
+# that sibuna-tls adds to the ring provider of rustls. Pure Rust (no C build), constant time,
+# tested against the Wycheproof vectors. rustls has the group only with aws-lc-rs, a second
+# C library beside ring (which sqlx and sibuna-acme keep) whose build adds risk on our five
+# release targets (musl, windows-msvc). ML-KEM is not written in-house: a silent fault in it
+# breaks the secrecy of every session. `hazmat` exposes the FIPS 203 encapsulation with
+# explicit randomness, which we draw from ring. Only sibuna-tls names it. SID 0035.
+ml-kem = { version = "0.3.4", default-features = false, features = ["hazmat", "zeroize"] }
 
 [workspace.lints.rust]
 unsafe_code = "deny"

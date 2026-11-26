@@ -135,7 +135,7 @@ impl Identity {
         let certificates = Arc::new(certs::Certificates::load(spec)?);
         let managed = certificates.tables();
         let on_demand = certificates.is_on_demand().then(|| Arc::clone(&certificates));
-        let provider = Arc::new(rustls::crypto::ring::default_provider());
+        let provider = Arc::new(sibuna_tls::provider());
         let versions: &[&rustls::SupportedProtocolVersion] = match spec.min_version {
             TlsVersion::V12 => rustls::DEFAULT_VERSIONS,
             TlsVersion::V13 => &[&rustls::version::TLS13],

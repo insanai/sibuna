@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 06:04+0000\n"
+"POT-Creation-Date: 2026-11-26 10:42+0000\n"
 "PO-Revision-Date: 2026-10-16 05:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -602,7 +602,7 @@ msgstr ""
 "es, fehlerhaft geformte Nachweise abzuweisen, bevor die teure "
 "Verifikation beginnt."
 
-#: ../../cryptography.rst:138 ../../cryptography.rst:208
+#: ../../cryptography.rst:138 ../../cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "Die Invariante erklären"
 
@@ -693,10 +693,35 @@ msgstr ""
 "keine Tokens ausstellen können."
 
 #: ../../cryptography.rst:160
+msgid ""
+"The tokens and the challenge records were therefore safe against a "
+"quantum adversary before the transport that carries them was. Since SID "
+"0035, every TLS session that Sibuna ends or opens also offers the hybrid "
+"key exchange X25519MLKEM768. Its key comes from X25519 and from "
+"ML-KEM-768 (FIPS 203) together and stays secret as long as either holds, "
+"so a session recorded today cannot be read later with a quantum computer. "
+"Certificates still carry ECDSA or RSA signatures. No public authority "
+"issues post-quantum certificates and browsers do not accept them, and a "
+"signature matters only during its own handshake, so a recording does not "
+"expose it."
+msgstr ""
+"Die Tokens und die Challenge-Datensätze waren also gegen einen "
+"Quantengegner sicher, bevor es der Transport war, der sie trägt. Seit SID "
+"0035 bietet jede TLS-Sitzung, die Sibuna beendet oder öffnet, zusätzlich "
+"den hybriden Schlüsselaustausch X25519MLKEM768 an. Ihr Schlüssel entsteht "
+"aus X25519 und ML-KEM-768 (FIPS 203) zusammen und bleibt geheim, solange "
+"eines der beiden hält. Eine heute aufgezeichnete Sitzung kann daher "
+"später auch mit einem Quantencomputer nicht gelesen werden. Zertifikate "
+"tragen weiterhin ECDSA- oder RSA-Signaturen. Keine öffentliche "
+"Zertifizierungsstelle stellt Post-Quanten-Zertifikate aus, und Browser "
+"akzeptieren sie nicht. Eine Signatur zählt außerdem nur während ihres "
+"eigenen Handshakes, sodass eine Aufzeichnung sie nicht preisgibt."
+
+#: ../../cryptography.rst:162
 msgid "The Key Schedule"
 msgstr "Der Schlüsselplan"
 
-#: ../../cryptography.rst:163
+#: ../../cryptography.rst:165
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -709,11 +734,11 @@ msgstr ""
 "für Token, Challenge, Ed25519 und Fingerabdruck sowie der "
 "Anforderungsschlüssel, der Anforderungstickets versiegelt (Teil IV)."
 
-#: ../../cryptography.rst:165
+#: ../../cryptography.rst:167
 msgid "Implementation: ``Keys::derive``"
 msgstr "Implementierung: ``Keys::derive``"
 
-#: ../../cryptography.rst:167
+#: ../../cryptography.rst:169
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -725,7 +750,7 @@ msgstr ""
 "und ``Seed`` überschreiben ihre Bytes beim Freigeben mit Nullen, und ihre "
 "``Debug``-Ausgabe ist geschwärzt."
 
-#: ../../cryptography.rst:169
+#: ../../cryptography.rst:171
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -755,7 +780,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:185
+#: ../../cryptography.rst:187
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -768,7 +793,7 @@ msgstr ""
 "ausgestellt hat, während Sitzungstokens und Anforderungstickets auf jedem "
 "Mitglied gültig bleiben."
 
-#: ../../cryptography.rst:187
+#: ../../cryptography.rst:189
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
@@ -778,11 +803,11 @@ msgstr ""
 "Zwecke hinweg; die Kompromittierung des Master-Seeds kompromittiert jeden "
 "abgeleiteten Schlüssel. Ein Cluster muss sich nur auf einen Seed einigen."
 
-#: ../../cryptography.rst:189
+#: ../../cryptography.rst:191
 msgid "Stateless Challenges"
 msgstr "Zustandslose Challenges"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
 "byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
@@ -803,7 +828,7 @@ msgstr ""
 "16-Byte-BLAKE3-Tag; 56 Bytes, gesendet als 75 Zeichen in URL-sicherem "
 "Base64."
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/wire-formats.typ\": draw\n"
@@ -815,7 +840,7 @@ msgstr ""
 "#show: chart.with(lang: \"de\")\n"
 "#draw()\n"
 
-#: ../../cryptography.rst:193
+#: ../../cryptography.rst:195
 msgid ""
 "Wire formats of the challenge identifier and the session token. The "
 "numbers above each record are byte offsets."
@@ -823,7 +848,7 @@ msgstr ""
 "Übertragungsformate der Challenge-Kennung und des Sitzungstokens. Die "
 "Zahlen über jedem Datensatz sind Byte-Offsets."
 
-#: ../../cryptography.rst:196
+#: ../../cryptography.rst:198
 msgid ""
 "A challenge identifier is a self-authenticating record: version, "
 "algorithm, difficulty, opening count, issue time, the client's keyed "
@@ -844,11 +869,11 @@ msgstr ""
 "Challenge-TTL, prüft den Fingerabdruck gegen den einreichenden Client und "
 "untersucht erst dann den Nachweis."
 
-#: ../../cryptography.rst:198
+#: ../../cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "Lemma 4 (Zustand wächst nur mit bezahlter Arbeit)"
 
-#: ../../cryptography.rst:200
+#: ../../cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -869,7 +894,7 @@ msgstr ""
 "eine gültige Lösung abweisen. Dies ist eine Schranke für den Zustand, "
 "keine untere Schranke für die Rechenstrategie jedes Gegners."
 
-#: ../../cryptography.rst:202
+#: ../../cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -883,11 +908,11 @@ msgstr ""
 "Schlüssel, sodass Fingerabdrücke anderer Clients nicht offline berechnet "
 "werden können."
 
-#: ../../cryptography.rst:204
+#: ../../cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "Übung 3.3"
 
-#: ../../cryptography.rst:206
+#: ../../cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -897,7 +922,7 @@ msgstr ""
 "``rule_hash`` und ``fingerprint``. Erklären, was jedes Feld verhindert, "
 "wenn es entfernt würde, und warum das Tag alle fünf abdecken muss."
 
-#: ../../cryptography.rst:210
+#: ../../cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "

@@ -178,7 +178,7 @@ fn server_config(leaf: Leaf) -> io::Result<ServerConfig> {
         .map_err(|error| invalid(&error))?;
     let key = PrivateKeyDer::from_pem_file(data_file(&format!("{stem}.key")))
         .map_err(|error| invalid(&error))?;
-    let provider = Arc::new(rustls::crypto::ring::default_provider());
+    let provider = Arc::new(crate::provider());
     ServerConfig::builder_with_provider(provider)
         .with_safe_default_protocol_versions()
         .map_err(|error| invalid(&error))?

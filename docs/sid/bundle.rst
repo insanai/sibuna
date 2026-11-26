@@ -39,5 +39,6 @@ Discussion reading order
    records/0031-edge-operator-console
    records/0032-staged-admission
    records/0033-reputation-deltas
+   records/0035-post-quantum-key-exchange
 
 .. sid-generated-end

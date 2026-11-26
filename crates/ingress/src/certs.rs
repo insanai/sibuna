@@ -47,7 +47,7 @@ fn bundle(path: &Path, chain: &[u8], key: &[u8]) -> Result<Arc<CertifiedKey>, Er
         return Err(named(path, "no certificate found"));
     }
     let key = PrivateKeyDer::from_pem_slice(key).map_err(|e| named(path, e))?;
-    let provider = rustls::crypto::ring::default_provider();
+    let provider = sibuna_tls::provider();
     let mut certified =
         CertifiedKey::from_der(certs, key, &provider).map_err(|e| named(path, e))?;
     certified.ocsp = stapled(path)?;

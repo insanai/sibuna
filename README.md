@@ -62,7 +62,7 @@ sibuna --config-file edge.jlv
 [Configuring Sibuna with Jlavi](https://insanai.github.io/sibuna/book/jlavi.html)
 
 - **Forwarding:** TCP and UDP, TLS passthrough routed by server name, QUIC passthrough and the PROXY protocol.
-- **HTTP:** TLS termination with HAProxy-style PEM bundles; HTTP/1.1, HTTP/2, HTTP/3 and WebSocket; routes by host name and path to HTTP/1.1, HTTP/2 or HTTP/3 servers. On Linux, event-driven workers serve the connections, one worker per processor.
+- **HTTP:** TLS termination with HAProxy-style PEM bundles and post-quantum key exchange (X25519MLKEM768); HTTP/1.1, HTTP/2, HTTP/3 and WebSocket; routes by host name and path to HTTP/1.1, HTTP/2 or HTTP/3 servers. On Linux, event-driven workers serve the connections, one worker per processor.
 - **Certificates:** automatic over ACME with renewal, fallback authorities and external account binding; wildcards through DNS with a hook program, an RFC 2136 update or the Cloudflare API; OCSP stapling; certificates on demand behind a guard; a local authority for `localhost`, internal names and IP addresses, with a revocation list and an ACME server of its own.
 - **Servers:** health checks, slow start, draining, weights, sticky sessions and a limit of flows for each server.
 - **Changes while it runs:** an accepted reload preserves established TCP streams. The admin socket drains, weighs, adds and removes servers (`sibuna ctl /run/sibuna/edge.sock set server app/10.0.0.1:80 state drain`). On Linux a new executable takes the listening sockets and the UDP mappings from the old one; QUIC connections end.

@@ -111,5 +111,8 @@ Discussion registry
    * - 0033
      - :doc:`records/0033-reputation-deltas`
      - discussion
+   * - 0035
+     - :doc:`records/0035-post-quantum-key-exchange`
+     - discussion
 
 .. sid-generated-end
