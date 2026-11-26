@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../protocol.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:1
 msgid "Part IV: The Sibuna Protocol"
 msgstr "第IV部：Sibunaプロトコル"
 
-#: ../../protocol.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:4
 msgid ""
 "We specify the wire protocol as implemented: the interstitial round trip, "
 "the stateless challenge record, both solution formats, verification "
@@ -29,16 +29,18 @@ msgid ""
 msgstr ""
 "実装どおりのワイヤープロトコルを規定します。中間ページの往復、状態を持たないチャレンジレコード、二つの解答形式、検証の順序、一回限りの使用の強制、セッションCookieです。"
 
-#: ../../protocol.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:6
 msgid "The Challenge Round Trip"
 msgstr "チャレンジの往復"
 
-#: ../../protocol.rst:9 ../../protocol.rst:48 ../../protocol.rst:111
-#: ../../protocol.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:162
 msgid "Objectives"
 msgstr "この章の学習目標"
 
-#: ../../protocol.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:11
 msgid ""
 "By the end of this chapter, we should be able to trace a browser from its "
 "first request to a minted session, name every endpoint and JSON field "
@@ -47,7 +49,7 @@ msgid ""
 msgstr ""
 "この章を読み終えると、ブラウザーの最初のリクエストからセッションの発行までをたどり、関係するすべてのエンドポイントとJSONフィールドを挙げ、チャレンジが保護されたパスのポリシー判断を運ぶ理由を説明できるようになります。"
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "A sequence diagram with the browser, its Web Worker and Sibuna. A "
 "navigation without a session receives the interstitial (HTTP 200). The "
@@ -64,7 +66,7 @@ msgstr ""
 "WorkerはそれをWASMまたはJSの証明器で解き、nonceまたは証明を返します。ページはPOST "
 "/__sibuna/verifyを送り、Sibunaはそれを検証し、使用済み集合に記録し、MACトークンを発行してSet-Cookieで応答します。ページはセッションを持って再読み込みします。"
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "// protocol.rst: the challenge round trip. Steps on the left run in the "
 "browser, steps on\n"
@@ -129,13 +131,13 @@ msgstr ""
 "  spacing: 44,\n"
 ")\n"
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "The challenge round trip. Steps on the left run in the browser, steps on "
 "the right in Sibuna."
 msgstr "チャレンジの往復。左側の手順はブラウザーで、右側の手順はSibunaで実行されます。"
 
-#: ../../protocol.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:17
 msgid ""
 "A navigation with no valid session reaches the policy engine and is "
 "classified ``CHALLENGE``. Because the request accepts ``text/html``, the "
@@ -154,7 +156,7 @@ msgstr ""
 "*要件チケット*\\ "
 "を運びます。これは、この判断が要求するチャレンジ（アルゴリズム、作業ビット、開示数）とルールのハッシュを、専用に導出した鍵による鍵付きBLAKE3タグでこのクライアント向けに封印したもので、チャレンジの有効期間一つ分だけ有効です。"
 
-#: ../../protocol.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:18
 msgid ""
 "The interstitial fetches ``GET /__sibuna/challenge.json?path=<original "
 "URL>&need=<ticket>``. A valid ticket decides the challenge: the work is "
@@ -177,11 +179,11 @@ msgstr ""
 "0009）。8 KiBより長いURLは切り詰めずに\\ ``414``\\ で拒否し、正規形を持たないパスは\\ ``400``\\ "
 "で拒否します。チケットは助言にすぎません。許可の判断では依然としてセッションの作業レベルを確認するので、再送や偽造したチケットは保有者に作業を課すだけです。"
 
-#: ../../protocol.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:19
 msgid "The response is the challenge record:"
 msgstr "応答はチャレンジレコードです。"
 
-#: ../../protocol.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:21
 msgid ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
@@ -189,7 +191,7 @@ msgstr ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
 
-#: ../../protocol.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:25
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
@@ -197,7 +199,7 @@ msgstr ""
 "``hashcash``\\ では、\\ ``difficulty``\\ はビット数で、\\ ``challenges``\\ は\\ "
 "``0``\\ です。"
 
-#: ../../protocol.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:26
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
@@ -205,25 +207,25 @@ msgstr ""
 "Web "
 "WorkerがWebAssemblyモジュールで、あるいはWebAssemblyが使えなければJavaScriptの証明器で（第VII部）これを解き、次のいずれか"
 
-#: ../../protocol.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:28
 msgid "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 msgstr "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 
-#: ../../protocol.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:32
 msgid "or"
 msgstr "または"
 
-#: ../../protocol.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:34
 msgid ""
 "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 msgstr ""
 "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 
-#: ../../protocol.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:38
 msgid "to ``POST /__sibuna/verify``."
 msgstr "を\\ ``POST /__sibuna/verify``\\ に送信します。"
 
-#: ../../protocol.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:39
 msgid ""
 "On success the server answers ``200 {\"status\":\"ok\"}`` with a "
 "``Set-Cookie`` header, and the page reloads its original location. Every "
@@ -232,11 +234,11 @@ msgstr ""
 "成功すると、サーバーは\\ ``Set-Cookie``\\ ヘッダー付きの\\ ``200 {\"status\":\"ok\"}``\\ "
 "で応答し、ページは元の場所を再読み込みします。以後のリクエストはすべてCookieを運び、ポリシーの評価の前に許可されます。"
 
-#: ../../protocol.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:41
 msgid "Why the path travels with the challenge"
 msgstr "パスがチャレンジとともに送られる理由"
 
-#: ../../protocol.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:43
 msgid ""
 "The interstitial is served at the protected URL, so the browser knows "
 "where it is. Sending the path lets the server pick the *per-rule* "
@@ -249,11 +251,11 @@ msgstr ""
 "難易度とアルゴリズムを選べます（決済のルートは20作業ビットの逐次作業を要求し、ブログは16ビットのHashcashを要求する、といった具合です）。さらにルールのハッシュをトークンに結び付け、\\ "
 "``X-Sibuna-Rule-Hash``\\ がそれを上流に伝えます。"
 
-#: ../../protocol.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:45
 msgid "The Stateless Challenge Record"
 msgstr "状態を持たないチャレンジレコード"
 
-#: ../../protocol.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:50
 msgid ""
 "Read the challenge encoder, understand every field's purpose, and see how "
 "the per-challenge nonce is derived without an entropy syscall on the hot "
@@ -261,11 +263,11 @@ msgid ""
 msgstr ""
 "チャレンジのエンコーダーを読み、各フィールドの目的を理解し、ホットパスでエントロピーのシステムコールを使わずにチャレンジごとのnonceを導く方法を確かめます。"
 
-#: ../../protocol.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:52
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
 msgstr "実装：\\ ``Coordinator::create_challenge_with_spec``"
 
-#: ../../protocol.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:54
 msgid ""
 "Builds the 36-byte payload, tags it under the challenge key, and "
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
@@ -275,7 +277,7 @@ msgstr ""
 "``crates/challenge/src/coordinator.rs``\\ （クレート\\ ``sibuna-challenge``\\ "
 "）にあります。"
 
-#: ../../protocol.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:56
 msgid ""
 "pub fn create_challenge_with_spec(\n"
 "    &self,\n"
@@ -367,7 +369,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../protocol.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:100
 msgid ""
 "The identifier is an ``Encoded<70>``: the text lives in an array of "
 "exactly its length, so issuing a challenge never allocates. "
@@ -381,11 +383,11 @@ msgstr ""
 "は作業ビットを層ごとの単位に対応付けます。Hashcashのビット（最大64）か、PoSWの深さ（\\ ``difficulty - 3``\\ "
 "を4から24の範囲に収めた値）です。"
 
-#: ../../protocol.rst:102
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:102
 msgid "Three details deserve attention:"
 msgstr "注目すべき点が三つあります。"
 
-#: ../../protocol.rst:104
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:104
 msgid ""
 "*Adaptive difficulty.* The coordinator keeps an exponentially weighted "
 "moving average of the challenge issue rate in three atomics. Above a "
@@ -396,7 +398,7 @@ msgstr ""
 "*適応的な難易度。*\\ "
 "コーディネーターは、チャレンジの発行率の指数加重移動平均を三つのアトミック変数で保持します。毎秒50チャレンジという基準を超えると、発行率が2倍になるごとに作業ビットを一つ加え、最大で六つまで加えます。大量アクセスは指数的に多くを支払い、静かなトラフィックは基本コストのままです。"
 
-#: ../../protocol.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:105
 msgid ""
 "*The nonce is a PRF output*, keyed by the challenge key over a counter, "
 "the clock, and the fingerprint. It is unique (counter) and unpredictable "
@@ -407,7 +409,7 @@ msgstr ""
 "*nonceはPRFの出力です。*\\ "
 "チャレンジ鍵を鍵とし、カウンター、時刻、フィンガープリントから計算します。nonceは一意（カウンターによる）で予測不能（鍵による）なので、敵対者は発行されていない識別子の解答を事前に計算できません。また、ホットパスでオペレーティングシステムにエントロピーを求めることもありません。"
 
-#: ../../protocol.rst:106
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:106
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
@@ -415,11 +417,11 @@ msgstr ""
 "*難易度はタグの中に含まれます。*\\ "
 "クライアントがレコードを書き換えて難易度を下げることはできません。証明を調べる前に、タグの確認で失敗するからです。"
 
-#: ../../protocol.rst:108
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:108
 msgid "Verification Order and Single Use"
 msgstr "検証の順序と一回限りの使用"
 
-#: ../../protocol.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:113
 msgid ""
 "Understand why the cheap checks run before the proof, why the challenge "
 "is marked spent only after the proof is valid, and how two concurrent "
@@ -427,11 +429,11 @@ msgid ""
 msgstr ""
 "安価な確認が証明より先に行われる理由、証明が有効になってから初めてチャレンジを使用済みにする理由、同じ解答の二つの同時提出がどう解決されるかを理解します。"
 
-#: ../../protocol.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:115
 msgid "Implementation: ``Coordinator::verify_and_mint``"
 msgstr "実装：\\ ``Coordinator::verify_and_mint``"
 
-#: ../../protocol.rst:117
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:117
 msgid ""
 "Decodes and authenticates the identifier, checks age and client binding, "
 "verifies the proof for the recorded tier, records the tag as spent, and "
@@ -442,7 +444,7 @@ msgstr ""
 "``crates/challenge/src/coordinator.rs``\\ （クレート\\ ``sibuna-challenge``\\ "
 "）にあります。"
 
-#: ../../protocol.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:119
 msgid ""
 "pub fn verify_and_mint(\n"
 "    &self,\n"
@@ -520,7 +522,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../protocol.rst:155
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:155
 msgid ""
 "The order is deliberate. Tag, age, and binding are constant-time checks "
 "that reject garbage before any hashing. A wrong proof must not consume "
@@ -539,7 +541,7 @@ msgstr ""
 "60``\\ （\\ ``CLOCK_SKEW_SECONDS``\\ "
 "は60）は、時計が1分より進んでいるノードが発行したレコードを拒否します。そうしなければ、チャレンジの寿命が延びてしまいます。"
 
-#: ../../protocol.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:157
 msgid ""
 "Errors surface to the client as ``400`` with an Elm-style diagnostic "
 "(Part XII): each ``VerifyError`` converts into "
@@ -554,21 +556,21 @@ msgstr ""
 "``FINGERPRINT MISMATCH``\\ 、\\ ``WRONG SOLUTION TYPE``\\ 、\\ ``MALFORMED "
 "CHALLENGE``\\ が含まれることを確認します。"
 
-#: ../../protocol.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:159
 msgid "The Session Cookie"
 msgstr "セッションCookie"
 
-#: ../../protocol.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:164
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
 msgstr "鍵付きハッシュのトークンを読み、Cookieの属性を理解し、クライアントへの結び付きを説明します。"
 
-#: ../../protocol.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:166
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
 msgstr "実装：\\ ``token::mac::mint``\\ と\\ ``token::mac::verify``"
 
-#: ../../protocol.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:168
 msgid ""
 "Serialises the 40-byte payload, appends the first 16 bytes of keyed "
 "BLAKE3 over it, and verifies with a constant-time comparison. In "
@@ -579,7 +581,7 @@ msgstr ""
 "``crates/challenge/src/token/mac.rs``\\ （クレート\\ ``sibuna-challenge``\\ "
 "）にあります。\\ ``Coordinator::verify_cookie``\\ がクライアントのフィンガープリントを渡して呼び出します。"
 
-#: ../../protocol.rst:170
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:170
 msgid ""
 "pub fn verify(\n"
 "    key: &[u8; 32],\n"
@@ -630,7 +632,7 @@ msgstr ""
 "    Ok(payload)\n"
 "}"
 
-#: ../../protocol.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:195
 msgid ""
 "The tag is checked before the payload is parsed: a payload of another "
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
@@ -639,11 +641,11 @@ msgstr ""
 "タグはペイロードをパースする前に確認します。別のバージョンのペイロードは、本物であると分かった後で初めて\\ "
 "``TokenError::InvalidEncoding``\\ で拒否されます。偽造したペイロードがパーサーに届くことはありません。"
 
-#: ../../protocol.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:197
 msgid "The cookie is emitted as"
 msgstr "Cookieは次の形で出力されます。"
 
-#: ../../protocol.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:199
 msgid ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
@@ -651,7 +653,7 @@ msgstr ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
 
-#: ../../protocol.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:204
 msgid ""
 "``HttpOnly`` keeps it out of page scripts, ``SameSite=Lax`` stops "
 "cross-site replay while allowing top-level navigation, and ``Secure`` is "
@@ -668,7 +670,7 @@ msgstr ""
 "``TokenError::TokenBoundAddressMismatch``\\ で失敗します。エンドツーエンドテスト「the cookie "
 "is bound to the client identity」がまさにその経路を確かめます。"
 
-#: ../../protocol.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:206
 msgid ""
 "The payload begins with a version byte and the *work level* the holder "
 "paid: the mechanism (Hashcash or PoSW) and the work bits actually solved, "
@@ -691,11 +693,11 @@ msgstr ""
 "session earned on a cheaper route does not admit a route that demands "
 "more work」が両方向を確かめます。"
 
-#: ../../protocol.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:208
 msgid "Forwarded addresses"
 msgstr "転送されたアドレス"
 
-#: ../../protocol.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:211
 msgid ""
 "Behind an ingress the client address arrives in ``X-Forwarded-For``. "
 "Sibuna trusts that header only with ``--trust-forwarded`` (implied in "
@@ -707,11 +709,11 @@ msgstr ""
 "で届きます。Sibunaがこのヘッダーを信頼するのは\\ ``--trust-forwarded``\\ "
 "を指定したときだけです（forward-authモードでは暗黙に有効です）。インターネットに直接公開するリバースプロキシでは無効にしておかなければなりません。そうしないと、どのクライアントも自分の結び付きとレート制限のバケットを自由に選べてしまいます。"
 
-#: ../../protocol.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:213
 msgid "Exercise 4.1"
 msgstr "演習4.1"
 
-#: ../../protocol.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:215
 msgid ""
 "Sketch the sequence of two browsers behind one NAT address with identical "
 "User-Agents. Which checks do they share, which do they not, and what "
@@ -719,11 +721,11 @@ msgid ""
 msgstr ""
 "一つのNATアドレスの背後にある、User-Agentが同一の二つのブラウザーのシーケンスを描いてください。両者が共有する確認と共有しない確認はどれでしょうか。そのNATの背後にいる攻撃者が、もう一方のブラウザーのCookieを再利用するには何が必要でしょうか。"
 
-#: ../../protocol.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:217
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
-#: ../../protocol.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:219
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."

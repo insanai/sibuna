@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
 "n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
-#: ../../solutions.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:1
 msgid "Selected Solutions"
 msgstr "حلول مختارة"
 
-#: ../../solutions.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:4
 msgid ""
 "These solutions are checks on the argument, not substitutes for the "
 "exercises. If a result differs, we first compare assumptions: endpoints "
@@ -33,11 +33,11 @@ msgstr ""
 "نتيجة ما، نقارن الافتراضات أولًا: فنهايات الفترات الزمنية، وما يُحسب "
 "عملًا، وهل أُودعت عملية الكتابة أم لا، كلها مصادر شائعة للاختلاف."
 
-#: ../../solutions.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:6
 msgid "Part I: Cost and Probability"
 msgstr "الجزء الأول: التكلفة والاحتمال"
 
-#: ../../solutions.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:9
 msgid ""
 "**1.1.** One million trials divided among 100 requests is 10,000 trials "
 "per request. Sharing a session does not change that arithmetic if the "
@@ -50,7 +50,7 @@ msgstr ""
 "الفعلي فعليه أن يقرر هل تستطيع عملية ثانية تحقيق روابط البصمة والتوجيه؛ "
 "وهذه الشروط خارج معادلة توزيع التكلفة."
 
-#: ../../solutions.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:11
 msgid ""
 "**1.2.** The excess is :math:`1000 - 600 = 400` records/s. An empty queue "
 "of 512 records buys :math:`512/400 = 1.28` seconds in the fluid model. "
@@ -62,11 +62,11 @@ msgstr ""
 "المستمر. أما المنتجون الحقيقيون فيصلون في دفعات، والمستهلك يودع دفعات "
 "مجمعة، لذا يعتمد موعد أول إسقاط بالضبط على أوقات الوصول والإيداع."
 
-#: ../../solutions.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:13
 msgid "Part II: Prior Art"
 msgstr "الجزء الثاني: الأعمال السابقة"
 
-#: ../../solutions.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:16
 msgid ""
 "**2.1.** One source compiled twice cannot disagree with itself about the "
 "statement, the nonce encoding, the tree shape, or the opening layout; "
@@ -83,7 +83,7 @@ msgstr ""
 "مقارنة متطابقة بايتًا ببايت بين مُبرهِني WebAssembly وJavaScript)، ولا عن "
 "معايرة المعاملات (وهذه مهمة القياس)."
 
-#: ../../solutions.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:18
 msgid ""
 "**2.2.** (a) Sibuna Gate or Anubis, one binary; (b) Sibuna Shield, "
 "SafeLine, or Cloudflare (Pro plan or above); (c) Sibuna Edge with a "
@@ -102,7 +102,7 @@ msgstr ""
 "بيانات PostgreSQL واحدة (``--database-url`` و\\ ``--cluster-node``)؛ "
 "والصفوف \"طريقة التشغيل\" و\"الفحص\" و\"العقد المتعددة\" هي التي تحسم ذلك."
 
-#: ../../solutions.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:20
 msgid ""
 "**2.3.** A removal must move the clients of the removed server, about 250 "
 "of the 1,000. Under rendezvous hashing exactly those move, each to the "
@@ -123,11 +123,11 @@ msgstr ""
 "تتغير، ولأن كل عقدة تحسب المالك من قائمة العقد وحدها، دون جدول يُعاد "
 "بناؤه ونشره."
 
-#: ../../solutions.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:22
 msgid "Part III: Cryptography"
 msgstr "الجزء الثالث: التشفير"
 
-#: ../../solutions.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:25
 msgid ""
 "**3.0.** The tail estimate is :math:`e^{-4.6} \\approx 0.010`. Dividing "
 "the nonce space changes the rate at which trials are completed, not the "
@@ -139,7 +139,7 @@ msgstr ""
 "مستقلة. وقد تجعل المحاولات المكررة أو عمل التنسيق التنفيذ المتوازي "
 "الحقيقي أقل كفاءة."
 
-#: ../../solutions.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:27
 msgid ""
 "**3.1.** If each commitment succeeds with probability :math:`q`, all "
 ":math:`g` fail with probability :math:`(1-q)^g`. At least one succeeds "
@@ -153,7 +153,7 @@ msgstr ""
 "الاستعلام، ولا الاعتماديات بين المحاولات، ولا العمل اللازم لإيجاد التزام "
 "باحتمال قبول معين."
 
-#: ../../solutions.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:29
 msgid ""
 "**3.2.** At depth 17 and 16 openings, the proof has :math:`32(1 + 16 "
 "\\times 18) = 9248` bytes. At 32 openings it has :math:`32(1 + 32 \\times "
@@ -165,7 +165,7 @@ msgstr ""
 "18) = 18464` بايت. تتضاعف بايتات عمليات الفتح؛ أما الجذر ذو 32 بايت "
 "فيُرسل مرة واحدة كما كان."
 
-#: ../../solutions.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:31
 msgid ""
 "**3.3.** Without the work level a session earned on a cheap route would "
 "admit a request to an expensive one that demanded more work; without "
@@ -184,11 +184,11 @@ msgstr ""
 "الوسم الحقول الخمسة كلها، لأن أي حقل يبقى خارجه يمكن تعديله بحرية دون أن "
 "يلاحظ المتحقق."
 
-#: ../../solutions.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:33
 msgid "Part IV: Protocol"
 msgstr "الجزء الرابع: البروتوكول"
 
-#: ../../solutions.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:36
 msgid ""
 "**4.1.** Both browsers share the address and User-Agent, so they share "
 "the fingerprint, the rate-limit cell, and the ban slot. They do not share "
@@ -205,11 +205,11 @@ msgstr ""
 "بالمتصفح الآخر، عليه أن يقرأه من الجهاز الآخر: عندئذ ستتطابق البصمة، "
 "ولهذا يهم ``HttpOnly`` و\\ ``SameSite`` أكثر من الربط عند العنوان المشترك."
 
-#: ../../solutions.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:38
 msgid "Part V: State and Ordering"
 msgstr "الجزء الخامس: الحالة والترتيب"
 
-#: ../../solutions.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:41
 msgid ""
 "**5.1.** The head and the first part of the body (up to what fits after "
 "the head in 64 KB) are in the connection buffer and are sent with "
@@ -226,7 +226,7 @@ msgstr ""
 "الأصلي. ويجب أن يُرسل الرأس أولًا لأن الخادم الأصلي يحتاج إلى "
 "``Content-Length`` قبل الجسم، ولأن ترويسات التدقيق جزء من الرأس."
 
-#: ../../solutions.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:43
 msgid ""
 "**5.2.** The emission interval is 100 ms and burst tolerance is 9,900 ms. "
 "An idle client may send 100 requests immediately, then one per 100 ms. "
@@ -242,11 +242,11 @@ msgstr ""
 "المنزلق سيسمح بـ 100 طلب بالضبط في أي 10 ثوانٍ، لكن عليه تخزين 100 طابع "
 "زمني لكل عميل."
 
-#: ../../solutions.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:45
 msgid "Part VI: Algorithms"
 msgstr "الجزء السادس: الخوارزميات"
 
-#: ../../solutions.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:48
 msgid ""
 "**6.1.** An apostrophe in a name and an ordinary parameter named "
 "``order`` do not establish an SQL expression. A substring detector could "
@@ -259,7 +259,7 @@ msgstr ""
 "الكاشف البنيوي فيبحث عن أدلة إضافية، منها العوامل والعلاقات بين القيم "
 "الحرفية. ويبقى فحصًا محدودًا، لا محللًا لكل لغة تطبيقات."
 
-#: ../../solutions.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:50
 msgid ""
 "**6.2.** LDAP filters are built from parentheses, ``|``, ``&``, ``!``, "
 "and ``=``. The detector needs a byte class for ``(`` and ``)`` (new) and "
@@ -275,11 +275,11 @@ msgstr ""
 "عند قوس واحد، للسبب نفسه الذي يجعل كاشف SQL يشترط علامة اقتباس أو تحصيل "
 "حاصل."
 
-#: ../../solutions.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:52
 msgid "Part VII: Browser Engine"
 msgstr "الجزء السابع: محرك المتصفح"
 
-#: ../../solutions.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:55
 msgid ""
 "**7.1.** At the default 16 work bits (depth 13 with 16 openings), the "
 "supposed 20 ms in WebAssembly become :math:`50 \\times 20 = 1000` ms, one "
@@ -298,11 +298,11 @@ msgstr ""
 "مقياسًا، ونخفض الصعوبة لقاعدة تطابق العملاء المعروفين بحجب WebAssembly، "
 "لا للجميع."
 
-#: ../../solutions.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:57
 msgid "Part VIII: The Edge Load Balancer"
 msgstr "الجزء الثامن: موازن الحمل على الحافة"
 
-#: ../../solutions.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:60
 msgid ""
 "**8.1.** Under modulo hashing, a step from 10 to 9 servers keeps a flow "
 "only when :math:`h \\bmod 10` and :math:`h \\bmod 9` name the same "
@@ -331,7 +331,7 @@ msgstr ""
 "rendezvous لا تنقل إلا العملاء الذين يكون القادم الجديد أقرب إليهم من "
 "خادمهم القديم: 20% منهم، كلهم إلى القادم الجديد."
 
-#: ../../solutions.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:62
 msgid ""
 "**8.2.** :math:`W = 4` and :math:`L + 1 = 20`. The bound of ``a`` is "
 ":math:`\\lceil 1.25 \\times 20 \\times 2/4 \\rceil = \\lceil 12.5 \\rceil "
@@ -354,7 +354,7 @@ msgstr ""
 "\\times 20\\, w_i / 4` تدفقًا، لحملت الثلاثة ما لا يقل عن :math:`1.25 "
 "\\times 20 = 25` تدفقًا، لكنها تحمل 19."
 
-#: ../../solutions.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:64
 msgid ""
 "**8.3.** With the tenant field, ``tenant`` admits. If ``score`` denies or "
 "challenges, the chain ends there; suppose it admits, by its verdict or, "
@@ -381,7 +381,7 @@ msgstr ""
 "الطلب الذي يحمل الحقل، ولا يضيف الوكيل الفاشل حقولًا. ويصير الخطاف حينئذ "
 "استشاريًا: كل من يستطيع جعله يفشل يجتازه."
 
-#: ../../solutions.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:66
 msgid ""
 "**8.4.** The mapping received 1,200 bytes, so before validation it sends "
 "at most 3,600 bytes to the client: three of the eight replies. The edge "
@@ -407,11 +407,11 @@ msgstr ""
 "المزيِّف يعرف تلك المعرفات، فلو تعلمت الحافة من تلك الرزمة لاستطاع المرسل "
 "أن يتحقق من نفسه ويرفع الحد الذي يمنع الانعكاس."
 
-#: ../../solutions.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:68
 msgid "Part IX: A Cluster of Edges"
 msgstr "الجزء التاسع: عنقود من الحواف"
 
-#: ../../solutions.rst:71
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:71
 msgid ""
 "**9.1.** C sends the lift :math:`\\max(1300, 900 + 60) = 1300`: the end "
 "of the ban it knows, and at least 60 seconds ahead. Every node that hears "
@@ -434,7 +434,7 @@ msgstr ""
 "الموعد الذي كان سينتهي فيه الحظر المرفوع. ولو صدر عند الثانية 1,000 حظر "
 "بطول حظر A لانتهى بعد 1,300 ولسرى على كل عقدة."
 
-#: ../../solutions.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:73
 msgid ""
 "**9.2.** The two entries have the same end, so the server decides: "
 "``0x91...`` is the larger hash, and B's entry wins on every node, A "
@@ -453,7 +453,7 @@ msgstr ""
 "وبدون الخادم في الترتيب، كانت A وB ستحتفظ كل منهما بمدخلها إلى الأبد، لأن "
 "أيًّا من النهايتين ليست أبعد."
 
-#: ../../solutions.rst:75
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:75
 msgid ""
 "**9.3.** :math:`\\lfloor 10/4 \\rfloor = 2` with remainder 2, so A and B "
 "have base 3 and C and D base 2. D has :math:`f = 0` and :math:`r = "
@@ -484,7 +484,7 @@ msgstr ""
 "غير متزامن، فتُرفض التدفقات الجديدة على الخادم حتى تتبادل العقد حالة "
 "واحدة، نحو ثانية."
 
-#: ../../solutions.rst:77
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:77
 msgid ""
 "**9.4.** (a) Each client moves with probability :math:`1/5`, so about 200 "
 "of 1,000 move, all of them to the new node. (b) Only B's clients, about "
@@ -503,7 +503,7 @@ msgstr ""
 "\\{0, 1, 2, 3\\}`، أربعة بواقٍ من عشرين. فينتقل نحو 800 عميل، مقابل 200 "
 "في تجزئة rendezvous."
 
-#: ../../solutions.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:79
 msgid ""
 "**9.5.** With eight counters for each slot, :math:`m = 8S`. At the middle "
 "of the window :math:`N = 2S` and :math:`\\lambda \\le 4 \\cdot 2S / 8S = "
@@ -525,7 +525,7 @@ msgstr ""
 "في المثال المحلول. ومضاعفة العدادات تنصّف :math:`\\lambda` وتخفض الاحتمال "
 "بأكثر من ثلاث مراتب عشرية، ولهذا تطلب الشيفرة ثمانية عدادات لكل خانة."
 
-#: ../../solutions.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:81
 msgid ""
 "**9.6.** Both commands read head 7 and commit with the expected revision "
 "7. The transaction that first takes the row lock of ``edge_head`` sets "
@@ -551,11 +551,11 @@ msgstr ""
 "بالرأس وقت التثبيت كان سينجح على 8 ويزيل تغيير المشغّل الأول بصمت: تحديث "
 "ضائع لم يره أحد."
 
-#: ../../solutions.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:83
 msgid "Part X: Evaluation"
 msgstr "الجزء العاشر: التقييم"
 
-#: ../../solutions.rst:86
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:86
 msgid ""
 "**10.2.** For Gate's ``admitted`` row, :math:`11.84 \\times 211{,}345 / "
 "10^6 \\approx 2.50` cores busy out of four, so the daemon was not CPU "
@@ -575,11 +575,11 @@ msgstr ""
 "وتفريغ الكاتب، وتسليم المجدول بين مولد الحمل وخيط الاتصال. ولا تقيس "
 "مجموعة اختبارات الأدوات الأولية أيًّا من ذلك."
 
-#: ../../solutions.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:88
 msgid "Part XI: Operations"
 msgstr "الجزء الحادي عشر: التشغيل"
 
-#: ../../solutions.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:91
 msgid ""
 "**11.1.** If the data commits before a separate receipt update, a crash "
 "between them leaves the old receipt and a retry can apply the effect "
@@ -594,7 +594,7 @@ msgstr ""
 "تتخطى بيانات لم توجد قط. والمعاملة الذرية الواحدة تزيل الفجوتين كلتيهما. "
 "أما فقدان إقرار المعاملة فلا يزال يتطلب إعادة المحاولة المحتفظ بها."
 
-#: ../../solutions.rst:93
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:93
 msgid ""
 "**11.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}`` (or an "
 "``ip_reputation`` row with score 100) admits staging; a rule ``{\"name\": "
@@ -617,11 +617,11 @@ msgstr ""
 "بعد حد البرنامج الخدمي لكل عميل (``--rate-limit`` و\\ ``--rate-window``)، "
 "الذي يجب لذلك أن يكون سخيًّا بالقدر نفسه على الأقل."
 
-#: ../../solutions.rst:95
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:95
 msgid "Part XII: Reference"
 msgstr "الجزء الثاني عشر: المرجع"
 
-#: ../../solutions.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:98
 msgid ""
 "**12.1.** The challenge record carries the keyed fingerprint of the "
 "address that fetched it; the solution arrives from a new address, so "
@@ -637,11 +637,11 @@ msgstr ""
 "``400`` عنوانها ``CLIENT FINGERPRINT MISMATCH``، تجلب الصفحة تحديًا "
 "جديدًا وتحله مرة أخرى بدل عرض الخطأ، لأن العمل المنجز لا يمكن نقله."
 
-#: ../../solutions.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:100
 msgid "Continue the Investigation"
 msgstr "واصل البحث"
 
-#: ../../solutions.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:103
 msgid ""
 "Change one invariant at a time in a disposable test. Remove the snapshot "
 "recheck, omit the incident receipt, or round the rate interval downward. "

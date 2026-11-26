@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../protocol.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:1
 msgid "Part IV: The Sibuna Protocol"
 msgstr "제IV부: Sibuna 프로토콜"
 
-#: ../../protocol.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:4
 msgid ""
 "We specify the wire protocol as implemented: the interstitial round trip, "
 "the stateless challenge record, both solution formats, verification "
@@ -30,16 +30,18 @@ msgstr ""
 "구현된 그대로의 전송 프로토콜을 명세합니다. 중간 페이지 왕복, 상태 없는 챌린지 레코드, 두 가지 풀이 형식, 검증 순서, 일회 "
 "사용 강제, 세션 쿠키를 다룹니다."
 
-#: ../../protocol.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:6
 msgid "The Challenge Round Trip"
 msgstr "챌린지 왕복"
 
-#: ../../protocol.rst:9 ../../protocol.rst:48 ../../protocol.rst:111
-#: ../../protocol.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:162
 msgid "Objectives"
 msgstr "학습 목표"
 
-#: ../../protocol.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:11
 msgid ""
 "By the end of this chapter, we should be able to trace a browser from its "
 "first request to a minted session, name every endpoint and JSON field "
@@ -49,7 +51,7 @@ msgstr ""
 "이 장을 마치면 브라우저가 첫 요청에서 세션을 발급받기까지의 과정을 추적하고, 관련된 모든 엔드포인트와 JSON 필드를 말하며, "
 "챌린지가 보호된 경로의 정책 결정을 담고 다니는 이유를 설명할 수 있어야 합니다."
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "A sequence diagram with the browser, its Web Worker and Sibuna. A "
 "navigation without a session receives the interstitial (HTTP 200). The "
@@ -66,7 +68,7 @@ msgstr ""
 "돌려줍니다. 페이지는 POST /__sibuna/verify를 보내고, Sibuna는 그것을 검증하고 사용된 집합에 기록하고 MAC "
 "토큰을 발행한 뒤 Set-Cookie로 답합니다. 페이지는 세션을 가지고 다시 불러옵니다."
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "// protocol.rst: the challenge round trip. Steps on the left run in the "
 "browser, steps on\n"
@@ -131,13 +133,13 @@ msgstr ""
 "  spacing: 44,\n"
 ")\n"
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "The challenge round trip. Steps on the left run in the browser, steps on "
 "the right in Sibuna."
 msgstr "챌린지 왕복. 왼쪽 단계는 브라우저에서, 오른쪽 단계는 Sibuna에서 실행됩니다."
 
-#: ../../protocol.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:17
 msgid ""
 "A navigation with no valid session reaches the policy engine and is "
 "classified ``CHALLENGE``. Because the request accepts ``text/html``, the "
@@ -156,7 +158,7 @@ msgstr ""
 "챌린지(알고리즘, 작업 비트, 개방 수)와 규칙의 해시를, 이 클라이언트 전용으로 도출한 키 아래 키 기반 BLAKE3 태그로 "
 "봉인한 것이며, 챌린지 수명 한 번 동안 유효합니다."
 
-#: ../../protocol.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:18
 msgid ""
 "The interstitial fetches ``GET /__sibuna/challenge.json?path=<original "
 "URL>&need=<ticket>``. A valid ticket decides the challenge: the work is "
@@ -180,11 +182,11 @@ msgstr ""
 "``414``\\ 로 거부하며, 정규형이 없는 경로는 ``400``\\ 으로 거부합니다. 티켓은 참고용일 뿐입니다. 요청 허용은 "
 "여전히 세션의 작업 수준을 확인하므로, 재전송하거나 위조한 티켓은 그 보유자에게 작업 비용만 지울 수 있습니다."
 
-#: ../../protocol.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:19
 msgid "The response is the challenge record:"
 msgstr "응답은 챌린지 레코드입니다."
 
-#: ../../protocol.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:21
 msgid ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
@@ -192,7 +194,7 @@ msgstr ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
 
-#: ../../protocol.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:25
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
@@ -200,7 +202,7 @@ msgstr ""
 "``hashcash``\\ 에서는 ``difficulty``\\ 가 비트 수이고 ``challenges``\\ 는 ``0``\\ "
 "입니다."
 
-#: ../../protocol.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:26
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
@@ -208,25 +210,25 @@ msgstr ""
 "Web Worker가 WebAssembly 모듈로, WebAssembly를 쓸 수 없으면 JavaScript 증명자로(제VII부) "
 "이를 풀고, 다음 둘 중 하나를"
 
-#: ../../protocol.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:28
 msgid "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 msgstr "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 
-#: ../../protocol.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:32
 msgid "or"
 msgstr "또는"
 
-#: ../../protocol.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:34
 msgid ""
 "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 msgstr ""
 "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1))바이트>\"}"
 
-#: ../../protocol.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:38
 msgid "to ``POST /__sibuna/verify``."
 msgstr "``POST /__sibuna/verify``\\ 로 보냅니다."
 
-#: ../../protocol.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:39
 msgid ""
 "On success the server answers ``200 {\"status\":\"ok\"}`` with a "
 "``Set-Cookie`` header, and the page reloads its original location. Every "
@@ -235,11 +237,11 @@ msgstr ""
 "성공하면 서버는 ``Set-Cookie`` 헤더와 함께 ``200 {\"status\":\"ok\"}``\\ 로 응답하고, 페이지는 "
 "원래 위치를 다시 불러옵니다. 이후의 모든 요청은 쿠키를 함께 보내며 정책 평가 전에 허용됩니다."
 
-#: ../../protocol.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:41
 msgid "Why the path travels with the challenge"
 msgstr "경로가 챌린지와 함께 전달되는 이유"
 
-#: ../../protocol.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:43
 msgid ""
 "The interstitial is served at the protected URL, so the browser knows "
 "where it is. Sending the path lets the server pick the *per-rule* "
@@ -252,11 +254,11 @@ msgstr ""
 "알고리즘을 고를 수 있고(결제 경로는 작업 비트 20의 순차 작업을, 블로그는 Hashcash 16비트를 요구할 수 있습니다), "
 "규칙 해시를 토큰에 묶을 수 있습니다. 토큰의 규칙 해시는 ``X-Sibuna-Rule-Hash``\\ 로 업스트림에 보고됩니다."
 
-#: ../../protocol.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:45
 msgid "The Stateless Challenge Record"
 msgstr "상태 없는 챌린지 레코드"
 
-#: ../../protocol.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:50
 msgid ""
 "Read the challenge encoder, understand every field's purpose, and see how "
 "the per-challenge nonce is derived without an entropy syscall on the hot "
@@ -265,11 +267,11 @@ msgstr ""
 "챌린지 인코더를 읽고, 각 필드의 목적을 이해하며, 핫 패스에서 엔트로피 시스템 호출 없이 챌린지별 nonce를 도출하는 방법을 "
 "살펴봅니다."
 
-#: ../../protocol.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:52
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
 msgstr "구현: ``Coordinator::create_challenge_with_spec``"
 
-#: ../../protocol.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:54
 msgid ""
 "Builds the 36-byte payload, tags it under the challenge key, and "
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
@@ -279,7 +281,7 @@ msgstr ""
 "``crates/challenge/src/coordinator.rs``\\ (crate ``sibuna-challenge``)에 "
 "있습니다."
 
-#: ../../protocol.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:56
 msgid ""
 "pub fn create_challenge_with_spec(\n"
 "    &self,\n"
@@ -371,7 +373,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../protocol.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:100
 msgid ""
 "The identifier is an ``Encoded<70>``: the text lives in an array of "
 "exactly its length, so issuing a challenge never allocates. "
@@ -383,11 +385,11 @@ msgstr ""
 "않습니다. ``ChallengeSpec::parameter``\\ 는 작업 비트를 계층 고유의 단위로 바꿉니다. Hashcash "
 "비트(최대 64) 또는 PoSW 깊이(``difficulty - 3``, 4에서 24 사이로 제한)입니다."
 
-#: ../../protocol.rst:102
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:102
 msgid "Three details deserve attention:"
 msgstr "세 가지 세부 사항을 눈여겨볼 만합니다."
 
-#: ../../protocol.rst:104
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:104
 msgid ""
 "*Adaptive difficulty.* The coordinator keeps an exponentially weighted "
 "moving average of the challenge issue rate in three atomics. Above a "
@@ -399,7 +401,7 @@ msgstr ""
 "50개를 넘으면 발급률이 두 배가 될 때마다 작업 비트가 하나씩 늘며, 최대 여섯 비트까지 늘어납니다. 폭주 트래픽은 지수적으로 더 "
 "많은 비용을 치르고, 조용한 트래픽은 기본 비용을 유지합니다."
 
-#: ../../protocol.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:105
 msgid ""
 "*The nonce is a PRF output*, keyed by the challenge key over a counter, "
 "the clock, and the fingerprint. It is unique (counter) and unpredictable "
@@ -411,7 +413,7 @@ msgstr ""
 "덕분에 예측할 수 없으므로, 공격자는 발급받지 않은 식별자에 대한 풀이를 미리 계산할 수 없습니다. 또한 핫 패스는 엔트로피를 "
 "얻으려고 운영체제를 호출하지 않습니다."
 
-#: ../../protocol.rst:106
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:106
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
@@ -419,11 +421,11 @@ msgstr ""
 "*난이도는 태그 안에 담겨 전달됩니다.* 클라이언트는 레코드를 고쳐 난이도를 낮출 수 없습니다. 그렇게 하면 증명을 살펴보기도 전에 "
 "태그 검사가 실패합니다."
 
-#: ../../protocol.rst:108
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:108
 msgid "Verification Order and Single Use"
 msgstr "검증 순서와 일회 사용"
 
-#: ../../protocol.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:113
 msgid ""
 "Understand why the cheap checks run before the proof, why the challenge "
 "is marked spent only after the proof is valid, and how two concurrent "
@@ -432,11 +434,11 @@ msgstr ""
 "값싼 검사를 증명보다 먼저 실행하는 이유, 증명이 유효하다고 확인된 뒤에야 챌린지를 사용 완료로 표시하는 이유, 그리고 한 풀이를 "
 "동시에 두 번 제출할 때 어떻게 해결되는지 이해합니다."
 
-#: ../../protocol.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:115
 msgid "Implementation: ``Coordinator::verify_and_mint``"
 msgstr "구현: ``Coordinator::verify_and_mint``"
 
-#: ../../protocol.rst:117
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:117
 msgid ""
 "Decodes and authenticates the identifier, checks age and client binding, "
 "verifies the proof for the recorded tier, records the tag as spent, and "
@@ -447,7 +449,7 @@ msgstr ""
 "기록한 다음 세션 토큰을 발급합니다. ``crates/challenge/src/coordinator.rs``\\ (crate "
 "``sibuna-challenge``)에 있습니다."
 
-#: ../../protocol.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:119
 msgid ""
 "pub fn verify_and_mint(\n"
 "    &self,\n"
@@ -525,7 +527,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../protocol.rst:155
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:155
 msgid ""
 "The order is deliberate. Tag, age, and binding are constant-time checks "
 "that reject garbage before any hashing. A wrong proof must not consume "
@@ -544,7 +546,7 @@ msgstr ""
 "now + 60`` 조건(``CLOCK_SKEW_SECONDS``\\ 는 60)은 시계가 1분 넘게 앞선 노드가 만든 레코드를 "
 "거부합니다. 그렇지 않으면 그런 레코드가 챌린지의 수명을 늘릴 수 있습니다."
 
-#: ../../protocol.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:157
 msgid ""
 "Errors surface to the client as ``400`` with an Elm-style diagnostic "
 "(Part XII): each ``VerifyError`` converts into "
@@ -558,21 +560,21 @@ msgstr ""
 "테스트는 응답 본문의 ``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG SOLUTION "
 "TYPE``, ``MALFORMED CHALLENGE``\\ 를 확인합니다."
 
-#: ../../protocol.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:159
 msgid "The Session Cookie"
 msgstr "세션 쿠키"
 
-#: ../../protocol.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:164
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
 msgstr "키 기반 해시 토큰을 읽고, 쿠키 속성을 이해하며, 클라이언트 바인딩을 설명합니다."
 
-#: ../../protocol.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:166
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
 msgstr "구현: ``token::mac::mint``\\ 와 ``token::mac::verify``"
 
-#: ../../protocol.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:168
 msgid ""
 "Serialises the 40-byte payload, appends the first 16 bytes of keyed "
 "BLAKE3 over it, and verifies with a constant-time comparison. In "
@@ -584,7 +586,7 @@ msgstr ""
 "``sibuna-challenge``)에 있습니다. ``Coordinator::verify_cookie``\\ 가 클라이언트 지문과 "
 "함께 이를 호출합니다."
 
-#: ../../protocol.rst:170
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:170
 msgid ""
 "pub fn verify(\n"
 "    key: &[u8; 32],\n"
@@ -635,7 +637,7 @@ msgstr ""
 "    Ok(payload)\n"
 "}"
 
-#: ../../protocol.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:195
 msgid ""
 "The tag is checked before the payload is parsed: a payload of another "
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
@@ -644,11 +646,11 @@ msgstr ""
 "태그는 페이로드를 파싱하기 전에 확인합니다. 다른 버전의 페이로드는 진본임이 확인된 뒤에야 "
 "``TokenError::InvalidEncoding``\\ 으로 거부되며, 위조된 페이로드는 파서에 도달하지 못합니다."
 
-#: ../../protocol.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:197
 msgid "The cookie is emitted as"
 msgstr "쿠키는 다음과 같이 내보냅니다."
 
-#: ../../protocol.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:199
 msgid ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
@@ -656,7 +658,7 @@ msgstr ""
 "Set-Cookie: __sibuna_token=<75자>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
 
-#: ../../protocol.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:204
 msgid ""
 "``HttpOnly`` keeps it out of page scripts, ``SameSite=Lax`` stops "
 "cross-site replay while allowing top-level navigation, and ``Secure`` is "
@@ -672,7 +674,7 @@ msgstr ""
 "``TokenError::TokenBoundAddressMismatch``\\ 로 실패합니다. 종단 간 테스트 \"the "
 "cookie is bound to the client identity\"가 바로 이 경로를 시험합니다."
 
-#: ../../protocol.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:206
 msgid ""
 "The payload begins with a version byte and the *work level* the holder "
 "paid: the mechanism (Hashcash or PoSW) and the work bits actually solved, "
@@ -697,11 +699,11 @@ msgstr ""
 "간 테스트 \"a session earned on a cheaper route does not admit a route that "
 "demands more work\"가 두 방향을 모두 시험합니다."
 
-#: ../../protocol.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:208
 msgid "Forwarded addresses"
 msgstr "전달된 주소"
 
-#: ../../protocol.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:211
 msgid ""
 "Behind an ingress the client address arrives in ``X-Forwarded-For``. "
 "Sibuna trusts that header only with ``--trust-forwarded`` (implied in "
@@ -714,11 +716,11 @@ msgstr ""
 "적용됩니다). 인터넷에 직접 노출된 리버스 프록시에서는 이 옵션을 꺼 두어야 합니다. 그렇지 않으면 어떤 클라이언트든 자신의 "
 "바인딩과 속도 제한 버킷을 스스로 고를 수 있습니다."
 
-#: ../../protocol.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:213
 msgid "Exercise 4.1"
 msgstr "연습 문제 4.1"
 
-#: ../../protocol.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:215
 msgid ""
 "Sketch the sequence of two browsers behind one NAT address with identical "
 "User-Agents. Which checks do they share, which do they not, and what "
@@ -727,11 +729,11 @@ msgstr ""
 "같은 NAT 주소 뒤에서 User-Agent가 똑같은 두 브라우저의 순서도를 그려 보세요. 두 브라우저가 공유하는 검사와 공유하지 "
 "않는 검사는 무엇이며, 그 NAT에 있는 공격자가 다른 브라우저의 쿠키를 재사용하려면 무엇이 필요할까요?"
 
-#: ../../protocol.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:217
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../protocol.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:219
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."

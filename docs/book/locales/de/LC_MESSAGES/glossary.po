@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../glossary.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:1
 msgid "Glossary"
 msgstr "Glossar"
 
-#: ../../glossary.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:6
 msgid "Admin socket"
 msgstr "Admin-Socket"
 
-#: ../../glossary.rst:7
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:7
 msgid ""
 "A Unix socket of mode 0600, named by ``global.admin_socket`` or ``sibuna "
 "lb --admin``, that takes one command line at a time from ``sibuna ctl``: "
@@ -38,11 +38,11 @@ msgstr ""
 "hinzufügen oder entfernen, eine Sperre aufheben, neu laden. Es gibt "
 "keinen TCP-Listener für die Administration (SID 0018)."
 
-#: ../../glossary.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:9
 msgid "Admission"
 msgstr "Zulassung"
 
-#: ../../glossary.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:10
 msgid ""
 "The decision to forward a request to the origin. In Sibuna it is made by "
 "a valid session, an ``ALLOW`` rule, a static bypass path, or a reputation "
@@ -53,11 +53,11 @@ msgstr ""
 "statischen Bypass-Pfad oder ein ``allow``-Präfix der Reputation "
 "getroffen, und sie hebt nie eine WAF-Ablehnung auf."
 
-#: ../../glossary.rst:12
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:12
 msgid "Affinity"
 msgstr "Affinität"
 
-#: ../../glossary.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:13
 msgid ""
 "The rule that sends the flows of one client to one server: by a cookie, "
 "by the source address, or by a sticky table. It gives way when the server "
@@ -68,11 +68,11 @@ msgstr ""
 "Server ausgefallen, voll, ausgeschlossen oder im Draining ist (SID 0019, "
 "SID 0025)."
 
-#: ../../glossary.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:15
 msgid "Aho-Corasick automaton"
 msgstr "Aho-Corasick-Automat"
 
-#: ../../glossary.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:16
 msgid ""
 "A finite automaton that finds any of a fixed set of patterns in one pass "
 "over the input. Sibuna folds failure links into a dense transition table "
@@ -82,11 +82,11 @@ msgstr ""
 "Durchlauf über die Eingabe findet. Sibuna faltet die Fehlerkanten in eine "
 "dichte Übergangstabelle, sodass jedes Byte einen Tabellenzugriff kostet."
 
-#: ../../glossary.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:18
 msgid "Authority"
 msgstr "Authority"
 
-#: ../../glossary.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:19
 msgid ""
 "In the edge, the database that owns the published topology in persistent "
 "mode: ``frontends``, ``backends`` and ``http``. Each node follows its "
@@ -99,11 +99,11 @@ msgstr ""
 "``global``, ``mesh``, ``observability`` und ``authority`` behält (SID "
 "0028)."
 
-#: ../../glossary.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:21
 msgid "Backend"
 msgstr "Backend"
 
-#: ../../glossary.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:22
 msgid ""
 "A pool of servers of one protocol, with its scheduler, health check, "
 "timeouts and stickiness. The word follows HAProxy; *pool* names the same "
@@ -113,11 +113,11 @@ msgstr ""
 "Zustandsprüfung, seinen Timeouts und seiner Stickiness. Das Wort folgt "
 "HAProxy; *Pool* bezeichnet dasselbe."
 
-#: ../../glossary.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:24
 msgid "Ban table"
 msgstr "Sperrtabelle"
 
-#: ../../glossary.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:25
 msgid ""
 "Lock-free slots of banned client addresses with expiry, 65,536 by default "
 "(``--ban-table-slots``), written by the honeypot, by rule quotas, by "
@@ -129,11 +129,11 @@ msgstr ""
 "Regelkontingenten, von der im Cluster gemeinsam genutzten Reputation und "
 "im Edge vom Mesh; gelesen bei jeder Anfrage."
 
-#: ../../glossary.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:27
 msgid "Breaker"
 msgstr "Breaker"
 
-#: ../../glossary.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:28
 msgid ""
 "The circuit breaker of an agent plugin. It opens after ``failures`` "
 "failures in a row and stays open for ``open``; while it is open a call "
@@ -144,11 +144,11 @@ msgstr ""
 "ist, schlägt ein Aufruf sofort mit dem Ergebnis ``unavailable`` fehl (SID "
 "0030)."
 
-#: ../../glossary.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:30
 msgid "Campaign"
 msgstr "Kampagne"
 
-#: ../../glossary.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:31
 msgid ""
 "A cluster of security incidents whose payload embeddings lie within "
 "cosine distance 0.35 of one another; a heuristic grouping, not a proof of "
@@ -158,11 +158,11 @@ msgstr ""
 "den Cosinus-Abstand 0,35 voneinander haben; eine heuristische "
 "Gruppierung, kein Beweis gemeinsamer Herkunft."
 
-#: ../../glossary.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:33
 msgid "Challenge record"
 msgstr "Challenge-Datensatz"
 
-#: ../../glossary.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:34
 msgid ""
 "The 70-character stateless identifier a client must solve: version, "
 "algorithm, difficulty, openings, issue time, client fingerprint, PRF "
@@ -174,11 +174,11 @@ msgstr ""
 "Fingerabdruck des Clients, PRF-Nonce, Regelhash und ein 16-Byte-Tag aus "
 "BLAKE3 mit Schlüssel. Ihr Ausstellen schreibt nichts auf dem Server."
 
-#: ../../glossary.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:36
 msgid "ClientHello inspection"
 msgstr "ClientHello-Untersuchung"
 
-#: ../../glossary.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:37
 msgid ""
 "On a ``tcp`` frontend with ``tcp_inspect``, reading the first TLS record "
 "of a connection without terminating TLS, to route or refuse it by server "
@@ -192,11 +192,11 @@ msgstr ""
 "innerhalb von ``inspect_bytes`` keinen vollständigen ClientHello sendet, "
 "nimmt den konfigurierten Ausweichweg (SID 0015, SID 0032)."
 
-#: ../../glossary.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:39
 msgid "Difficulty, work bits"
 msgstr "Schwierigkeit, Arbeitsbits"
 
-#: ../../glossary.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:40
 msgid ""
 "The single integer that scales both tiers: the number of leading zero "
 "bits for Hashcash, or three more than the tree depth for sequential work."
@@ -204,11 +204,11 @@ msgstr ""
 "Die eine Ganzzahl, die beide Stufen skaliert: die Zahl führender Nullbits "
 "bei Hashcash oder drei mehr als die Baumtiefe bei sequenzieller Arbeit."
 
-#: ../../glossary.rst:42
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:42
 msgid "Drain"
 msgstr "Draining"
 
-#: ../../glossary.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:43
 msgid ""
 "The state of a server that takes no new flow and keeps its established "
 "ones. ``set server POOL/NAME state drain`` sets it, a reload keeps it, "
@@ -221,11 +221,11 @@ msgstr ""
 "Herunterfahren als Ganzes ins Draining, während die Bereitschaftsprüfung "
 "503 antwortet."
 
-#: ../../glossary.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:45
 msgid "Edge"
 msgstr "Edge"
 
-#: ../../glossary.rst:46
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:46
 msgid ""
 "A Sibuna deployment with ``--data-dir`` (a SQLite file on one node), or "
 "with ``--database-url`` and ``--cluster-node`` (one PostgreSQL database "
@@ -238,11 +238,11 @@ msgstr ""
 "Betriebsformen persistente Richtlinien, gemeinsame Reputation und "
 "Vorfallsforensik gibt."
 
-#: ../../glossary.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:48
 msgid "Edge mode"
 msgstr "Edge-Modus"
 
-#: ../../glossary.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:49
 msgid ""
 "The daemon started with ``--config-file``. It forwards TCP and UDP, "
 "terminates TLS, HTTP/2 and HTTP/3, and routes HTTP requests to server "
@@ -254,11 +254,11 @@ msgstr ""
 "Server-Pools, mit der Firewall auf den Routen, die sie verlangen. Er hat "
 "nichts mit der Speicherungsbedeutung von *Edge* oben zu tun."
 
-#: ../../glossary.rst:51
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:51
 msgid "Engine slot"
 msgstr "Engine-Slot"
 
-#: ../../glossary.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:52
 msgid ""
 "The place where the published policy engine lives, as a reference-counted "
 "pointer. Workers hold a reference while classifying; the storage thread "
@@ -271,11 +271,11 @@ msgstr ""
 "Anfragepfads und veröffentlicht sie per Zeigertausch, und die alte Engine "
 "wird freigegeben, wenn ihr letzter Leser sie loslässt."
 
-#: ../../glossary.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:54
 msgid "Fingerprint"
 msgstr "Fingerabdruck"
 
-#: ../../glossary.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:55
 msgid ""
 "A keyed hash of client address and User-Agent, bound into challenges and "
 "tokens so neither can be replayed from another client."
@@ -284,11 +284,11 @@ msgstr ""
 "Challenges und Tokens gebunden, sodass keines von beiden von einem "
 "anderen Client wiederverwendet werden kann."
 
-#: ../../glossary.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:57
 msgid "Fleet cap"
 msgstr "Flottenweite Obergrenze"
 
-#: ../../glossary.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:58
 msgid ""
 "The ``max_flows`` of a server bounding the flows of all nodes of a mesh "
 "together, with ``max_flows_scope: \"fleet\"``. Each node holds a share of "
@@ -300,11 +300,11 @@ msgstr ""
 "einen Anteil des Limits, und ungenutzte Anteile wandern zu den Knoten, "
 "die die Flüsse haben (SID 0025)."
 
-#: ../../glossary.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:60
 msgid "Flow"
 msgstr "Fluss"
 
-#: ../../glossary.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:61
 msgid ""
 "One unit of work of the edge that holds a slot of ``global.max_flows``: a "
 "TCP connection, a UDP mapping, or an HTTP connection."
@@ -312,11 +312,11 @@ msgstr ""
 "Eine Arbeitseinheit des Edge, die einen Slot von ``global.max_flows`` "
 "belegt: eine TCP-Verbindung, eine UDP-Zuordnung oder eine HTTP-Verbindung."
 
-#: ../../glossary.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:63
 msgid "Forward auth"
 msgstr "Forward-Auth"
 
-#: ../../glossary.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:64
 msgid ""
 "Deployment mode in which an ingress asks Sibuna whether to admit a "
 "request (``200``) or challenge, deny, or limit it (``401``, ``403``, "
@@ -327,11 +327,11 @@ msgstr ""
 "begrenzt werden soll (``401``, ``403``, ``429``), und die Anfrage selbst "
 "an den Ursprungsserver weiterleitet."
 
-#: ../../glossary.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:66
 msgid "Frontend"
 msgstr "Frontend"
 
-#: ../../glossary.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:67
 msgid ""
 "A named set of listening addresses of one protocol, ``tcp``, ``udp`` or "
 "``http``, with its routes, its limits and its default backend."
@@ -340,11 +340,11 @@ msgstr ""
 "``udp`` oder ``http``, mit ihren Routen, ihren Limits und ihrem "
 "Standard-Backend."
 
-#: ../../glossary.rst:69
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:69
 msgid "Gate"
 msgstr "Gate"
 
-#: ../../glossary.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:70
 msgid ""
 "The surface with proof-of-work admission, sessions, rules, reputation, "
 "GCRA limits and bans, but no application inspection (``--gate``)."
@@ -353,11 +353,11 @@ msgstr ""
 "Reputation, GCRA-Limits und Sperren, aber ohne Anwendungsprüfung "
 "(``--gate``)."
 
-#: ../../glossary.rst:72
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:72
 msgid "GCRA"
 msgstr "GCRA"
 
-#: ../../glossary.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:73
 msgid ""
 "The Generic Cell Rate Algorithm: one theoretical arrival time per client "
 "that admits a burst of :math:`N` then one request per emission interval, "
@@ -367,11 +367,11 @@ msgstr ""
 "Client, die einen Burst von :math:`N` und danach eine Anfrage pro "
 "Emissionsintervall zulässt, ohne Fenstergrenzen."
 
-#: ../../glossary.rst:75
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:75
 msgid "Handoff"
 msgstr "Übergabe"
 
-#: ../../glossary.rst:76
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:76
 msgid ""
 "The replacement of a running edge binary with ``global.upgrade_socket``: "
 "the old process passes its listening sockets and its live UDP mappings to "
@@ -383,11 +383,11 @@ msgstr ""
 "Sockets und seine laufenden UDP-Zuordnungen über einen Unix-Socket an den "
 "neuen und lässt dann seine TCP-Streams auslaufen. Nur Linux (SID 0029)."
 
-#: ../../glossary.rst:78
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:78
 msgid "Hashcash"
 msgstr "Hashcash"
 
-#: ../../glossary.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:79
 msgid ""
 "Tier One: find a nonce such that SHA-256 of the challenge, a colon, and "
 "the decimal nonce has :math:`b` leading zero bits. Expected :math:`2^b` "
@@ -397,11 +397,11 @@ msgstr ""
 "Doppelpunkt und die dezimale Nonce :math:`b` führende Nullbits hat. Im "
 "Erwartungswert :math:`2^b` Versuche, verifiziert mit einem einzigen Hash."
 
-#: ../../glossary.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:81
 msgid "Honeypot"
 msgstr "Honeypot"
 
-#: ../../glossary.rst:82
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:82
 msgid ""
 "An invisible link to ``/__sibuna/honeypot``; a client that follows it is "
 "banned and an incident with reputation :math:`-100` is recorded."
@@ -410,11 +410,11 @@ msgstr ""
 "folgt, wird gesperrt, und ein Vorfall mit der Reputation :math:`-100` "
 "wird aufgezeichnet."
 
-#: ../../glossary.rst:84
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:84
 msgid "Hook"
 msgstr "Hook"
 
-#: ../../glossary.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:85
 msgid ""
 "A decision of the operator's own on the path of the edge, run by a plugin "
 "at the stage ``connection``, ``request`` or ``telemetry``. A plugin is "
@@ -426,11 +426,11 @@ msgstr ""
 "``telemetry``. Ein Plugin ist natives Rust, ein WebAssembly-Modul mit "
 "Verbrauchsmessung oder ein Agent in einem anderen Prozess (SID 0030)."
 
-#: ../../glossary.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:87
 msgid "Idle reaper"
 msgstr "Idle-Reaper"
 
-#: ../../glossary.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:88
 msgid ""
 "A thread that closes connections that have been silent longer than "
 "``--idle-timeout``, so a slow client cannot pin a connection thread."
@@ -439,11 +439,11 @@ msgstr ""
 "inaktiv waren, sodass ein langsamer Client keinen Verbindungsthread "
 "blockieren kann."
 
-#: ../../glossary.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:90
 msgid "Interstitial"
 msgstr "Zwischenseite"
 
-#: ../../glossary.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:91
 msgid ""
 "The embedded HTML page served in place of a protected page; it fetches a "
 "challenge, solves it in a Web Worker, posts the solution, and reloads."
@@ -452,11 +452,11 @@ msgstr ""
 "ausgeliefert wird; sie holt eine Challenge, löst sie in einem Web Worker, "
 "sendet die Lösung und lädt neu."
 
-#: ../../glossary.rst:93
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:93
 msgid "JA4"
 msgstr "JA4"
 
-#: ../../glossary.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:94
 msgid ""
 "A 36-character fingerprint, defined by FoxIO, of how a client opens a TLS "
 "connection: protocol, TLS version, server name, cipher and extension "
@@ -475,11 +475,11 @@ msgstr ""
 "mit dem Feld ``ja4`` ab (SID 0014). Er hat nichts mit dem Fingerabdruck "
 "des Clients zu tun, der in Challenges und Tokens gebunden ist."
 
-#: ../../glossary.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:96
 msgid "Judge"
 msgstr "Urteils-Thread"
 
-#: ../../glossary.rst:97
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:97
 msgid ""
 "A thread that decides a parked connection whose chain of hooks names an "
 "agent, so that the edge worker never waits for the agent (SID 0030)."
@@ -488,11 +488,11 @@ msgstr ""
 "Hook-Kette einen Agent nennt, sodass der Edge-Worker nie auf den Agent "
 "wartet (SID 0030)."
 
-#: ../../glossary.rst:99
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:99
 msgid "Keyed BLAKE3"
 msgstr "BLAKE3 mit Schlüssel"
 
-#: ../../glossary.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:100
 msgid ""
 "The pseudorandom function behind Sibuna's key schedule, challenge tags, "
 "session tags, fingerprints, and challenge nonces."
@@ -500,11 +500,11 @@ msgstr ""
 "Die Pseudozufallsfunktion hinter Sibunas Schlüsselplan, den "
 "Challenge-Tags, Sitzungstags, Fingerabdrücken und Challenge-Nonces."
 
-#: ../../glossary.rst:102
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:102
 msgid "Local authority"
 msgstr "Lokale Zertifizierungsstelle"
 
-#: ../../glossary.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:103
 msgid ""
 "The certificate authority that the edge runs itself for internal names. "
 "It keeps a root and an intermediate in the storage of automatic HTTPS, "
@@ -516,11 +516,11 @@ msgstr ""
 "automatischen HTTPS, schreibt eine Sperrliste und kann andere Maschinen "
 "als ACME-Server bedienen (SID 0021)."
 
-#: ../../glossary.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:105
 msgid "MAC token"
 msgstr "MAC-Token"
 
-#: ../../glossary.rst:106
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:106
 msgid ""
 "The default session cookie: a 40-byte payload (version, work level, "
 "timestamp, expiry, rule hash, fingerprint) and a 16-byte keyed BLAKE3 "
@@ -530,11 +530,11 @@ msgstr ""
 "Arbeitsstufe, Zeitstempel, Ablauf, Regelhash, Fingerabdruck) und ein "
 "16-Byte-Tag aus BLAKE3 mit Schlüssel, verifiziert in konstanter Zeit."
 
-#: ../../glossary.rst:108
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:108
 msgid "Maglev"
 msgstr ""
 
-#: ../../glossary.rst:109
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:109
 msgid ""
 "A consistent-hash table of a prime number of slots (65,537 in Sibuna), "
 "filled by permutations of the servers, that places a client on a server "
@@ -548,11 +548,11 @@ msgstr ""
 "2016). Sibuna baut eine gewichtete Tabelle und begrenzt die Last des "
 "gewählten Servers durch einen Faktor (``bounded_maglev``, SID 0015)."
 
-#: ../../glossary.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:111
 msgid "Mesh"
 msgstr "Mesh"
 
-#: ../../glossary.rst:112
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:112
 msgid ""
 "The nodes of an edge cluster, listed in the ``mesh`` section with a "
 "shared key. They probe each other over UDP every half second and share "
@@ -566,11 +566,11 @@ msgstr ""
 "flottenweiter Obergrenzen; mit ``forward`` senden sie außerdem Flüsse an "
 "ihren Besitzer. Höchstens 64 Knoten (SID 0022 bis SID 0026)."
 
-#: ../../glossary.rst:114
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:114
 msgid "Node"
 msgstr "Knoten"
 
-#: ../../glossary.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:115
 msgid ""
 "One edge process in a mesh, known by its mesh address; in persistent mode "
 "also by the name ``authority.node``."
@@ -578,11 +578,11 @@ msgstr ""
 "Ein Edge-Prozess in einem Mesh, erkannt an seiner Mesh-Adresse; im "
 "persistenten Modus auch am Namen ``authority.node``."
 
-#: ../../glossary.rst:117
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:117
 msgid "Work level"
 msgstr "Arbeitsstufe"
 
-#: ../../glossary.rst:118
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:118
 msgid ""
 "The mechanism and work bits a session's holder actually solved, carried "
 "in the token; a route admits a session only when its level reaches the "
@@ -592,11 +592,11 @@ msgstr ""
 "tatsächlich gelöst hat, getragen im Token; eine Route lässt eine Sitzung "
 "nur zu, wenn deren Stufe die Anforderung der Route erreicht."
 
-#: ../../glossary.rst:120
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:120
 msgid "Opening"
 msgstr "Öffnung"
 
-#: ../../glossary.rst:121
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:121
 msgid ""
 "In a sequential-work proof, one leaf label plus the sibling labels along "
 "its path to the root; the verifier recomputes the path and compares with "
@@ -606,11 +606,11 @@ msgstr ""
 "Geschwisterlabels entlang seines Pfads zur Wurzel; der Verifizierer "
 "berechnet den Pfad neu und vergleicht mit dem Commitment."
 
-#: ../../glossary.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:123
 msgid "Owner"
 msgstr "Besitzer"
 
-#: ../../glossary.rst:124
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:124
 msgid ""
 "The node of a mesh that serves a client under peer forwarding: the live "
 "node with the largest rendezvous score for the client's address (SID "
@@ -620,11 +620,11 @@ msgstr ""
 "bedient: der lebende Knoten mit der größten Rendezvous-Bewertung für die "
 "Adresse des Clients (SID 0026)."
 
-#: ../../glossary.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:126
 msgid "Passive health"
 msgstr "Passive Zustandsprüfung"
 
-#: ../../glossary.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:127
 msgid ""
 "Ejecting a server for ``ejection`` after ``failures`` consecutive "
 "failures of real requests, while another server can serve (SID 0019)."
@@ -633,11 +633,11 @@ msgstr ""
 "aufeinanderfolgenden Fehlschlägen echter Anfragen, solange ein anderer "
 "Server bedienen kann (SID 0019)."
 
-#: ../../glossary.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:129
 msgid "Passthrough"
 msgstr "Passthrough"
 
-#: ../../glossary.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:130
 msgid ""
 "Relaying the bytes of a TLS or QUIC connection to a server without "
 "terminating it. The edge may still read the ClientHello, or validate QUIC "
@@ -647,11 +647,11 @@ msgstr ""
 "Server, ohne sie zu terminieren. Der Edge kann dennoch den ClientHello "
 "lesen oder QUIC per Connection-ID validieren (SID 0032)."
 
-#: ../../glossary.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:132
 msgid "Peer forwarding"
 msgstr "Peer-Weiterleitung"
 
-#: ../../glossary.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:133
 msgid ""
 "The mesh feature that hands a new connection or UDP client to the node "
 "that owns the client, so that its sticky server, rate counters and UDP "
@@ -664,19 +664,19 @@ msgstr ""
 "bestehende TCP-Verbindung, die das Netz verlegt, wird nicht repariert "
 "(SID 0026)."
 
-#: ../../glossary.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:135
 msgid "Pool"
 msgstr ""
 
-#: ../../glossary.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:136
 msgid "See *Backend*."
 msgstr "Siehe *Backend*."
 
-#: ../../glossary.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:138
 msgid "Proof of Sequential Work (PoSW)"
 msgstr "Proof of Sequential Work (PoSW)"
 
-#: ../../glossary.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:139
 msgid ""
 "Tier Two: the Cohen-Pietrzak hash graph whose labels depend on all "
 "earlier labels, forcing :math:`2^{n+1}-1` sequential hashes however many "
@@ -687,11 +687,11 @@ msgstr ""
 "Hashes, unabhängig davon, wie viele Kerne der Beweiser hat. Verifiziert "
 "mit :math:`t(n+1)` Hashes."
 
-#: ../../glossary.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:141
 msgid "Regime"
 msgstr "Regime"
 
-#: ../../glossary.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:142
 msgid ""
 "The routing mode of a mesh, chosen from the 95th percentile of the round "
 "trip to the peers: *standalone* without a live peer, *regional* while the "
@@ -706,11 +706,11 @@ msgstr ""
 "Regime erst unter 1,5 ms zurück (``Regime::step`` in "
 "``crates/lb/src/mesh.rs``)."
 
-#: ../../glossary.rst:144
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:144
 msgid "Rendezvous hashing"
 msgstr "Rendezvous-Hashing"
 
-#: ../../glossary.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:145
 msgid ""
 "Highest-random-weight hashing (Thaler and Ravishankar, 1998): each "
 "candidate gets a score from a hash of its name and the key, and the "
@@ -724,11 +724,11 @@ msgstr ""
 "verschiebt nur seine eigenen Schlüssel. Sibuna verwendet es für die "
 "Quell-Stickiness (SID 0019) und für den Besitzer eines Clients (SID 0026)."
 
-#: ../../glossary.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:147
 msgid "Reputation trie"
 msgstr "Reputations-Trie"
 
-#: ../../glossary.rst:148
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:148
 msgid ""
 "The 128-bit radix trie holding ``allow``, ``deny``, and ``challenge`` "
 "prefixes from the policy file and from the ``ip_reputation`` table."
@@ -737,11 +737,11 @@ msgstr ""
 "``challenge``-Präfixen aus der Richtliniendatei und aus der Tabelle "
 "``ip_reputation``."
 
-#: ../../glossary.rst:150
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:150
 msgid "Revision"
 msgstr "Revision"
 
-#: ../../glossary.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:151
 msgid ""
 "In the edge, one published state of the topology. With a file it is the "
 "digest of the file; with a database it is a number that only grows, and a "
@@ -751,11 +751,11 @@ msgstr ""
 "es der Digest der Datei; mit einer Datenbank ist es eine Zahl, die nur "
 "wächst, und ein Rollback ist eine neue Revision (SID 0028)."
 
-#: ../../glossary.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:153
 msgid "Robin Hood spent set"
 msgstr "Robin-Hood-Verbrauchsmenge"
 
-#: ../../glossary.rst:154
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:154
 msgid ""
 "The fixed-capacity open-addressed table of solved challenge tags, which "
 "prevents a valid solution from being submitted twice."
@@ -763,11 +763,11 @@ msgstr ""
 "Die Open-Addressing-Tabelle fester Kapazität für gelöste Challenge-Tags, "
 "die verhindert, dass eine gültige Lösung zweimal eingereicht wird."
 
-#: ../../glossary.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:156
 msgid "Route"
 msgstr "Route"
 
-#: ../../glossary.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:157
 msgid ""
 "A rule of an HTTP frontend that selects a backend by host name and path "
 "prefix, and may switch the firewall off or on for its requests."
@@ -776,11 +776,11 @@ msgstr ""
 "Pfadpräfix wählt und die Firewall für ihre Anfragen aus- oder einschalten "
 "kann."
 
-#: ../../glossary.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:159
 msgid "Rule hash"
 msgstr "Regelhash"
 
-#: ../../glossary.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:160
 msgid ""
 "A 64-bit hash of the rule name that demanded a challenge, carried in the "
 "challenge, the token, and the ``X-Sibuna-Rule-Hash`` header."
@@ -788,11 +788,11 @@ msgstr ""
 "Ein 64-Bit-Hash des Namens der Regel, die eine Challenge verlangt hat, "
 "getragen in der Challenge, im Token und im Header ``X-Sibuna-Rule-Hash``."
 
-#: ../../glossary.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:162
 msgid "Server"
 msgstr "Server"
 
-#: ../../glossary.rst:163
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:163
 msgid ""
 "One address of a pool, with a name, a weight and an optional "
 "``max_flows``. ``sibuna ctl`` addresses it as ``POOL/NAME``."
@@ -800,31 +800,31 @@ msgstr ""
 "Eine Adresse eines Pools, mit einem Namen, einem Gewicht und einem "
 "optionalen ``max_flows``. ``sibuna ctl`` spricht ihn als ``POOL/NAME`` an."
 
-#: ../../glossary.rst:165
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:165
 msgid "Share"
 msgstr "Anteil"
 
-#: ../../glossary.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:166
 msgid "The part of a fleet cap that one node may hold now (SID 0025)."
 msgstr ""
 "Der Teil einer flottenweiten Obergrenze, den ein Knoten jetzt halten darf "
 "(SID 0025)."
 
-#: ../../glossary.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:168
 msgid "Shield"
 msgstr "Shield"
 
-#: ../../glossary.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:169
 msgid "The default surface: Gate plus the semantic firewall (``--shield``)."
 msgstr ""
 "Die Standard-Betriebsform: Gate plus die semantische Firewall "
 "(``--shield``)."
 
-#: ../../glossary.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:171
 msgid "SID"
 msgstr "SID"
 
-#: ../../glossary.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:172
 msgid ""
 "A Sibuna Discussion record: a paper-style design document under "
 "``docs/sid/records`` with the assumptions, proofs, and measurements "
@@ -834,11 +834,11 @@ msgstr ""
 "Fachartikels unter ``docs/sid/records`` mit den Annahmen, Beweisen und "
 "Messungen hinter einem Teil des Systems."
 
-#: ../../glossary.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:174
 msgid "Slow start"
 msgstr "Slow Start"
 
-#: ../../glossary.rst:175
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:175
 msgid ""
 "The ramp of ``slow_start`` during which a server that entered service "
 "takes a weight that grows in proportion to the time, so that a cold "
@@ -848,11 +848,11 @@ msgstr ""
 "gegangen ist, ein Gewicht erhält, das proportional zur Zeit wächst, damit "
 "ein kalter Server nicht überflutet wird (SID 0019)."
 
-#: ../../glossary.rst:177
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:177
 msgid "Spill cache"
 msgstr "Spill-Cache"
 
-#: ../../glossary.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:178
 msgid ""
 "A file mapped into memory under the sticky table that keeps the hints of "
 "clients that left memory, and keeps them over a restart. Admission to it "
@@ -863,11 +863,11 @@ msgstr ""
 "über einen Neustart hinweg bewahrt. Die Zulassung zu ihr folgt TinyLFU "
 "(SID 0027)."
 
-#: ../../glossary.rst:180
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:180
 msgid "Sticky table"
 msgstr "Sticky-Tabelle"
 
-#: ../../glossary.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:181
 msgid ""
 "The table of a pool with ``sticky: \"table\"`` that remembers the server "
 "of each client, by source address or by cookie, for ``ttl`` after the "
@@ -878,11 +878,11 @@ msgstr ""
 "Verwendung merkt. Ein Mesh repliziert sie, und die spätere Wahl gewinnt "
 "(SID 0025)."
 
-#: ../../glossary.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:183
 msgid "Surface"
 msgstr "Betriebsform"
 
-#: ../../glossary.rst:184
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:184
 msgid ""
 "One of the two product shapes, Gate or Shield; storage and clustering are "
 "options for either."
@@ -890,11 +890,11 @@ msgstr ""
 "Eine der beiden Produktformen, Gate oder Shield; Speicherung und "
 "Clusterbildung sind für beide optional."
 
-#: ../../glossary.rst:186
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:186
 msgid "WEIGH"
 msgstr "WEIGH"
 
-#: ../../glossary.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:187
 msgid ""
 "A rule action that adds a signed weight to a request's score instead of "
 "deciding; totals at or above the thresholds challenge with extra work "
@@ -904,11 +904,11 @@ msgstr ""
 "Anfrage addiert, statt zu entscheiden; Summen an oder über den Schwellen "
 "führen zu einer Challenge mit zusätzlichen Arbeitsbits oder zur Ablehnung."
 
-#: ../../glossary.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:189
 msgid "Worker"
 msgstr "Worker"
 
-#: ../../glossary.rst:190
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:190
 msgid ""
 "In the edge, a thread that serves traffic. The edge worker accepts for "
 "every frontend and owns the flow table and the UDP mappings; relay "
@@ -921,11 +921,11 @@ msgstr ""
 "ereignisgesteuerten HTTP-Worker, einer pro Prozessor, HTTP-Verbindungen "
 "(SID 0015, SID 0016)."
 
-#: ../../glossary.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:192
 msgid "Zaxonlite"
 msgstr "Zaxonlite"
 
-#: ../../glossary.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:193
 msgid ""
 "The embedded SQLite replication engine (Multi-Paxos) of SID 0005, "
 "replaced by SQLite and PostgreSQL storage in SID 0011; its cluster "
@@ -935,11 +935,11 @@ msgstr ""
 "in SID 0011 durch Speicherung in SQLite und PostgreSQL ersetzt; ihre "
 "Cluster-Optionen brechen den Start jetzt mit ``RemovedOption`` ab."
 
-#: ../../glossary.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:195
 msgid "Bibliography"
 msgstr "Literaturverzeichnis"
 
-#: ../../glossary.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:198
 msgid ""
 "Aho, A. V., and Corasick, M. J. \"Efficient string matching: an aid to "
 "bibliographic search.\" *Communications of the ACM* 18(6), 1975."
@@ -947,7 +947,7 @@ msgstr ""
 "Aho, A. V., und Corasick, M. J. „Efficient string matching: an aid to "
 "bibliographic search.“ *Communications of the ACM* 18(6), 1975."
 
-#: ../../glossary.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:199
 msgid ""
 "ATM Forum. *Traffic Management Specification Version 4.0*, "
 "af-tm-0056.000, 1996 (the Generic Cell Rate Algorithm)."
@@ -955,7 +955,7 @@ msgstr ""
 "ATM Forum. *Traffic Management Specification Version 4.0*, "
 "af-tm-0056.000, 1996 (der Generic Cell Rate Algorithm)."
 
-#: ../../glossary.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:200
 msgid ""
 "Back, A. \"Hashcash: a denial of service counter-measure.\" Technical "
 "report, 2002."
@@ -963,7 +963,7 @@ msgstr ""
 "Back, A. „Hashcash: a denial of service counter-measure.“ Technischer "
 "Bericht, 2002."
 
-#: ../../glossary.rst:201
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:201
 msgid ""
 "Blocki, J., Lee, S., and Zhou, S. \"On the security of proofs of "
 "sequential work in a post-quantum world.\" *Information-Theoretic "
@@ -973,14 +973,14 @@ msgstr ""
 "sequential work in a post-quantum world.“ *Information-Theoretic "
 "Cryptography (ITC)*, 2021."
 
-#: ../../glossary.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:202
 msgid ""
 "Celis, P. *Robin Hood Hashing*. PhD thesis, University of Waterloo, 1986."
 msgstr ""
 "Celis, P. *Robin Hood Hashing*. Dissertation, University of Waterloo, "
 "1986."
 
-#: ../../glossary.rst:203
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:203
 msgid ""
 "Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
 "*EUROCRYPT*, 2018."
@@ -988,7 +988,7 @@ msgstr ""
 "Cohen, B., und Pietrzak, K. „Simple proofs of sequential work.“ "
 "*EUROCRYPT*, 2018."
 
-#: ../../glossary.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:204
 msgid ""
 "Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
 "mail.\" *CRYPTO*, 1992."
@@ -996,7 +996,7 @@ msgstr ""
 "Dwork, C., und Naor, M. „Pricing via processing or combatting junk mail.“ "
 "*CRYPTO*, 1992."
 
-#: ../../glossary.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:205
 msgid ""
 "Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
 "identification and signature problems.\" *CRYPTO*, 1986."
@@ -1004,7 +1004,7 @@ msgstr ""
 "Fiat, A., und Shamir, A. „How to prove yourself: practical solutions to "
 "identification and signature problems.“ *CRYPTO*, 1986."
 
-#: ../../glossary.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:206
 msgid ""
 "Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110, "
 "and *HTTP/1.1*, RFC 9112. IETF, 2022."
@@ -1012,7 +1012,7 @@ msgstr ""
 "Fielding, R., Nottingham, M., und Reschke, J. *HTTP Semantics*, RFC 9110, "
 "und *HTTP/1.1*, RFC 9112. IETF, 2022."
 
-#: ../../glossary.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:207
 msgid ""
 "FoxIO. *JA4+ Network Fingerprinting*. https://github.com/FoxIO-LLC/ja4, "
 "2023 (the JA4 TLS client fingerprint)."
@@ -1020,7 +1020,7 @@ msgstr ""
 "FoxIO. *JA4+ Network Fingerprinting*. https://github.com/FoxIO-LLC/ja4, "
 "2023 (der JA4-Fingerabdruck von TLS-Clients)."
 
-#: ../../glossary.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:208
 msgid ""
 "Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
 "cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
@@ -1028,7 +1028,7 @@ msgstr ""
 "Einziger, G., Friedman, R., und Manes, B. „TinyLFU: a highly efficient "
 "cache admission policy.“ *ACM Transactions on Storage* 13(4), 2017."
 
-#: ../../glossary.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:209
 msgid ""
 "Eisenbud, D. E., Yi, C., Contavalli, C., Smith, C., Kononov, R., "
 "Mann-Hielscher, E., Cilingiroglu, A., Cheyney, B., Shang, W., and Hosein, "
@@ -1040,7 +1040,7 @@ msgstr ""
 "J. D. „Maglev: a fast and reliable software network load balancer.“ "
 "*NSDI*, 2016."
 
-#: ../../glossary.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:210
 msgid ""
 "Hanson, N. \"libinjection: SQL injection detection by tokenization.\" "
 "Black Hat USA, 2012."
@@ -1048,7 +1048,7 @@ msgstr ""
 "Hanson, N. „libinjection: SQL injection detection by tokenization.“ Black "
 "Hat USA, 2012."
 
-#: ../../glossary.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:211
 msgid ""
 "Juels, A., and Brainard, J. \"Client puzzles: a cryptographic "
 "countermeasure against connection depletion attacks.\" *NDSS*, 1999."
@@ -1056,7 +1056,7 @@ msgstr ""
 "Juels, A., und Brainard, J. „Client puzzles: a cryptographic "
 "countermeasure against connection depletion attacks.“ *NDSS*, 1999."
 
-#: ../../glossary.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:212
 msgid ""
 "Lamport, L. \"The part-time parliament.\" *ACM Transactions on Computer "
 "Systems* 16(2), 1998; and \"Paxos made simple.\" *ACM SIGACT News* 32(4), "
@@ -1066,7 +1066,7 @@ msgstr ""
 "Systems* 16(2), 1998; und „Paxos made simple.“ *ACM SIGACT News* 32(4), "
 "2001."
 
-#: ../../glossary.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:213
 msgid ""
 "Mahmoody, M., Moran, T., and Vadhan, S. \"Publicly verifiable proofs of "
 "sequential work.\" *Innovations in Theoretical Computer Science (ITCS)*, "
@@ -1076,7 +1076,7 @@ msgstr ""
 "sequential work.“ *Innovations in Theoretical Computer Science (ITCS)*, "
 "2013."
 
-#: ../../glossary.rst:214
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:214
 msgid ""
 "Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
 "bounded loads.\" *SODA*, 2018."
@@ -1084,7 +1084,7 @@ msgstr ""
 "Mirrokni, V., Thorup, M., und Zadimoghaddam, M. „Consistent hashing with "
 "bounded loads.“ *SODA*, 2018."
 
-#: ../../glossary.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:215
 msgid ""
 "O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
 "one function, fast everywhere*. Specification, 2020."
@@ -1092,7 +1092,7 @@ msgstr ""
 "O'Connor, J., Aumasson, J.-P., Neves, S., und Wilcox-O'Hearn, Z. *BLAKE3: "
 "one function, fast everywhere*. Spezifikation, 2020."
 
-#: ../../glossary.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:216
 msgid ""
 "Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
 "increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
@@ -1100,7 +1100,7 @@ msgstr ""
 "Thaler, D. G., und Ravishankar, C. V. „Using name-based mappings to "
 "increase hit rates.“ *IEEE/ACM Transactions on Networking* 6(1), 1998."
 
-#: ../../glossary.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:217
 msgid ""
 "Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, 2011 (the "
 "sequence-stamped ring used for the incident queue)."
@@ -1108,7 +1108,7 @@ msgstr ""
 "Vyukov, D. „Bounded MPMC queue.“ 1024cores.net, 2011 (der "
 "sequenzmarkierte Ring der Vorfallswarteschlange)."
 
-#: ../../glossary.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:218
 msgid ""
 "Wang, X., Hong, Y., Chang, H., Park, K., Langdale, G., Hu, J., and Zhu, "
 "H. \"Hyperscan: a fast multi-pattern regex matcher for modern CPUs.\" "
@@ -1118,7 +1118,7 @@ msgstr ""
 "H. „Hyperscan: a fast multi-pattern regex matcher for modern CPUs.“ "
 "*NSDI*, 2019."
 
-#: ../../glossary.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:219
 msgid ""
 "Sibuna Discussions 0001 to 0032, ``docs/sid/records``, 2026: process, "
 "foundation architecture, declarative policy engine, semantic inspection, "

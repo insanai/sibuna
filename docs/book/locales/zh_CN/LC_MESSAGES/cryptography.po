@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../cryptography.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:1
 msgid "Part III: Foundations from Cryptography Research"
 msgstr "第 III 部分：来自密码学研究的基础"
 
-#: ../../cryptography.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:4
 msgid ""
 "We derive the cost models behind Sibuna's two proof-of-work tiers, "
 "present the Cohen-Pietrzak Proof of Sequential Work with its security "
@@ -31,16 +31,17 @@ msgstr ""
 "我们推导 Sibuna 两层工作量证明背后的成本模型，介绍 Cohen-Pietrzak "
 "顺序工作量证明及其安全性论证，并说明为什么用带密钥哈希来认证挑战和会话。SID 0006 记录了相关的假设和参考文献。"
 
-#: ../../cryptography.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:6
 msgid "Hashcash: The Mathematics of Tier One"
 msgstr "Hashcash：第一层的数学"
 
-#: ../../cryptography.rst:9 ../../cryptography.rst:36
-#: ../../cryptography.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:145
 msgid "Objectives"
 msgstr "学习目标"
 
-#: ../../cryptography.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:11
 msgid ""
 "By the end of this chapter, we should be able to state the expected work, "
 "variance, and tail probability of a bit-level Hashcash puzzle, explain "
@@ -50,11 +51,11 @@ msgstr ""
 "学完本章，我们应当能够给出比特级 Hashcash "
 "谜题的期望工作量、方差和尾部概率，解释为什么服务器的验证成本限制了攻击者的优势，并描述促使我们引入第二层的两个局限。"
 
-#: ../../cryptography.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:13
 msgid "Definition and Cost"
 msgstr "定义与成本"
 
-#: ../../cryptography.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:16
 msgid ""
 "Sibuna's Tier One puzzle for challenge string :math:`C` and difficulty "
 ":math:`b` bits is: find :math:`N \\in \\mathbb{N}` such that "
@@ -69,7 +70,7 @@ msgstr ""
 "\\parallel \\mathrm{dec}(N))` 具有 :math:`b` 个前导零比特。nonce 采用十进制表示是有意为之；它使 "
 "WebAssembly 求解器、JavaScript 后备实现和原生验证器之间的线路格式保持一致，而不需要二进制编码步骤。"
 
-#: ../../cryptography.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:18
 msgid ""
 "The unit of difficulty is an expected *hash trial*, not a compression "
 "function call. An input can occupy several SHA-256 blocks. Prefix "
@@ -80,7 +81,7 @@ msgstr ""
 "难度的单位是一次期望的 *哈希尝试*，而不是一次压缩函数调用。一个输入可能占用多个 SHA-256 分组。前缀预计算也会改变每个 nonce "
 "的工作量。线路规则始终是摘要谓词；各个实现必须就陈述和 nonce 编码达成一致，而不是就估计的 CPU 成本达成一致。"
 
-#: ../../cryptography.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:20
 msgid ""
 "For independent ideal digests, the trial count :math:`X` is geometric "
 "with :math:`p = 2^{-b}`. Its median is :math:`\\left\\lceil \\ln(1/2) / "
@@ -96,11 +97,11 @@ msgstr ""
 "很小时约为 :math:`2^b \\ln 2`，方差为 "
 ":math:`(1-p)/p^2`。验证者只检查一个候选摘要，而不执行搜索。解析、挑战认证、指纹检查、写入已用状态以及响应都是额外的工作。不能从一个原语的耗时反推出服务器抵御洪泛的能力。"
 
-#: ../../cryptography.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:22
 msgid "Two Limits of Search"
 msgstr "搜索的两个局限"
 
-#: ../../cryptography.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:25
 msgid ""
 "The first is variance: a long search is not necessarily a broken worker. "
 "The second is parallelism: independent nonce trials can run concurrently. "
@@ -112,11 +113,11 @@ msgstr ""
 "第一个局限是方差：一次很长的搜索并不一定意味着 worker 出了故障。第二个局限是并行性：相互独立的 nonce "
 "尝试可以并发执行。即使期望的总尝试次数不变，更多的核心也会缩短搜索的实际耗时。因此，硬件吞吐量对准入策略很重要。无论是声称的哈希速率还是单次基准测试，都无法给每个请求方的优势划定上界。"
 
-#: ../../cryptography.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:27
 msgid "Exercise 3.0"
 msgstr "练习 3.0"
 
-#: ../../cryptography.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:29
 msgid ""
 "Using the geometric tail, estimate the probability of needing more than "
 ":math:`4.6 \\times 2^b` trials. Why is the expected trial count unchanged "
@@ -125,15 +126,15 @@ msgstr ""
 "利用几何分布的尾部，估计需要超过 :math:`4.6 \\times 2^b` 次尝试的概率。为什么把 nonce 空间分给多个 worker "
 "不会改变期望尝试次数？"
 
-#: ../../cryptography.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:31
 msgid "*Hint:* Count aggregate trials, not elapsed seconds."
 msgstr "*提示：* 统计总尝试次数，而不是经过的秒数。"
 
-#: ../../cryptography.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:33
 msgid "Proof of Sequential Work: Tier Two"
 msgstr "顺序工作量证明：第二层"
 
-#: ../../cryptography.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:38
 msgid ""
 "Understand the Cohen-Pietrzak labelling, why it forces sequential "
 "computation, what the verifier checks, the conditional sampling bound "
@@ -144,11 +145,11 @@ msgstr ""
 "理解 Cohen-Pietrzak 标签计算、它为什么强制顺序计算、验证者检查什么、条件抽样界 :math:`(1 - \\alpha)^t` "
 "及其局限、后量子结果、证明者的内存上界，以及工作比特映射背后的校准数据。"
 
-#: ../../cryptography.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:40
 msgid "Why Sequential Work"
 msgstr "为什么需要顺序工作量"
 
-#: ../../cryptography.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:43
 msgid ""
 "A sequential-work construction introduces dependencies between "
 "computations: a later label needs a value produced earlier. This "
@@ -158,7 +159,7 @@ msgid ""
 msgstr ""
 "顺序工作量构造在计算之间引入依赖：后面的标签需要前面算出的值。它针对的是与总工作量不同的一个量，即计算的深度。相互独立的谜题仍然可以并行运行，硬件的哈希延迟也仍然重要。"
 
-#: ../../cryptography.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:45
 msgid ""
 "Sibuna follows the hash-based construction described by Cohen and "
 "Pietrzak. Its graph has :math:`2^{n+1}-1` labels at depth :math:`n`, but "
@@ -172,11 +173,11 @@ msgstr ""
 ":math:`2^{n+1}-1` "
 "个标签，但固定的标签数并不意味着确定的浏览器延迟：标签可能跨越多个压缩分组，揭示可能需要重新计算子树，调度也会带来波动。不能把预言机模型分析得出的安全性陈述，变成关于每个具体实现或每个对手的无条件结论。"
 
-#: ../../cryptography.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:47
 msgid "The Construction"
 msgstr "构造"
 
-#: ../../cryptography.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:50
 msgid ""
 "Let :math:`n` be the depth and consider the complete binary tree with "
 "nodes named by binary strings of length at most :math:`n` (root "
@@ -192,14 +193,14 @@ msgstr ""
 "\\mathrm{parents}(v))`，其中 :math:`\\chi` 是挑战陈述，:math:`H` 是只吸收一次 "
 ":math:`\\chi` 的 SHA-256（与 Hashcash 求解器相同的前缀技巧）："
 
-#: ../../cryptography.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:52
 msgid ""
 "an internal node hashes its two children: :math:`\\ell_v = H(\\chi, v, "
 "\\ell_{v0}, \\ell_{v1})`;"
 msgstr ""
 "内部节点对它的两个子节点做哈希：:math:`\\ell_v = H(\\chi, v, \\ell_{v0}, \\ell_{v1})`；"
 
-#: ../../cryptography.rst:53
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:53
 msgid ""
 "a leaf :math:`u = u_1 \\dots u_n` hashes the *left siblings of its "
 "ancestors* wherever the root path turned right: :math:`\\ell_u = H(\\chi, "
@@ -208,7 +209,7 @@ msgstr ""
 "叶子 :math:`u = u_1 \\dots u_n` 在根路径每次向右转的地方，对 *其祖先的左兄弟* 做哈希：:math:`\\ell_u "
 "= H(\\chi, u, \\{\\ell_{u_1 \\dots u_{i-1} 0} : u_i = 1\\})`。"
 
-#: ../../cryptography.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:56
 msgid ""
 "A complete binary tree of depth 3 with nodes named depth.index. The root "
 "path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is green, the siblings 1.0, "
@@ -220,7 +221,7 @@ msgstr ""
 "0.0、1.1、2.2、3.5）为绿色，它的揭示中发送的兄弟节点 1.0、2.3 和 3.4 为青灰色，金色虚线箭头从 1.0 和 3.4 "
 "指向叶子 3.5。叶子下方的箭头表示叶子从左到右依次计算标签。"
 
-#: ../../cryptography.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:56
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/posw-tree.typ\": draw\n"
@@ -232,14 +233,14 @@ msgstr ""
 "#show: chart.with(lang: \"zh_CN\")\n"
 "#draw()\n"
 
-#: ../../cryptography.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:56
 msgid ""
 "The depth-3 tree: an opening of leaf 3.5 sends the leaf label and the "
 "three sibling labels; the dashed edges are the left-sibling dependencies "
 "that make labelling sequential."
 msgstr "深度为 3 的树：叶子 3.5 的一次揭示发送该叶子标签和三个兄弟标签；虚线边是使标签计算成为顺序过程的左兄弟依赖。"
 
-#: ../../cryptography.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:59
 msgid ""
 "The left-sibling edges are what make the computation sequential: leaf "
 ":math:`u` cannot be labelled until every subtree to its left is complete, "
@@ -251,7 +252,7 @@ msgstr ""
 "左侧的每棵子树都完成之前，无法计算它的标签，因此只能按深度优先的后序遍历进行，根标签 :math:`\\varphi = "
 "\\ell_\\varepsilon` 依次依赖于全部 :math:`2^{n+1} - 1` 个标签。"
 
-#: ../../cryptography.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:61
 msgid ""
 "**Openings.** After computing :math:`\\varphi`, the prover derives "
 ":math:`t` leaves by Fiat-Shamir, :math:`\\gamma_i = H(\\chi \\parallel "
@@ -269,11 +270,11 @@ msgstr ""
 "个兄弟标签。验证者用作为父节点的兄弟标签重新计算叶子，沿路径向上做哈希，并检查最终是否得到 :math:`\\varphi`。验证者的成本是 "
 ":math:`O(tn)` 次标签计算，所需工作空间有界。一次标签计算可能跨越多个哈希分组；统计标签数并不等于统计压缩函数调用次数。"
 
-#: ../../cryptography.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:63
 msgid "Implementation: ``posw::verify_opening``"
 msgstr "实现：``posw::verify_opening``"
 
-#: ../../cryptography.rst:65
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:65
 msgid ""
 "Recomputes one opened leaf from its sibling labels and walks the path to "
 "the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
@@ -281,7 +282,7 @@ msgstr ""
 "用兄弟标签重新计算一个被揭示的叶子，并沿路径走到根。位于 ``crates/pow/src/posw.rs``\\ （crate "
 "``sibuna-pow``）。"
 
-#: ../../cryptography.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:67
 msgid ""
 "fn verify_opening(base: &Sha256, n: u8, phi: &Label, gamma: u32, opening: "
 "&[Label]) -> bool {\n"
@@ -344,11 +345,11 @@ msgstr ""
 "    current == *phi\n"
 "}"
 
-#: ../../cryptography.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:98
 msgid "Sampling, Soundness, and Their Limits"
 msgstr "抽样、可靠性及其局限"
 
-#: ../../cryptography.rst:101
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:101
 msgid ""
 "Consider a fixed commitment with an independently detectable bad fraction "
 ":math:`\\alpha`. If each opening samples uniformly and independently, the "
@@ -361,11 +362,11 @@ msgstr ""
 ":math:`t` 次揭示全部错过坏位置的概率是 "
 ":math:`(1-\\alpha)^t`。这个初等计算解释了为什么更多的揭示有帮助。但它本身并不是顺序工作量协议的安全性证明。"
 
-#: ../../cryptography.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:103
 msgid "Worked example: a conditional sampling bound"
 msgstr "实例分析：一个条件抽样界"
 
-#: ../../cryptography.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:105
 msgid ""
 "With a fixed bad fraction :math:`\\alpha = 0.1` and :math:`t = 16` "
 "independent openings, the chance of missing every bad location is "
@@ -378,7 +379,7 @@ msgstr ""
 ":math:`0.9^{16} \\approx 0.185`。进行 32 次揭示时，该概率约为 "
 "0.034。这个前提要求在选择样本之前承诺已经固定。如果证明者可以反复尝试许多个根、选择揭示哪个承诺，或者让失败相互关联，那么这个计算没有考虑这些策略。"
 
-#: ../../cryptography.rst:107
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:107
 msgid ""
 "The referenced sequential-work construction has a security analysis in an "
 "oracle model. Sibuna's domain separation, parameter mapping, truncation, "
@@ -391,11 +392,11 @@ msgstr ""
 "的域分离、参数映射、截断和实现，仍然必须对照该构造的假设进行检查。Fiat-Shamir "
 "抽样使揭示可以从承诺复现；但仅有可复现性并不能证明能够抵御反复尝试（grinding）。我们不作出“作弊永远不会更便宜”这样的无条件声明。"
 
-#: ../../cryptography.rst:109
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:109
 msgid "Exercise 3.1"
 msgstr "练习 3.1"
 
-#: ../../cryptography.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:111
 msgid ""
 "If an attacker tries :math:`g` independent commitments, each accepted "
 "with probability :math:`q`, derive the probability that at least one is "
@@ -403,15 +404,15 @@ msgid ""
 msgstr ""
 "如果攻击者尝试 :math:`g` 个相互独立的承诺，每个被接受的概率为 :math:`q`，推导至少有一个被接受的概率。这个表达式遗漏了哪些成本？"
 
-#: ../../cryptography.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:113
 msgid "*Hint:* First calculate the probability that all :math:`g` fail."
 msgstr "*提示：* 先计算全部 :math:`g` 个都失败的概率。"
 
-#: ../../cryptography.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:115
 msgid "Prover Memory"
 msgstr "证明者的内存"
 
-#: ../../cryptography.rst:118
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:118
 msgid ""
 "A naive prover stores every label (:math:`2^{n+1} - 1` of them). Sibuna's "
 "prover keeps a stack of the current path's left-sibling labels (:math:`n "
@@ -431,11 +432,11 @@ msgstr ""
 ":math:`2^{n+1} - 1 + t\\,(2^{n-m+1} - 1)` 次哈希，整个工作空间（包括输出的证明）不到 100 "
 "KB：浏览器标签页和原生测试共用同一个 ``Workspace`` 类型（``sibuna_pow::posw::Workspace``）。"
 
-#: ../../cryptography.rst:120
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:120
 msgid "Parameters Are Not Timings"
 msgstr "参数不是耗时"
 
-#: ../../cryptography.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:123
 msgid ""
 "Sibuna maps work bits to depth using :math:`n = b - 3`, clamped to the "
 "supported interval :math:`[4, 24]`. This is a work-scale convention, not "
@@ -449,7 +450,7 @@ msgstr ""
 "内。这是一个工作量尺度上的约定，并不保证不同算法的实际耗时相等。一个叶子可能要对多个父标签做哈希，而 Hashcash 是反复测试 "
 "nonce。编译器、浏览器、处理器和参数的选择都会影响它们的相对成本。已提交的原语基准测试测量的是验证；它并不能说明浏览器的求解延迟。"
 
-#: ../../cryptography.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:125
 msgid ""
 "Proof size is :math:`32(1 + t(n+1))` bytes. At depth 13 with sixteen "
 "openings, this is :math:`32(1 + 16 \\times 14) = 7200` bytes. Raising the "
@@ -459,21 +460,21 @@ msgstr ""
 "证明的大小是 :math:`32(1 + t(n+1))` 字节。在深度 13、十六次揭示时，大小为 :math:`32(1 + 16 "
 "\\times 14) = 7200` 字节。即使构造树这一主要成本保持不变，增加揭示次数也会同时增大证明和验证者的工作量。"
 
-#: ../../cryptography.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:127
 msgid "Exercise 3.2"
 msgstr "练习 3.2"
 
-#: ../../cryptography.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:129
 msgid ""
 "Compute the proof size at depth 17 with 16 openings. Then double the "
 "opening count. Which term doubles and which term remains fixed?"
 msgstr "计算深度 17、16 次揭示时的证明大小。然后把揭示次数加倍。哪一项加倍了，哪一项保持不变？"
 
-#: ../../cryptography.rst:131
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:131
 msgid "Choosing a Construction"
 msgstr "选择一种构造"
 
-#: ../../cryptography.rst:134
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:134
 msgid ""
 "The relevant comparison is a resource budget, not an algorithm's "
 "reputation. Record the prover's memory, the verifier's worst-case work, "
@@ -485,7 +486,7 @@ msgid ""
 msgstr ""
 "有意义的比较对象是资源预算，而不是算法的名声。记录证明者的内存、验证者的最坏情况工作量、证明的字节数，以及所声称的性质需要的假设。内存困难的搜索可能有用，但如果验证者必须重复昂贵的工作，攻击者就多了一个消耗服务器资源的地方。可公开验证的延迟构造所服务的信任模型，与共享密钥的网关不同。"
 
-#: ../../cryptography.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:136
 msgid ""
 "Sibuna retains cheap hash verification and a hash-based sequential-work "
 "option. The latter requires more proof bytes and more careful parameter "
@@ -495,22 +496,23 @@ msgstr ""
 "Sibuna "
 "保留了低成本的哈希验证，以及一个基于哈希的顺序工作量选项。后者需要更多的证明字节和更仔细的参数分析。无论哪种选择，都需要在进入昂贵的验证之前拒绝格式错误的证明。"
 
-#: ../../cryptography.rst:138 ../../cryptography.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
-#: ../../cryptography.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:140
 msgid ""
 "Explain the distinction between an authentication tree, which proves that "
 "a label belongs to a commitment, and dependency edges, which constrain "
 "how labels are computed."
 msgstr "解释认证树与依赖边之间的区别：前者证明某个标签属于一个承诺，后者约束标签的计算方式。"
 
-#: ../../cryptography.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:142
 msgid "Symmetric Authentication: Challenges and Sessions"
 msgstr "对称认证：挑战与会话"
 
-#: ../../cryptography.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:147
 msgid ""
 "Explain why a keyed pseudorandom function is the correct primitive when "
 "issuer and verifier are the same trust domain, state the forgery bound "
@@ -520,11 +522,11 @@ msgstr ""
 "解释当签发者和验证者属于同一个信任域时，为什么带密钥的伪随机函数是正确的原语；给出 128 "
 "位标签的伪造界；描述无状态挑战记录和已用集合的上界；并读懂密钥派生方案。"
 
-#: ../../cryptography.rst:149
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:149
 msgid "Issuer Equals Verifier"
 msgstr "签发者即验证者"
 
-#: ../../cryptography.rst:152
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:152
 msgid ""
 "A digital signature lets *anyone* holding the public key verify, which is "
 "the right tool when verifiers must not be able to mint. Sibuna's verifier "
@@ -538,11 +540,11 @@ msgstr ""
 "签发者（或共享同一个种子的集群）。由伪随机函数构建的消息认证码在这个信任域内提供认证。它不提供公开验证：任何持有 MAC "
 "密钥的人也都能签发令牌。基准测试一章比较了已实现的令牌操作。"
 
-#: ../../cryptography.rst:154
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:154
 msgid "Lemma 3 (Forgery bound)"
 msgstr "引理 3（伪造界）"
 
-#: ../../cryptography.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:156
 msgid ""
 "With BLAKE3 in keyed mode modelled as a PRF and a 16-byte tag, an "
 "adversary making :math:`q` verification queries forges a valid token with "
@@ -554,7 +556,7 @@ msgstr ""
 ":math:`q \\cdot 2^{-128} + \\varepsilon_{\\mathrm{PRF}}`。按每秒一百万次查询计算，即每秒 "
 ":math:`2^{-108}`。"
 
-#: ../../cryptography.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:158
 msgid ""
 "A second consequence matters for the long term: Ed25519 rests on discrete "
 "logarithms in an elliptic-curve group, which Shor's algorithm breaks; a "
@@ -567,7 +569,7 @@ msgstr ""
 "算法可以攻破它；带密钥哈希只依赖于哈希函数，量子算法对它至多带来平方级加速。对于需要验证者不具备签发能力的部署，Sibuna 保留 Ed25519 "
 "作为选项（``--token-scheme ed25519``）。"
 
-#: ../../cryptography.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:160
 msgid ""
 "The tokens and the challenge records were therefore safe against a "
 "quantum adversary before the transport that carries them was. Since SID "
@@ -585,11 +587,11 @@ msgstr ""
 "203），只要两者之一仍然安全就保持机密，所以今天录下的会话以后也无法用量子计算机读取。证书仍然使用 ECDSA 或 RSA "
 "签名。没有公共证书颁发机构签发后量子证书，浏览器也不接受它们；而且签名只在它自己的握手期间起作用，所以录下流量并不会暴露它。"
 
-#: ../../cryptography.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:162
 msgid "The Key Schedule"
 msgstr "密钥派生方案"
 
-#: ../../cryptography.rst:165
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:165
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -599,11 +601,11 @@ msgstr ""
 "一个 32 字节的主种子（来自 ``--secret-file``、``SIBUNA_SECRET`` 或一个新生成的随机值）通过带密钥 "
 "BLAKE3 和域字符串派生出每个用途的密钥：令牌密钥、挑战密钥、Ed25519 密钥、指纹密钥，以及用于封装要求票据的要求密钥（第 IV 部分）。"
 
-#: ../../cryptography.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:167
 msgid "Implementation: ``Keys::derive``"
 msgstr "实现：``Keys::derive``"
 
-#: ../../cryptography.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:169
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -614,7 +616,7 @@ msgstr ""
 "``sibuna-challenge``）。``Keys`` 和 ``Seed`` 在被丢弃时将其字节清零，它们的 ``Debug`` "
 "输出也经过脱敏。"
 
-#: ../../cryptography.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:171
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -644,7 +646,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:187
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -654,18 +656,18 @@ msgstr ""
 "在集群中，``Keys::bind_node`` 以挑战密钥为密钥，对 ``sibuna/challenge-node/v1`` 和节点 ID "
 "计算带密钥 BLAKE3，并用结果替换挑战密钥。这样，挑战必须回到签发它的节点，而会话令牌和要求票据在每个成员上都保持有效。"
 
-#: ../../cryptography.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:189
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
 "agree on one seed."
 msgstr "域分离可以防止不同用途之间的意外复用；主种子一旦泄露，所有派生密钥都会随之泄露。集群只需要就一个种子达成一致。"
 
-#: ../../cryptography.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:191
 msgid "Stateless Challenges"
 msgstr "无状态挑战"
 
-#: ../../cryptography.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:195
 msgid ""
 "Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
 "byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
@@ -682,7 +684,7 @@ msgstr ""
 "timestamp、expiry、rule_hash 和 fingerprint 各占八个字节，构成 40 字节载荷，其后是 16 字节的 "
 "BLAKE3 标签；共 56 字节，以 75 个 URL 安全的 base64 字符发送。"
 
-#: ../../cryptography.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:195
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/wire-formats.typ\": draw\n"
@@ -694,13 +696,13 @@ msgstr ""
 "#show: chart.with(lang: \"zh_CN\")\n"
 "#draw()\n"
 
-#: ../../cryptography.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:195
 msgid ""
 "Wire formats of the challenge identifier and the session token. The "
 "numbers above each record are byte offsets."
 msgstr "挑战标识符和会话令牌的线路格式。每条记录上方的数字是字节偏移量。"
 
-#: ../../cryptography.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:198
 msgid ""
 "A challenge identifier is a self-authenticating record: version, "
 "algorithm, difficulty, opening count, issue time, the client's keyed "
@@ -715,11 +717,11 @@ msgstr ""
 "nonce，以及要求该挑战的策略规则的哈希，后面跟着一个用挑战密钥计算的 16 "
 "字节标签。签发挑战不写入任何内容。验证时先解码记录，以常量时间检查标签，对照挑战 TTL 检查时效，对照提交方客户端检查指纹，最后才检查证明。"
 
-#: ../../cryptography.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "引理 4（状态只随付出的工作增长）"
 
-#: ../../cryptography.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -734,7 +736,7 @@ msgstr ""
 "之后离开。因此，若 :math:`r` 是该时间段内被接受的不同解答的速率上界，则 :math:`|S| \\le r \\cdot "
 "\\mathrm{TTL}`。免费获取挑战不会分配标签。实现还具有固定容量，饱和时可能拒绝有效的解答。这是一个状态上界，而不是对每个对手计算策略的下界。"
 
-#: ../../cryptography.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -744,11 +746,11 @@ msgstr ""
 "已用集合由 16 个分片组成，每个分片对 16 字节标签使用 Robin Hood 开放寻址（第 V 部分）。指纹是客户端地址和 "
 "User-Agent 的带密钥哈希；输入按长度分隔，使任何两个输入都不会因拼接而碰撞；并且带有密钥，使其他客户端的指纹无法离线计算。"
 
-#: ../../cryptography.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "练习 3.3"
 
-#: ../../cryptography.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -757,7 +759,7 @@ msgstr ""
 "令牌载荷包含工作等级、``timestamp``、``expiry``、``rule_hash`` 和 "
 "``fingerprint``。解释如果去掉每个字段，分别会失去什么防护，以及为什么标签必须覆盖全部五个字段。"
 
-#: ../../cryptography.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "

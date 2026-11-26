@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:19+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../solutions.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:1
 msgid "Selected Solutions"
 msgstr "चुनिंदा समाधान"
 
-#: ../../solutions.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:4
 msgid ""
 "These solutions are checks on the argument, not substitutes for the "
 "exercises. If a result differs, we first compare assumptions: endpoints "
@@ -33,11 +33,11 @@ msgstr ""
 "किसे कार्य गिना गया है, और कोई राइट कमिट हुआ है या नहीं, ये असहमति के आम "
 "स्रोत हैं।"
 
-#: ../../solutions.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:6
 msgid "Part I: Cost and Probability"
 msgstr "भाग I: लागत और प्रायिकता"
 
-#: ../../solutions.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:9
 msgid ""
 "**1.1.** One million trials divided among 100 requests is 10,000 trials "
 "per request. Sharing a session does not change that arithmetic if the "
@@ -51,7 +51,7 @@ msgstr ""
 "क्या दूसरी प्रोसेस फ़िंगरप्रिंट और रूटिंग की बाइंडिंग को संतुष्ट कर सकती "
 "है; ये शर्तें लागत बँटवारे के समीकरण से बाहर हैं।"
 
-#: ../../solutions.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:11
 msgid ""
 "**1.2.** The excess is :math:`1000 - 600 = 400` records/s. An empty queue "
 "of 512 records buys :math:`512/400 = 1.28` seconds in the fluid model. "
@@ -63,11 +63,11 @@ msgstr ""
 "वास्तविक उत्पादक बर्स्ट में आते हैं और उपभोक्ता बैच कमिट करता है, इसलिए "
 "पहला रिकॉर्ड ठीक कब छूटेगा, यह आगमन और कमिट के समय पर निर्भर करता है।"
 
-#: ../../solutions.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:13
 msgid "Part II: Prior Art"
 msgstr "भाग II: पूर्व कार्य"
 
-#: ../../solutions.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:16
 msgid ""
 "**2.1.** One source compiled twice cannot disagree with itself about the "
 "statement, the nonce encoding, the tree shape, or the opening layout; "
@@ -85,7 +85,7 @@ msgstr ""
 "प्रूवर के बीच byte-identical तुलना जाँचती है), या पैरामीटर कैलिब्रेट किए "
 "गए हैं या नहीं (मापन)।"
 
-#: ../../solutions.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:18
 msgid ""
 "**2.2.** (a) Sibuna Gate or Anubis, one binary; (b) Sibuna Shield, "
 "SafeLine, or Cloudflare (Pro plan or above); (c) Sibuna Edge with a "
@@ -105,7 +105,7 @@ msgstr ""
 "(``--database-url`` और ``--cluster-node``); इसका निर्णय \"किस रूप में "
 "चलता है\", \"निरीक्षण\" और \"मल्टी-नोड\" पंक्तियाँ करती हैं।"
 
-#: ../../solutions.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:20
 msgid ""
 "**2.3.** A removal must move the clients of the removed server, about 250 "
 "of the 1,000. Under rendezvous hashing exactly those move, each to the "
@@ -127,11 +127,11 @@ msgstr ""
 "क्लाइंट नहीं हिलाता, और क्योंकि हर नोड केवल नोडों की सूची से मालिक "
 "निकालता है, बिना किसी टेबल को फिर से बनाए और प्रकाशित किए।"
 
-#: ../../solutions.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:22
 msgid "Part III: Cryptography"
 msgstr "भाग III: क्रिप्टोग्राफ़ी"
 
-#: ../../solutions.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:25
 msgid ""
 "**3.0.** The tail estimate is :math:`e^{-4.6} \\approx 0.010`. Dividing "
 "the nonce space changes the rate at which trials are completed, not the "
@@ -143,7 +143,7 @@ msgstr ""
 "की सफलता की प्रायिकता नहीं। दोहराए गए प्रयास या समन्वय का कार्य किसी "
 "वास्तविक समानांतर इम्प्लीमेंटेशन को कम कुशल बना सकते हैं।"
 
-#: ../../solutions.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:27
 msgid ""
 "**3.1.** If each commitment succeeds with probability :math:`q`, all "
 ":math:`g` fail with probability :math:`(1-q)^g`. At least one succeeds "
@@ -157,7 +157,7 @@ msgstr ""
 "लागत, क्वेरी बजट, प्रयासों के बीच की निर्भरता, या किसी विशेष स्वीकृति "
 "प्रायिकता वाला कमिटमेंट खोजने के कार्य को नहीं गिनता।"
 
-#: ../../solutions.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:29
 msgid ""
 "**3.2.** At depth 17 and 16 openings, the proof has :math:`32(1 + 16 "
 "\\times 18) = 9248` bytes. At 32 openings it has :math:`32(1 + 32 \\times "
@@ -169,7 +169,7 @@ msgstr ""
 "18464` बाइट होते हैं। ओपनिंग के बाइट दोगुने हो जाते हैं; 32-बाइट रूट अब "
 "भी एक ही बार भेजा जाता है।"
 
-#: ../../solutions.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:31
 msgid ""
 "**3.3.** Without the work level a session earned on a cheap route would "
 "admit a request to an expensive one that demanded more work; without "
@@ -190,11 +190,11 @@ msgstr ""
 "छोड़ा गया कोई भी फ़ील्ड मनचाहे ढंग से बदला जा सकता था, और सत्यापनकर्ता यह "
 "पहचान नहीं पाता।"
 
-#: ../../solutions.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:33
 msgid "Part IV: Protocol"
 msgstr "भाग IV: प्रोटोकॉल"
 
-#: ../../solutions.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:36
 msgid ""
 "**4.1.** Both browsers share the address and User-Agent, so they share "
 "the fingerprint, the rate-limit cell, and the ban slot. They do not share "
@@ -212,11 +212,11 @@ msgstr ""
 "जाएगा, इसीलिए साझा पते पर बाइंडिंग से अधिक ``HttpOnly`` और ``SameSite`` "
 "मायने रखते हैं।"
 
-#: ../../solutions.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:38
 msgid "Part V: State and Ordering"
 msgstr "भाग V: अवस्था और क्रम"
 
-#: ../../solutions.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:41
 msgid ""
 "**5.1.** The head and the first part of the body (up to what fits after "
 "the head in 64 KB) are in the connection buffer and are sent with "
@@ -233,7 +233,7 @@ msgstr ""
 "लिखता है। हेड पहले जाना चाहिए, क्योंकि ऑरिजिन को बॉडी से पहले "
 "``Content-Length`` चाहिए, और क्योंकि ऑडिट हेडर हेड का ही भाग हैं।"
 
-#: ../../solutions.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:43
 msgid ""
 "**5.2.** The emission interval is 100 ms and burst tolerance is 9,900 ms. "
 "An idle client may send 100 requests immediately, then one per 100 ms. "
@@ -249,11 +249,11 @@ msgstr ""
 "sliding log किसी भी 10 सेकंड में ठीक 100 की अनुमति देगा, लेकिन उसे प्रति "
 "क्लाइंट 100 टाइमस्टैम्प रखने होंगे।"
 
-#: ../../solutions.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:45
 msgid "Part VI: Algorithms"
 msgstr "भाग VI: एल्गोरिदम"
 
-#: ../../solutions.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:48
 msgid ""
 "**6.1.** An apostrophe in a name and an ordinary parameter named "
 "``order`` do not establish an SQL expression. A substring detector could "
@@ -267,7 +267,7 @@ msgstr ""
 "संबंधों सहित अतिरिक्त साक्ष्य खोजता है। यह फिर भी सीमित निरीक्षण ही है, "
 "हर एप्लिकेशन भाषा का पार्सर नहीं।"
 
-#: ../../solutions.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:50
 msgid ""
 "**6.2.** LDAP filters are built from parentheses, ``|``, ``&``, ``!``, "
 "and ``=``. The detector needs a byte class for ``(`` and ``)`` (new) and "
@@ -283,11 +283,11 @@ msgstr ""
 "अकेले कोष्ठक पर नहीं, उसी कारण से जिसके लिए SQL डिटेक्टर एक quote या "
 "tautology माँगता है।"
 
-#: ../../solutions.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:52
 msgid "Part VII: Browser Engine"
 msgstr "भाग VII: ब्राउज़र इंजन"
 
-#: ../../solutions.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:55
 msgid ""
 "**7.1.** At the default 16 work bits (depth 13 with 16 openings), the "
 "supposed 20 ms in WebAssembly become :math:`50 \\times 20 = 1000` ms, one "
@@ -307,11 +307,11 @@ msgstr ""
 "के बजाय केवल उस नियम के लिए घटाएँ जो WebAssembly को ब्लॉक करने वाले ज्ञात "
 "क्लाइंट से मेल खाता है।"
 
-#: ../../solutions.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:57
 msgid "Part VIII: The Edge Load Balancer"
 msgstr "भाग VIII: एज लोड बैलेंसर"
 
-#: ../../solutions.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:60
 msgid ""
 "**8.1.** Under modulo hashing, a step from 10 to 9 servers keeps a flow "
 "only when :math:`h \\bmod 10` and :math:`h \\bmod 9` name the same "
@@ -341,7 +341,7 @@ msgstr ""
 "है जिनके लिए नया सर्वर उनके पुराने सर्वर से निकट है: उनमें से 20%, सभी नए "
 "सर्वर पर।"
 
-#: ../../solutions.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:62
 msgid ""
 "**8.2.** :math:`W = 4` and :math:`L + 1 = 20`. The bound of ``a`` is "
 ":math:`\\lceil 1.25 \\times 20 \\times 2/4 \\rceil = \\lceil 12.5 \\rceil "
@@ -365,7 +365,7 @@ msgstr ""
 "\\times 20\\, w_i / 4` फ़्लो रखता, तो तीनों कम से कम :math:`1.25 \\times "
 "20 = 25` फ़्लो रखते, लेकिन उनके पास 19 हैं।"
 
-#: ../../solutions.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:64
 msgid ""
 "**8.3.** With the tenant field, ``tenant`` admits. If ``score`` denies or "
 "challenges, the chain ends there; suppose it admits, by its verdict or, "
@@ -395,7 +395,7 @@ msgstr ""
 "जोड़ता। तब हुक केवल सलाहकारी है: जो कोई उसे विफल करा सके, वह उसे पार कर "
 "जाता है।"
 
-#: ../../solutions.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:66
 msgid ""
 "**8.4.** The mapping received 1,200 bytes, so before validation it sends "
 "at most 3,600 bytes to the client: three of the eight replies. The edge "
@@ -423,11 +423,11 @@ msgstr ""
 "से सीखता, तो प्रेषक स्वयं को सत्यापित कर सकता और reflection रोकने वाली "
 "सीमा हटा सकता।"
 
-#: ../../solutions.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:68
 msgid "Part IX: A Cluster of Edges"
 msgstr "भाग IX: एज का एक क्लस्टर"
 
-#: ../../solutions.rst:71
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:71
 msgid ""
 "**9.1.** C sends the lift :math:`\\max(1300, 900 + 60) = 1300`: the end "
 "of the ban it knows, and at least 60 seconds ahead. Every node that hears "
@@ -452,7 +452,7 @@ msgstr ""
 "प्रतिबंध समाप्त होता। सेकंड 1,000 पर जारी, A के बराबर लंबाई का प्रतिबंध "
 "1,300 के बाद समाप्त होता और हर नोड पर लागू होता।"
 
-#: ../../solutions.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:73
 msgid ""
 "**9.2.** The two entries have the same end, so the server decides: "
 "``0x91...`` is the larger hash, and B's entry wins on every node, A "
@@ -471,7 +471,7 @@ msgstr ""
 "और केवल तब तक जब तक वह सर्वर योग्य है। क्रम में सर्वर के बिना A और B "
 "हमेशा अपनी-अपनी प्रविष्टि रखते, क्योंकि कोई भी अंत बाद का नहीं है।"
 
-#: ../../solutions.rst:75
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:75
 msgid ""
 "**9.3.** :math:`\\lfloor 10/4 \\rfloor = 2` with remainder 2, so A and B "
 "have base 3 and C and D base 2. D has :math:`f = 0` and :math:`r = "
@@ -503,7 +503,7 @@ msgstr ""
 "होता है, इसलिए नोडों के एक स्टेटस का आदान-प्रदान करने तक, लगभग एक सेकंड, "
 "सर्वर पर नए फ़्लो अस्वीकार होते हैं।"
 
-#: ../../solutions.rst:77
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:77
 msgid ""
 "**9.4.** (a) Each client moves with probability :math:`1/5`, so about 200 "
 "of 1,000 move, all of them to the new node. (b) Only B's clients, about "
@@ -523,7 +523,7 @@ msgstr ""
 "\\{0, 1, 2, 3\\}` के लिए सहमत होते हैं, बीस में से चार शेषफल। इसलिए लगभग "
 "800 क्लाइंट हिलते हैं, जबकि rendezvous hashing में 200।"
 
-#: ../../solutions.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:79
 msgid ""
 "**9.5.** With eight counters for each slot, :math:`m = 8S`. At the middle "
 "of the window :math:`N = 2S` and :math:`\\lambda \\le 4 \\cdot 2S / 8S = "
@@ -546,7 +546,7 @@ msgstr ""
 ":math:`\\lambda` आधा होता है और प्रायिकता परिमाण के तीन से अधिक क्रम घट "
 "जाती है, इसीलिए कोड हर स्लॉट के लिए आठ काउंटर माँगता है।"
 
-#: ../../solutions.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:81
 msgid ""
 "**9.6.** Both commands read head 7 and commit with the expected revision "
 "7. The transaction that first takes the row lock of ``edge_head`` sets "
@@ -573,11 +573,11 @@ msgstr ""
 "समय के head पर शर्त रखने वाला commit 8 पर सफल हो जाता और चुपचाप पहले "
 "ऑपरेटर का बदलाव हटा देता: एक खोया हुआ अपडेट जिसे किसी ने नहीं देखा।"
 
-#: ../../solutions.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:83
 msgid "Part X: Evaluation"
 msgstr "भाग X: मूल्यांकन"
 
-#: ../../solutions.rst:86
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:86
 msgid ""
 "**10.2.** For Gate's ``admitted`` row, :math:`11.84 \\times 211{,}345 / "
 "10^6 \\approx 2.50` cores busy out of four, so the daemon was not CPU "
@@ -597,11 +597,11 @@ msgstr ""
 "थ्रेड के बीच शेड्यूलर का हस्तांतरण भी शामिल है। प्रिमिटिव सूट इनमें से "
 "किसी का समय नहीं मापता।"
 
-#: ../../solutions.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:88
 msgid "Part XI: Operations"
 msgstr "भाग XI: संचालन"
 
-#: ../../solutions.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:91
 msgid ""
 "**11.1.** If the data commits before a separate receipt update, a crash "
 "between them leaves the old receipt and a retry can apply the effect "
@@ -617,7 +617,7 @@ msgstr ""
 "(atomic) ट्रांज़ैक्शन दोनों अंतराल हटा देता है। ट्रांज़ैक्शन की पावती खो "
 "जाने पर फिर भी रखा गया रीट्राई चाहिए।"
 
-#: ../../solutions.rst:93
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:93
 msgid ""
 "**11.2.** ``ip_rules: {\"10.20.0.0/16\": \"ALLOW\"}`` (or an "
 "``ip_reputation`` row with score 100) admits staging; a rule ``{\"name\": "
@@ -641,11 +641,11 @@ msgstr ""
 "डेमन सीमा (``--rate-limit``, ``--rate-window``) के बाद, इसलिए उस सीमा को "
 "कम से कम उतना ही उदार होना चाहिए।"
 
-#: ../../solutions.rst:95
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:95
 msgid "Part XII: Reference"
 msgstr "भाग XII: संदर्भ"
 
-#: ../../solutions.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:98
 msgid ""
 "**12.1.** The challenge record carries the keyed fingerprint of the "
 "address that fetched it; the solution arrives from a new address, so "
@@ -663,11 +663,11 @@ msgstr ""
 "चैलेंज लाएँ और फिर से हल करें, क्योंकि पहले किया गया कार्य स्थानांतरित "
 "नहीं किया जा सकता।"
 
-#: ../../solutions.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:100
 msgid "Continue the Investigation"
 msgstr "जाँच जारी रखें"
 
-#: ../../solutions.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/solutions.rst:103
 msgid ""
 "Change one invariant at a time in a disposable test. Remove the snapshot "
 "recheck, omit the incident receipt, or round the rate interval downward. "

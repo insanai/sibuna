@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../glossary.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:1
 msgid "Glossary"
 msgstr "术语表"
 
-#: ../../glossary.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:6
 msgid "Admin socket"
 msgstr "管理套接字（Admin socket）"
 
-#: ../../glossary.rst:7
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:7
 msgid ""
 "A Unix socket of mode 0600, named by ``global.admin_socket`` or ``sibuna "
 "lb --admin``, that takes one command line at a time from ``sibuna ctl``: "
@@ -36,11 +36,11 @@ msgstr ""
 "指定，每次从 ``sibuna ctl`` 接收一行命令：查看服务器、排空、设置权重、添加或删除服务器、解除封禁、重新加载。没有用于管理的 TCP "
 "监听器（SID 0018）。"
 
-#: ../../glossary.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:9
 msgid "Admission"
 msgstr "准入（Admission）"
 
-#: ../../glossary.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:10
 msgid ""
 "The decision to forward a request to the origin. In Sibuna it is made by "
 "a valid session, an ``ALLOW`` rule, a static bypass path, or a reputation "
@@ -49,11 +49,11 @@ msgstr ""
 "决定把请求转发给源站。在 Sibuna 中，准入由有效会话、``ALLOW`` 规则、静态绕过路径或信誉 ``allow`` "
 "前缀作出，并且绝不推翻 WAF 的拒绝。"
 
-#: ../../glossary.rst:12
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:12
 msgid "Affinity"
 msgstr "会话保持（Affinity）"
 
-#: ../../glossary.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:13
 msgid ""
 "The rule that sends the flows of one client to one server: by a cookie, "
 "by the source address, or by a sticky table. It gives way when the server "
@@ -62,11 +62,11 @@ msgstr ""
 "把同一个客户端的流发往同一台服务器的规则：按 Cookie、按源地址，或按粘性表。当服务器宕机、已满、被剔除或被排空时，它会让步（SID "
 "0019，SID 0025）。"
 
-#: ../../glossary.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:15
 msgid "Aho-Corasick automaton"
 msgstr "Aho-Corasick 自动机"
 
-#: ../../glossary.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:16
 msgid ""
 "A finite automaton that finds any of a fixed set of patterns in one pass "
 "over the input. Sibuna folds failure links into a dense transition table "
@@ -74,11 +74,11 @@ msgid ""
 msgstr ""
 "一种有限自动机，只需遍历输入一次，就能找到固定模式集合中的任意模式。Sibuna 把失败链接折叠进稠密转移表，使每个字节只需一次表读取。"
 
-#: ../../glossary.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:18
 msgid "Authority"
 msgstr "权威（Authority）"
 
-#: ../../glossary.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:19
 msgid ""
 "In the edge, the database that owns the published topology in persistent "
 "mode: ``frontends``, ``backends`` and ``http``. Each node follows its "
@@ -89,11 +89,11 @@ msgstr ""
 "``http``。每个节点跟随其头部修订版本，并把它与自己的文件组合，后者保留 "
 "``global``、``mesh``、``observability`` 和 ``authority``\\ （SID 0028）。"
 
-#: ../../glossary.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:21
 msgid "Backend"
 msgstr "后端（Backend）"
 
-#: ../../glossary.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:22
 msgid ""
 "A pool of servers of one protocol, with its scheduler, health check, "
 "timeouts and stickiness. The word follows HAProxy; *pool* names the same "
@@ -102,11 +102,11 @@ msgstr ""
 "同一种协议的一个服务器池，带有调度器、健康检查、超时和粘性设置。这个词沿用 HAProxy 的用法；\\ *服务器池*\\ "
 "（pool）指的是同一个东西。"
 
-#: ../../glossary.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:24
 msgid "Ban table"
 msgstr "封禁表"
 
-#: ../../glossary.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:25
 msgid ""
 "Lock-free slots of banned client addresses with expiry, 65,536 by default "
 "(``--ban-table-slots``), written by the honeypot, by rule quotas, by "
@@ -116,11 +116,11 @@ msgstr ""
 "无锁槽，保存被封禁的客户端地址及其过期时间，默认 65,536 "
 "个（``--ban-table-slots``）；由蜜罐、规则配额、集群共享的信誉写入，在边缘中还由网格写入；每个请求都会读取。"
 
-#: ../../glossary.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:27
 msgid "Breaker"
 msgstr "熔断器（Breaker）"
 
-#: ../../glossary.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:28
 msgid ""
 "The circuit breaker of an agent plugin. It opens after ``failures`` "
 "failures in a row and stays open for ``open``; while it is open a call "
@@ -129,22 +129,22 @@ msgstr ""
 "代理（agent）插件的熔断器。连续 ``failures`` 次失败后它断开，并保持断开 ``open`` 的时间；断开期间，调用立即以结果 "
 "``unavailable`` 失败（SID 0030）。"
 
-#: ../../glossary.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:30
 msgid "Campaign"
 msgstr "攻击活动（Campaign）"
 
-#: ../../glossary.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:31
 msgid ""
 "A cluster of security incidents whose payload embeddings lie within "
 "cosine distance 0.35 of one another; a heuristic grouping, not a proof of "
 "common origin."
 msgstr "一组安全事件，它们的载荷嵌入向量彼此之间的余弦距离不超过 0.35；这是一种启发式分组，并不能证明来源相同。"
 
-#: ../../glossary.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:33
 msgid "Challenge record"
 msgstr "挑战记录"
 
-#: ../../glossary.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:34
 msgid ""
 "The 70-character stateless identifier a client must solve: version, "
 "algorithm, difficulty, openings, issue time, client fingerprint, PRF "
@@ -154,11 +154,11 @@ msgstr ""
 "客户端必须求解的 70 字符无状态标识符：版本、算法、难度、揭示数、签发时间、客户端指纹、PRF nonce、规则哈希，以及 16 字节的带密钥 "
 "BLAKE3 标签。签发挑战记录不会在服务器上写入任何内容。"
 
-#: ../../glossary.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:36
 msgid "ClientHello inspection"
 msgstr "ClientHello 检查"
 
-#: ../../glossary.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:37
 msgid ""
 "On a ``tcp`` frontend with ``tcp_inspect``, reading the first TLS record "
 "of a connection without terminating TLS, to route or refuse it by server "
@@ -170,21 +170,21 @@ msgstr ""
 "记录，以便按服务器名称、ALPN 或 JA4 路由或拒绝它。在 ``inspect_bytes`` 内没有发送完整 ClientHello "
 "的连接采用配置的后备动作（SID 0015，SID 0032）。"
 
-#: ../../glossary.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:39
 msgid "Difficulty, work bits"
 msgstr "难度，工作比特"
 
-#: ../../glossary.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:40
 msgid ""
 "The single integer that scales both tiers: the number of leading zero "
 "bits for Hashcash, or three more than the tree depth for sequential work."
 msgstr "同时缩放两层证明的那个整数：对 Hashcash 而言是前导零比特数，对顺序工作量而言是树深度加三。"
 
-#: ../../glossary.rst:42
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:42
 msgid "Drain"
 msgstr "排空（Drain）"
 
-#: ../../glossary.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:43
 msgid ""
 "The state of a server that takes no new flow and keeps its established "
 "ones. ``set server POOL/NAME state drain`` sets it, a reload keeps it, "
@@ -194,11 +194,11 @@ msgstr ""
 "服务器不接受新流、但保留已建立的流的状态。``set server POOL/NAME state drain`` "
 "设置这一状态，重新加载会保留它，重启会结束它。节点在关闭时整体排空，此时就绪检查回答 503。"
 
-#: ../../glossary.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:45
 msgid "Edge"
 msgstr "Edge"
 
-#: ../../glossary.rst:46
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:46
 msgid ""
 "A Sibuna deployment with ``--data-dir`` (a SQLite file on one node), or "
 "with ``--database-url`` and ``--cluster-node`` (one PostgreSQL database "
@@ -209,11 +209,11 @@ msgstr ""
 "``--cluster-node``\\ （由集群共享的一个 PostgreSQL 数据库）的 Sibuna "
 "部署，为任一形态提供持久策略、共享信誉和事件取证。"
 
-#: ../../glossary.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:48
 msgid "Edge mode"
 msgstr "边缘模式（Edge mode）"
 
-#: ../../glossary.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:49
 msgid ""
 "The daemon started with ``--config-file``. It forwards TCP and UDP, "
 "terminates TLS, HTTP/2 and HTTP/3, and routes HTTP requests to server "
@@ -223,11 +223,11 @@ msgstr ""
 "以 ``--config-file`` 启动的守护进程。它转发 TCP 和 UDP，终止 TLS、HTTP/2 和 HTTP/3，并把 HTTP "
 "请求路由到服务器池，在要求防火墙的路由上启用防火墙。它与上文存储意义上的 *Edge* 无关。"
 
-#: ../../glossary.rst:51
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:51
 msgid "Engine slot"
 msgstr "引擎槽"
 
-#: ../../glossary.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:52
 msgid ""
 "The place where the published policy engine lives, as a reference-counted "
 "pointer. Workers hold a reference while classifying; the storage thread "
@@ -237,21 +237,21 @@ msgstr ""
 "已发布的策略引擎所在的位置，形式为一个引用计数指针。worker "
 "在分类期间持有一个引用；存储线程在请求路径之外构建新引擎，并通过交换指针发布它，旧引擎在最后一个读者释放它时被回收。"
 
-#: ../../glossary.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:54
 msgid "Fingerprint"
 msgstr "指纹"
 
-#: ../../glossary.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:55
 msgid ""
 "A keyed hash of client address and User-Agent, bound into challenges and "
 "tokens so neither can be replayed from another client."
 msgstr "客户端地址和 User-Agent 的带密钥哈希，绑定进挑战和令牌中，使两者都无法从另一个客户端重放。"
 
-#: ../../glossary.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:57
 msgid "Fleet cap"
 msgstr "集群上限（Fleet cap）"
 
-#: ../../glossary.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:58
 msgid ""
 "The ``max_flows`` of a server bounding the flows of all nodes of a mesh "
 "together, with ``max_flows_scope: \"fleet\"``. Each node holds a share of "
@@ -261,22 +261,22 @@ msgstr ""
 "在 ``max_flows_scope: \"fleet\"`` 下，服务器的 ``max_flows`` "
 "约束网格中所有节点的流之和。每个节点持有限制的一个份额，未使用的份额会转移到拥有流的节点（SID 0025）。"
 
-#: ../../glossary.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:60
 msgid "Flow"
 msgstr "流（Flow）"
 
-#: ../../glossary.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:61
 msgid ""
 "One unit of work of the edge that holds a slot of ``global.max_flows``: a "
 "TCP connection, a UDP mapping, or an HTTP connection."
 msgstr ""
 "边缘的一个工作单位，占用 ``global.max_flows`` 中的一个槽位：一个 TCP 连接、一个 UDP 映射或一个 HTTP 连接。"
 
-#: ../../glossary.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:63
 msgid "Forward auth"
 msgstr "Forward auth"
 
-#: ../../glossary.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:64
 msgid ""
 "Deployment mode in which an ingress asks Sibuna whether to admit a "
 "request (``200``) or challenge, deny, or limit it (``401``, ``403``, "
@@ -285,31 +285,31 @@ msgstr ""
 "一种部署模式：入口代理询问 Sibuna "
 "是准入请求（``200``），还是挑战、拒绝或限制它（``401``、``403``、``429``），并自行代理源站。"
 
-#: ../../glossary.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:66
 msgid "Frontend"
 msgstr "前端（Frontend）"
 
-#: ../../glossary.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:67
 msgid ""
 "A named set of listening addresses of one protocol, ``tcp``, ``udp`` or "
 "``http``, with its routes, its limits and its default backend."
 msgstr "同一种协议（``tcp``、``udp`` 或 ``http``）的一组具名监听地址，带有其路由、限制和默认后端。"
 
-#: ../../glossary.rst:69
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:69
 msgid "Gate"
 msgstr "Gate"
 
-#: ../../glossary.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:70
 msgid ""
 "The surface with proof-of-work admission, sessions, rules, reputation, "
 "GCRA limits and bans, but no application inspection (``--gate``)."
 msgstr "具备工作量证明准入、会话、规则、信誉、GCRA 限制和封禁，但没有应用检查的形态（``--gate``）。"
 
-#: ../../glossary.rst:72
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:72
 msgid "GCRA"
 msgstr "GCRA"
 
-#: ../../glossary.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:73
 msgid ""
 "The Generic Cell Rate Algorithm: one theoretical arrival time per client "
 "that admits a burst of :math:`N` then one request per emission interval, "
@@ -318,11 +318,11 @@ msgstr ""
 "通用信元速率算法（Generic Cell Rate Algorithm）：每个客户端保存一个理论到达时间，允许 :math:`N` "
 "个请求的突发，此后每个发射间隔允许一个请求，没有窗口边界。"
 
-#: ../../glossary.rst:75
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:75
 msgid "Handoff"
 msgstr "交接（Handoff）"
 
-#: ../../glossary.rst:76
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:76
 msgid ""
 "The replacement of a running edge binary with ``global.upgrade_socket``: "
 "the old process passes its listening sockets and its live UDP mappings to "
@@ -332,11 +332,11 @@ msgstr ""
 "用 ``global.upgrade_socket`` 替换正在运行的边缘二进制程序：旧进程通过 Unix 套接字把监听套接字和活动的 UDP "
 "映射传递给新进程，然后排空它的 TCP 流。仅限 Linux（SID 0029）。"
 
-#: ../../glossary.rst:78
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:78
 msgid "Hashcash"
 msgstr "Hashcash"
 
-#: ../../glossary.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:79
 msgid ""
 "Tier One: find a nonce such that SHA-256 of the challenge, a colon, and "
 "the decimal nonce has :math:`b` leading zero bits. Expected :math:`2^b` "
@@ -345,22 +345,22 @@ msgstr ""
 "第一层：寻找一个 nonce，使挑战、一个冒号和十进制 nonce 拼接后的 SHA-256 具有 :math:`b` 个前导零比特。期望尝试 "
 ":math:`2^b` 次，验证只需一次哈希。"
 
-#: ../../glossary.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:81
 msgid "Honeypot"
 msgstr "蜜罐"
 
-#: ../../glossary.rst:82
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:82
 msgid ""
 "An invisible link to ``/__sibuna/honeypot``; a client that follows it is "
 "banned and an incident with reputation :math:`-100` is recorded."
 msgstr ""
 "一个指向 ``/__sibuna/honeypot`` 的不可见链接；访问它的客户端会被封禁，并记录一条信誉为 :math:`-100` 的事件。"
 
-#: ../../glossary.rst:84
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:84
 msgid "Hook"
 msgstr "钩子（Hook）"
 
-#: ../../glossary.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:85
 msgid ""
 "A decision of the operator's own on the path of the edge, run by a plugin "
 "at the stage ``connection``, ``request`` or ``telemetry``. A plugin is "
@@ -370,31 +370,31 @@ msgstr ""
 "运维人员自己在边缘路径上加入的决策，由插件在 ``connection``、``request`` 或 ``telemetry`` "
 "阶段运行。插件可以是原生 Rust、计量的 WebAssembly 模块，或另一个进程中的代理（SID 0030）。"
 
-#: ../../glossary.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:87
 msgid "Idle reaper"
 msgstr "空闲回收器"
 
-#: ../../glossary.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:88
 msgid ""
 "A thread that closes connections that have been silent longer than "
 "``--idle-timeout``, so a slow client cannot pin a connection thread."
 msgstr "一个线程，关闭静默时间超过 ``--idle-timeout`` 的连接，使慢速客户端无法占住连接线程。"
 
-#: ../../glossary.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:90
 msgid "Interstitial"
 msgstr "验证中间页"
 
-#: ../../glossary.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:91
 msgid ""
 "The embedded HTML page served in place of a protected page; it fetches a "
 "challenge, solves it in a Web Worker, posts the solution, and reloads."
 msgstr "代替受保护页面提供的嵌入式 HTML 页面；它获取挑战，在 Web Worker 中求解，提交解答，然后重新加载。"
 
-#: ../../glossary.rst:93
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:93
 msgid "JA4"
 msgstr "JA4"
 
-#: ../../glossary.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:94
 msgid ""
 "A 36-character fingerprint, defined by FoxIO, of how a client opens a TLS "
 "connection: protocol, TLS version, server name, cipher and extension "
@@ -409,31 +409,31 @@ msgstr ""
 "``--ja4-header`` 所指定的请求头中转发的值，规则用 ``ja4`` 字段匹配它（SID "
 "0014）。它与绑定进挑战和令牌中的客户端指纹无关。"
 
-#: ../../glossary.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:96
 msgid "Judge"
 msgstr "评判线程（Judge）"
 
-#: ../../glossary.rst:97
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:97
 msgid ""
 "A thread that decides a parked connection whose chain of hooks names an "
 "agent, so that the edge worker never waits for the agent (SID 0030)."
 msgstr "一个线程，为调用链中包含代理的暂存连接作出决定，使边缘 worker 永远不必等待代理（SID 0030）。"
 
-#: ../../glossary.rst:99
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:99
 msgid "Keyed BLAKE3"
 msgstr "带密钥 BLAKE3"
 
-#: ../../glossary.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:100
 msgid ""
 "The pseudorandom function behind Sibuna's key schedule, challenge tags, "
 "session tags, fingerprints, and challenge nonces."
 msgstr "Sibuna 的密钥派生、挑战标签、会话标签、指纹和挑战 nonce 背后的伪随机函数。"
 
-#: ../../glossary.rst:102
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:102
 msgid "Local authority"
 msgstr "本地证书颁发机构（Local authority）"
 
-#: ../../glossary.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:103
 msgid ""
 "The certificate authority that the edge runs itself for internal names. "
 "It keeps a root and an intermediate in the storage of automatic HTTPS, "
@@ -443,11 +443,11 @@ msgstr ""
 "边缘为内部名称自己运行的证书颁发机构。它在自动 HTTPS 的存储中保存一个根证书和一个中间证书，写入吊销列表，并可以作为 ACME "
 "服务器为其他机器提供服务（SID 0021）。"
 
-#: ../../glossary.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:105
 msgid "MAC token"
 msgstr "MAC 令牌"
 
-#: ../../glossary.rst:106
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:106
 msgid ""
 "The default session cookie: a 40-byte payload (version, work level, "
 "timestamp, expiry, rule hash, fingerprint) and a 16-byte keyed BLAKE3 "
@@ -456,11 +456,11 @@ msgstr ""
 "默认的会话 Cookie：40 字节的载荷（版本、工作等级、时间戳、过期时间、规则哈希、指纹）加上 16 字节的带密钥 BLAKE3 "
 "标签，以常量时间验证。"
 
-#: ../../glossary.rst:108
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:108
 msgid "Maglev"
 msgstr "Maglev"
 
-#: ../../glossary.rst:109
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:109
 msgid ""
 "A consistent-hash table of a prime number of slots (65,537 in Sibuna), "
 "filled by permutations of the servers, that places a client on a server "
@@ -472,11 +472,11 @@ msgstr ""
 "等，NSDI 2016）。Sibuna 构建加权表，并把所选服务器的负载限制在某个倍数以内（``bounded_maglev``，SID "
 "0015）。"
 
-#: ../../glossary.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:111
 msgid "Mesh"
 msgstr "网格（Mesh）"
 
-#: ../../glossary.rst:112
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:112
 msgid ""
 "The nodes of an edge cluster, listed in the ``mesh`` section with a "
 "shared key. They probe each other over UDP every half second and share "
@@ -487,54 +487,54 @@ msgstr ""
 "边缘集群的节点，与一个共享密钥一起列在 ``mesh`` 部分中。它们每半秒通过 UDP 相互探测，共享封禁、命令、粘性表和集群上限的份额；使用 "
 "``forward`` 时，它们还把流发送给其所有者。至多 64 个节点（SID 0022 至 SID 0026）。"
 
-#: ../../glossary.rst:114
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:114
 msgid "Node"
 msgstr "节点（Node）"
 
-#: ../../glossary.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:115
 msgid ""
 "One edge process in a mesh, known by its mesh address; in persistent mode "
 "also by the name ``authority.node``."
 msgstr "网格中的一个边缘进程，以其网格地址识别；在持久模式下还以名称 ``authority.node`` 识别。"
 
-#: ../../glossary.rst:117
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:117
 msgid "Work level"
 msgstr "工作等级"
 
-#: ../../glossary.rst:118
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:118
 msgid ""
 "The mechanism and work bits a session's holder actually solved, carried "
 "in the token; a route admits a session only when its level reaches the "
 "route's requirement."
 msgstr "会话持有者实际求解的机制和工作比特，保存在令牌中；只有当会话的等级达到路由的要求时，该路由才准入这个会话。"
 
-#: ../../glossary.rst:120
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:120
 msgid "Opening"
 msgstr "揭示（Opening）"
 
-#: ../../glossary.rst:121
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:121
 msgid ""
 "In a sequential-work proof, one leaf label plus the sibling labels along "
 "its path to the root; the verifier recomputes the path and compares with "
 "the commitment."
 msgstr "在顺序工作量证明中，一个叶子标签加上它通往根的路径上的兄弟标签；验证者重新计算这条路径，并与承诺比较。"
 
-#: ../../glossary.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:123
 msgid "Owner"
 msgstr "所有者（Owner）"
 
-#: ../../glossary.rst:124
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:124
 msgid ""
 "The node of a mesh that serves a client under peer forwarding: the live "
 "node with the largest rendezvous score for the client's address (SID "
 "0026)."
 msgstr "在对等转发下为客户端提供服务的网格节点：对该客户端地址具有最大 rendezvous 得分的存活节点（SID 0026）。"
 
-#: ../../glossary.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:126
 msgid "Passive health"
 msgstr "被动健康检查（Passive health）"
 
-#: ../../glossary.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:127
 msgid ""
 "Ejecting a server for ``ejection`` after ``failures`` consecutive "
 "failures of real requests, while another server can serve (SID 0019)."
@@ -542,11 +542,11 @@ msgstr ""
 "在另一台服务器可以提供服务时，于真实请求连续失败 ``failures`` 次之后，把一台服务器剔除 ``ejection`` 的时间（SID "
 "0019）。"
 
-#: ../../glossary.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:129
 msgid "Passthrough"
 msgstr "透传（Passthrough）"
 
-#: ../../glossary.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:130
 msgid ""
 "Relaying the bytes of a TLS or QUIC connection to a server without "
 "terminating it. The edge may still read the ClientHello, or validate QUIC "
@@ -555,11 +555,11 @@ msgstr ""
 "把 TLS 或 QUIC 连接的字节中继给服务器而不终止它。边缘仍然可以读取 ClientHello，或通过连接 ID 验证 QUIC（SID "
 "0032）。"
 
-#: ../../glossary.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:132
 msgid "Peer forwarding"
 msgstr "对等转发（Peer forwarding）"
 
-#: ../../glossary.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:133
 msgid ""
 "The mesh feature that hands a new connection or UDP client to the node "
 "that owns the client, so that its sticky server, rate counters and UDP "
@@ -569,19 +569,19 @@ msgstr ""
 "网格的一项功能：把新的连接或 UDP 客户端交给拥有该客户端的节点，使它的粘性服务器、速率计数器和 UDP "
 "会话保持在一个节点上。被网络转移的已建立 TCP 连接不会被修复（SID 0026）。"
 
-#: ../../glossary.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:135
 msgid "Pool"
 msgstr "服务器池（Pool）"
 
-#: ../../glossary.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:136
 msgid "See *Backend*."
 msgstr "见\\ *后端*\\ 。"
 
-#: ../../glossary.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:138
 msgid "Proof of Sequential Work (PoSW)"
 msgstr "顺序工作量证明（PoSW）"
 
-#: ../../glossary.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:139
 msgid ""
 "Tier Two: the Cohen-Pietrzak hash graph whose labels depend on all "
 "earlier labels, forcing :math:`2^{n+1}-1` sequential hashes however many "
@@ -590,11 +590,11 @@ msgstr ""
 "第二层：Cohen-Pietrzak 哈希图，其中每个标签都依赖于之前的所有标签，无论证明者有多少个核心，都必须完成 "
 ":math:`2^{n+1}-1` 次顺序哈希。验证需要 :math:`t(n+1)` 次哈希。"
 
-#: ../../glossary.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:141
 msgid "Regime"
 msgstr "模式（Regime）"
 
-#: ../../glossary.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:142
 msgid ""
 "The routing mode of a mesh, chosen from the 95th percentile of the round "
 "trip to the peers: *standalone* without a live peer, *regional* while the "
@@ -606,11 +606,11 @@ msgstr ""
 "ms 及以下时为\\ *区域*\\ （regional），高于 3 ms 时为\\ *广域*\\ （wide-area）。网格只有在低于 1.5 "
 "ms 时才从广域返回区域（``crates/lb/src/mesh.rs`` 中的 ``Regime::step``）。"
 
-#: ../../glossary.rst:144
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:144
 msgid "Rendezvous hashing"
 msgstr "rendezvous 哈希（Rendezvous hashing）"
 
-#: ../../glossary.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:145
 msgid ""
 "Highest-random-weight hashing (Thaler and Ravishankar, 1998): each "
 "candidate gets a score from a hash of its name and the key, and the "
@@ -622,11 +622,11 @@ msgstr ""
 "Ravishankar，1998）：每个候选者根据其名称和键的哈希得到一个得分，得分最高者胜出。失去一个候选者只会迁移它自己的键。Sibuna "
 "把它用于源地址粘性（SID 0019）和客户端的所有者（SID 0026）。"
 
-#: ../../glossary.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:147
 msgid "Reputation trie"
 msgstr "信誉字典树"
 
-#: ../../glossary.rst:148
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:148
 msgid ""
 "The 128-bit radix trie holding ``allow``, ``deny``, and ``challenge`` "
 "prefixes from the policy file and from the ``ip_reputation`` table."
@@ -634,11 +634,11 @@ msgstr ""
 "128 位基数字典树，保存来自策略文件和 ``ip_reputation`` 表的 ``allow``、``deny`` 和 "
 "``challenge`` 前缀。"
 
-#: ../../glossary.rst:150
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:150
 msgid "Revision"
 msgstr "修订版本（Revision）"
 
-#: ../../glossary.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:151
 msgid ""
 "In the edge, one published state of the topology. With a file it is the "
 "digest of the file; with a database it is a number that only grows, and a "
@@ -646,68 +646,68 @@ msgid ""
 msgstr ""
 "在边缘中，拓扑的一个已发布状态。使用文件时，它是文件的摘要；使用数据库时，它是一个只增不减的数字，回滚也是一个新的修订版本（SID 0028）。"
 
-#: ../../glossary.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:153
 msgid "Robin Hood spent set"
 msgstr "Robin Hood 已用集合"
 
-#: ../../glossary.rst:154
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:154
 msgid ""
 "The fixed-capacity open-addressed table of solved challenge tags, which "
 "prevents a valid solution from being submitted twice."
 msgstr "固定容量的开放寻址表，保存已求解的挑战标签，防止同一个有效解答被提交两次。"
 
-#: ../../glossary.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:156
 msgid "Route"
 msgstr "路由（Route）"
 
-#: ../../glossary.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:157
 msgid ""
 "A rule of an HTTP frontend that selects a backend by host name and path "
 "prefix, and may switch the firewall off or on for its requests."
 msgstr "HTTP 前端的一条规则，按主机名和路径前缀选择后端，并可以为其请求关闭或开启防火墙。"
 
-#: ../../glossary.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:159
 msgid "Rule hash"
 msgstr "规则哈希"
 
-#: ../../glossary.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:160
 msgid ""
 "A 64-bit hash of the rule name that demanded a challenge, carried in the "
 "challenge, the token, and the ``X-Sibuna-Rule-Hash`` header."
 msgstr "要求挑战的规则名称的 64 位哈希，携带在挑战、令牌和 ``X-Sibuna-Rule-Hash`` 请求头中。"
 
-#: ../../glossary.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:162
 msgid "Server"
 msgstr "服务器（Server）"
 
-#: ../../glossary.rst:163
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:163
 msgid ""
 "One address of a pool, with a name, a weight and an optional "
 "``max_flows``. ``sibuna ctl`` addresses it as ``POOL/NAME``."
 msgstr ""
 "服务器池中的一个地址，带有名称、权重和可选的 ``max_flows``。``sibuna ctl`` 以 ``POOL/NAME`` 指称它。"
 
-#: ../../glossary.rst:165
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:165
 msgid "Share"
 msgstr "份额（Share）"
 
-#: ../../glossary.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:166
 msgid "The part of a fleet cap that one node may hold now (SID 0025)."
 msgstr "集群上限中一个节点此刻可以持有的部分（SID 0025）。"
 
-#: ../../glossary.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:168
 msgid "Shield"
 msgstr "Shield"
 
-#: ../../glossary.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:169
 msgid "The default surface: Gate plus the semantic firewall (``--shield``)."
 msgstr "默认的形态：Gate 加上语义防火墙（``--shield``）。"
 
-#: ../../glossary.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:171
 msgid "SID"
 msgstr "SID"
 
-#: ../../glossary.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:172
 msgid ""
 "A Sibuna Discussion record: a paper-style design document under "
 "``docs/sid/records`` with the assumptions, proofs, and measurements "
@@ -716,11 +716,11 @@ msgstr ""
 "Sibuna 讨论（Sibuna Discussion）记录：位于 ``docs/sid/records`` "
 "下的论文式设计文档，记录系统某一部分背后的假设、证明和测量。"
 
-#: ../../glossary.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:174
 msgid "Slow start"
 msgstr "慢启动（Slow start）"
 
-#: ../../glossary.rst:175
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:175
 msgid ""
 "The ramp of ``slow_start`` during which a server that entered service "
 "takes a weight that grows in proportion to the time, so that a cold "
@@ -728,11 +728,11 @@ msgid ""
 msgstr ""
 "``slow_start`` 的爬升期，在此期间刚进入服务的服务器所取的权重与时间成正比增长，使冷服务器不会被流量淹没（SID 0019）。"
 
-#: ../../glossary.rst:177
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:177
 msgid "Spill cache"
 msgstr "溢出缓存（Spill cache）"
 
-#: ../../glossary.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:178
 msgid ""
 "A file mapped into memory under the sticky table that keeps the hints of "
 "clients that left memory, and keeps them over a restart. Admission to it "
@@ -740,11 +740,11 @@ msgid ""
 msgstr ""
 "映射到内存中、位于粘性表之下的一个文件，保存已离开内存的客户端的提示，并在重启后保留它们。它的准入遵循 TinyLFU（SID 0027）。"
 
-#: ../../glossary.rst:180
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:180
 msgid "Sticky table"
 msgstr "粘性表（Sticky table）"
 
-#: ../../glossary.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:181
 msgid ""
 "The table of a pool with ``sticky: \"table\"`` that remembers the server "
 "of each client, by source address or by cookie, for ``ttl`` after the "
@@ -753,32 +753,32 @@ msgstr ""
 "带 ``sticky: \"table\"`` 的服务器池的表，按源地址或 Cookie 记住每个客户端的服务器，在最后一次使用后保留 "
 "``ttl`` 的时间。网格复制这张表，较晚的选择胜出（SID 0025）。"
 
-#: ../../glossary.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:183
 msgid "Surface"
 msgstr "形态（Surface）"
 
-#: ../../glossary.rst:184
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:184
 msgid ""
 "One of the two product shapes, Gate or Shield; storage and clustering are "
 "options for either."
 msgstr "两种产品形态之一，即 Gate 或 Shield；存储和集群是两者都可选用的选项。"
 
-#: ../../glossary.rst:186
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:186
 msgid "WEIGH"
 msgstr "WEIGH"
 
-#: ../../glossary.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:187
 msgid ""
 "A rule action that adds a signed weight to a request's score instead of "
 "deciding; totals at or above the thresholds challenge with extra work "
 "bits or deny."
 msgstr "一种规则动作，它不直接作出决定，而是给请求的分数加上一个有符号的权重；总分达到或超过阈值时，以额外的工作比特发起挑战或拒绝请求。"
 
-#: ../../glossary.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:189
 msgid "Worker"
 msgstr "worker"
 
-#: ../../glossary.rst:190
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:190
 msgid ""
 "In the edge, a thread that serves traffic. The edge worker accepts for "
 "every frontend and owns the flow table and the UDP mappings; relay "
@@ -788,11 +788,11 @@ msgstr ""
 "在边缘中，服务流量的线程。边缘 worker 为每个前端接受连接，并拥有流表和 UDP 映射；中继线程承载 TCP 流；在 Linux "
 "上，事件驱动的 HTTP worker（每个处理器一个）服务 HTTP 连接（SID 0015，SID 0016）。"
 
-#: ../../glossary.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:192
 msgid "Zaxonlite"
 msgstr "Zaxonlite"
 
-#: ../../glossary.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:193
 msgid ""
 "The embedded SQLite replication engine (Multi-Paxos) of SID 0005, "
 "replaced by SQLite and PostgreSQL storage in SID 0011; its cluster "
@@ -801,11 +801,11 @@ msgstr ""
 "SID 0005 中的嵌入式 SQLite 复制引擎（Multi-Paxos），在 SID 0011 中被 SQLite 和 PostgreSQL "
 "存储取代；它的集群选项现在会以 ``RemovedOption`` 终止启动。"
 
-#: ../../glossary.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:195
 msgid "Bibliography"
 msgstr "参考文献"
 
-#: ../../glossary.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:198
 msgid ""
 "Aho, A. V., and Corasick, M. J. \"Efficient string matching: an aid to "
 "bibliographic search.\" *Communications of the ACM* 18(6), 1975."
@@ -813,7 +813,7 @@ msgstr ""
 "Aho, A. V., and Corasick, M. J. \"Efficient string matching: an aid to "
 "bibliographic search.\" *Communications of the ACM* 18(6), 1975."
 
-#: ../../glossary.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:199
 msgid ""
 "ATM Forum. *Traffic Management Specification Version 4.0*, "
 "af-tm-0056.000, 1996 (the Generic Cell Rate Algorithm)."
@@ -821,7 +821,7 @@ msgstr ""
 "ATM Forum. *Traffic Management Specification Version 4.0*, "
 "af-tm-0056.000, 1996（通用信元速率算法）。"
 
-#: ../../glossary.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:200
 msgid ""
 "Back, A. \"Hashcash: a denial of service counter-measure.\" Technical "
 "report, 2002."
@@ -829,7 +829,7 @@ msgstr ""
 "Back, A. \"Hashcash: a denial of service counter-measure.\" Technical "
 "report, 2002."
 
-#: ../../glossary.rst:201
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:201
 msgid ""
 "Blocki, J., Lee, S., and Zhou, S. \"On the security of proofs of "
 "sequential work in a post-quantum world.\" *Information-Theoretic "
@@ -839,13 +839,13 @@ msgstr ""
 "sequential work in a post-quantum world.\" *Information-Theoretic "
 "Cryptography (ITC)*, 2021."
 
-#: ../../glossary.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:202
 msgid ""
 "Celis, P. *Robin Hood Hashing*. PhD thesis, University of Waterloo, 1986."
 msgstr ""
 "Celis, P. *Robin Hood Hashing*. PhD thesis, University of Waterloo, 1986."
 
-#: ../../glossary.rst:203
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:203
 msgid ""
 "Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
 "*EUROCRYPT*, 2018."
@@ -853,7 +853,7 @@ msgstr ""
 "Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
 "*EUROCRYPT*, 2018."
 
-#: ../../glossary.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:204
 msgid ""
 "Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
 "mail.\" *CRYPTO*, 1992."
@@ -861,7 +861,7 @@ msgstr ""
 "Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
 "mail.\" *CRYPTO*, 1992."
 
-#: ../../glossary.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:205
 msgid ""
 "Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
 "identification and signature problems.\" *CRYPTO*, 1986."
@@ -869,7 +869,7 @@ msgstr ""
 "Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
 "identification and signature problems.\" *CRYPTO*, 1986."
 
-#: ../../glossary.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:206
 msgid ""
 "Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110, "
 "and *HTTP/1.1*, RFC 9112. IETF, 2022."
@@ -877,7 +877,7 @@ msgstr ""
 "Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110, "
 "and *HTTP/1.1*, RFC 9112. IETF, 2022."
 
-#: ../../glossary.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:207
 msgid ""
 "FoxIO. *JA4+ Network Fingerprinting*. https://github.com/FoxIO-LLC/ja4, "
 "2023 (the JA4 TLS client fingerprint)."
@@ -885,13 +885,13 @@ msgstr ""
 "FoxIO. *JA4+ Network Fingerprinting*. https://github.com/FoxIO-LLC/ja4, "
 "2023（JA4 TLS 客户端指纹）。"
 
-#: ../../glossary.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:208
 msgid ""
 "Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
 "cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
 msgstr ""
 
-#: ../../glossary.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:209
 msgid ""
 "Eisenbud, D. E., Yi, C., Contavalli, C., Smith, C., Kononov, R., "
 "Mann-Hielscher, E., Cilingiroglu, A., Cheyney, B., Shang, W., and Hosein, "
@@ -899,7 +899,7 @@ msgid ""
 "*NSDI*, 2016."
 msgstr ""
 
-#: ../../glossary.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:210
 msgid ""
 "Hanson, N. \"libinjection: SQL injection detection by tokenization.\" "
 "Black Hat USA, 2012."
@@ -907,7 +907,7 @@ msgstr ""
 "Hanson, N. \"libinjection: SQL injection detection by tokenization.\" "
 "Black Hat USA, 2012."
 
-#: ../../glossary.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:211
 msgid ""
 "Juels, A., and Brainard, J. \"Client puzzles: a cryptographic "
 "countermeasure against connection depletion attacks.\" *NDSS*, 1999."
@@ -915,7 +915,7 @@ msgstr ""
 "Juels, A., and Brainard, J. \"Client puzzles: a cryptographic "
 "countermeasure against connection depletion attacks.\" *NDSS*, 1999."
 
-#: ../../glossary.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:212
 msgid ""
 "Lamport, L. \"The part-time parliament.\" *ACM Transactions on Computer "
 "Systems* 16(2), 1998; and \"Paxos made simple.\" *ACM SIGACT News* 32(4), "
@@ -925,7 +925,7 @@ msgstr ""
 "Systems* 16(2), 1998; and \"Paxos made simple.\" *ACM SIGACT News* 32(4), "
 "2001."
 
-#: ../../glossary.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:213
 msgid ""
 "Mahmoody, M., Moran, T., and Vadhan, S. \"Publicly verifiable proofs of "
 "sequential work.\" *Innovations in Theoretical Computer Science (ITCS)*, "
@@ -935,13 +935,13 @@ msgstr ""
 "sequential work.\" *Innovations in Theoretical Computer Science (ITCS)*, "
 "2013."
 
-#: ../../glossary.rst:214
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:214
 msgid ""
 "Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
 "bounded loads.\" *SODA*, 2018."
 msgstr ""
 
-#: ../../glossary.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:215
 msgid ""
 "O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
 "one function, fast everywhere*. Specification, 2020."
@@ -949,20 +949,20 @@ msgstr ""
 "O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
 "one function, fast everywhere*. Specification, 2020."
 
-#: ../../glossary.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:216
 msgid ""
 "Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
 "increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
 msgstr ""
 
-#: ../../glossary.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:217
 msgid ""
 "Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, 2011 (the "
 "sequence-stamped ring used for the incident queue)."
 msgstr ""
 "Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, 2011（事件队列所用的带序号环形缓冲区）。"
 
-#: ../../glossary.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:218
 msgid ""
 "Wang, X., Hong, Y., Chang, H., Park, K., Langdale, G., Hu, J., and Zhu, "
 "H. \"Hyperscan: a fast multi-pattern regex matcher for modern CPUs.\" "
@@ -972,7 +972,7 @@ msgstr ""
 "H. \"Hyperscan: a fast multi-pattern regex matcher for modern CPUs.\" "
 "*NSDI*, 2019."
 
-#: ../../glossary.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:219
 msgid ""
 "Sibuna Discussions 0001 to 0032, ``docs/sid/records``, 2026: process, "
 "foundation architecture, declarative policy engine, semantic inspection, "

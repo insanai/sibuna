@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:24+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../prior-art.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:1
 msgid "Part II: Prior Art and the Design Space"
 msgstr "भाग II: पूर्व कार्य और डिज़ाइन का क्षेत्र"
 
-#: ../../prior-art.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:4
 msgid ""
 "We place Sibuna among the systems it learned from: client puzzles and "
 "sequential work from the cryptography literature, signature and semantic "
@@ -39,15 +39,15 @@ msgstr ""
 "हैं कि कौन-से तथ्य जाँचे गए। अंत में हम भाग VIII के एज लोड बैलेंसर को "
 "HAProxy और Envoy के साथ रखते हैं।"
 
-#: ../../prior-art.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:6
 msgid "Where Sibuna Comes From"
 msgstr "Sibuna कहाँ से आता है"
 
-#: ../../prior-art.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:9
 msgid "Objectives"
 msgstr "उद्देश्य"
 
-#: ../../prior-art.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:11
 msgid ""
 "By the end of this chapter, we should be able to trace the lineage of "
 "client puzzles from 1992 to the sequential-work constructions of 2018, "
@@ -65,11 +65,11 @@ msgstr ""
 "HAProxy और Envoy से करना, और बताना कि तुलना के कौन-से दावे सत्यापित किए "
 "गए और कौन-से केवल दस्तावेज़ों से पढ़े गए।"
 
-#: ../../prior-art.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:13
 msgid "Client Puzzles and Sequential Work"
 msgstr "क्लाइंट पहेलियाँ और अनुक्रमिक कार्य"
 
-#: ../../prior-art.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:16
 msgid ""
 "Dwork and Naor's \"Pricing via Processing\" (CRYPTO 1992) proposed that a "
 "service require a moderately hard, easily checked computation before "
@@ -91,7 +91,7 @@ msgstr ""
 "है जो Sibuna बनाए रखता है: सर्वर द्वारा चुना गया स्टेटमेंट, ऐसा समाधान "
 "जिसकी लागत समायोज्य है, और ऐसा सत्यापन जो हल करने से कई गुना सस्ता है।"
 
-#: ../../prior-art.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:18
 msgid ""
 "Hash search is embarrassingly parallel, so a requester with more cores "
 "finishes sooner. Mahmoody, Moran, and Vadhan (CRYPTO 2013) defined proofs "
@@ -113,7 +113,7 @@ msgstr ""
 "क्वांटम प्रूवर के विरुद्ध सुदृढ़ सिद्ध किया। भाग III इसी कार्य-परंपरा से "
 "Sibuna का टियर दो निकालता है; SID 0006 धारणाएँ दर्ज करता है।"
 
-#: ../../prior-art.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:21
 msgid ""
 "A lineage graph. Dwork-Naor 1992 leads to Hashcash 1997, Juels-Brainard "
 "1999, Mahmoody et al. 2013, Cohen-Pietrzak 2018 and Blocki-Lee-Zhou 2021. "
@@ -134,7 +134,7 @@ msgstr ""
 "libinjection, GCRA (ATM Forum 1996), Anubis, SafeLine और Cloudflare से "
 "निकला है।"
 
-#: ../../prior-art.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:21
 msgid ""
 "// prior-art.rst: the lineage of the ideas Sibuna combines. Three "
 "columns, time running\n"
@@ -238,7 +238,7 @@ msgstr ""
 "  main-edge(<systems>, <sibuna>, \"-|>\"),\n"
 ")\n"
 
-#: ../../prior-art.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:21
 msgid ""
 "Lineage of the ideas Sibuna combines. The left column is the cryptography "
 "of client puzzles and sequential work, the right column the algorithms "
@@ -257,11 +257,11 @@ msgstr ""
 "0005) पर आधारित था; अब Sibuna अपनी अवस्था SQLite या PostgreSQL में "
 "संग्रहीत करता है (SID 0011)।"
 
-#: ../../prior-art.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:24
 msgid "Application Firewalls"
 msgstr "एप्लिकेशन फ़ायरवॉल"
 
-#: ../../prior-art.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:27
 msgid ""
 "The first generation of web application firewalls matched request bytes "
 "against regular expressions. ModSecurity (2002) and the OWASP Core Rule "
@@ -291,11 +291,11 @@ msgstr ""
 "एक्सप्रेशन या SIMD इंजन के बजाय सघन ऑटोमेटन और छोटे संरचनात्मक टोकनाइज़र "
 "क्यों चुने।"
 
-#: ../../prior-art.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:29
 msgid "Interstitials and Edges"
 msgstr "इंटरस्टिशियल और edge"
 
-#: ../../prior-art.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:32
 msgid ""
 "The proof-of-work interstitial in front of a website became common in "
 "2025, when scraper traffic feeding language-model training made ordinary "
@@ -315,7 +315,7 @@ msgstr ""
 "के दूसरे टियर से हल करती है; नीचे की तुलना दर्ज करती है कि दोनों कहाँ "
 "भिन्न हैं।"
 
-#: ../../prior-art.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:34
 msgid ""
 "At the other end of the scale, hosted edges such as Cloudflare place "
 "inspection, rate limiting, and bot scoring in hundreds of points of "
@@ -335,11 +335,11 @@ msgstr ""
 "फ़ाइल, क्लस्टर द्वारा साझा एक PostgreSQL डेटाबेस), जिसे अनुरोध पाथ से "
 "बाहर एक स्टोरेज थ्रेड पढ़ता है।"
 
-#: ../../prior-art.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:36
 msgid "Three Ideas in One Binary"
 msgstr "एक बाइनरी में तीन विचार"
 
-#: ../../prior-art.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:39
 msgid ""
 "Sibuna combines a browser work challenge for admission, bounded "
 "application-payload inspection, and a shared control plane that publishes "
@@ -351,71 +351,73 @@ msgstr ""
 "को जोड़ता है। Gate और Shield उत्पाद की दो सतहें हैं; स्टोरेज और वितरित "
 "डिप्लॉयमेंट दोनों के लिए विकल्प हैं।"
 
-#: ../../prior-art.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:45
 msgid "**Property**"
 msgstr "**गुण**"
 
-#: ../../prior-art.rst:46
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:46
 msgid "**Gate**"
 msgstr "**Gate**"
 
-#: ../../prior-art.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:47
 msgid "**Shield**"
 msgstr "**Shield**"
 
-#: ../../prior-art.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:48
 msgid "Admission"
 msgstr "प्रवेश"
 
-#: ../../prior-art.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:49
 msgid "Native Hashcash or sequential-work verification"
 msgstr "नेटिव Hashcash या अनुक्रमिक कार्य का सत्यापन"
 
-#: ../../prior-art.rst:50 ../../prior-art.rst:53 ../../prior-art.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:53
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:56
 msgid "Same"
 msgstr "वही"
 
-#: ../../prior-art.rst:51
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:51
 msgid "Session"
 msgstr "सत्र"
 
-#: ../../prior-art.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:52
 msgid "Keyed BLAKE3; optional Ed25519"
 msgstr "कुंजी-युक्त BLAKE3; वैकल्पिक Ed25519"
 
-#: ../../prior-art.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:54
 msgid "Local controls"
 msgstr "स्थानीय नियंत्रण"
 
-#: ../../prior-art.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:55
 msgid "Rules, CIDRs, GCRA, bans"
 msgstr "नियम, CIDR, GCRA, प्रतिबंध"
 
-#: ../../prior-art.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:57
 msgid "Inspection"
 msgstr "निरीक्षण"
 
-#: ../../prior-art.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:58
 msgid "Disabled"
 msgstr "अक्षम"
 
-#: ../../prior-art.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:59
 msgid "Bounded signatures and structural tokenizers"
 msgstr "सीमित सिग्नेचर और संरचनात्मक टोकनाइज़र"
 
-#: ../../prior-art.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:60
 msgid "State"
 msgstr "अवस्था"
 
-#: ../../prior-art.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:61
 msgid "Optional persistent policy and reputation, shared across a cluster"
 msgstr "वैकल्पिक स्थायी नीति और प्रतिष्ठा, क्लस्टर में साझा"
 
-#: ../../prior-art.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:62
 msgid "Also inspection forensics"
 msgstr "निरीक्षण की फ़ॉरेंसिक जानकारी भी"
 
-#: ../../prior-art.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:64
 msgid ""
 "The browser solver compiles from the same proof sources as the native "
 "verifier. Dense literal matching avoids backtracking and keeps scan work "
@@ -433,11 +435,11 @@ msgstr ""
 "लंबी बॉडी, पैटर्न की विविधता, कोर की संख्या और cache का आकार इन समझौतों "
 "को बदल देते हैं।"
 
-#: ../../prior-art.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:66
 msgid "Design constraints adopted"
 msgstr "अपनाई गई डिज़ाइन शर्तें"
 
-#: ../../prior-art.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:68
 msgid ""
 "No heap allocation on the request path; every table has a fixed capacity "
 "and a stated saturation behaviour."
@@ -445,7 +447,7 @@ msgstr ""
 "अनुरोध पाथ पर कोई हीप आवंटन नहीं; हर टेबल की एक निश्चित क्षमता और भर जाने "
 "पर एक घोषित व्यवहार है।"
 
-#: ../../prior-art.rst:69
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:69
 msgid ""
 "Issuing a challenge writes nothing; only a paid-for solution occupies "
 "memory."
@@ -453,7 +455,7 @@ msgstr ""
 "चैलेंज जारी करने में कुछ भी नहीं लिखा जाता; केवल चुकाया गया समाधान मेमोरी "
 "घेरता है।"
 
-#: ../../prior-art.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:70
 msgid ""
 "A session admits; it never exempts a request from inspection or an "
 "explicit denial."
@@ -461,7 +463,7 @@ msgstr ""
 "सत्र प्रवेश देता है; वह किसी अनुरोध को कभी निरीक्षण या स्पष्ट अस्वीकृति "
 "से छूट नहीं देता।"
 
-#: ../../prior-art.rst:71
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:71
 msgid ""
 "Every claimed number is either measured by a committed harness or "
 "labelled as a model."
@@ -469,7 +471,7 @@ msgstr ""
 "हर दावा की गई संख्या या तो किसी कमिट किए गए हार्नेस से मापी गई है या मॉडल "
 "के रूप में चिह्नित है।"
 
-#: ../../prior-art.rst:72
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:72
 msgid ""
 "Cryptographic choices cite a venue and a proof, and state their quantum "
 "posture."
@@ -477,11 +479,11 @@ msgstr ""
 "क्रिप्टोग्राफ़िक चुनाव किसी प्रकाशन-स्थल और प्रमाण का हवाला देते हैं, और "
 "क्वांटम के प्रति अपनी स्थिति बताते हैं।"
 
-#: ../../prior-art.rst:74
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:74
 msgid "Feature Comparison"
 msgstr "सुविधाओं की तुलना"
 
-#: ../../prior-art.rst:77
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:77
 msgid ""
 "The four tables below compare Sibuna with the three tools most often "
 "mentioned alongside it. Facts about the other products were read from "
@@ -511,40 +513,51 @@ msgstr ""
 "(8.10.0 और 9.2.0) और Cloudflare के पेज \"JA3/JA4 fingerprint\" से मिलाकर "
 "जाँची गई।"
 
-#: ../../prior-art.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:79
 msgid "Feature comparison, part 1: deployment"
 msgstr "सुविधाओं की तुलना, भाग 1: डिप्लॉयमेंट"
 
-#: ../../prior-art.rst:84 ../../prior-art.rst:115 ../../prior-art.rst:156
-#: ../../prior-art.rst:192 ../../prior-art.rst:260
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:84
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:260
 msgid "Feature"
 msgstr "सुविधा"
 
-#: ../../prior-art.rst:85 ../../prior-art.rst:116 ../../prior-art.rst:157
-#: ../../prior-art.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:116
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:193
 msgid "Sibuna"
 msgstr "Sibuna"
 
-#: ../../prior-art.rst:86 ../../prior-art.rst:117 ../../prior-art.rst:158
-#: ../../prior-art.rst:194
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:86
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:117
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:194
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../prior-art.rst:87 ../../prior-art.rst:118 ../../prior-art.rst:159
-#: ../../prior-art.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:118
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:195
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../prior-art.rst:88 ../../prior-art.rst:119 ../../prior-art.rst:160
-#: ../../prior-art.rst:196
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:196
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
-#: ../../prior-art.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:89
 msgid "Runs as"
 msgstr "किस रूप में चलता है"
 
-#: ../../prior-art.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:90
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database; or an edge load balancer with the firewall per route "
@@ -553,67 +566,67 @@ msgstr ""
 "एक बाइनरी; रिवर्स प्रॉक्सी या forward auth; वैकल्पिक SQLite फ़ाइल या साझा "
 "PostgreSQL डेटाबेस; या हर रूट पर फ़ायरवॉल वाला एज लोड बैलेंसर (भाग VIII)"
 
-#: ../../prior-art.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:91
 msgid "One Go binary; reverse proxy or forward auth"
 msgstr "एक Go बाइनरी; रिवर्स प्रॉक्सी या forward auth"
 
-#: ../../prior-art.rst:92
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:92
 msgid ""
 "Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
 msgstr ""
 "सात Docker कंटेनर (tengine, detector, mgt, luigi, fvm, chaos, PostgreSQL)"
 
-#: ../../prior-art.rst:93
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:93
 msgid "Hosted network; DNS points at Cloudflare"
 msgstr "होस्टेड नेटवर्क; DNS, Cloudflare की ओर इंगित करता है"
 
-#: ../../prior-art.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:94
 msgid "Language, runtime"
 msgstr "भाषा, रनटाइम"
 
-#: ../../prior-art.rst:95
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:95
 msgid "Rust, no garbage collector; no external crate when storage is off"
 msgstr ""
 "Rust, कोई garbage collector नहीं; स्टोरेज बंद होने पर कोई बाहरी क्रेट नहीं"
 
-#: ../../prior-art.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:96
 msgid "Go, garbage collected"
 msgstr "Go, garbage collected"
 
-#: ../../prior-art.rst:97
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:97
 msgid "C/C++ proxy and detector, Go management, PostgreSQL"
 msgstr "C/C++ प्रॉक्सी और डिटेक्टर, Go प्रबंधन, PostgreSQL"
 
-#: ../../prior-art.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:98
 msgid "Proprietary edge software"
 msgstr "मालिकाना edge सॉफ़्टवेयर"
 
-#: ../../prior-art.rst:99
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:99
 msgid "Licence"
 msgstr "लाइसेंस"
 
-#: ../../prior-art.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:100
 msgid "LGPL-3.0-or-later"
 msgstr "LGPL-3.0-or-later"
 
-#: ../../prior-art.rst:101
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:101
 msgid "MIT"
 msgstr "MIT"
 
-#: ../../prior-art.rst:102
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:102
 msgid "GPL-3.0 management code; closed detector images"
 msgstr "GPL-3.0 प्रबंधन कोड; बंद डिटेक्टर इमेज"
 
-#: ../../prior-art.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:103
 msgid "Proprietary service"
 msgstr "मालिकाना सेवा"
 
-#: ../../prior-art.rst:104
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:104
 msgid "Host footprint"
 msgstr "होस्ट पर संसाधन"
 
-#: ../../prior-art.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:105
 msgid ""
 "35.7 MiB binary (``benchmarks/results/comparison-latest.json``); 5.9 MiB "
 "idle RSS (``benchmarks/results/primitives-latest.json``); at most 16.0 "
@@ -623,27 +636,27 @@ msgstr ""
 "निष्क्रिय RSS (``benchmarks/results/primitives-latest.json``); लोड में "
 "अधिकतम 16.0 MiB पीक RSS (``benchmarks/results/product-latest.md``)"
 
-#: ../../prior-art.rst:106
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:106
 msgid "38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off"
 msgstr "38.1 MiB बाइनरी; 21 MiB निष्क्रिय RSS; Linux fixture, कंसोल बंद"
 
-#: ../../prior-art.rst:107
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:107
 msgid "1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+"
 msgstr "न्यूनतम 1 CPU कोर, 1 GB RAM, 5 GB डिस्क, Docker 20.10+"
 
-#: ../../prior-art.rst:108
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:108
 msgid "None on premises"
 msgstr "अपने परिसर में कुछ नहीं"
 
-#: ../../prior-art.rst:110
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:110
 msgid "Feature comparison, part 2: admission and sessions"
 msgstr "सुविधाओं की तुलना, भाग 2: प्रवेश और सत्र"
 
-#: ../../prior-art.rst:120
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:120
 msgid "Proof-of-work admission"
 msgstr "Proof-of-work प्रवेश"
 
-#: ../../prior-art.rst:121
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:121
 msgid ""
 "Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule; "
 "WebAssembly with JavaScript fallback"
@@ -651,7 +664,7 @@ msgstr ""
 "Hashcash (बिट-स्तर) और Cohen-Pietrzak अनुक्रमिक कार्य, प्रति नियम चुना "
 "गया; JavaScript फ़ॉलबैक के साथ WebAssembly"
 
-#: ../../prior-art.rst:122
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:122
 msgid ""
 "SHA-256 Hashcash in hex nibbles (``fast``, ``slow``); non-work "
 "``metarefresh`` and ``preact`` challenges"
@@ -659,11 +672,11 @@ msgstr ""
 "हेक्स nibble में SHA-256 Hashcash (``fast``, ``slow``); कार्य-रहित "
 "``metarefresh`` और ``preact`` चैलेंज"
 
-#: ../../prior-art.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:123
 msgid "JavaScript anti-bot challenge and CAPTCHA; not work-bound"
 msgstr "JavaScript anti-bot चैलेंज और CAPTCHA; कार्य से बँधा नहीं"
 
-#: ../../prior-art.rst:124
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:124
 msgid ""
 "Managed challenge, JS challenge, Turnstile; Bot Fight Mode issues a "
 "compute challenge"
@@ -671,31 +684,31 @@ msgstr ""
 "Managed challenge, JS challenge, Turnstile; Bot Fight Mode एक गणना चैलेंज "
 "जारी करता है"
 
-#: ../../prior-art.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:125
 msgid "Challenge state on the server"
 msgstr "सर्वर पर चैलेंज की अवस्था"
 
-#: ../../prior-art.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:126
 msgid "None until solved; solved tags in a fixed Robin Hood table"
 msgstr "हल होने तक कुछ नहीं; हल किए गए टैग एक निश्चित Robin Hood टेबल में"
 
-#: ../../prior-art.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:127
 msgid "Store backend: memory, bbolt, Valkey, or S3"
 msgstr "स्टोर बैकएंड: memory, bbolt, Valkey या S3"
 
-#: ../../prior-art.rst:128
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:128
 msgid "Managed by the stack"
 msgstr "स्टैक द्वारा प्रबंधित"
 
-#: ../../prior-art.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:129
 msgid "Managed by Cloudflare"
 msgstr "Cloudflare द्वारा प्रबंधित"
 
-#: ../../prior-art.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:130
 msgid "Session token"
 msgstr "सत्र टोकन"
 
-#: ../../prior-art.rst:131
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:131
 msgid ""
 "Keyed BLAKE3 tag, 75-character cookie bound to the work paid; Ed25519 "
 "optional"
@@ -703,39 +716,40 @@ msgstr ""
 "कुंजी-युक्त BLAKE3 टैग, चुकाए गए कार्य से बँधी 75 अक्षरों की कुकी; "
 "Ed25519 वैकल्पिक"
 
-#: ../../prior-art.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:132
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
 msgstr "Ed25519 से हस्ताक्षरित JSON Web Token; HS512 वैकल्पिक"
 
-#: ../../prior-art.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:133
 msgid "Cookie issued by the stack"
 msgstr "स्टैक द्वारा जारी कुकी"
 
-#: ../../prior-art.rst:134
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:134
 msgid "``cf_clearance`` cookie"
 msgstr "``cf_clearance`` कुकी"
 
-#: ../../prior-art.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:135
 msgid "Post-quantum posture of the default token"
 msgstr "डिफ़ॉल्ट टोकन की पोस्ट-क्वांटम स्थिति"
 
-#: ../../prior-art.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:136
 msgid "Symmetric: only Grover's quadratic speedup applies"
 msgstr "सममित: केवल Grover की द्विघाती गति-वृद्धि लागू होती है"
 
-#: ../../prior-art.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:137
 msgid "Ed25519: broken by Shor's algorithm"
 msgstr "Ed25519: Shor के एल्गोरिदम से टूट जाता है"
 
-#: ../../prior-art.rst:138 ../../prior-art.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:139
 msgid "Not documented"
 msgstr "दस्तावेज़ों में नहीं"
 
-#: ../../prior-art.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:140
 msgid "Policy language"
 msgstr "नीति भाषा"
 
-#: ../../prior-art.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:141
 msgid ""
 "JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR, JA4 fingerprint; "
 "ALLOW, DENY, CHALLENGE, WEIGH with thresholds; dynamic rules from the "
@@ -744,7 +758,7 @@ msgstr ""
 "JSON नियम: पाथ, User-Agent, हेडर, IPv4/IPv6 CIDR, JA4 फ़िंगरप्रिंट; "
 "ALLOW, DENY, CHALLENGE, थ्रेशोल्ड के साथ WEIGH; डेटाबेस से डायनामिक नियम"
 
-#: ../../prior-art.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:142
 msgid ""
 "YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH "
 "with thresholds"
@@ -752,22 +766,22 @@ msgstr ""
 "YAML/JSON bots: UA, पाथ, हेडर पर regex; CIDR; CEL एक्सप्रेशन; थ्रेशोल्ड "
 "के साथ WEIGH"
 
-#: ../../prior-art.rst:143
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:143
 msgid "Console-defined custom rules, ACLs, IP groups"
 msgstr "कंसोल में परिभाषित कस्टम नियम, ACL, IP समूह"
 
-#: ../../prior-art.rst:144
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:144
 msgid ""
 "Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*"
 msgstr ""
 "Rules language एक्सप्रेशन; *प्लान के अनुसार 5 / 20 / 100 / 1000 कस्टम "
 "नियम*"
 
-#: ../../prior-art.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:145
 msgid "TLS fingerprint (JA4)"
 msgstr "TLS फ़िंगरप्रिंट (JA4)"
 
-#: ../../prior-art.rst:146
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:146
 msgid ""
 "Rules match a JA4 fingerprint exactly or by prefix; a trusted ingress "
 "computes it and forwards it in a header (``--ja4-header``); Sibuna does "
@@ -777,7 +791,7 @@ msgstr ""
 "विश्वसनीय इनग्रेस उसकी गणना करके उसे एक हेडर (``--ja4-header``) में "
 "फ़ॉरवर्ड करता है; Sibuna स्वयं उसकी गणना नहीं करता"
 
-#: ../../prior-art.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:147
 msgid ""
 "Not documented; policies may reference the HTTP fingerprint JA4H, which "
 "Anubis computes and adds as the header ``X-Http-Fingerprint-JA4H``"
@@ -786,7 +800,7 @@ msgstr ""
 "हैं, जिसकी गणना करके Anubis उसे ``X-Http-Fingerprint-JA4H`` हेडर के रूप "
 "में जोड़ता है"
 
-#: ../../prior-art.rst:148
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:148
 msgid ""
 "Computed at its own TLS termination; shown in attack details; custom "
 "rules match it (equals, not equals); a built-in rule denies fingerprints "
@@ -796,7 +810,7 @@ msgstr ""
 "उसका मिलान करते हैं (equals, not equals); एक बिल्ट-इन नियम उसकी "
 "दुर्भावनापूर्ण JA4 इंटेलिजेंस में दर्ज फ़िंगरप्रिंट अस्वीकार करता है"
 
-#: ../../prior-art.rst:149
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:149
 msgid ""
 "JA3 and JA4 fingerprints in WAF custom rules and analytics *(Enterprise "
 "with Bot Management)*"
@@ -804,29 +818,30 @@ msgstr ""
 "WAF कस्टम नियमों और analytics में JA3 और JA4 फ़िंगरप्रिंट *(Bot "
 "Management के साथ Enterprise)*"
 
-#: ../../prior-art.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:151
 msgid "Feature comparison, part 3: inspection and state"
 msgstr "सुविधाओं की तुलना, भाग 3: निरीक्षण और अवस्था"
 
-#: ../../prior-art.rst:161
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:161
 msgid "SQLi, XSS, RCE, traversal inspection"
 msgstr "SQLi, XSS, RCE, traversal निरीक्षण"
 
-#: ../../prior-art.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:162
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
 msgstr ""
 "Shield: टैग किया गया ऑटोमेटन और संरचनात्मक टोकनाइज़र, बॉडी के पहले 8 KB"
 
-#: ../../prior-art.rst:163 ../../prior-art.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:163
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:209
 msgid "\\-"
 msgstr "\\-"
 
-#: ../../prior-art.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:164
 msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
 msgstr "OWASP श्रेणियों पर सिमैंटिक विश्लेषण इंजन, साथ में SSRF, XXE, CRLF"
 
-#: ../../prior-art.rst:165
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:165
 msgid ""
 "Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
 "*(Business and above)*"
@@ -834,33 +849,33 @@ msgstr ""
 "Managed rulesets *(Pro और ऊपर)*; OWASP Core Ruleset; attack score "
 "*(Business और ऊपर)*"
 
-#: ../../prior-art.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:166
 msgid "Rate limiting"
 msgstr "रेट लिमिटिंग"
 
-#: ../../prior-art.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:167
 msgid "GCRA per client, local to a node"
 msgstr "प्रति क्लाइंट GCRA, एक नोड पर स्थानीय"
 
-#: ../../prior-art.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:168
 msgid "\\- (system load is exposed to CEL rules)"
 msgstr "\\- (सिस्टम लोड CEL नियमों को उपलब्ध है)"
 
-#: ../../prior-art.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:169
 msgid "Per IP, path, session"
 msgstr "प्रति IP, पाथ, सत्र"
 
-#: ../../prior-art.rst:170
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:170
 msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
 msgstr ""
 "*प्लान के अनुसार 1 / 2 / 5 / 100 नियम*; Enterprise से नीचे केवल IP "
 "कुंजियाँ"
 
-#: ../../prior-art.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:171
 msgid "Bans and reputation"
 msgstr "प्रतिबंध और प्रतिष्ठा"
 
-#: ../../prior-art.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:172
 msgid ""
 "Honeypot bans; reputation trie loaded from the reputation table shared "
 "across the cluster"
@@ -868,46 +883,46 @@ msgstr ""
 "हनीपॉट प्रतिबंध; क्लस्टर में साझा प्रतिष्ठा टेबल से लोड किया गया "
 "प्रतिष्ठा trie"
 
-#: ../../prior-art.rst:173
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:173
 msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
 msgstr "DNSBL; Thoth के माध्यम से ASN और GeoIP *(सशुल्क, बंद)*"
 
-#: ../../prior-art.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:174
 msgid "IP groups and blacklists; threat intelligence *(Pro)*"
 msgstr "IP समूह और ब्लैकलिस्ट; threat intelligence *(Pro)*"
 
-#: ../../prior-art.rst:175
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:175
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
 msgstr "IP सूचियाँ; managed lists और bot score *(Enterprise)*"
 
-#: ../../prior-art.rst:176
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:176
 msgid "Forensics"
 msgstr "फ़ॉरेंसिक"
 
-#: ../../prior-art.rst:177
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:177
 msgid ""
 "SQLite or PostgreSQL: full-text search over incidents, vector campaign "
 "clustering"
 msgstr ""
 "SQLite या PostgreSQL: घटनाओं पर full-text खोज, vector कैंपेन क्लस्टरिंग"
 
-#: ../../prior-art.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:178
 msgid "Prometheus metrics only"
 msgstr "केवल Prometheus मेट्रिक"
 
-#: ../../prior-art.rst:179
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:179
 msgid "PostgreSQL attack log with console"
 msgstr "कंसोल के साथ PostgreSQL आक्रमण लॉग"
 
-#: ../../prior-art.rst:180
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:180
 msgid "Security Events; sampled on Free"
 msgstr "Security Events; Free पर सैंपल किए गए"
 
-#: ../../prior-art.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:181
 msgid "Multi-node"
 msgstr "मल्टी-नोड"
 
-#: ../../prior-art.rst:182
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:182
 msgid ""
 "Daemon: one PostgreSQL database shared by every node for policy and "
 "reputation; shared seed; sticky challenge verification. Edge: a mesh "
@@ -916,89 +931,93 @@ msgstr ""
 "डेमन: नीति और प्रतिष्ठा के लिए हर नोड द्वारा साझा एक PostgreSQL डेटाबेस; "
 "साझा सीड; sticky चैलेंज सत्यापन। एज: मेश प्रतिबंध साझा करता है (SID 0022)"
 
-#: ../../prior-art.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:183
 msgid "Shared signing key; shared Valkey store"
 msgstr "साझा signing कुंजी; साझा Valkey स्टोर"
 
-#: ../../prior-art.rst:184
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:184
 msgid "One stack per host"
 msgstr "प्रति होस्ट एक स्टैक"
 
-#: ../../prior-art.rst:185
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:185
 msgid "Global anycast"
 msgstr "वैश्विक anycast"
 
-#: ../../prior-art.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:187
 msgid "Feature comparison, part 4: operations"
 msgstr "सुविधाओं की तुलना, भाग 4: संचालन"
 
-#: ../../prior-art.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:197
 msgid "Metrics"
 msgstr "मेट्रिक"
 
-#: ../../prior-art.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:198
 msgid "Prometheus at ``/__sibuna/metrics``"
 msgstr "``/__sibuna/metrics`` पर Prometheus"
 
-#: ../../prior-art.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:199
 msgid "Prometheus on a separate port"
 msgstr "अलग पोर्ट पर Prometheus"
 
-#: ../../prior-art.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:200
 msgid "Console dashboards"
 msgstr "कंसोल डैशबोर्ड"
 
-#: ../../prior-art.rst:201
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:201
 msgid "Dashboard and analytics"
 msgstr "डैशबोर्ड और analytics"
 
-#: ../../prior-art.rst:202 ../../prior-art.rst:272
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:272
 msgid "TLS termination"
 msgstr "TLS टर्मिनेशन"
 
-#: ../../prior-art.rst:203
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:203
 msgid ""
 "Daemon: \\- (ingress). Edge: **Yes**, with automatic HTTPS (SID 0021)"
 msgstr "डेमन: \\- (इनग्रेस)। एज: **हाँ**, स्वचालित HTTPS के साथ (SID 0021)"
 
-#: ../../prior-art.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:204
 msgid "\\- (ingress)"
 msgstr "\\- (इनग्रेस)"
 
-#: ../../prior-art.rst:205 ../../prior-art.rst:206 ../../prior-art.rst:210
-#: ../../prior-art.rst:211 ../../prior-art.rst:214
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:214
 msgid "**Yes**"
 msgstr "**हाँ**"
 
-#: ../../prior-art.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:207
 msgid "Management console"
 msgstr "प्रबंधन कंसोल"
 
-#: ../../prior-art.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:208
 msgid "Opt-in; SID 0007 Committed"
 msgstr "वैकल्पिक (opt-in); SID 0007 Committed"
 
-#: ../../prior-art.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:212
 msgid "Measured on the benchmark host"
 msgstr "बेंचमार्क होस्ट पर मापा गया"
 
-#: ../../prior-art.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:213
 msgid "**Yes** (Part X)"
 msgstr "**हाँ** (भाग X)"
 
-#: ../../prior-art.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:215
 msgid "\\- (Docker only)"
 msgstr "\\- (केवल Docker)"
 
-#: ../../prior-art.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:216
 msgid "\\- (hosted)"
 msgstr "\\- (होस्टेड)"
 
-#: ../../prior-art.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:218
 msgid "Three differences carry most of the weight in a selection decision."
 msgstr "चयन के निर्णय में सबसे अधिक भार तीन अंतरों का है।"
 
-#: ../../prior-art.rst:220
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:220
 msgid ""
 "*Where the work goes.* Anubis and Sibuna Gate make the *client* pay "
 "before the origin does anything. SafeLine and Cloudflare inspect first "
@@ -1012,7 +1031,7 @@ msgstr ""
 "छानने का है। Sibuna Shield दोनों करता है, इसी क्रम में: निरीक्षण उस "
 "अनुरोध को भी अस्वीकार कर सकता है जिसके पास पहले से वैध सत्र है।"
 
-#: ../../prior-art.rst:221
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:221
 msgid ""
 "*What the server remembers.* Anubis keeps challenge state in a store "
 "(memory, bbolt, Valkey, or S3) and signs a JSON Web Token with Ed25519; "
@@ -1027,7 +1046,7 @@ msgstr ""
 "PostgreSQL में रखता है; Cloudflare सब कुछ रखता है, Free प्लान पर सैंपल की "
 "गई दृश्यता के साथ।"
 
-#: ../../prior-art.rst:222
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:222
 msgid ""
 "*What an operator has to run.* Sibuna is one binary with an optional "
 "SQLite file, or a PostgreSQL database shared by a cluster; Anubis is one "
@@ -1041,11 +1060,11 @@ msgstr ""
 "वाले Linux होस्ट पर Docker डेमन के पीछे सात कंटेनर है; Cloudflare एक DNS "
 "बदलाव और एक सब्सक्रिप्शन है।"
 
-#: ../../prior-art.rst:224
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:224
 msgid "Current product boundary"
 msgstr "उत्पाद की वर्तमान सीमा"
 
-#: ../../prior-art.rst:227
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:227
 msgid ""
 "The firewall daemon leaves TLS termination to the deployment proxy; the "
 "edge terminates TLS itself (Part VIII). Sibuna does not score bots with a "
@@ -1075,11 +1094,11 @@ msgstr ""
 "साथ उसका औपचारिक प्रदर्शन-पृथक्करण गेट अभी मापा नहीं गया है; भाग VIII "
 "दर्ज करता है कि क्या मापा गया है।"
 
-#: ../../prior-art.rst:229
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:229
 msgid "Load Balancers"
 msgstr "लोड बैलेंसर"
 
-#: ../../prior-art.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:232
 msgid ""
 "Since SID 0015 Sibuna is also an edge load balancer: it forwards TCP and "
 "UDP, terminates TLS, HTTP/2 and HTTP/3, and routes HTTP requests to pools "
@@ -1093,11 +1112,11 @@ msgstr ""
 "यह अनुभाग बताता है कि लोड बैलेंसर किन स्रोतों पर आधारित है, और उसकी तुलना "
 "दो खुले लोड बैलेंसरों से करता है।"
 
-#: ../../prior-art.rst:234
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:234
 msgid "Where the Load Balancer Comes From"
 msgstr "लोड बैलेंसर कहाँ से आता है"
 
-#: ../../prior-art.rst:237
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:237
 msgid ""
 "The vocabulary is HAProxy's. A *frontend* binds addresses, a *backend* is "
 "a pool of *servers*, and an operator drains a server through a local "
@@ -1123,13 +1142,13 @@ msgstr ""
 "हुक भी तय चरणों पर, तीन स्तरों में, जुड़ते हैं, और हर निर्णय एक समय-सीमा "
 "वाली एक कॉल है।"
 
-#: ../../prior-art.rst:239
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:239
 msgid "Four papers decide how the edge places a flow and what it remembers."
 msgstr ""
 "चार शोध-पत्र तय करते हैं कि एज किसी फ़्लो को कैसे रखता है और क्या याद "
 "रखता है।"
 
-#: ../../prior-art.rst:241
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:241
 msgid ""
 "*Maglev* (Eisenbud et al., NSDI 2016) fills a table of a prime number of "
 "slots from one permutation per server, so a lookup is one hash and one "
@@ -1145,7 +1164,7 @@ msgstr ""
 "(``crates/lb/src/maglev.rs``), और अपनी regional व्यवस्था में मेश इससे "
 "क्लाइंटों को रखता है (SID 0015)।"
 
-#: ../../prior-art.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:242
 msgid ""
 "*Consistent hashing with bounded loads* (Mirrokni, Thorup and "
 "Zadimoghaddam, SODA 2018) caps the load of the chosen server at a factor "
@@ -1161,7 +1180,7 @@ msgstr ""
 "साथ, डिफ़ॉल्ट 125। HAProxy यही विचार अपने consistent hashing पर "
 "``hash-balance-factor`` के साथ लागू करता है।"
 
-#: ../../prior-art.rst:243
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:243
 msgid ""
 "*Rendezvous hashing* (Thaler and Ravishankar, IEEE/ACM Transactions on "
 "Networking 1998) gives each server a score from a hash of its name and "
@@ -1177,7 +1196,7 @@ msgstr ""
 "सर्वरों को इसी तरह क्रम देती है (SID 0019), और पीयर फ़ॉरवर्डिंग नोडों में "
 "से किसी क्लाइंट का मालिक इसी तरह चुनती है (SID 0026)।"
 
-#: ../../prior-art.rst:244
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:244
 msgid ""
 "*TinyLFU* (Einziger, Friedman and Manes, ACM Transactions on Storage "
 "2017) admits a new entry to a full cache only when a small frequency "
@@ -1190,7 +1209,7 @@ msgstr ""
 "धकेलेगी। SID 0027 का spill cache अपनी फ़ाइल में संकेतों को इसी नियम से "
 "प्रवेश देता है।"
 
-#: ../../prior-art.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:247
 msgid ""
 "HAProxy gives the vocabulary and the admin socket, nginx the event-driven "
 "workers, and Envoy shares the idea of hook stages. Maglev and bounded "
@@ -1205,7 +1224,7 @@ msgstr ""
 "मालिक देता है, और TinyLFU spill cache का प्रवेश देता है। HAProxy का "
 "hash-balance-factor bounded loads का विचार साझा करता है।"
 
-#: ../../prior-art.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:247
 msgid ""
 "// prior-art.rst: what the edge load balancer takes from earlier systems "
 "and papers.\n"
@@ -1296,7 +1315,7 @@ msgstr ""
 "label-angle: auto),\n"
 ")\n"
 
-#: ../../prior-art.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:247
 msgid ""
 "What the edge load balancer takes from earlier systems and papers. Solid "
 "arrows are ideas taken directly; dashed lines are ideas shared."
@@ -1304,11 +1323,11 @@ msgstr ""
 "एज लोड बैलेंसर पहले की प्रणालियों और शोध-पत्रों से क्या लेता है। ठोस तीर "
 "सीधे लिए गए विचार हैं; डैश वाली रेखाएँ साझा विचार हैं।"
 
-#: ../../prior-art.rst:250
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:250
 msgid "Load Balancing Compared"
 msgstr "लोड बैलेंसिंग की तुलना"
 
-#: ../../prior-art.rst:253
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:253
 msgid ""
 "The table compares the load balancing of Sibuna with HAProxy and Envoy. "
 "We read their public documentation on 25 November 2026: the HAProxy 3.4.8 "
@@ -1330,27 +1349,27 @@ msgstr ""
 "देता है जिसे हमारे पढ़े पेजों ने तय नहीं किया। Sibuna के लिए कोड और SID "
 "रिकॉर्ड निर्णय करते हैं, और जो सुविधा नहीं बनी है उसके लिए यही कहा गया है।"
 
-#: ../../prior-art.rst:255
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:255
 msgid "Load balancing: Sibuna, HAProxy and Envoy"
 msgstr "लोड बैलेंसिंग: Sibuna, HAProxy और Envoy"
 
-#: ../../prior-art.rst:261
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:261
 msgid "Sibuna edge"
 msgstr "Sibuna एज"
 
-#: ../../prior-art.rst:262
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:262
 msgid "HAProxy 3.4"
 msgstr "HAProxy 3.4"
 
-#: ../../prior-art.rst:263
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:263
 msgid "Envoy 1.40"
 msgstr "Envoy 1.40"
 
-#: ../../prior-art.rst:264
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:264
 msgid "Protocols"
 msgstr "प्रोटोकॉल"
 
-#: ../../prior-art.rst:265
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:265
 msgid ""
 "TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3 and gRPC, toward clients and toward "
 "servers; WebSocket, but not toward an HTTP/2 or HTTP/3 pool"
@@ -1358,7 +1377,7 @@ msgstr ""
 "TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3 और gRPC, क्लाइंटों की ओर और सर्वरों की "
 "ओर; WebSocket, लेकिन HTTP/2 या HTTP/3 पूल की ओर नहीं"
 
-#: ../../prior-art.rst:266
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:266
 msgid ""
 "TCP, HTTP/1.1, HTTP/2 and HTTP/3; QUIC toward servers is experimental; "
 "UDP listeners only in ``log-forward`` sections"
@@ -1366,7 +1385,7 @@ msgstr ""
 "TCP, HTTP/1.1, HTTP/2 और HTTP/3; सर्वरों की ओर QUIC प्रायोगिक है; UDP "
 "लिसनर केवल ``log-forward`` अनुभागों में"
 
-#: ../../prior-art.rst:267
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:267
 msgid ""
 "TCP, UDP (UDP proxy filter), HTTP/1.1, HTTP/2, and HTTP/3 toward clients "
 "and toward servers"
@@ -1374,11 +1393,11 @@ msgstr ""
 "TCP, UDP (UDP proxy filter), HTTP/1.1, HTTP/2, और HTTP/3, क्लाइंटों की ओर "
 "और सर्वरों की ओर"
 
-#: ../../prior-art.rst:268
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:268
 msgid "Scheduling"
 msgstr "शेड्यूलिंग"
 
-#: ../../prior-art.rst:269
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:269
 msgid ""
 "Least connections (default), round robin, power of two choices with peak "
 "EWMA, bounded Maglev; slow start"
@@ -1386,7 +1405,7 @@ msgstr ""
 "Least connections (डिफ़ॉल्ट), round robin, peak EWMA के साथ power of two "
 "choices, bounded Maglev; स्लो स्टार्ट"
 
-#: ../../prior-art.rst:270
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:270
 msgid ""
 "``roundrobin``, ``static-rr``, ``leastconn``, ``first``, ``hash``, "
 "``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, "
@@ -1396,7 +1415,7 @@ msgstr ""
 "``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, "
 "``sticky``; ``hash-balance-factor`` के साथ bounded loads; ``slowstart``"
 
-#: ../../prior-art.rst:271
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:271
 msgid ""
 "Weighted round robin, least request (power of two choices), ring hash, "
 "Maglev with 65,537 slots, random, client-side weighted round robin"
@@ -1404,26 +1423,26 @@ msgstr ""
 "Weighted round robin, least request (power of two choices), ring hash, "
 "65,537 स्लॉट वाला Maglev, random, client-side weighted round robin"
 
-#: ../../prior-art.rst:273
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:273
 msgid ""
 "**Yes**: PEM bundles chosen by server name; HTTP/2 over TLS and HTTP/3 "
 "over QUIC"
 msgstr ""
 "**हाँ**: सर्वर नाम से चुने गए PEM bundle; TLS पर HTTP/2 और QUIC पर HTTP/3"
 
-#: ../../prior-art.rst:274
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:274
 msgid "**Yes**: ``bind ... ssl crt``"
 msgstr "**हाँ**: ``bind ... ssl crt``"
 
-#: ../../prior-art.rst:275
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:275
 msgid "**Yes**: certificates from files or the secret discovery service"
 msgstr "**हाँ**: फ़ाइलों से या secret discovery service से सर्टिफ़िकेट"
 
-#: ../../prior-art.rst:276
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:276
 msgid "TLS passthrough"
 msgstr "TLS passthrough"
 
-#: ../../prior-art.rst:277
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:277
 msgid ""
 "**Yes**: ``tcp`` frontends route or refuse by server name, ALPN or JA4 "
 "read from the ClientHello; QUIC is validated by connection ID (SID 0032); "
@@ -1433,11 +1452,11 @@ msgstr ""
 "के आधार पर रूट या अस्वीकार करते हैं; QUIC connection ID से सत्यापित होता "
 "है (SID 0032); एज द्वारा बनाया गया Retry नहीं बना है"
 
-#: ../../prior-art.rst:278
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:278
 msgid "**Yes**: ``mode tcp`` with content inspection of ``req.ssl_sni``"
 msgstr "**हाँ**: ``req.ssl_sni`` के content inspection के साथ ``mode tcp``"
 
-#: ../../prior-art.rst:279
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:279
 msgid ""
 "**Yes**: the TLS Inspector reads server name and ALPN to choose a filter "
 "chain"
@@ -1445,11 +1464,11 @@ msgstr ""
 "**हाँ**: TLS Inspector filter chain चुनने के लिए सर्वर नाम और ALPN पढ़ता "
 "है"
 
-#: ../../prior-art.rst:280
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:280
 msgid "ACME"
 msgstr "ACME"
 
-#: ../../prior-art.rst:281
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:281
 msgid ""
 "**Built in**: HTTP-01, TLS-ALPN-01 and DNS-01 (hook, RFC 2136, "
 "Cloudflare), wildcards, issuance on demand, OCSP stapling, and a local "
@@ -1459,7 +1478,7 @@ msgstr ""
 "wildcard, मांग पर जारी करना, OCSP stapling, और एक स्थानीय अथॉरिटी जो ACME "
 "पर दूसरी मशीनों को सर्व कर सकती है (SID 0021)"
 
-#: ../../prior-art.rst:282
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:282
 msgid ""
 "**Experimental** ``acme`` section: HAProxy answers HTTP-01 itself; DNS-01 "
 "and dns-persist-01 need the Data Plane API or another tool"
@@ -1467,15 +1486,16 @@ msgstr ""
 "**प्रायोगिक** ``acme`` अनुभाग: HAProxy HTTP-01 का उत्तर स्वयं देता है; "
 "DNS-01 और dns-persist-01 के लिए Data Plane API या कोई दूसरा उपकरण चाहिए"
 
-#: ../../prior-art.rst:283 ../../prior-art.rst:315
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:283
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:315
 msgid "Not checked"
 msgstr "जाँचा नहीं गया"
 
-#: ../../prior-art.rst:284
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:284
 msgid "Health checks"
 msgstr "हेल्थ चेक"
 
-#: ../../prior-art.rst:285
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:285
 msgid ""
 "Active TCP connect or HTTP ``GET`` with ``rise`` and ``fall``; passive "
 "ejection by real failures (SID 0019)"
@@ -1483,7 +1503,7 @@ msgstr ""
 "``rise`` और ``fall`` के साथ सक्रिय TCP connect या HTTP ``GET``; वास्तविक "
 "विफलताओं से निष्क्रिय ejection (SID 0019)"
 
-#: ../../prior-art.rst:286
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:286
 msgid ""
 "Active checks (``check``, ``option httpchk``); passive observation with "
 "``observe`` and ``error-limit``"
@@ -1491,7 +1511,7 @@ msgstr ""
 "सक्रिय जाँचें (``check``, ``option httpchk``); ``observe`` और "
 "``error-limit`` के साथ निष्क्रिय अवलोकन"
 
-#: ../../prior-art.rst:287
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:287
 msgid ""
 "Active HTTP, gRPC, L3/L4, Redis and Thrift checks; passive outlier "
 "detection"
@@ -1499,11 +1519,11 @@ msgstr ""
 "सक्रिय HTTP, gRPC, L3/L4, Redis और Thrift जाँचें; निष्क्रिय outlier "
 "detection"
 
-#: ../../prior-art.rst:288
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:288
 msgid "Sticky sessions"
 msgstr "स्टिकी सत्र"
 
-#: ../../prior-art.rst:289
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:289
 msgid ""
 "Keyed cookie, source address, or a learned table by source or cookie that "
 "a mesh replicates and a file can keep over a restart (SID 0025, SID 0027)"
@@ -1512,13 +1532,13 @@ msgstr ""
 "प्रतिकृति मेश बनाता है और जिसे एक फ़ाइल restart के पार रख सकती है (SID "
 "0025, SID 0027)"
 
-#: ../../prior-art.rst:290
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:290
 msgid ""
 "``cookie`` (insert, rewrite, prefix); stick tables (``stick on src``)"
 msgstr ""
 "``cookie`` (insert, rewrite, prefix); stick tables (``stick on src``)"
 
-#: ../../prior-art.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:291
 msgid ""
 "A hash policy on the route with ring hash or Maglev; the stateful session "
 "filter with a cookie or a header"
@@ -1526,11 +1546,11 @@ msgstr ""
 "ring hash या Maglev के साथ रूट पर hash policy; कुकी या हेडर के साथ "
 "stateful session filter"
 
-#: ../../prior-art.rst:292
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:292
 msgid "Runtime API"
 msgstr "रनटाइम API"
 
-#: ../../prior-art.rst:293
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:293
 msgid ""
 "Unix admin socket and ``sibuna ctl``: drain, weight, add and remove "
 "servers, lift bans, reload, show; a subset in the operator console (SID "
@@ -1540,7 +1560,7 @@ msgstr ""
 "प्रतिबंध हटाना, रीलोड, show; इसका एक उपसमूह ऑपरेटर कंसोल में (SID 0018, "
 "SID 0031)"
 
-#: ../../prior-art.rst:294
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:294
 msgid ""
 "Runtime API on the stats socket: ``set server ... state|weight``, ``add "
 "server``, ``del server``, ``show stat``, ``show table``, ``clear table``, "
@@ -1550,7 +1570,7 @@ msgstr ""
 "server``, ``del server``, ``show stat``, ``show table``, ``clear table``, "
 "``acme renew``"
 
-#: ../../prior-art.rst:295
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:295
 msgid ""
 "Admin interface: stats, ``config_dump``, ``drain_listeners``, "
 "``healthcheck/fail``, ``runtime_modify``; endpoints and listeners change "
@@ -1560,11 +1580,11 @@ msgstr ""
 "``healthcheck/fail``, ``runtime_modify``; endpoint और लिसनर control plane "
 "से xDS के ज़रिए बदलते हैं"
 
-#: ../../prior-art.rst:296
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:296
 msgid "Hot reload"
 msgstr "हॉट रीलोड"
 
-#: ../../prior-art.rst:297
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:297
 msgid ""
 "In the same process by SIGHUP, ``reload`` or a file watcher; established "
 "flows keep their server; ``reload cluster`` for a mesh; a database "
@@ -1574,7 +1594,7 @@ msgstr ""
 "सर्वर बनाए रखते हैं; मेश के लिए ``reload cluster``; persistent मोड में "
 "डेटाबेस revision (SID 0023, SID 0028)"
 
-#: ../../prior-art.rst:298
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:298
 msgid ""
 "A reload starts a new worker that takes the listening sockets of the old "
 "one (``-x``; automatic in master-worker mode)"
@@ -1582,15 +1602,15 @@ msgstr ""
 "रीलोड एक नया वर्कर शुरू करता है जो पुराने के लिसनिंग सॉकेट ले लेता है "
 "(``-x``; master-worker मोड में स्वचालित)"
 
-#: ../../prior-art.rst:299
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:299
 msgid "Dynamic configuration through xDS without a restart"
 msgstr "बिना restart के xDS के ज़रिए गतिशील कॉन्फ़िगरेशन"
 
-#: ../../prior-art.rst:300
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:300
 msgid "Binary replacement"
 msgstr "बाइनरी बदलना"
 
-#: ../../prior-art.rst:301
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:301
 msgid ""
 "``global.upgrade_socket``: the listening sockets and the live UDP "
 "mappings pass to the new process, and TCP streams drain in the old one; "
@@ -1600,11 +1620,11 @@ msgstr ""
 "को जाती हैं, और TCP स्ट्रीम पुरानी प्रोसेस में ड्रेन होती हैं; केवल Linux "
 "(SID 0029)। या ``global.reuse_port``"
 
-#: ../../prior-art.rst:302
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:302
 msgid "The same reload passes the listening sockets to the new process"
 msgstr "वही रीलोड लिसनिंग सॉकेट नई प्रोसेस को सौंपता है"
 
-#: ../../prior-art.rst:303
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:303
 msgid ""
 "Hot restart passes the listening sockets over a Unix socket; existing "
 "connections are not transferred; HTTP/3 is not handled gracefully yet"
@@ -1612,11 +1632,11 @@ msgstr ""
 "Hot restart लिसनिंग सॉकेट को Unix सॉकेट पर सौंपता है; मौजूदा कनेक्शन "
 "स्थानांतरित नहीं होते; HTTP/3 अभी सुचारु रूप से नहीं सँभाला जाता"
 
-#: ../../prior-art.rst:304
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:304
 msgid "Clustering of state"
 msgstr "अवस्था की क्लस्टरिंग"
 
-#: ../../prior-art.rst:305
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:305
 msgid ""
 "A mesh of at most 64 nodes shares bans, server commands, the sticky table "
 "and fleet-wide ``max_flows``, and forwards each client to its owner node "
@@ -1626,7 +1646,7 @@ msgstr ""
 "``max_flows`` साझा करता है, और हर क्लाइंट को उसके मालिक नोड पर फ़ॉरवर्ड "
 "करता है (SID 0022, SID 0025, SID 0026); अनुरोध लिमिटर हर नोड पर गिनते हैं"
 
-#: ../../prior-art.rst:306
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:306
 msgid ""
 "``peers`` sections push stick-table entries between instances over TCP, "
 "multi-master; values overwrite without aggregation"
@@ -1634,7 +1654,7 @@ msgstr ""
 "``peers`` अनुभाग TCP पर instances के बीच stick-table प्रविष्टियाँ भेजते "
 "हैं, multi-master; मान बिना एकत्रीकरण के overwrite होते हैं"
 
-#: ../../prior-art.rst:307
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:307
 msgid ""
 "Global rate limits through an external gRPC rate limit service; other "
 "shared state not checked"
@@ -1642,11 +1662,11 @@ msgstr ""
 "बाहरी gRPC rate limit service के ज़रिए वैश्विक रेट लिमिट; अन्य साझा "
 "अवस्था जाँची नहीं गई"
 
-#: ../../prior-art.rst:308
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:308
 msgid "Extension mechanism"
 msgstr "एक्सटेंशन तंत्र"
 
-#: ../../prior-art.rst:309
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:309
 msgid ""
 "Native Rust hooks, WebAssembly on an in-house metered interpreter, and "
 "agents on a Unix socket, at the connection, request and telemetry stages; "
@@ -1656,7 +1676,7 @@ msgstr ""
 "Unix सॉकेट पर agent, कनेक्शन, अनुरोध और telemetry चरणों पर; रिस्पॉन्स या "
 "बॉडी पर कोई हुक नहीं (SID 0030)"
 
-#: ../../prior-art.rst:310
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:310
 msgid ""
 "Lua (``lua-load``); filters, among them the Stream Processing Offload "
 "Engine (SPOE)"
@@ -1664,7 +1684,7 @@ msgstr ""
 "Lua (``lua-load``); फ़िल्टर, जिनमें Stream Processing Offload Engine "
 "(SPOE) भी है"
 
-#: ../../prior-art.rst:311
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:311
 msgid ""
 "Filters, among them Lua, external authorization and external processing; "
 "WebAssembly through the Proxy-Wasm ABI"
@@ -1672,11 +1692,11 @@ msgstr ""
 "फ़िल्टर, जिनमें Lua, external authorization और external processing हैं; "
 "Proxy-Wasm ABI के ज़रिए WebAssembly"
 
-#: ../../prior-art.rst:312
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:312
 msgid "Built-in bot protection"
 msgstr "बिल्ट-इन बॉट सुरक्षा"
 
-#: ../../prior-art.rst:313
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:313
 msgid ""
 "Proof-of-work admission (Gate) and the semantic firewall (Shield), chosen "
 "per frontend and per route; off in ``sibuna lb`` unless asked"
@@ -1684,15 +1704,15 @@ msgstr ""
 "proof-of-work प्रवेश (Gate) और सिमैंटिक फ़ायरवॉल (Shield), हर फ़्रंटएंड "
 "और हर रूट के लिए चुने जाते हैं; ``sibuna lb`` में बंद, जब तक माँगा न जाए"
 
-#: ../../prior-art.rst:314
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:314
 msgid "None in the Configuration Manual; stick-table rates and deny rules"
 msgstr "Configuration Manual में कुछ नहीं; stick-table दरें और deny नियम"
 
-#: ../../prior-art.rst:317
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:317
 msgid "Three differences matter most when we choose."
 msgstr "चुनते समय तीन अंतर सबसे अधिक मायने रखते हैं।"
 
-#: ../../prior-art.rst:319
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:319
 msgid ""
 "*What changes at run time.* HAProxy and Sibuna both change servers "
 "through a local socket. Envoy expects a control plane: its admin "
@@ -1706,7 +1726,7 @@ msgstr ""
 "का सॉकेट सर्वर, प्रतिबंध और अपनी स्थानीय अथॉरिटी के सर्टिफ़िकेट बदलता है; "
 "फ़्रंटएंड, रूट और नीति रीलोड से बदलते हैं (SID 0018)।"
 
-#: ../../prior-art.rst:320
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:320
 msgid ""
 "*What a cluster shares.* HAProxy replicates stick tables between peers. "
 "Sibuna's mesh replicates more kinds of state, each with its own merge "
@@ -1721,7 +1741,7 @@ msgstr ""
 "भीतर और केवल विश्वसनीय नेटवर्क पर, क्योंकि मेश प्रमाणित करता है, "
 "एन्क्रिप्ट नहीं करता (SID 0026)।"
 
-#: ../../prior-art.rst:321
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:321
 msgid ""
 "*What a replacement keeps.* All three keep the listening sockets. Sibuna "
 "also passes live UDP mappings, so a UDP client keeps its server; none of "
@@ -1732,11 +1752,11 @@ msgstr ""
 "रखता है; तीनों में से कोई भी स्थापित TCP कनेक्शन को नई प्रोसेस में नहीं "
 "ले जाता।"
 
-#: ../../prior-art.rst:323
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:323
 msgid "Current boundary of the load balancer"
 msgstr "लोड बैलेंसर की वर्तमान सीमा"
 
-#: ../../prior-art.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:326
 msgid ""
 "The edge is new. HAProxy and Envoy have served production traffic for "
 "years; Sibuna's edge has run in tests and in benchmarks on up to three "
@@ -1753,11 +1773,11 @@ msgstr ""
 "सकता, spill cache 5 करोड़ अलग कुंजियों पर प्रतिधारण का लक्ष्य पूरा नहीं "
 "कर सका, और अनुरोध चरण पर agent कॉल अपने थ्रेड को रोके रखती है।"
 
-#: ../../prior-art.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:328
 msgid "Exercise 2.1"
 msgstr "अभ्यास 2.1"
 
-#: ../../prior-art.rst:330
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:330
 msgid ""
 "Explain why compiling one verifier source to native code and WebAssembly "
 "reduces protocol drift. Which properties still require independent "
@@ -1767,11 +1787,11 @@ msgstr ""
 "करने से प्रोटोकॉल का विचलन क्यों घटता है। किन गुणों के लिए अब भी स्वतंत्र "
 "परीक्षण या क्रिप्टोग्राफ़िक समीक्षा चाहिए?"
 
-#: ../../prior-art.rst:332
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:332
 msgid "Exercise 2.2"
 msgstr "अभ्यास 2.2"
 
-#: ../../prior-art.rst:334
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:334
 msgid ""
 "Using only the comparison tables, write down the smallest deployment that "
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
@@ -1781,16 +1801,16 @@ msgstr ""
 "स्टैटिक साइट को (a) proof-of-work गेट, (b) SQL-injection निरीक्षण, और (c) "
 "क्लस्टर-व्यापी प्रतिबंध दे। किन पंक्तियों ने हर चुनाव को बाध्य किया?"
 
-#: ../../prior-art.rst:336
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:336
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
 msgstr ""
 "संकेत: \"किस रूप में चलता है\" और \"मल्टी-नोड\" पंक्तियों से शुरू करें।"
 
-#: ../../prior-art.rst:338
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:338
 msgid "Exercise 2.3"
 msgstr "अभ्यास 2.3"
 
-#: ../../prior-art.rst:340
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:340
 msgid ""
 "A pool has four servers of equal weight and 1,000 clients. Using only the "
 "descriptions of Maglev and rendezvous hashing above, say how many clients "
@@ -1802,7 +1822,7 @@ msgstr ""
 "एक सर्वर हटाने पर कितने क्लाइंट हिलते हैं, और पीयर फ़ॉरवर्डिंग (SID 0026) "
 "ने क्लाइंट के मालिक के लिए rendezvous hashing क्यों चुना।"
 
-#: ../../prior-art.rst:342
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:342
 msgid ""
 "Hint: Ask which clients a removal must move, and which ones a rebuilt "
 "table may move as well."
@@ -1810,11 +1830,11 @@ msgstr ""
 "संकेत: पूछिए कि हटाने पर किन क्लाइंटों को हिलना ही होगा, और फिर से बनी "
 "टेबल किन्हें और भी हिला सकती है।"
 
-#: ../../prior-art.rst:344
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:344
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाएँ"
 
-#: ../../prior-art.rst:346
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:346
 msgid ""
 "Describe how Gate, Shield, and optional shared storage divide admission, "
 "inspection and policy distribution. Then name one row of the comparison "

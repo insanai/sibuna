@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,15 +17,15 @@ msgstr ""
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../glossary.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:1
 msgid "Glossary"
 msgstr "用語集"
 
-#: ../../glossary.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:6
 msgid "Admin socket"
 msgstr "管理ソケット"
 
-#: ../../glossary.rst:7
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:7
 msgid ""
 "A Unix socket of mode 0600, named by ``global.admin_socket`` or ``sibuna "
 "lb --admin``, that takes one command line at a time from ``sibuna ctl``: "
@@ -37,11 +37,11 @@ msgstr ""
 "からコマンドを一行ずつ受け取ります。サーバーの表示、ドレイン、重みの設定、サーバーの追加と削除、禁止の解除、再読み込みです。管理用のTCPリスナーはありません（SID "
 "0018）。"
 
-#: ../../glossary.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:9
 msgid "Admission"
 msgstr "許可"
 
-#: ../../glossary.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:10
 msgid ""
 "The decision to forward a request to the origin. In Sibuna it is made by "
 "a valid session, an ``ALLOW`` rule, a static bypass path, or a reputation "
@@ -51,11 +51,11 @@ msgstr ""
 "ルール、バイパス対象の静的パス、レピュテーションの\\ ``allow``\\ "
 "接頭辞のいずれかによって許可します。許可がWAFの拒否を覆すことはありません。"
 
-#: ../../glossary.rst:12
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:12
 msgid "Affinity"
 msgstr "アフィニティ"
 
-#: ../../glossary.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:13
 msgid ""
 "The rule that sends the flows of one client to one server: by a cookie, "
 "by the source address, or by a sticky table. It gives way when the server "
@@ -64,11 +64,11 @@ msgstr ""
 "一つのクライアントのフローを一つのサーバーへ送る規則です。Cookie、送信元アドレス、スティッキーテーブルのいずれかによります。サーバーが停止、満杯、除外、ドレインのときは譲ります（SID "
 "0019、SID 0025）。"
 
-#: ../../glossary.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:15
 msgid "Aho-Corasick automaton"
 msgstr "Aho-Corasickオートマトン"
 
-#: ../../glossary.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:16
 msgid ""
 "A finite automaton that finds any of a fixed set of patterns in one pass "
 "over the input. Sibuna folds failure links into a dense transition table "
@@ -76,11 +76,11 @@ msgid ""
 msgstr ""
 "入力を一度走査するだけで、固定したパターン集合のどのパターンでも見つける有限オートマトンです。Sibunaは失敗リンクを密な遷移表に組み込むので、各バイトのコストは表の読み込み一回です。"
 
-#: ../../glossary.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:18
 msgid "Authority"
 msgstr "オーソリティ"
 
-#: ../../glossary.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:19
 msgid ""
 "In the edge, the database that owns the published topology in persistent "
 "mode: ``frontends``, ``backends`` and ``http``. Each node follows its "
@@ -92,11 +92,11 @@ msgstr ""
 "``global``\\ 、\\ ``mesh``\\ 、\\ ``observability``\\ 、\\ ``authority``\\ "
 "を保ちます（SID 0028）。"
 
-#: ../../glossary.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:21
 msgid "Backend"
 msgstr "バックエンド"
 
-#: ../../glossary.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:22
 msgid ""
 "A pool of servers of one protocol, with its scheduler, health check, "
 "timeouts and stickiness. The word follows HAProxy; *pool* names the same "
@@ -105,11 +105,11 @@ msgstr ""
 "一つのプロトコルのサーバーのプールで、スケジューラー、ヘルスチェック、タイムアウト、スティッキネスを持ちます。この語はHAProxyに従ったもので、\\ "
 "*プール*\\ も同じものを指します。"
 
-#: ../../glossary.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:24
 msgid "Ban table"
 msgstr "禁止テーブル"
 
-#: ../../glossary.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:25
 msgid ""
 "Lock-free slots of banned client addresses with expiry, 65,536 by default "
 "(``--ban-table-slots``), written by the honeypot, by rule quotas, by "
@@ -120,11 +120,11 @@ msgstr ""
 "``--ban-table-slots``\\ "
 "）。ハニーポット、ルールのクォータ、クラスターで共有するレピュテーション、そしてエッジではメッシュが書き込み、すべてのリクエストで読みます。"
 
-#: ../../glossary.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:27
 msgid "Breaker"
 msgstr "ブレーカー"
 
-#: ../../glossary.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:28
 msgid ""
 "The circuit breaker of an agent plugin. It opens after ``failures`` "
 "failures in a row and stays open for ``open``; while it is open a call "
@@ -133,11 +133,11 @@ msgstr ""
 "エージェントプラグインのサーキットブレーカーです。\\ ``failures``\\ 回連続で失敗すると開き、\\ ``open``\\ "
 "の間開いたままです。開いている間、呼び出しは即座に結果\\ ``unavailable``\\ で失敗します（SID 0030）。"
 
-#: ../../glossary.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:30
 msgid "Campaign"
 msgstr "キャンペーン"
 
-#: ../../glossary.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:31
 msgid ""
 "A cluster of security incidents whose payload embeddings lie within "
 "cosine distance 0.35 of one another; a heuristic grouping, not a proof of "
@@ -145,11 +145,11 @@ msgid ""
 msgstr ""
 "ペイロードの埋め込みベクトルが互いにコサイン距離0.35以内にあるセキュリティインシデントのまとまりです。ヒューリスティックなグループ分けであり、同じ発信元であることの証明ではありません。"
 
-#: ../../glossary.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:33
 msgid "Challenge record"
 msgstr "チャレンジレコード"
 
-#: ../../glossary.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:34
 msgid ""
 "The 70-character stateless identifier a client must solve: version, "
 "algorithm, difficulty, openings, issue time, client fingerprint, PRF "
@@ -159,11 +159,11 @@ msgstr ""
 "クライアントが解くべき、70文字の状態を持たない識別子です。バージョン、アルゴリズム、難易度、開示数、発行時刻、クライアントのフィンガープリント、PRF "
 "nonce、ルールのハッシュ、16バイトの鍵付きBLAKE3タグを含みます。発行してもサーバーには何も書き込みません。"
 
-#: ../../glossary.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:36
 msgid "ClientHello inspection"
 msgstr "ClientHelloの検査"
 
-#: ../../glossary.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:37
 msgid ""
 "On a ``tcp`` frontend with ``tcp_inspect``, reading the first TLS record "
 "of a connection without terminating TLS, to route or refuse it by server "
@@ -176,21 +176,21 @@ msgstr ""
 "``inspect_bytes``\\ の範囲で完全なClientHelloを送らない接続は、設定されたフォールバックをとります（SID "
 "0015、SID 0032）。"
 
-#: ../../glossary.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:39
 msgid "Difficulty, work bits"
 msgstr "難易度、作業ビット"
 
-#: ../../glossary.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:40
 msgid ""
 "The single integer that scales both tiers: the number of leading zero "
 "bits for Hashcash, or three more than the tree depth for sequential work."
 msgstr "二つの層の規模を決める一つの整数です。Hashcashでは先頭のゼロビットの数、逐次作業では木の深さに3を足した値です。"
 
-#: ../../glossary.rst:42
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:42
 msgid "Drain"
 msgstr "ドレイン"
 
-#: ../../glossary.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:43
 msgid ""
 "The state of a server that takes no new flow and keeps its established "
 "ones. ``set server POOL/NAME state drain`` sets it, a reload keeps it, "
@@ -200,11 +200,11 @@ msgstr ""
 "新しいフローを取らず、確立したフローを保つサーバーの状態です。\\ ``set server POOL/NAME state drain``\\ "
 "がこれを設定し、再読み込みはそれを保ち、再起動はそれを終わらせます。ノードは停止時に全体としてドレインし、その間レディネスは503で応答します。"
 
-#: ../../glossary.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:45
 msgid "Edge"
 msgstr "Edge"
 
-#: ../../glossary.rst:46
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:46
 msgid ""
 "A Sibuna deployment with ``--data-dir`` (a SQLite file on one node), or "
 "with ``--database-url`` and ``--cluster-node`` (one PostgreSQL database "
@@ -215,11 +215,11 @@ msgstr ""
 "``--cluster-node``\\ "
 "（クラスターで共有する一つのPostgreSQLデータベース）を使うSibunaのデプロイです。どちらの運用構成にも、永続的なポリシー、共有レピュテーション、インシデントのフォレンジックを提供します。"
 
-#: ../../glossary.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:48
 msgid "Edge mode"
 msgstr "エッジモード"
 
-#: ../../glossary.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:49
 msgid ""
 "The daemon started with ``--config-file``. It forwards TCP and UDP, "
 "terminates TLS, HTTP/2 and HTTP/3, and routes HTTP requests to server "
@@ -230,11 +230,11 @@ msgstr ""
 "で起動したデーモンです。TCPとUDPを転送し、TLS、HTTP/2、HTTP/3を終端し、HTTPリクエストをサーバーのプールへルーティングします。ファイアウォールはそれを求めるルートで動きます。上の、ストレージの意味での\\ "
 "*Edge*\\ とは無関係です。"
 
-#: ../../glossary.rst:51
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:51
 msgid "Engine slot"
 msgstr "エンジンスロット"
 
-#: ../../glossary.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:52
 msgid ""
 "The place where the published policy engine lives, as a reference-counted "
 "pointer. Workers hold a reference while classifying; the storage thread "
@@ -243,22 +243,22 @@ msgid ""
 msgstr ""
 "公開中のポリシーエンジンを参照カウント付きポインターとして置く場所です。ワーカーは分類の間、参照を保持します。ストレージスレッドはリクエストの経路の外で新しいエンジンを構築し、ポインター交換で公開します。古いエンジンは、最後の読み手が参照を手放したときに解放されます。"
 
-#: ../../glossary.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:54
 msgid "Fingerprint"
 msgstr "フィンガープリント"
 
-#: ../../glossary.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:55
 msgid ""
 "A keyed hash of client address and User-Agent, bound into challenges and "
 "tokens so neither can be replayed from another client."
 msgstr ""
 "クライアントのアドレスとUser-Agentの鍵付きハッシュです。チャレンジとトークンに結び付けるので、どちらも別のクライアントから再利用できません。"
 
-#: ../../glossary.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:57
 msgid "Fleet cap"
 msgstr "フリート全体のキャップ"
 
-#: ../../glossary.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:58
 msgid ""
 "The ``max_flows`` of a server bounding the flows of all nodes of a mesh "
 "together, with ``max_flows_scope: \"fleet\"``. Each node holds a share of "
@@ -269,22 +269,22 @@ msgstr ""
 "がメッシュのすべてのノードのフローの合計を制限することです。各ノードは上限の割り当てを持ち、使われていない割り当ては、フローを持つノードへ移ります（SID "
 "0025）。"
 
-#: ../../glossary.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:60
 msgid "Flow"
 msgstr "フロー"
 
-#: ../../glossary.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:61
 msgid ""
 "One unit of work of the edge that holds a slot of ``global.max_flows``: a "
 "TCP connection, a UDP mapping, or an HTTP connection."
 msgstr ""
 "``global.max_flows``\\ の枠を一つ占める、エッジの仕事の単位です。TCP接続、UDPマッピング、HTTP接続のいずれかです。"
 
-#: ../../glossary.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:63
 msgid "Forward auth"
 msgstr "Forward auth"
 
-#: ../../glossary.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:64
 msgid ""
 "Deployment mode in which an ingress asks Sibuna whether to admit a "
 "request (``200``) or challenge, deny, or limit it (``401``, ``403``, "
@@ -293,11 +293,11 @@ msgstr ""
 "イングレスがSibunaに、リクエストを許可するか（\\ ``200``\\ ）、チャレンジ、拒否、制限するか（\\ ``401``\\ 、\\ "
 "``403``\\ 、\\ ``429``\\ ）を問い合わせ、オリジンへのプロキシはイングレス自身が行うデプロイ方式です。"
 
-#: ../../glossary.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:66
 msgid "Frontend"
 msgstr "フロントエンド"
 
-#: ../../glossary.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:67
 msgid ""
 "A named set of listening addresses of one protocol, ``tcp``, ``udp`` or "
 "``http``, with its routes, its limits and its default backend."
@@ -305,11 +305,11 @@ msgstr ""
 "一つのプロトコル（\\ ``tcp``\\ 、\\ ``udp``\\ 、\\ ``http``\\ "
 "）のリスニングアドレスの名前付きの集合で、ルート、上限、既定のバックエンドを持ちます。"
 
-#: ../../glossary.rst:69
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:69
 msgid "Gate"
 msgstr "Gate"
 
-#: ../../glossary.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:70
 msgid ""
 "The surface with proof-of-work admission, sessions, rules, reputation, "
 "GCRA limits and bans, but no application inspection (``--gate``)."
@@ -317,11 +317,11 @@ msgstr ""
 "作業証明による許可、セッション、ルール、レピュテーション、GCRAによる制限、禁止を備え、アプリケーションの検査を持たない運用構成です（\\ "
 "``--gate``\\ ）。"
 
-#: ../../glossary.rst:72
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:72
 msgid "GCRA"
 msgstr "GCRA"
 
-#: ../../glossary.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:73
 msgid ""
 "The Generic Cell Rate Algorithm: one theoretical arrival time per client "
 "that admits a burst of :math:`N` then one request per emission interval, "
@@ -330,11 +330,11 @@ msgstr ""
 "Generic Cell Rate Algorithmです。クライアントごとに一つの理論到着時刻を持ち、\\ :math:`N`\\ "
 "個のバーストを許可した後は送出間隔ごとに一つのリクエストを許可します。窓の境界はありません。"
 
-#: ../../glossary.rst:75
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:75
 msgid "Handoff"
 msgstr "ハンドオフ"
 
-#: ../../glossary.rst:76
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:76
 msgid ""
 "The replacement of a running edge binary with ``global.upgrade_socket``: "
 "the old process passes its listening sockets and its live UDP mappings to "
@@ -345,11 +345,11 @@ msgstr ""
 "による、動いているエッジのバイナリの置き換えです。古いプロセスは、リスニングソケットと生きているUDPマッピングをUnixソケットを通して新しいプロセスに渡し、それからTCPストリームをドレインします。Linuxのみです（SID "
 "0029）。"
 
-#: ../../glossary.rst:78
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:78
 msgid "Hashcash"
 msgstr "Hashcash"
 
-#: ../../glossary.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:79
 msgid ""
 "Tier One: find a nonce such that SHA-256 of the challenge, a colon, and "
 "the decimal nonce has :math:`b` leading zero bits. Expected :math:`2^b` "
@@ -358,11 +358,11 @@ msgstr ""
 "第一層です。チャレンジ、コロン、十進数のnonceを連結したもののSHA-256が先頭に\\ :math:`b`\\ "
 "個のゼロビットを持つようなnonceを探します。期待試行回数は\\ :math:`2^b`\\ 回で、検証はハッシュ一回です。"
 
-#: ../../glossary.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:81
 msgid "Honeypot"
 msgstr "ハニーポット"
 
-#: ../../glossary.rst:82
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:82
 msgid ""
 "An invisible link to ``/__sibuna/honeypot``; a client that follows it is "
 "banned and an incident with reputation :math:`-100` is recorded."
@@ -370,11 +370,11 @@ msgstr ""
 "``/__sibuna/honeypot``\\ を指す見えないリンクです。たどったクライアントは禁止され、レピュテーション\\ "
 ":math:`-100`\\ のインシデントが記録されます。"
 
-#: ../../glossary.rst:84
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:84
 msgid "Hook"
 msgstr "フック"
 
-#: ../../glossary.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:85
 msgid ""
 "A decision of the operator's own on the path of the edge, run by a plugin "
 "at the stage ``connection``, ``request`` or ``telemetry``. A plugin is "
@@ -386,11 +386,11 @@ msgstr ""
 "のいずれかの段階で実行します。プラグインは、ネイティブのRust、計量付きのWebAssemblyモジュール、別のプロセスのエージェントのいずれかです（SID "
 "0030）。"
 
-#: ../../glossary.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:87
 msgid "Idle reaper"
 msgstr "アイドル接続回収スレッド"
 
-#: ../../glossary.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:88
 msgid ""
 "A thread that closes connections that have been silent longer than "
 "``--idle-timeout``, so a slow client cannot pin a connection thread."
@@ -398,22 +398,22 @@ msgstr ""
 "``--idle-timeout``\\ "
 "より長く無通信の接続を閉じるスレッドです。これにより、遅いクライアントが接続スレッドを占有し続けることはできません。"
 
-#: ../../glossary.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:90
 msgid "Interstitial"
 msgstr "中間ページ"
 
-#: ../../glossary.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:91
 msgid ""
 "The embedded HTML page served in place of a protected page; it fetches a "
 "challenge, solves it in a Web Worker, posts the solution, and reloads."
 msgstr ""
 "保護されたページの代わりに配信する組み込みのHTMLページです。チャレンジを取得し、Web Workerで解き、解答を送信して再読み込みします。"
 
-#: ../../glossary.rst:93
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:93
 msgid "JA4"
 msgstr "JA4"
 
-#: ../../glossary.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:94
 msgid ""
 "A 36-character fingerprint, defined by FoxIO, of how a client opens a TLS "
 "connection: protocol, TLS version, server name, cipher and extension "
@@ -427,11 +427,11 @@ msgstr ""
 "``--ja4-header``\\ で指定したヘッダーで転送する値を読み、ルールは\\ ``ja4``\\ フィールドでこれと照合します（SID "
 "0014）。チャレンジとトークンに結び付けるクライアントのフィンガープリントとは無関係です。"
 
-#: ../../glossary.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:96
 msgid "Judge"
 msgstr "判定スレッド"
 
-#: ../../glossary.rst:97
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:97
 msgid ""
 "A thread that decides a parked connection whose chain of hooks names an "
 "agent, so that the edge worker never waits for the agent (SID 0030)."
@@ -439,21 +439,21 @@ msgstr ""
 "フックのチェーンがエージェントを指定する保留された接続を判定するスレッドです。これにより、エッジワーカーがエージェントを待つことはありません（SID "
 "0030）。"
 
-#: ../../glossary.rst:99
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:99
 msgid "Keyed BLAKE3"
 msgstr "鍵付きBLAKE3"
 
-#: ../../glossary.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:100
 msgid ""
 "The pseudorandom function behind Sibuna's key schedule, challenge tags, "
 "session tags, fingerprints, and challenge nonces."
 msgstr "Sibunaの鍵スケジュール、チャレンジタグ、セッションタグ、フィンガープリント、チャレンジのnonceを支える擬似ランダム関数です。"
 
-#: ../../glossary.rst:102
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:102
 msgid "Local authority"
 msgstr "ローカルの認証局"
 
-#: ../../glossary.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:103
 msgid ""
 "The certificate authority that the edge runs itself for internal names. "
 "It keeps a root and an intermediate in the storage of automatic HTTPS, "
@@ -463,11 +463,11 @@ msgstr ""
 "エッジが内部の名前のために自分で動かす認証局です。自動HTTPSのストレージにルートと中間を保持し、失効リストを書き、ACMEサーバーとして他の機械に証明書を提供できます（SID "
 "0021）。"
 
-#: ../../glossary.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:105
 msgid "MAC token"
 msgstr "MACトークン"
 
-#: ../../glossary.rst:106
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:106
 msgid ""
 "The default session cookie: a 40-byte payload (version, work level, "
 "timestamp, expiry, rule hash, fingerprint) and a 16-byte keyed BLAKE3 "
@@ -475,11 +475,11 @@ msgid ""
 msgstr ""
 "標準のセッションCookieです。40バイトのペイロード（バージョン、作業レベル、タイムスタンプ、期限、ルールのハッシュ、フィンガープリント）と16バイトの鍵付きBLAKE3タグからなり、定数時間で検証します。"
 
-#: ../../glossary.rst:108
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:108
 msgid "Maglev"
 msgstr "Maglev"
 
-#: ../../glossary.rst:109
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:109
 msgid ""
 "A consistent-hash table of a prime number of slots (65,537 in Sibuna), "
 "filled by permutations of the servers, that places a client on a server "
@@ -491,11 +491,11 @@ msgstr ""
 "et al., NSDI 2016）。Sibunaは重み付きの表を作り、選んだサーバーの負荷を定数倍で制限します（\\ "
 "``bounded_maglev``\\ 、SID 0015）。"
 
-#: ../../glossary.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:111
 msgid "Mesh"
 msgstr "メッシュ"
 
-#: ../../glossary.rst:112
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:112
 msgid ""
 "The nodes of an edge cluster, listed in the ``mesh`` section with a "
 "shared key. They probe each other over UDP every half second and share "
@@ -507,11 +507,11 @@ msgstr ""
 "節に列挙されます。0.5秒ごとにUDPで互いをプローブし、禁止、コマンド、スティッキーテーブル、フリート全体のキャップの割り当てを共有します。\\ "
 "``forward``\\ があれば、フローを所有者へ送ることもします。最大64ノードです（SID 0022からSID 0026）。"
 
-#: ../../glossary.rst:114
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:114
 msgid "Node"
 msgstr "ノード"
 
-#: ../../glossary.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:115
 msgid ""
 "One edge process in a mesh, known by its mesh address; in persistent mode "
 "also by the name ``authority.node``."
@@ -519,11 +519,11 @@ msgstr ""
 "メッシュの中の一つのエッジのプロセスで、メッシュアドレスで識別されます。永続モードでは名前\\ ``authority.node``\\ "
 "でも識別されます。"
 
-#: ../../glossary.rst:117
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:117
 msgid "Work level"
 msgstr "作業レベル"
 
-#: ../../glossary.rst:118
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:118
 msgid ""
 "The mechanism and work bits a session's holder actually solved, carried "
 "in the token; a route admits a session only when its level reaches the "
@@ -531,11 +531,11 @@ msgid ""
 msgstr ""
 "セッションの保有者が実際に解いた方式と作業ビットで、トークンに記録されます。ルートがセッションを許可するのは、そのレベルがルートの要件に達するときだけです。"
 
-#: ../../glossary.rst:120
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:120
 msgid "Opening"
 msgstr "開示"
 
-#: ../../glossary.rst:121
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:121
 msgid ""
 "In a sequential-work proof, one leaf label plus the sibling labels along "
 "its path to the root; the verifier recomputes the path and compares with "
@@ -543,11 +543,11 @@ msgid ""
 msgstr ""
 "逐次作業証明における、一つの葉のラベルと、その葉から根までの経路上の兄弟ラベルの組です。検証者は経路を再計算し、コミットメントと比較します。"
 
-#: ../../glossary.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:123
 msgid "Owner"
 msgstr "所有者"
 
-#: ../../glossary.rst:124
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:124
 msgid ""
 "The node of a mesh that serves a client under peer forwarding: the live "
 "node with the largest rendezvous score for the client's address (SID "
@@ -556,11 +556,11 @@ msgstr ""
 "ピア転送の下でクライアントを処理するメッシュのノードです。クライアントのアドレスに対するランデブーのスコアが最大の、生きているノードです（SID "
 "0026）。"
 
-#: ../../glossary.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:126
 msgid "Passive health"
 msgstr "パッシブヘルス"
 
-#: ../../glossary.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:127
 msgid ""
 "Ejecting a server for ``ejection`` after ``failures`` consecutive "
 "failures of real requests, while another server can serve (SID 0019)."
@@ -568,11 +568,11 @@ msgstr ""
 "別のサーバーが受け持てる間、実際のリクエストが\\ ``failures``\\ 回連続で失敗したサーバーを\\ ``ejection``\\ "
 "の間除外することです（SID 0019）。"
 
-#: ../../glossary.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:129
 msgid "Passthrough"
 msgstr "パススルー"
 
-#: ../../glossary.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:130
 msgid ""
 "Relaying the bytes of a TLS or QUIC connection to a server without "
 "terminating it. The edge may still read the ClientHello, or validate QUIC "
@@ -581,11 +581,11 @@ msgstr ""
 "TLSやQUICの接続を終端せずに、そのバイトをサーバーへ中継することです。それでもエッジはClientHelloを読んだり、QUICを接続IDで検証したりできます（SID "
 "0032）。"
 
-#: ../../glossary.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:132
 msgid "Peer forwarding"
 msgstr "ピア転送"
 
-#: ../../glossary.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:133
 msgid ""
 "The mesh feature that hands a new connection or UDP client to the node "
 "that owns the client, so that its sticky server, rate counters and UDP "
@@ -595,19 +595,19 @@ msgstr ""
 "新しい接続やUDPクライアントを、そのクライアントを所有するノードに渡すメッシュの機能です。これにより、スティッキーなサーバー、レートカウンター、UDPセッションが一つのノードに留まります。ネットワークが移した確立済みのTCP接続は修復されません（SID "
 "0026）。"
 
-#: ../../glossary.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:135
 msgid "Pool"
 msgstr "プール"
 
-#: ../../glossary.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:136
 msgid "See *Backend*."
 msgstr "*バックエンド*\\ を参照。"
 
-#: ../../glossary.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:138
 msgid "Proof of Sequential Work (PoSW)"
 msgstr "逐次作業証明（PoSW）"
 
-#: ../../glossary.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:139
 msgid ""
 "Tier Two: the Cohen-Pietrzak hash graph whose labels depend on all "
 "earlier labels, forcing :math:`2^{n+1}-1` sequential hashes however many "
@@ -616,11 +616,11 @@ msgstr ""
 "第二層です。各ラベルがそれ以前のすべてのラベルに依存するCohen-Pietrzakのハッシュグラフを使い、証明者のコア数にかかわらず\\ "
 ":math:`2^{n+1}-1`\\ 回の逐次ハッシュを強制します。検証は\\ :math:`t(n+1)`\\ 回のハッシュです。"
 
-#: ../../glossary.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:141
 msgid "Regime"
 msgstr "体制"
 
-#: ../../glossary.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:142
 msgid ""
 "The routing mode of a mesh, chosen from the 95th percentile of the round "
 "trip to the peers: *standalone* without a live peer, *regional* while the "
@@ -633,11 +633,11 @@ msgstr ""
 "（広域）です。メッシュが広域から地域に戻るのは1.5 msを下回ったときだけです（\\ ``crates/lb/src/mesh.rs``\\ "
 "の\\ ``Regime::step``\\ ）。"
 
-#: ../../glossary.rst:144
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:144
 msgid "Rendezvous hashing"
 msgstr "ランデブーハッシュ"
 
-#: ../../glossary.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:145
 msgid ""
 "Highest-random-weight hashing (Thaler and Ravishankar, 1998): each "
 "candidate gets a score from a hash of its name and the key, and the "
@@ -648,11 +648,11 @@ msgstr ""
 "最高ランダム重みハッシュ（ThalerとRavishankar、1998）です。各候補は名前とキーのハッシュからスコアを得て、最大のスコアが勝ちます。失われた候補は自分のキーだけを移します。Sibunaはこれをソースのスティッキネス（SID "
 "0019）とクライアントの所有者（SID 0026）に使います。"
 
-#: ../../glossary.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:147
 msgid "Reputation trie"
 msgstr "レピュテーショントライ"
 
-#: ../../glossary.rst:148
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:148
 msgid ""
 "The 128-bit radix trie holding ``allow``, ``deny``, and ``challenge`` "
 "prefixes from the policy file and from the ``ip_reputation`` table."
@@ -660,11 +660,11 @@ msgstr ""
 "ポリシーファイルと\\ ``ip_reputation``\\ テーブルから得た\\ ``allow``\\ 、\\ ``deny``\\ 、\\ "
 "``challenge``\\ の接頭辞を保持する128ビットの基数トライです。"
 
-#: ../../glossary.rst:150
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:150
 msgid "Revision"
 msgstr "リビジョン"
 
-#: ../../glossary.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:151
 msgid ""
 "In the edge, one published state of the topology. With a file it is the "
 "digest of the file; with a database it is a number that only grows, and a "
@@ -673,32 +673,32 @@ msgstr ""
 "エッジにおいて、公開されたトポロジーの一つの状態です。ファイルではファイルのダイジェスト、データベースでは増えるだけの数で、ロールバックは新しいリビジョンです（SID "
 "0028）。"
 
-#: ../../glossary.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:153
 msgid "Robin Hood spent set"
 msgstr "Robin Hood使用済み集合"
 
-#: ../../glossary.rst:154
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:154
 msgid ""
 "The fixed-capacity open-addressed table of solved challenge tags, which "
 "prevents a valid solution from being submitted twice."
 msgstr "解かれたチャレンジのタグを持つ、容量固定のオープンアドレス法のテーブルです。有効な解答が二度提出されることを防ぎます。"
 
-#: ../../glossary.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:156
 msgid "Route"
 msgstr "ルート"
 
-#: ../../glossary.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:157
 msgid ""
 "A rule of an HTTP frontend that selects a backend by host name and path "
 "prefix, and may switch the firewall off or on for its requests."
 msgstr ""
 "ホスト名とパスの接頭辞でバックエンドを選ぶHTTPフロントエンドのルールで、そのリクエストについてファイアウォールを無効または有効にできます。"
 
-#: ../../glossary.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:159
 msgid "Rule hash"
 msgstr "ルールのハッシュ"
 
-#: ../../glossary.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:160
 msgid ""
 "A 64-bit hash of the rule name that demanded a challenge, carried in the "
 "challenge, the token, and the ``X-Sibuna-Rule-Hash`` header."
@@ -706,11 +706,11 @@ msgstr ""
 "チャレンジを要求したルールの名前の64ビットハッシュです。チャレンジ、トークン、\\ ``X-Sibuna-Rule-Hash``\\ "
 "ヘッダーで運ばれます。"
 
-#: ../../glossary.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:162
 msgid "Server"
 msgstr "サーバー"
 
-#: ../../glossary.rst:163
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:163
 msgid ""
 "One address of a pool, with a name, a weight and an optional "
 "``max_flows``. ``sibuna ctl`` addresses it as ``POOL/NAME``."
@@ -718,27 +718,27 @@ msgstr ""
 "プールの一つのアドレスで、名前、重み、任意の\\ ``max_flows``\\ を持ちます。\\ ``sibuna ctl``\\ はそれを\\ "
 "``POOL/NAME``\\ と指定します。"
 
-#: ../../glossary.rst:165
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:165
 msgid "Share"
 msgstr "割り当て"
 
-#: ../../glossary.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:166
 msgid "The part of a fleet cap that one node may hold now (SID 0025)."
 msgstr "フリート全体のキャップのうち、一つのノードが今持てる部分です（SID 0025）。"
 
-#: ../../glossary.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:168
 msgid "Shield"
 msgstr "Shield"
 
-#: ../../glossary.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:169
 msgid "The default surface: Gate plus the semantic firewall (``--shield``)."
 msgstr "標準の運用構成です。Gateに意味解析ファイアウォールを加えたものです（\\ ``--shield``\\ ）。"
 
-#: ../../glossary.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:171
 msgid "SID"
 msgstr "SID"
 
-#: ../../glossary.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:172
 msgid ""
 "A Sibuna Discussion record: a paper-style design document under "
 "``docs/sid/records`` with the assumptions, proofs, and measurements "
@@ -747,11 +747,11 @@ msgstr ""
 "Sibuna Discussionの記録です。\\ ``docs/sid/records``\\ "
 "にある論文形式の設計文書で、システムの一部分を支える前提、証明、測定を示します。"
 
-#: ../../glossary.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:174
 msgid "Slow start"
 msgstr "スロースタート"
 
-#: ../../glossary.rst:175
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:175
 msgid ""
 "The ramp of ``slow_start`` during which a server that entered service "
 "takes a weight that grows in proportion to the time, so that a cold "
@@ -760,11 +760,11 @@ msgstr ""
 "``slow_start``\\ "
 "のランプです。その間、稼働を始めたサーバーは時間に比例して増える重みをとるので、冷えたサーバーに負荷が殺到しません（SID 0019）。"
 
-#: ../../glossary.rst:177
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:177
 msgid "Spill cache"
 msgstr "spillキャッシュ"
 
-#: ../../glossary.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:178
 msgid ""
 "A file mapped into memory under the sticky table that keeps the hints of "
 "clients that left memory, and keeps them over a restart. Admission to it "
@@ -773,11 +773,11 @@ msgstr ""
 "スティッキーテーブルの下でメモリにマップしたファイルで、メモリから出たクライアントのヒントを保持し、再起動をまたいで保ちます。その受け入れはTinyLFUに従います（SID "
 "0027）。"
 
-#: ../../glossary.rst:180
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:180
 msgid "Sticky table"
 msgstr "スティッキーテーブル"
 
-#: ../../glossary.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:181
 msgid ""
 "The table of a pool with ``sticky: \"table\"`` that remembers the server "
 "of each client, by source address or by cookie, for ``ttl`` after the "
@@ -787,21 +787,21 @@ msgstr ""
 "を持つプールの表で、各クライアントのサーバーを、送信元アドレスまたはCookieによって、最後に使ってから\\ ``ttl``\\ "
 "の間覚えます。メッシュがそれを複製し、後の選択が勝ちます（SID 0025）。"
 
-#: ../../glossary.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:183
 msgid "Surface"
 msgstr "運用構成"
 
-#: ../../glossary.rst:184
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:184
 msgid ""
 "One of the two product shapes, Gate or Shield; storage and clustering are "
 "options for either."
 msgstr "GateとShieldという二つの製品の形のいずれかです。ストレージとクラスタリングはどちらでも選択できます。"
 
-#: ../../glossary.rst:186
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:186
 msgid "WEIGH"
 msgstr "WEIGH"
 
-#: ../../glossary.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:187
 msgid ""
 "A rule action that adds a signed weight to a request's score instead of "
 "deciding; totals at or above the thresholds challenge with extra work "
@@ -809,11 +809,11 @@ msgid ""
 msgstr ""
 "判断を下す代わりに、リクエストのスコアに符号付きの重みを加えるルール動作です。合計がしきい値以上になると、追加の作業ビット付きでチャレンジするか、拒否します。"
 
-#: ../../glossary.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:189
 msgid "Worker"
 msgstr "ワーカー"
 
-#: ../../glossary.rst:190
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:190
 msgid ""
 "In the edge, a thread that serves traffic. The edge worker accepts for "
 "every frontend and owns the flow table and the UDP mappings; relay "
@@ -823,11 +823,11 @@ msgstr ""
 "エッジにおいて、トラフィックを処理するスレッドです。エッジワーカーはすべてのフロントエンドについて受け付け、フローテーブルとUDPマッピングを所有します。中継スレッドがTCPストリームを運びます。Linuxでは、プロセッサーごとに一つのイベント駆動のHTTPワーカーがHTTP接続を処理します（SID "
 "0015、SID 0016）。"
 
-#: ../../glossary.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:192
 msgid "Zaxonlite"
 msgstr "Zaxonlite"
 
-#: ../../glossary.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:193
 msgid ""
 "The embedded SQLite replication engine (Multi-Paxos) of SID 0005, "
 "replaced by SQLite and PostgreSQL storage in SID 0011; its cluster "
@@ -837,11 +837,11 @@ msgstr ""
 "0011でSQLiteとPostgreSQLによるストレージに置き換えられました。そのクラスターオプションを指定すると、現在は起動が\\ "
 "``RemovedOption``\\ で停止します。"
 
-#: ../../glossary.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:195
 msgid "Bibliography"
 msgstr "参考文献"
 
-#: ../../glossary.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:198
 msgid ""
 "Aho, A. V., and Corasick, M. J. \"Efficient string matching: an aid to "
 "bibliographic search.\" *Communications of the ACM* 18(6), 1975."
@@ -849,7 +849,7 @@ msgstr ""
 "Aho, A. V., and Corasick, M. J. \"Efficient string matching: an aid to "
 "bibliographic search.\" *Communications of the ACM* 18(6), 1975."
 
-#: ../../glossary.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:199
 msgid ""
 "ATM Forum. *Traffic Management Specification Version 4.0*, "
 "af-tm-0056.000, 1996 (the Generic Cell Rate Algorithm)."
@@ -857,14 +857,14 @@ msgstr ""
 "ATM Forum. *Traffic Management Specification Version 4.0*, "
 "af-tm-0056.000, 1996（Generic Cell Rate Algorithm）."
 
-#: ../../glossary.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:200
 msgid ""
 "Back, A. \"Hashcash: a denial of service counter-measure.\" Technical "
 "report, 2002."
 msgstr ""
 "Back, A. \"Hashcash: a denial of service counter-measure.\" 技術報告, 2002."
 
-#: ../../glossary.rst:201
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:201
 msgid ""
 "Blocki, J., Lee, S., and Zhou, S. \"On the security of proofs of "
 "sequential work in a post-quantum world.\" *Information-Theoretic "
@@ -874,12 +874,12 @@ msgstr ""
 "sequential work in a post-quantum world.\" *Information-Theoretic "
 "Cryptography (ITC)*, 2021."
 
-#: ../../glossary.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:202
 msgid ""
 "Celis, P. *Robin Hood Hashing*. PhD thesis, University of Waterloo, 1986."
 msgstr "Celis, P. *Robin Hood Hashing*. 博士論文, University of Waterloo, 1986."
 
-#: ../../glossary.rst:203
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:203
 msgid ""
 "Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
 "*EUROCRYPT*, 2018."
@@ -887,7 +887,7 @@ msgstr ""
 "Cohen, B., and Pietrzak, K. \"Simple proofs of sequential work.\" "
 "*EUROCRYPT*, 2018."
 
-#: ../../glossary.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:204
 msgid ""
 "Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
 "mail.\" *CRYPTO*, 1992."
@@ -895,7 +895,7 @@ msgstr ""
 "Dwork, C., and Naor, M. \"Pricing via processing or combatting junk "
 "mail.\" *CRYPTO*, 1992."
 
-#: ../../glossary.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:205
 msgid ""
 "Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
 "identification and signature problems.\" *CRYPTO*, 1986."
@@ -903,7 +903,7 @@ msgstr ""
 "Fiat, A., and Shamir, A. \"How to prove yourself: practical solutions to "
 "identification and signature problems.\" *CRYPTO*, 1986."
 
-#: ../../glossary.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:206
 msgid ""
 "Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC 9110, "
 "and *HTTP/1.1*, RFC 9112. IETF, 2022."
@@ -911,7 +911,7 @@ msgstr ""
 "Fielding, R., Nottingham, M., and Reschke, J. *HTTP Semantics*, RFC "
 "9110、および\\ *HTTP/1.1*, RFC 9112. IETF, 2022."
 
-#: ../../glossary.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:207
 msgid ""
 "FoxIO. *JA4+ Network Fingerprinting*. https://github.com/FoxIO-LLC/ja4, "
 "2023 (the JA4 TLS client fingerprint)."
@@ -919,7 +919,7 @@ msgstr ""
 "FoxIO. *JA4+ Network Fingerprinting*. https://github.com/FoxIO-LLC/ja4, "
 "2023（JA4 TLSクライアントフィンガープリント）."
 
-#: ../../glossary.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:208
 msgid ""
 "Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
 "cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
@@ -927,7 +927,7 @@ msgstr ""
 "Einziger, G., Friedman, R., and Manes, B. \"TinyLFU: a highly efficient "
 "cache admission policy.\" *ACM Transactions on Storage* 13(4), 2017."
 
-#: ../../glossary.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:209
 msgid ""
 "Eisenbud, D. E., Yi, C., Contavalli, C., Smith, C., Kononov, R., "
 "Mann-Hielscher, E., Cilingiroglu, A., Cheyney, B., Shang, W., and Hosein, "
@@ -939,7 +939,7 @@ msgstr ""
 "J. D. \"Maglev: a fast and reliable software network load balancer.\" "
 "*NSDI*, 2016."
 
-#: ../../glossary.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:210
 msgid ""
 "Hanson, N. \"libinjection: SQL injection detection by tokenization.\" "
 "Black Hat USA, 2012."
@@ -947,7 +947,7 @@ msgstr ""
 "Hanson, N. \"libinjection: SQL injection detection by tokenization.\" "
 "Black Hat USA, 2012."
 
-#: ../../glossary.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:211
 msgid ""
 "Juels, A., and Brainard, J. \"Client puzzles: a cryptographic "
 "countermeasure against connection depletion attacks.\" *NDSS*, 1999."
@@ -955,7 +955,7 @@ msgstr ""
 "Juels, A., and Brainard, J. \"Client puzzles: a cryptographic "
 "countermeasure against connection depletion attacks.\" *NDSS*, 1999."
 
-#: ../../glossary.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:212
 msgid ""
 "Lamport, L. \"The part-time parliament.\" *ACM Transactions on Computer "
 "Systems* 16(2), 1998; and \"Paxos made simple.\" *ACM SIGACT News* 32(4), "
@@ -965,7 +965,7 @@ msgstr ""
 "Systems* 16(2), 1998、および\"Paxos made simple.\" *ACM SIGACT News* 32(4), "
 "2001."
 
-#: ../../glossary.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:213
 msgid ""
 "Mahmoody, M., Moran, T., and Vadhan, S. \"Publicly verifiable proofs of "
 "sequential work.\" *Innovations in Theoretical Computer Science (ITCS)*, "
@@ -975,7 +975,7 @@ msgstr ""
 "sequential work.\" *Innovations in Theoretical Computer Science (ITCS)*, "
 "2013."
 
-#: ../../glossary.rst:214
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:214
 msgid ""
 "Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
 "bounded loads.\" *SODA*, 2018."
@@ -983,7 +983,7 @@ msgstr ""
 "Mirrokni, V., Thorup, M., and Zadimoghaddam, M. \"Consistent hashing with "
 "bounded loads.\" *SODA*, 2018."
 
-#: ../../glossary.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:215
 msgid ""
 "O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
 "one function, fast everywhere*. Specification, 2020."
@@ -991,7 +991,7 @@ msgstr ""
 "O'Connor, J., Aumasson, J.-P., Neves, S., and Wilcox-O'Hearn, Z. *BLAKE3: "
 "one function, fast everywhere*. 仕様, 2020."
 
-#: ../../glossary.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:216
 msgid ""
 "Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
 "increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
@@ -999,7 +999,7 @@ msgstr ""
 "Thaler, D. G., and Ravishankar, C. V. \"Using name-based mappings to "
 "increase hit rates.\" *IEEE/ACM Transactions on Networking* 6(1), 1998."
 
-#: ../../glossary.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:217
 msgid ""
 "Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, 2011 (the "
 "sequence-stamped ring used for the incident queue)."
@@ -1007,7 +1007,7 @@ msgstr ""
 "Vyukov, D. \"Bounded MPMC queue.\" 1024cores.net, "
 "2011（インシデントキューで使う、シーケンス番号付きのリング）."
 
-#: ../../glossary.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:218
 msgid ""
 "Wang, X., Hong, Y., Chang, H., Park, K., Langdale, G., Hu, J., and Zhu, "
 "H. \"Hyperscan: a fast multi-pattern regex matcher for modern CPUs.\" "
@@ -1017,7 +1017,7 @@ msgstr ""
 "H. \"Hyperscan: a fast multi-pattern regex matcher for modern CPUs.\" "
 "*NSDI*, 2019."
 
-#: ../../glossary.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/glossary.rst:219
 msgid ""
 "Sibuna Discussions 0001 to 0032, ``docs/sid/records``, 2026: process, "
 "foundation architecture, declarative policy engine, semantic inspection, "

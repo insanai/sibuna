@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../edge.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:1
 msgid "Part VIII: The Edge Load Balancer"
 msgstr "제VIII부: 엣지 로드 밸런서"
 
-#: ../../edge.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:4
 msgid ""
 "The earlier Parts built a gate and a shield in front of one origin. This "
 "Part follows a connection through a node that serves many origins: it "
@@ -37,11 +37,11 @@ msgstr ""
 "그 플로를 같은 서버에 둡니다. 우리는 설계와 그 이유를 공부합니다. 설정은 제XI부에 있으며, 여기서 되풀이하지 않고 그곳을 "
 "가리킵니다. SID 0015가 상위 기록이며, 각 절은 그 설계를 담은 기록을 밝힙니다."
 
-#: ../../edge.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:6
 msgid "Objectives"
 msgstr "학습 목표"
 
-#: ../../edge.rst:8
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:8
 msgid ""
 "By the end of this chapter, we should be able to explain why a flow "
 "belongs to one thread and why a reload fails no request, describe how a "
@@ -57,11 +57,11 @@ msgstr ""
 "손으로 풀고, 서버가 빠질 때 클라이언트가 얼마나 옮겨 가는지 유도하고, 서버의 생애를 상태 기계로 그리고, 소켓에서의 요청 허용 "
 "단계를 나열하고, 훅의 결과 규칙을 말하고, 남아 있는 빈틈을 짚을 수 있어야 합니다."
 
-#: ../../edge.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:10
 msgid "The Model"
 msgstr "모델"
 
-#: ../../edge.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:13
 msgid ""
 "A node is described by four kinds of object. A *frontend* is a set of "
 "bound addresses and a protocol: ``tcp``, ``udp`` or ``http``. A *route* "
@@ -81,7 +81,7 @@ msgstr ""
 "하나를 지정하고, ClientHello를 검사하는 TCP 프런트엔드는 다른 풀을 고르는 규칙을 둘 수 있습니다. HTTP "
 "프런트엔드는 경로를 차례대로 평가합니다. 처음 일치한 경로가 풀을 고르고, 나머지는 기본 풀이 맡습니다."
 
-#: ../../edge.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:15
 msgid ""
 "The unit of work is a *flow*. A TCP stream is a flow from accept to "
 "close. A UDP mapping, the association between one client address and one "
@@ -97,11 +97,11 @@ msgstr ""
 "플로입니다. TCP나 UDP 플로는 생애 전체에 걸쳐 서버를 한 번만 고릅니다. HTTP 프런트엔드는 요청마다 서버를 고르므로, "
 "keep-alive 연결 하나의 요청들이나 HTTP/2 연결 하나의 스트림들은 서로 다른 서버에 도달할 수 있습니다."
 
-#: ../../edge.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:17
 msgid "Flows Belong to One Thread"
 msgstr "플로는 스레드 하나에 속합니다"
 
-#: ../../edge.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:20
 msgid ""
 "Each flow is owned by exactly one thread at a time. The edge worker "
 "accepts the connections of every frontend, owns the UDP mappings and the "
@@ -118,7 +118,7 @@ msgstr ""
 "이동한 뒤에는 이전 소유자가 그 플로의 어떤 것도 쥐고 있지 않습니다. 그래서 플로의 상태를 보호하는 락이 없으며, 연결 하나의 "
 "결함은 그 연결만 닫습니다."
 
-#: ../../edge.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:22
 msgid ""
 "The alternative is one table of flows that every thread reads and writes. "
 "It needs a lock for each access, or a lock-free structure in which every "
@@ -135,7 +135,7 @@ msgstr ""
 "없앱니다. 스레드들이 반드시 공유해야 하는 것은 작고, 의도적으로 공유합니다. 플로 예산, 서버별 활성 플로 수, 헬스 플래그, "
 "게시된 라우팅 테이블입니다."
 
-#: ../../edge.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:24
 msgid ""
 "The price of ownership is that a flow cannot move to a less busy thread. "
 "The assignment by fewest connections keeps the connection counts of the "
@@ -147,11 +147,11 @@ msgstr ""
 "수 차이를 1 이내로 유지합니다(SID 0016의 Lean 모델에 있는 ``assign_keeps_balance``). 이 방식이 "
 "맞추는 것은 연결 수이지 작업량이 아닙니다. 바쁜 연결과 유휴 연결은 똑같이 하나로 셉니다."
 
-#: ../../edge.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:26
 msgid "An Immutable Routing Snapshot"
 msgstr "불변 라우팅 스냅숏"
 
-#: ../../edge.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:29
 msgid ""
 "The routing table changes rarely and is read by every request. Sibuna "
 "therefore separates the two. A writer, which is a reload, an admin "
@@ -167,11 +167,11 @@ msgstr ""
 "읽는 쪽은 숫자 하나를 자기 스레드가 마지막으로 본 세대와 비교합니다. 둘이 같으면 스레드가 이미 쥐고 있는 스냅숏을 락 없이, "
 "공유 메모리에 쓰지 않고 사용합니다. 다르면 뮤텍스를 한 번 잡고 새 스냅숏을 가져옵니다(SID 0019)."
 
-#: ../../edge.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:31
 msgid "Implementation: ``Shared::read``"
 msgstr "구현: ``Shared::read``"
 
-#: ../../edge.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:33
 msgid ""
 "Runs a visitor on the current routing snapshot. The usual call compares "
 "the generation with a ``thread_local`` cache of at most eight entries and "
@@ -180,7 +180,7 @@ msgstr ""
 "현재 라우팅 스냅숏에서 방문자를 실행합니다. 보통의 호출은 세대를 최대 여덟 항목의 ``thread_local`` 캐시와 비교하며 "
 "락을 잡지 않습니다. ``crates/lb/src/http.rs``\\ (크레이트 ``sibuna-lb``)에 있습니다."
 
-#: ../../edge.rst:35
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:35
 msgid ""
 "fn read<R>(&self, visit: impl Fn(&Snapshot) -> R) -> R {\n"
 "    let generation = self.generation.load(Ordering::Acquire);\n"
@@ -199,7 +199,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:52
 msgid ""
 "The firewall decides a request under policy generation :math:`n`, and the "
 "route table selects its server a moment later. A reload may fall between "
@@ -217,7 +217,7 @@ msgstr ""
 "있으며, 리비전 :math:`n`\\ 에서 판정한 요청은 리비전 :math:`n`\\ 으로 라우팅합니다(SID 0018). 그 뒤 "
 "같은 테스트는 세 번의 실행에서 각각 요청 약 50,000개로 통과했습니다. 두 리비전 뒤처진 요청은 여전히 거부합니다."
 
-#: ../../edge.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:54
 msgid ""
 "A flow keeps its server across a reload for a simpler reason: its "
 "reservation does not live in the snapshot. A reservation is a ``Ticket`` "
@@ -232,11 +232,11 @@ msgstr ""
 "보관되며 다시 불러오기가 이 맵을 참조하므로, 새 파일이 여전히 지정하는 서버는 자기 카운트를 유지합니다. 플로가 끝나면 티켓의 "
 "``Drop``\\ 이 어느 리비전이 지금 서비스하든 그 레코드에 자리를 돌려줍니다."
 
-#: ../../edge.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:56
 msgid "Implementation: ``Pool::reserve_with``"
 msgstr "구현: ``Pool::reserve_with``"
 
-#: ../../edge.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:58
 msgid ""
 "Picks a server, counts itself on it with one atomic addition, and then "
 "checks the count. When another thread took the last place meanwhile, it "
@@ -247,12 +247,16 @@ msgstr ""
 "가져갔다면 자리를 돌려주고 다시 고르며, 이를 최대 여덟 번 합니다. 그래서 서버는 결코 ``max_flows``\\ 보다 많이 "
 "서비스하지 않습니다. ``crates/lb/src/pool.rs``\\ 에 있습니다."
 
-#: ../../edge.rst:60 ../../edge.rst:112 ../../edge.rst:232
-#: ../../edge.rst:278 ../../edge.rst:324 ../../edge.rst:399
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:112
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:278
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:403
 msgid "Explain the invariant"
 msgstr "불변식을 설명하세요"
 
-#: ../../edge.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:62
 msgid ""
 "Two threads reserve on a server with ``max_flows`` 10 that holds 9 flows. "
 "Show that at most one of them keeps the place, whatever the interleaving "
@@ -264,11 +268,11 @@ msgstr ""
 "어떻게 엇갈리든 둘 중 많아야 하나만 자리를 유지함을 보이세요. 그다음 이 서버를 파일에서 지우는 다시 불러오기가 왜 그 플로 "
 "9개를 끝내지 않는지, 그리고 그 자리들이 언제 반환되는지 설명하세요."
 
-#: ../../edge.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:64
 msgid "Workers That Wait Without Threads"
 msgstr "스레드 없이 기다리는 워커"
 
-#: ../../edge.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:67
 msgid ""
 "The firewall of the earlier Parts serves each connection on a thread. "
 "Beside HAProxy 3.0, that design reached 59% of HAProxy's plaintext HTTP "
@@ -280,11 +284,11 @@ msgstr ""
 "HAProxy 평문 HTTP 처리량의 59%에 이르렀습니다. 요청당 컨텍스트 전환이 2.9번 일어났고, 연결마다 상주 메모리 약 "
 "145 KiB를 차지했습니다(SID 0015). SID 0016은 엣지의 스레드를 이벤트 기반 워커로 바꾸었습니다."
 
-#: ../../edge.rst:69
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:69
 msgid "The Path of a Connection"
 msgstr "연결의 경로"
 
-#: ../../edge.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:73
 msgid ""
 "A client reaches the kernel listener, then the edge worker, which applies "
 "the connection rate, the flow budget and the connection hooks. A TCP flow "
@@ -300,7 +304,7 @@ msgstr ""
 "매핑이 됩니다. HTTP 연결은 HTTP 워커로 가고, h2를 제안하는 TLS 클라이언트는 프로토콜 런타임으로 갑니다. 둘 다 "
 "차단과 제한, 트래픽 정책, 게이트나 실드, 요청 훅을 실행하고 라우팅 스냅숏에서 서버를 고른 뒤 그 서버와 교환합니다."
 
-#: ../../edge.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:73
 msgid ""
 "digraph edge_path {\n"
 "  // edge.rst: the path of a connection through a node. Each box is owned "
@@ -462,7 +466,7 @@ msgstr ""
 "  choose -> shared [constraint=false];\n"
 "}"
 
-#: ../../edge.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:73
 msgid ""
 "The path of a connection through a node. Each box is owned by one thread "
 "or one group of threads; the dashed edges are the shared, read-mostly "
@@ -471,7 +475,7 @@ msgstr ""
 "노드를 지나는 연결의 경로. 각 상자는 스레드 하나 또는 스레드 그룹 하나가 소유합니다. 점선 간선은 주로 읽기만 하는 공유 "
 "상태입니다."
 
-#: ../../edge.rst:76
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:76
 msgid ""
 "A QUIC client of an HTTP/3 frontend does not pass the edge worker: the "
 "protocol runtime accepts it, applies the per-client bound through an "
@@ -482,11 +486,11 @@ msgstr ""
 "요청 허용 함수로 클라이언트별 상한을 적용하며, ClientHello를 읽었을 때 연결 훅에 묻습니다(SID 0017, SID "
 "0030)."
 
-#: ../../edge.rst:78
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:78
 msgid "Readiness and the Cost of Waiting"
 msgstr "준비 상태와 대기의 비용"
 
-#: ../../edge.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:81
 msgid ""
 "The edge starts one HTTP worker for each processor the process may use, "
 "up to 64. A worker is one thread with one poller (``epoll`` on Linux). "
@@ -501,7 +505,7 @@ msgstr ""
 "``epoll_wait`` 호출 하나뿐입니다. 워커는 어느 소켓이 *준비*\\ 되었는지, 곧 지금 읽거나 쓸 수 있는지를 "
 "통보받습니다. 그러면 그 바이트가 허락하는 작업을 하고 루프로 돌아갑니다. 어떤 스레드도 느린 클라이언트를 기다리지 않습니다."
 
-#: ../../edge.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:83
 msgid ""
 "A connection is a record in the worker and a socket in the kernel. While "
 "it is idle it holds no buffer. When its socket becomes readable the "
@@ -521,7 +525,7 @@ msgstr ""
 "연결 하나를 프로세스 안에서 약 0.4 KiB로 보며, 스레드 경로에서는 약 145 KiB였습니다. 그러면 버퍼를 잡기 전 약 "
 "3.4 KiB인 커널 소켓 메모리가 더 큰 비용이 됩니다."
 
-#: ../../edge.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:85
 msgid ""
 "The firewall decision did not become asynchronous. It needs no I/O, so it "
 "stays the synchronous function of the earlier Parts. The worker calls it "
@@ -540,18 +544,18 @@ msgstr ""
 "중계기입니다. 각각 바이트를 소비하고 바이트를 만들 뿐 소켓은 건드리지 않습니다. 각각은 자신이 대체한 블로킹 중계기와 대조해 "
 "테스트했습니다. 변형한 응답 150,000개를 통째로, 무작위 조각으로, 한 바이트씩 넣었을 때 바이트와 결과가 같았습니다."
 
-#: ../../edge.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:87
 msgid "Every resource has a bound, and every state has a deadline:"
 msgstr "모든 자원에는 상한이 있고, 모든 상태에는 기한이 있습니다."
 
-#: ../../edge.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:89
 msgid ""
 "The worker reads from a socket only while the buffer toward the other "
 "side is below 64 KiB. A slow reader thereby stops the reads of its peer."
 msgstr ""
 "워커는 반대쪽으로 가는 버퍼가 64 KiB 미만인 동안에만 소켓에서 읽습니다. 그래서 느리게 읽는 쪽은 상대의 읽기를 멈춥니다."
 
-#: ../../edge.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:90
 msgid ""
 "One readiness event reads each socket of a connection at most once, at "
 "most 64 KiB, and causes at most eight rounds of work. A bulk transfer "
@@ -560,7 +564,7 @@ msgstr ""
 "준비 이벤트 하나는 연결의 각 소켓을 많아야 한 번, 많아야 64 KiB만 읽고, 작업 라운드를 많아야 여덟 번 일으킵니다. 대량 "
 "전송이 같은 워커의 작은 요청들을 굶길 수 없습니다."
 
-#: ../../edge.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:91
 msgid ""
 "A timer wheel with one-second slots holds one deadline per connection: "
 "the idle timeout, a slow head, a slow body, a connect of five seconds, "
@@ -569,7 +573,7 @@ msgstr ""
 "1초 슬롯의 타이머 휠이 연결마다 기한 하나를 쥡니다. 유휴 타임아웃, 느린 헤더, 느린 본문, 5초의 connect, 서버의 "
 "침묵, 진척 없는 쓰기입니다."
 
-#: ../../edge.rst:92
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:92
 msgid ""
 "A connection serves at most 4,096 requests. A worker keeps at most 64 "
 "idle server sockets per address and 1,024 in all."
@@ -577,7 +581,7 @@ msgstr ""
 "연결 하나는 요청을 최대 4,096개까지 서비스합니다. 워커는 주소마다 유휴 서버 소켓을 최대 64개, 전체로 최대 1,024개까지 "
 "유지합니다."
 
-#: ../../edge.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:94
 msgid ""
 "With these workers, plaintext HTTP at 256 connections reached 229,139 "
 "requests per second against HAProxy's 243,864, which is 94%, with a 99th "
@@ -586,11 +590,11 @@ msgstr ""
 "이 워커들로 연결 256개의 평문 HTTP는 초당 요청 229,139개에 이르렀고, HAProxy의 243,864개 대비 "
 "94%였으며, 99번째 백분위수는 2.60 ms였습니다(SID 0016)."
 
-#: ../../edge.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:96
 msgid "Implementation: ``Workers::submit``"
 msgstr "구현: ``Workers::submit``"
 
-#: ../../edge.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:98
 msgid ""
 "Gives an accepted connection to the worker that serves the fewest "
 "connections, raises that worker's count and wakes its poller. The "
@@ -600,11 +604,11 @@ msgstr ""
 "accept한 연결을 연결을 가장 적게 맡은 워커에 주고, 그 워커의 카운트를 올리고 폴러를 깨웁니다. 그 뒤 연결은 그 워커에 "
 "머뭅니다. ``cmd/sibuna/src/edge/workers.rs``\\ (크레이트 ``sibuna``)에 있습니다."
 
-#: ../../edge.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:100
 msgid "One Hop Fewer for HTTP/2 and HTTP/3"
 msgstr "HTTP/2와 HTTP/3의 한 단계 줄이기"
 
-#: ../../edge.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:103
 msgid ""
 "HTTP/2 and HTTP/3 are terminated by a protocol runtime that uses "
 "maintained libraries (rustls, hyper, quinn with h3). At first the runtime "
@@ -619,7 +623,7 @@ msgstr ""
 "전달했습니다. SID 0017은 HTTP/2 요청 하나를 CPU 시간 76 us로 측정했습니다. 워커가 요청을 보기 전 런타임에서 "
 "46 us, 같은 요청을 소켓에서 읽고 판정하느라 워커에서 30 us가 더 들었습니다."
 
-#: ../../edge.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:105
 msgid ""
 "The repair is to call the decision as a function on the thread that "
 "decoded the stream. The ingress crate defines plain data, ``Offer`` (the "
@@ -644,11 +648,11 @@ msgstr ""
 "않습니다. 그러면 rapid reset, CONTINUATION 폭주, HPACK 확장에 대한 방어가 우리 몫의 일이 되기 "
 "때문입니다."
 
-#: ../../edge.rst:107
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:107
 msgid "TLS on the Workers"
 msgstr "워커 위의 TLS"
 
-#: ../../edge.rst:110
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:110
 msgid ""
 "HTTPS kept one crossing: the runtime ended TLS and copied the clear bytes "
 "to a worker through a socket pair. SID 0024 lets the worker end the TLS "
@@ -673,7 +677,7 @@ msgstr ""
 "HTTPS는 초당 요청 149,168개에서 174,901개로 올랐으며, 같은 헤더를 쓰는 HAProxy는 153,080개를 "
 "처리합니다."
 
-#: ../../edge.rst:114
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:114
 msgid ""
 "\"A worker never waits for a peer.\" Explain how this sentence, together "
 "with the 64 KiB high-water mark, guarantees that a client which stops "
@@ -685,11 +689,11 @@ msgstr ""
 "양의 메모리를 쥐게 할 수 없음을 어떻게 보장하는지 설명하세요. 그다음 여전히 왕복 한 번 동안 워커를 붙잡는 단 한 종류의 호출을 "
 "짚어 보세요(훅에 관한 절을 보세요)."
 
-#: ../../edge.rst:116
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:116
 msgid "Choosing a Server"
 msgstr "서버 고르기"
 
-#: ../../edge.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:119
 msgid ""
 "A new flow first filters the servers of its pool. A server is *eligible* "
 "when it is not the frontend's own address, not drained, healthy by its "
@@ -706,7 +710,7 @@ msgstr ""
 "서버가 있는 동안에만 제외됩니다. 메시의 광역 체제에서는 적격인 로컬 서버가 있으면 로컬 서버를 우선합니다. 백업 서버는 적격인 주 "
 "서버가 없을 때에만 고릅니다."
 
-#: ../../edge.rst:121
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:121
 msgid ""
 "Among the eligible servers the choice is made in a fixed order: a server "
 "named by a sticky cookie or by the learned table, then the server that "
@@ -721,11 +725,11 @@ msgstr ""
 "힘(power of two choices), 가중 최소 연결 중 하나입니다. 모든 스케줄러는 1/256 단위의 정수 가중치로 "
 "동작하므로, 슬로 스타트가 가중치를 잘게 낮출 수 있습니다."
 
-#: ../../edge.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:123
 msgid "Weighted Round Robin"
 msgstr "가중 라운드 로빈"
 
-#: ../../edge.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:126
 msgid ""
 "Round robin is the smooth weighted round robin of nginx (SID 0019). Each "
 "eligible server holds a credit. At each choice every server gains its "
@@ -739,11 +743,11 @@ msgstr ""
 ":math:`W`\\ 를 냅니다. :math:`W`\\ 번 선택하면 크레딧은 처음 자리로 돌아오고, 서버 :math:`i`\\ 는 "
 "정확히 :math:`w_i`\\ 번 선택됩니다."
 
-#: ../../edge.rst:128
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:128
 msgid "Worked example: three servers of weights 5, 1 and 1"
 msgstr "풀이 예제: 가중치가 5, 1, 1인 서버 세 개"
 
-#: ../../edge.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:130
 msgid ""
 ":math:`W = 7`. All credits start at 0. The table shows the credits after "
 "the gain, the choice, and the chosen server's credit after it pays 7. "
@@ -752,116 +756,119 @@ msgstr ""
 ":math:`W = 7`\\ 입니다. 모든 크레딧은 0에서 시작합니다. 표는 크레딧을 얻은 뒤의 값, 선택, 그리고 선택된 서버가 "
 "7을 낸 뒤의 크레딧을 보여 줍니다. 동점이면 앞의 서버가 선택됩니다."
 
-#: ../../edge.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:133
 msgid "Step"
 msgstr "단계"
 
-#: ../../edge.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:133
 msgid "a, b, c"
 msgstr ""
 
-#: ../../edge.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:133
 msgid "Chosen"
 msgstr "선택"
 
-#: ../../edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
 msgid "1"
 msgstr ""
 
-#: ../../edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
 msgid "5, 1, 1"
 msgstr ""
 
-#: ../../edge.rst:135 ../../edge.rst:136 ../../edge.rst:138
-#: ../../edge.rst:140 ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "a"
 msgstr ""
 
-#: ../../edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
 msgid "-2, 1, 1"
 msgstr ""
 
-#: ../../edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
 msgid "2"
 msgstr ""
 
-#: ../../edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
 msgid "3, 2, 2"
 msgstr ""
 
-#: ../../edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
 msgid "-4, 2, 2"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "3"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "1, 3, 3"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "b"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "1, -4, 3"
 msgstr ""
 
-#: ../../edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
 msgid "4"
 msgstr ""
 
-#: ../../edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
 msgid "6, -3, 4"
 msgstr ""
 
-#: ../../edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
 msgid "-1, -3, 4"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "5"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "4, -2, 5"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "c"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "4, -2, -2"
 msgstr ""
 
-#: ../../edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
 msgid "6"
 msgstr ""
 
-#: ../../edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
 msgid "9, -1, -1"
 msgstr ""
 
-#: ../../edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
 msgid "2, -1, -1"
 msgstr ""
 
-#: ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "7"
 msgstr ""
 
-#: ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "7, 0, 0"
 msgstr ""
 
-#: ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "0, 0, 0"
 msgstr ""
 
-#: ../../edge.rst:144
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:144
 msgid ""
 "The sequence is ``a a b a c a a``: five turns for ``a``, one each for "
 "``b`` and ``c``, and the light servers are spread between the heavy "
@@ -872,11 +879,11 @@ msgstr ""
 "얻으며, 가벼운 서버들은 끝에 몰리지 않고 무거운 서버의 차례 사이사이에 흩어집니다. 7단계 뒤의 크레딧은 처음과 같으므로 이 "
 "패턴이 반복됩니다."
 
-#: ../../edge.rst:146
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:146
 msgid "Least Connections and Two Choices"
 msgstr "최소 연결과 두 선택"
 
-#: ../../edge.rst:149
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:149
 msgid ""
 "Weighted least connections, the default of a standalone pool, chooses the "
 "server with the fewest active flows per unit of weight. The comparison "
@@ -890,7 +897,7 @@ msgstr ""
 "서버 :math:`j`\\ 보다 우선합니다. 동점은 풀을 불러온 뒤 허용한 요청 수로, 역시 가중치 단위당으로 가르며, 백업 서버는 "
 "언제나 주 서버 뒤에 놓입니다."
 
-#: ../../edge.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:151
 msgid ""
 "The power of two choices with a peak-weighted moving latency "
 "(``p2c_pewma``) hashes the flow to two distinct eligible servers and "
@@ -907,11 +914,11 @@ msgstr ""
 ":math:`\\ell \\leftarrow \\max(s, (7\\ell + s)/8)`\\ 로 설정하며, 유휴 서버의 추정값은 "
 "표본이 없는 1초마다 기본값 1 ms 쪽으로 절반씩 되돌아갑니다."
 
-#: ../../edge.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:153
 msgid "Consistent Hashing: the Problem"
 msgstr "일관 해싱: 문제"
 
-#: ../../edge.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:156
 msgid ""
 "Several nodes of a cluster should send the same flow to the same server "
 "without talking to each other, and a change of the server set should move "
@@ -922,11 +929,11 @@ msgstr ""
 "적어야 합니다. 플로 해시 :math:`h`\\ 에 대해 서버 :math:`h \\bmod N`\\ 을 고르는 뻔한 방법은 두 번째 "
 "요구 조건을 크게 어깁니다."
 
-#: ../../edge.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:158
 msgid "Worked example: one of five servers leaves"
 msgstr "풀이 예제: 서버 다섯 개 중 하나가 빠질 때"
 
-#: ../../edge.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:160
 msgid ""
 "Under modulo hashing, a flow with hash :math:`h` goes to position "
 ":math:`h \\bmod 5`, and after the departure to position :math:`h \\bmod "
@@ -948,7 +955,7 @@ msgstr ""
 "갑니다**. 옮겨 가야 했던 것은 빠진 서버가 맡던 20%뿐인데도 그렇습니다. 일반적으로 서버가 :math:`N`\\ 개에서 "
 ":math:`N - 1`\\ 개로 줄면 플로의 :math:`(N-1)/(N(N-1)) = 1/N`\\ 만 남습니다."
 
-#: ../../edge.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:162
 msgid ""
 "A consistent method moves only the departed server's flows: :math:`1/5 = "
 "20\\%`. Rendezvous hashing, below, achieves exactly that. Sibuna's Maglev "
@@ -971,11 +978,11 @@ msgstr ""
 "서버가 열 개일 때 빠진 서버는 슬롯의 9.999%에서 10.000%를 맡고 있었고, 다른 슬롯 120개에서 181개, "
 "0.18%에서 0.28%가 소유자를 바꾸었습니다."
 
-#: ../../edge.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:164
 msgid "Maglev as Sibuna Builds It"
 msgstr "Sibuna가 만드는 Maglev"
 
-#: ../../edge.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:167
 msgid ""
 "Maglev (Eisenbud et al., 2016) fills a lookup table of :math:`M` slots. "
 "Each server derives two numbers from its name, an offset and a stride, "
@@ -997,11 +1004,11 @@ msgstr ""
 "주므로, 가중치가 :math:`w_i`\\ 인 서버는 슬롯 하나 이내의 오차로 슬롯의 :math:`w_i/W`\\ 를 차지합니다. "
 "플로는 프런트엔드 주소와 포트를 포함한 클라이언트 주소를 해시해 조회합니다. 해시 한 번과 읽기 한 번입니다."
 
-#: ../../edge.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:169
 msgid "Implementation: ``Table::build`` and ``Table::primary``"
 msgstr "구현: ``Table::build``\\ 와 ``Table::primary``"
 
-#: ../../edge.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:171
 msgid ""
 "``build`` fills the 65,537 slots from servers in stable name order, "
 "skipping backups, with smooth weighted turns. ``primary`` hashes the "
@@ -1012,7 +1019,7 @@ msgstr ""
 "채웁니다. ``primary``\\ 는 프런트엔드와 클라이언트 엔드포인트(IPv4는 IPv6로 매핑)를 해시해 슬롯 하나를 "
 "얻습니다. ``crates/lb/src/maglev.rs``\\ 에 있습니다."
 
-#: ../../edge.rst:173
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:173
 msgid ""
 "for _ in 0..SIZE {\n"
 "    let mut best = 0;\n"
@@ -1032,7 +1039,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:192
 msgid ""
 "Every node builds the same table from the same file, so every node sends "
 "a flow with the same addresses to the same server. This is why the "
@@ -1047,11 +1054,11 @@ msgstr ""
 "것이므로, 관리 소켓은 이를 거부합니다(SID 0018). 드레인은 허용합니다. 각 노드는 이미 자체 헬스 체크로 서버를 제외하기 "
 "때문입니다."
 
-#: ../../edge.rst:194
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:194
 msgid "Bounded Loads"
 msgstr "부하 상한"
 
-#: ../../edge.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:197
 msgid ""
 "A hash spreads flows evenly only on average. A popular client range can "
 "still crowd one server. Consistent hashing with bounded loads (Mirrokni, "
@@ -1067,11 +1074,11 @@ msgstr ""
 "플로 수, :math:`a_p`\\ 를 주 서버 :math:`p`\\ 의 활성 플로 수라고 합시다. 주 서버가 적격이고 다음을 "
 "만족하면 새 플로는 주 서버로 갑니다."
 
-#: ../../edge.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:199
 msgid "a_p < \\left\\lceil \\frac{c\\,(L + 1)\\, w_p}{W} \\right\\rceil,"
 msgstr "a_p < \\left\\lceil \\frac{c\\,(L + 1)\\, w_p}{W} \\right\\rceil,"
 
-#: ../../edge.rst:203
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:203
 msgid ""
 "with :math:`c` given in percent as ``load_factor_pct`` (125 by default, "
 "at least 100). Otherwise the flow goes to the pool's fallback: weighted "
@@ -1082,11 +1089,11 @@ msgstr ""
 "그렇지 않으면 플로는 풀의 대체 방식으로 갑니다. 가중 최소 연결이거나, ``fallback``\\ 이 ``pewma``\\ 이면 "
 "두 선택의 힘입니다."
 
-#: ../../edge.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:205
 msgid "Worked example: the bound with c = 1.25"
 msgstr "풀이 예제: c = 1.25일 때의 상한"
 
-#: ../../edge.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:207
 msgid ""
 "Four servers of equal weight hold :math:`L = 99` flows, and a hundredth "
 "arrives. The bound is :math:`\\lceil 1.25 \\times 100 / 4 \\rceil = "
@@ -1106,7 +1113,7 @@ msgstr ""
 "40 \\times 3/4 \\rceil = \\lceil 37.5 \\rceil = 38`\\ 과 :math:`\\lceil "
 "1.25 \\times 40 / 4 \\rceil = \\lceil 12.5 \\rceil = 13`\\ 입니다."
 
-#: ../../edge.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:209
 msgid ""
 "The overflow always finds a server below its bound. Suppose every server "
 ":math:`i` held at least :math:`c(L+1)w_i/W` flows. Summing over the "
@@ -1118,7 +1125,7 @@ msgstr ""
 "> L`\\ 이 되어 모순입니다. :math:`c = 1.25`\\ 이고 같은 서버가 네 개이면, 한 번에 상한에 있을 수 있는 "
 "서버는 많아야 세 개입니다."
 
-#: ../../edge.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:211
 msgid ""
 "With the least-connections fallback, and all servers eligible, one "
 "admission keeps every server within its cap: the hash path admits only "
@@ -1141,11 +1148,11 @@ msgstr ""
 "지연으로 고르므로 이때 상한은 보장이 아닙니다. 넘침 처리는 한 가지 점에서 논문과도 다릅니다. 일관된 순서의 다음 서버로 걸어가지 "
 "않으므로, 두 노드가 넘친 플로를 서로 다른 서버에 놓을 수 있습니다."
 
-#: ../../edge.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:213
 msgid "Rendezvous Hashing for Source Stickiness"
 msgstr "소스 고정을 위한 랑데부 해싱"
 
-#: ../../edge.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:216
 msgid ""
 "A pool with ``sticky: \"source\"`` sends each client address to the same "
 "server. It uses weighted rendezvous hashing (SID 0019). For client "
@@ -1156,11 +1163,11 @@ msgstr ""
 "씁니다(SID 0019). 클라이언트 :math:`x`\\ 와 서버 :math:`i`\\ 에 대해 해시는 수 :math:`u_i "
 "\\in (0, 1]`\\ 을 주고, *거리*\\ 는 다음과 같습니다."
 
-#: ../../edge.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:218
 msgid "d_i = \\frac{-\\log_2 u_i}{w_i}."
 msgstr "d_i = \\frac{-\\log_2 u_i}{w_i}."
 
-#: ../../edge.rst:222
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:222
 msgid ""
 "The client goes to the nearest eligible server. The choice follows the "
 "weights exactly. Since :math:`-\\ln u_i` is exponentially distributed "
@@ -1176,7 +1183,7 @@ msgstr ""
 "확률 :math:`w_i / \\sum_j w_j`\\ 로 서버 :math:`i`\\ 에서 나옵니다. 로그의 밑은 모든 거리를 같은 "
 "배수로 바꿀 뿐 순위는 바꾸지 않습니다."
 
-#: ../../edge.rst:224
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:224
 msgid ""
 "The disruption is exactly the minimum. When server :math:`k` leaves, a "
 "client whose nearest server was not :math:`k` keeps it, because removing "
@@ -1192,7 +1199,7 @@ msgstr ""
 "고정소수점으로 로그를 계산하고, :math:`d_i < d_j`\\ 를 나눗셈 없이 :math:`c_i w_j < c_j "
 "w_i`\\ 로 비교합니다."
 
-#: ../../edge.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:226
 msgid ""
 "Ranking every server for every request costs one hash and one logarithm "
 "per server. So the pool precomputes a table of 1,021 slots. A client "
@@ -1212,11 +1219,11 @@ msgstr ""
 "0019). 대가는 입도입니다. 한 슬롯의 두 주소는 서버를 공유하며, 가중치 합이 1,000인 풀에서 가중치 1인 서버는 "
 "클라이언트의 천분의 일이 아니라 슬롯 하나를 서비스합니다."
 
-#: ../../edge.rst:228
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:228
 msgid "Implementation: ``Pool::home`` and ``sticky::distance``"
 msgstr "구현: ``Pool::home``\\ 과 ``sticky::distance``"
 
-#: ../../edge.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:230
 msgid ""
 "``home`` hashes the client to a slot and returns the first eligible "
 "server of the slot's four, falling back to ranking the pool. ``distance`` "
@@ -1229,7 +1236,7 @@ msgstr ""
 "\\log_2(\\mathrm{draw})`\\ 를 가중치와 함께 계산합니다. "
 "``crates/lb/src/pool/extra.rs``\\ 와 ``crates/lb/src/sticky.rs``\\ 에 있습니다."
 
-#: ../../edge.rst:234
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:234
 msgid ""
 "Rendezvous hashing moves exactly the departed server's clients; the "
 "Maglev table moves them and about 0.1% more. Explain where the excess "
@@ -1241,11 +1248,11 @@ msgstr ""
 "채우기 루프의 어디에서 오는지 설명하고, Sibuna가 주소와 포트로 해시한 플로에는 이를 받아들이면서도 내일도 같은 서버를 찾아야 "
 "하는 클라이언트에는 랑데부 해싱을 쓰는 이유를 설명하세요."
 
-#: ../../edge.rst:236
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:236
 msgid "Health, Slow Start, Draining and Failover"
 msgstr "헬스, 슬로 스타트, 드레이닝, 페일오버"
 
-#: ../../edge.rst:239
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:239
 msgid ""
 "A server can be out of rotation for five reasons, and each has its own "
 "way back. Active probes and passive health judge the server; a failed "
@@ -1255,7 +1262,7 @@ msgstr ""
 "서버는 다섯 가지 이유로 순환에서 빠질 수 있으며, 각각 돌아오는 길이 따로 있습니다. 능동 프로브와 수동 헬스 체크는 서버를 "
 "판정하고, 실패한 connect는 시도 하나를 판정하며, 드레인은 운영자의 결정이고, 슬로 스타트는 복귀를 다스립니다."
 
-#: ../../edge.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:242
 msgid ""
 "In service leads to Down after fall failed probes, to Ejected after "
 "consecutive request failures, to Marked after a failed connect, and to "
@@ -1269,7 +1276,7 @@ msgstr ""
 "뒤에, Marked는 2초 뒤에, Drained는 다시 허용될 때 돌아옵니다. 모든 복귀는 Ramping으로 이어지고, "
 "Ramping은 램프가 끝나면 In service로 이어집니다."
 
-#: ../../edge.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:242
 msgid ""
 "digraph server_states {\n"
 "  // edge.rst: the life of a server in a pool. Only \"In service\" and "
@@ -1369,7 +1376,7 @@ msgstr ""
 "투입 종료</FONT>>, color=\"#176a4b\", penwidth=1.1];\n"
 "}"
 
-#: ../../edge.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:242
 msgid ""
 "The life of a server in a pool. Only \"In service\" and \"Ramping\" take "
 "new flows; slow start applies when it is configured."
@@ -1377,7 +1384,7 @@ msgstr ""
 "풀 안에서 서버의 생애. \"In service\"와 \"Ramping\"만 새 플로를 받습니다. 슬로 스타트는 설정되어 있을 때 "
 "적용됩니다."
 
-#: ../../edge.rst:245
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:245
 msgid ""
 "*Active probes* connect, or send ``GET``, at an interval. A server starts "
 "in service, leaves after ``fall`` failures in a row and returns after "
@@ -1404,7 +1411,7 @@ msgstr ""
 "동안 서버를 새 플로에서 뺍니다. 드레인은 파일이 같은 주소의 그 서버를 여전히 지정하는 한 다시 불러오기를 거쳐도 "
 "유지됩니다(SID 0018)."
 
-#: ../../edge.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:247
 msgid ""
 "*Slow start* gives a returning server a ramp :math:`R`. A server of "
 "configured weight :math:`W` that entered service :math:`t` ago has the "
@@ -1413,7 +1420,7 @@ msgstr ""
 "*슬로 스타트*\\ 는 돌아오는 서버에 램프 :math:`R`\\ 을 줍니다. 설정된 가중치가 :math:`W`\\ 이고 "
 ":math:`t` 전에 서비스에 들어간 서버의 실효 가중치는 1/256 단위로 다음과 같습니다."
 
-#: ../../edge.rst:249
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:249
 msgid ""
 "w(t) = \\max\\left(1, \\left\\lfloor \\frac{256\\, W\\, t}{R} "
 "\\right\\rfloor\\right) \\text{ for } t < R, \\qquad w(t) = 256\\, W "
@@ -1423,7 +1430,7 @@ msgstr ""
 "\\right\\rfloor\\right) \\text{ for } t < R, \\qquad w(t) = 256\\, W "
 "\\text{ otherwise.}"
 
-#: ../../edge.rst:253
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:253
 msgid ""
 "The weight is never zero, never above the configured weight, and never "
 "decreases while the server stays in service. Servers first seen together, "
@@ -1440,11 +1447,11 @@ msgstr ""
 "256`, 곧 가중치의 4분의 1을 가집니다. 전체 가중치(1,024 단위)인 가중치 4의 동료 옆에서 라운드 로빈은 이 서버에 "
 "차례의 50%가 아니라 :math:`256/1280 = 20\\%`\\ 를 줍니다."
 
-#: ../../edge.rst:255
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:255
 msgid "Failover"
 msgstr "페일오버"
 
-#: ../../edge.rst:258
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:258
 msgid ""
 "A request moves to another server only when sending it twice does no "
 "harm. A failed connect may always move: the server received nothing. "
@@ -1457,11 +1464,11 @@ msgstr ""
 "런타임의 HTTP/1.1, HTTP/2, HTTP/3 클라이언트가 모두 이 함수에 물으므로, 서로 어긋날 수 없습니다(SID "
 "0019)."
 
-#: ../../edge.rst:260
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:260
 msgid "Implementation: ``recover``"
 msgstr "구현: ``recover``"
 
-#: ../../edge.rst:262
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:262
 msgid ""
 "Decides what follows the loss of a server after the connection was made: "
 "reconnect to the same server, move to another, or fail. In "
@@ -1470,7 +1477,7 @@ msgstr ""
 "연결이 맺어진 뒤 서버를 잃었을 때 다음에 무엇을 할지 결정합니다. 같은 서버에 다시 연결하거나, 다른 서버로 옮기거나, "
 "실패합니다. ``crates/net/src/route.rs``\\ (크레이트 ``sibuna-net``)에 있습니다."
 
-#: ../../edge.rst:264
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:264
 msgid ""
 "pub fn recover(lost: Lost) -> Recovery {\n"
 "    if !(lost.unanswered && lost.kept && (lost.idempotent || "
@@ -1484,7 +1491,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:276
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:276
 msgid ""
 "A request is sent again only while no response byte arrived, only when "
 "the node still holds all of it (a body of at most 64 KiB that ended "
@@ -1504,7 +1511,7 @@ msgstr ""
 "요청이 시도한 모든 서버를 제외하고 같은 풀의 다른 서버를 예약합니다. 그래서 요청은 어떤 서버도 두 번 시도하지 않으며, 많아야 "
 "``retries + 1``\\ 개의 서버를 시도합니다."
 
-#: ../../edge.rst:280
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:280
 msgid ""
 "A ``POST`` with a 2 KiB body loses its server after the request was "
 "written and before any response byte. Trace ``recover`` and explain why "
@@ -1516,11 +1523,11 @@ msgstr ""
 "추적하고, 클라이언트가 조용한 두 번째 시도 대신 502를 받는 이유를 설명하세요. 그다음 서버가 HTTP/2 "
 "``REFUSED_STREAM``\\ 으로 답했다는 사실 하나를 바꾸어 다시 추적하세요."
 
-#: ../../edge.rst:282
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:282
 msgid "Admission at the Socket"
 msgstr "소켓에서의 요청 허용"
 
-#: ../../edge.rst:285
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:285
 msgid ""
 "An application filter can shed work only after the traffic reaches the "
 "host. The cheapest refusal is therefore the earliest one, and SID 0015 "
@@ -1531,7 +1538,7 @@ msgstr ""
 "SID 0015는 각 단계가 다음 단계보다 적은 비용이 들도록 단계의 순서를 정합니다. SID 0032는 TCP와 UDP "
 "프런트엔드에 대해 이 단계들을 완성했습니다."
 
-#: ../../edge.rst:287
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:287
 msgid ""
 "*Kernel listener admission.* ``defer_accept`` sets ``TCP_DEFER_ACCEPT`` "
 "on Linux: the kernel gives the node a connection only when its first "
@@ -1545,7 +1552,18 @@ msgstr ""
 "깨우기도 쓰지 않습니다. ``backlog``\\ 는 accept 큐의 길이를 정합니다. 둘 다 권한이 필요 없습니다. 플랫폼이 "
 "하나를 거부하면 노드는 ``EDGE013``\\ 을 기록하고 그것 없이 서비스합니다."
 
-#: ../../edge.rst:288
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:288
+msgid ""
+"*Bans.* The ban table that the HTTP firewall shares with the packet "
+"worker refuses a banned address at accept on a TCP frontend and before a "
+"UDP mapping opens (SID 0034). ``auto_ban`` bans an address that keeps "
+"breaking its limits, on every node."
+msgstr ""
+"*차단.* HTTP 방화벽이 패킷 워커와 공유하는 차단 테이블은 차단된 주소를 TCP 프런트엔드에서는 accept 시점에, "
+"UDP에서는 매핑이 열리기 전에 거부합니다(SID 0034). ``auto_ban``\\ 은 한도를 계속 어기는 주소를 모든 "
+"노드에서 차단합니다."
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:289
 msgid ""
 "*Connection rate.* ``rate_limit.conn_per_10s`` per source IPv4 address or "
 "IPv6 /64, and ``udp_defense.threshold_pps`` for datagrams."
@@ -1553,57 +1571,84 @@ msgstr ""
 "*연결 속도.* 출발지 IPv4 주소 또는 IPv6 /64마다 ``rate_limit.conn_per_10s``, 데이터그램에는 "
 "``udp_defense.threshold_pps``\\ 입니다."
 
-#: ../../edge.rst:289
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:290
 msgid ""
 "*The flow budget.* One slot per client connection or UDP mapping, "
 "node-wide, up to ``global.max_flows`` (8,192 by default, at most "
-"1,000,000). UDP mappings take at most ``global.max_udp_flows`` of it, "
-"because their sources are not validated. HTTP adds "
-"``http.max_connections`` and ``http.max_connections_per_ip``."
+"1,000,000). A frontend may cap its own flows with ``max_flows`` and the "
+"flows of one address with ``max_flows_per_ip``. UDP mappings take at most "
+"``global.max_udp_flows`` of it, because their sources are not validated, "
+"and ``udp_defense.total_pps`` keeps half the packet budget of a UDP "
+"frontend for confirmed mappings. HTTP adds ``http.max_connections`` and "
+"``http.max_connections_per_ip``."
 msgstr ""
 "*플로 예산.* 노드 전체에서 클라이언트 연결이나 UDP 매핑마다 슬롯 하나를 쓰며, ``global.max_flows``\\ "
-"(기본값 8,192, 최대 1,000,000)까지입니다. UDP 매핑은 출발지가 검증되지 않으므로 그중 많아야 "
-"``global.max_udp_flows``\\ 만 차지합니다. HTTP는 ``http.max_connections``\\ 와 "
+"(기본값 8,192, 최대 1,000,000)까지입니다. 프런트엔드는 ``max_flows``\\ 로 자신의 플로를, "
+"``max_flows_per_ip``\\ 로 주소 하나의 플로를 제한할 수 있습니다. UDP 매핑은 출발지가 검증되지 않으므로 그중 "
+"많아야 ``global.max_udp_flows``\\ 만 차지하며, ``udp_defense.total_pps``\\ 는 UDP "
+"프런트엔드의 패킷 예산 절반을 확인된 매핑을 위해 남겨 둡니다. HTTP는 ``http.max_connections``\\ 와 "
 "``http.max_connections_per_ip``\\ 를 더합니다."
 
-#: ../../edge.rst:290
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:291
+msgid ""
+"*Pressure.* Above ``global.pressure.on`` percent of the table, a new "
+"address passes only within ``new_per_second``, and an address that proved "
+"a working flow passes first."
+msgstr ""
+"*압박.* 테이블의 ``global.pressure.on`` 퍼센트를 넘으면 새 주소는 ``new_per_second`` 안에서만 "
+"통과하고, 동작하는 플로를 증명한 주소가 먼저 통과합니다."
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:292
 msgid ""
 "*Bounded inspection*, of a TLS ClientHello on TCP, and of the QUIC header "
 "on UDP."
 msgstr "*제한된 검사*: TCP에서는 TLS ClientHello를, UDP에서는 QUIC 헤더를 검사합니다."
 
-#: ../../edge.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:293
 msgid ""
 "*The connection hooks*, then the pool: a server's ``max_flows`` and, in a "
 "cluster, its share of a fleet-wide limit (Part IX)."
 msgstr ""
-"*연결 훅*, 그다음 풀입니다. 서버의 ``max_flows``, 그리고 클러스터에서는 플릿 전체 한도 중 그 서버의 "
-"몫입니다(제IX부)."
+"*연결 훅*, 그다음 풀: 서버의 ``max_flows``\\ 와, 클러스터에서는 플릿 전체 상한 가운데 그 서버의 몫(제IX부)."
 
-#: ../../edge.rst:292
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:294
 msgid "*The HTTP firewall*, for HTTP frontends only."
-msgstr "*HTTP 방화벽*: HTTP 프런트엔드에만 해당합니다."
+msgstr "*HTTP 방화벽*, HTTP 프런트엔드에만 해당합니다."
 
-#: ../../edge.rst:294
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:296
+msgid ""
+"Accept threads run the bans, the rate, the caps and pressure on several "
+"cores, and end a refused connection with a reset (SID 0034). The packet "
+"worker runs the stages after them."
+msgstr ""
+"accept 스레드가 차단, 속도, 상한, 압박 검사를 여러 코어에서 실행하고, 거부한 연결을 리셋으로 끝냅니다(SID 0034). "
+"그 뒤의 단계는 패킷 워커가 실행합니다."
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:298
 msgid "Implementation: ``FlowBudget::reserve``"
 msgstr "구현: ``FlowBudget::reserve``"
 
-#: ../../edge.rst:296
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:300
 msgid ""
 "Takes one slot of the node-wide flow budget and returns a ``FlowPermit``, "
 "or nothing when the budget is full. The permit's ``Drop`` returns the "
 "slot on cancellation, close or expiry, so no path can leak one. A drain "
-"sets the limit to zero. In ``crates/lb/src/budget.rs``."
+"sets the limit to zero. ``FlowBudget::take`` does the same under the caps "
+"of a frontend and of an address and under pressure, all under one lock, "
+"so the caps hold whatever the order of the threads: ``caps_hold`` in the "
+"Lean model of SID 0034. In ``crates/lb/src/budget.rs``."
 msgstr ""
 "노드 전체 플로 예산에서 슬롯 하나를 가져와 ``FlowPermit``\\ 을 돌려주며, 예산이 가득 찼으면 아무것도 돌려주지 "
 "않습니다. 허가의 ``Drop``\\ 이 취소, 닫힘, 만료 때 슬롯을 돌려주므로 어떤 경로도 슬롯을 새게 할 수 없습니다. "
-"드레인은 한도를 0으로 설정합니다. ``crates/lb/src/budget.rs``\\ 에 있습니다."
+"드레인은 한도를 0으로 설정합니다. ``FlowBudget::take``\\ 는 프런트엔드와 주소의 상한, 그리고 압박 아래에서 "
+"같은 일을 하며, 이 모두를 잠금 하나 안에서 합니다. 그래서 스레드의 순서와 상관없이 상한이 지켜집니다. SID 0034의 "
+"Lean 모델에서 이것이 ``caps_hold``\\ 입니다. ``crates/lb/src/budget.rs``\\ 에 있습니다."
 
-#: ../../edge.rst:298
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:302
 msgid "ClientHello Inspection and Fallback Classes"
 msgstr "ClientHello 검사와 대체 클래스"
 
-#: ../../edge.rst:301
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:305
 msgid ""
 "A TCP frontend with ``tcp_inspect: \"tls_client_hello\"`` reads the start "
 "of each connection before it selects a pool, within ``inspect_bytes`` "
@@ -1619,7 +1664,7 @@ msgstr ""
 "TLS를 건드리지 않고 연결을 서버로 그대로 통과시키며, 자신이 읽은 바이트를 클라이언트의 이후 바이트보다 먼저 정확히 한 번 "
 "재생합니다. 실패한 connect는 그 바이트를 하나도 받지 않습니다."
 
-#: ../../edge.rst:303
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:307
 msgid ""
 "The inspection ends in one of five classes, and every class has exactly "
 "one outcome, deny or one named pool (SID 0032). *Visible* is a whole "
@@ -1642,11 +1687,11 @@ msgstr ""
 "거부합니다. 기본값은 클래스가 생기기 전의 동작을 재현합니다. absent와 encrypted에는 ``rules``, 나머지 둘에는 "
 "``deny``\\ 입니다."
 
-#: ../../edge.rst:305
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:309
 msgid "Implementation: ``Plan::decide``"
 msgstr "구현: ``Plan::decide``"
 
-#: ../../edge.rst:307
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:311
 msgid ""
 "Maps a class and the parsed ClientHello, if any, to a pool or to a "
 "refusal. The match is total, so no class is left without an outcome. In "
@@ -1655,7 +1700,7 @@ msgstr ""
 "클래스와, 있다면 파싱한 ClientHello를 풀 또는 거부로 대응시킵니다. 일치가 전부를 덮으므로 결과 없이 남는 클래스가 "
 "없습니다. ``crates/lb/src/inspect.rs``\\ 에 있습니다."
 
-#: ../../edge.rst:309
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:313
 msgid ""
 "Two cautions belong beside the feature. A JA4 fingerprint describes a "
 "handshake; any client can send the handshake of another, so it separates "
@@ -1669,11 +1714,11 @@ msgstr ""
 "ClientHello 확장을 GREASE 값으로 채우고 진짜 이름은 바깥 필드에 둡니다. 엣지는 GREASE와 진짜 ECH를 구별할 "
 "수 없으므로, ``encrypted: deny``\\ 는 대부분의 브라우저를 거부합니다."
 
-#: ../../edge.rst:311
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:315
 msgid "QUIC Address Validation"
 msgstr "QUIC 주소 검증"
 
-#: ../../edge.rst:314
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:318
 msgid ""
 "A UDP frontend bounds the replies of each mapping to three times the "
 "bytes the client sent. Without the bound, a spoofed source would turn the "
@@ -1696,7 +1741,7 @@ msgstr ""
 "그 ID를 기억하되, 그 ID가 클라이언트가 보낸 ID와 같으면 기억하지 않습니다. 클라이언트의 이후 데이터그램이 그 ID를 "
 "목적지로 담고 있으면 주소가 검증되고 응답 상한이 끝납니다."
 
-#: ../../edge.rst:316
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:320
 msgid ""
 "The argument is that of RFC 9000, section 8.1. The ID was chosen by the "
 "origin and sent only to the claimed address. A sender that spoofs the "
@@ -1715,12 +1760,12 @@ msgstr ""
 "때 83에서 86 ms가 걸렸고, 검증이 없을 때는 3초 동안 17,060바이트가 도착했습니다. 이 수치는 효과의 크기를 보여 줄 "
 "뿐 벤치마크가 아닙니다."
 
-#: ../../edge.rst:318
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:322
 msgid ""
 "Implementation: ``Validation::see_reply`` and ``Validation::see_request``"
 msgstr "구현: ``Validation::see_reply``\\ 와 ``Validation::see_request``"
 
-#: ../../edge.rst:320
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:324
 msgid ""
 "``see_reply`` learns the origin's connection ID from a reply, refusing "
 "version zero, short IDs and echoes. ``see_request`` marks the mapping "
@@ -1731,7 +1776,7 @@ msgstr ""
 "``see_request``\\ 는 클라이언트가 긴 헤더나 짧은 헤더에서 그 ID를 되풀이하면 매핑을 검증된 것으로 표시합니다. "
 "``crates/lb/src/quic_edge.rs``\\ 에 있습니다."
 
-#: ../../edge.rst:322
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:326
 msgid ""
 "The edge does not send QUIC Retry itself. SID 0032 specifies the contract "
 "that edge and origin would have to share, a token format and key, an "
@@ -1744,7 +1789,7 @@ msgstr ""
 "주소 바인딩, 전송 파라미터 안의 연결 ID를 명세하고, 그것을 만들지 않은 이유를 기록합니다. 워크스페이스의 QUIC 라이브러리는 "
 "토큰 형식을 비공개로 두고 토큰을 데이터그램의 출발지에 묶는데, 엣지 뒤에서는 그 출발지가 엣지 자신입니다."
 
-#: ../../edge.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:330
 msgid ""
 "\"Validation never happens on a value that an off-path sender can know.\" "
 "For each of the three conditions on the learned connection ID (version "
@@ -1754,11 +1799,11 @@ msgstr ""
 "\"검증은 경로 밖의 송신자가 알 수 있는 값으로는 결코 일어나지 않는다.\" 학습한 연결 ID에 대한 세 조건(버전이 0이 아님, "
 "최소 8바이트, 여는 데이터그램의 ID와 같지 않음) 각각이 막는 공격을 기술하세요."
 
-#: ../../edge.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:332
 msgid "Traffic Policy, the Gate and the Shield"
 msgstr "트래픽 정책, 게이트, 실드"
 
-#: ../../edge.rst:331
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:335
 msgid ""
 "An HTTP request passes the cheap checks before the expensive ones, and a "
 "hook only after both. The ban table and the request limiter come first. "
@@ -1786,11 +1831,11 @@ msgstr ""
 "고릅니다. SID 0019의 나머지가 교환을 다듬습니다. connect와 응답 타임아웃, 재시도, 수동 헬스 체크, 스티키 세션, "
 "헤더 편집, HSTS입니다. TCP나 UDP 프런트엔드는 방화벽을 결코 호출하지 않습니다."
 
-#: ../../edge.rst:333
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:337
 msgid "Hooks"
 msgstr "훅"
 
-#: ../../edge.rst:336
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:340
 msgid ""
 "An operator sometimes needs a decision of his own on the path: a tenant "
 "check, an authorization service, a score. SID 0030 fixes where such a "
@@ -1812,7 +1857,7 @@ msgstr ""
 "요청 필드를 최대 8개까지 더할 수 있습니다. 본문을 읽거나, 메서드, 경로, 호스트를 바꾸거나, 서버를 고르거나, 프레이밍 필드나 "
 "Sibuna가 자기 진술로 쓰는 필드를 더할 수는 없습니다."
 
-#: ../../edge.rst:338
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:342
 msgid ""
 "A hook runs in one of three *tiers*. A *native* hook is Rust compiled "
 "into the daemon: trusted, unbudgeted, 42 ns per call with the chain and "
@@ -1826,11 +1871,11 @@ msgstr ""
 "브라우저 엔진이 아님)에서 실행되며, JIT도 ``unsafe``\\ 도 없습니다. *agent*\\ 는 Unix 소켓, 기한, "
 "회로 차단기 뒤에 있는 다른 프로세스입니다."
 
-#: ../../edge.rst:340
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:344
 msgid "The Outcome Rule"
 msgstr "결과 규칙"
 
-#: ../../edge.rst:343
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:347
 msgid ""
 "An invocation ends with a verdict or with one of four failures: "
 "``timeout``, ``overload``, ``trap`` or ``unavailable``. Each plugin has "
@@ -1842,7 +1887,7 @@ msgstr ""
 "쓰지 않으면 ``deny``\\ 입니다. 단계 :math:`s`, 적어 둔 선택 :math:`f`, 결과 :math:`r`\\ 에 "
 "대해 다음과 같습니다."
 
-#: ../../edge.rst:345
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:349
 msgid ""
 "\\mathit{outcome}(s, f, r) = \\begin{cases} \\mathrm{admit} & s = "
 "\\mathrm{telemetry} \\\\ v & r = \\mathrm{verdict}(v) \\\\ \\mathrm{deny} "
@@ -1854,7 +1899,7 @@ msgstr ""
 "& r = \\mathrm{failed},\\ f = \\mathrm{deny} \\\\ \\mathrm{admit} & r = "
 "\\mathrm{failed},\\ f = \\mathrm{admit}. \\end{cases}"
 
-#: ../../edge.rst:349
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:353
 msgid ""
 "A chain admits only when every hook in it has the outcome admit; the "
 "first other verdict ends it. Hence a chain with a failing authorization "
@@ -1865,11 +1910,11 @@ msgstr ""
 "있는 체인은 다른 훅들이 무엇이라 답하든 결코 허용하지 않으며, 파일에 적어 둔 선택이 아니면 어떤 실패도 트래픽을 허용하지 "
 "않습니다."
 
-#: ../../edge.rst:351
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:355
 msgid "Implementation: ``outcome`` and ``chain``"
 msgstr "구현: ``outcome``\\ 과 ``chain``"
 
-#: ../../edge.rst:353
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:357
 msgid ""
 "The rule above and its fold over a chain, as two small functions modelled "
 "in ``docs/sid/assets/plugin-tiers.lean``. In "
@@ -1879,7 +1924,7 @@ msgstr ""
 "작은 함수 두 개입니다. ``crates/plugin/src/verdict.rs``\\ (크레이트 "
 "``sibuna-plugin``)에 있습니다."
 
-#: ../../edge.rst:355
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:359
 msgid ""
 "pub fn outcome(stage: Stage, on_failure: OnFailure, result: "
 "Result<Verdict, Failure>) -> Verdict {\n"
@@ -1892,11 +1937,11 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:366
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:370
 msgid "Fuel, Breakers and Parked Connections"
 msgstr "연료, 차단기, 대기시킨 연결"
 
-#: ../../edge.rst:369
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:373
 msgid ""
 "A Wasm module is untrusted input, so every bound is set before it runs: "
 "at most 4 MiB of module, ``memory_pages`` pages of 64 KiB, 256 call "
@@ -1926,7 +1971,7 @@ msgstr ""
 "96,000줄과 크레이트 여덟 개 대신, ``unsafe``\\ 도 새 크레이트도 없는 2,324줄짜리 인터프리터를 위해 1.4 "
 "us의 차이를 받아들입니다."
 
-#: ../../edge.rst:371
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:375
 msgid ""
 "An agent call waits at most ``deadline`` (5 ms by default). Each thread "
 "keeps a breaker for each agent: ``failures`` failures in a row open it, "
@@ -1939,11 +1984,11 @@ msgstr ""
 "``unavailable``\\ 로 거절하며, ``open`` 시간이 지나면 프로브 하나를 보내 차단기를 닫거나 다시 엽니다. "
 "``overload``\\ 는 agent의 잘못이 아니므로 세지 않습니다."
 
-#: ../../edge.rst:373
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:377
 msgid "Worked example: what a dead agent costs"
 msgstr "풀이 예제: 죽은 agent의 비용"
 
-#: ../../edge.rst:375
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:379
 msgid ""
 "Eight workers call an agent with ``deadline`` 5 ms and the default "
 "breaker, five failures and ``1s`` open. In the worst case each worker "
@@ -1959,7 +2004,7 @@ msgstr ""
 "하나당 많아야 5 ms이므로 워커의 많아야 0.5%입니다. 그동안 보호되는 프런트엔드의 모든 요청은 agent의 "
 "``on_failure`` 결과를 받습니다. 기본값이면 거부됩니다."
 
-#: ../../edge.rst:377
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:381
 msgid ""
 "At the request stage an agent call holds the thread that serves the "
 "request, and on a worker the other connections of that worker wait for "
@@ -1979,73 +2024,73 @@ msgstr ""
 "실패하는 것으로 호출자에서 실행되고, 실패 규칙이 결정합니다. 대기에는 스레드 핸드오프 두 번, 약 11 us가 듭니다. 같은 "
 "호출을 호출 스레드에서 하면 12 us인 데 비해 22.8 us입니다."
 
-#: ../../edge.rst:379
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:383
 msgid ""
 "Measured cost of one hook (SID 0030, one busy machine, optimized builds, "
 "loopback)"
 msgstr "훅 하나의 측정 비용(SID 0030, 바쁜 기계 한 대, 최적화 빌드, 루프백)"
 
-#: ../../edge.rst:383
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:387
 msgid "Case"
 msgstr "사례"
 
-#: ../../edge.rst:384
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:388
 msgid "In process"
 msgstr "프로세스 안"
 
-#: ../../edge.rst:385
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:389
 msgid "End to end per request"
 msgstr "요청당 종단 간"
 
-#: ../../edge.rst:386
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:390
 msgid "No hook"
 msgstr "훅 없음"
 
-#: ../../edge.rst:387
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:391
 msgid "1.1 ns (one load)"
 msgstr "1.1 ns(읽기 한 번)"
 
-#: ../../edge.rst:388
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:392
 msgid "41.8 to 42.2 us"
 msgstr "41.8에서 42.2 us"
 
-#: ../../edge.rst:389
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:393
 msgid "Native ``require_header``"
 msgstr "네이티브 ``require_header``"
 
-#: ../../edge.rst:390
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:394
 msgid "42 ns"
 msgstr ""
 
-#: ../../edge.rst:391
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:395
 msgid "within the noise of about 2 us"
 msgstr "약 2 us의 잡음 안"
 
-#: ../../edge.rst:392
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:396
 msgid "Wasm, the example module"
 msgstr "Wasm, 예제 모듈"
 
-#: ../../edge.rst:393
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:397
 msgid "2.2 to 2.4 us"
 msgstr "2.2에서 2.4 us"
 
-#: ../../edge.rst:394
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:398
 msgid "+5.2 to +6.1 us"
 msgstr "+5.2에서 +6.1 us"
 
-#: ../../edge.rst:395
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:399
 msgid "Agent on a Unix socket"
 msgstr "Unix 소켓의 agent"
 
-#: ../../edge.rst:396
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:400
 msgid "12 to 18 us"
 msgstr "12에서 18 us"
 
-#: ../../edge.rst:397
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:401
 msgid "+18.4 to +21.5 us"
 msgstr "+18.4에서 +21.5 us"
 
-#: ../../edge.rst:401
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:405
 msgid ""
 "\"A failure of an authorization hook denies.\" An attacker can make a "
 "Wasm hook fail with ``overload`` by sending a head larger than its input "
@@ -2057,11 +2102,11 @@ msgstr ""
 "만들 수 있습니다. 뷰를 크기에 맞게 잘라 내지 않는 이유, ``on_failure``\\ 를 기본값으로 두었을 때 일어나는 일, "
 "그리고 운영자가 ``on_failure: \"admit\"``\\ 를 적으면 무엇을 포기하는지 설명하세요."
 
-#: ../../edge.rst:403
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:407
 msgid "Automatic HTTPS"
 msgstr "자동 HTTPS"
 
-#: ../../edge.rst:406
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:410
 msgid ""
 "A frontend that names its hosts, ``tls: { auto: [\"example.org\"] }``, "
 "obtains its certificates itself (SID 0021). The node registers an ACME "
@@ -2093,11 +2138,11 @@ msgstr ""
 "때문입니다. 가드가 있으면 핸드셰이크는 메모리를 읽는 검사만 적용하고, 스레드 하나가 주문하기 전에 ``ask`` URL에 묻고 "
 "시간당 ``rate``\\ 개 주문의 버킷에서 토큰 하나를 가져옵니다."
 
-#: ../../edge.rst:408
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:412
 msgid "Observation"
 msgstr "관측"
 
-#: ../../edge.rst:411
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:415
 msgid ""
 "The node counts what it does so that an operator can tell a refusal for "
 "lack of capacity from a refusal by policy (SID 0020). Each HTTP request "
@@ -2125,11 +2170,11 @@ msgstr ""
 "서버가 필요하고, ``rate_limit``\\ 가 늘면 클라이언트를 살펴봐야 합니다. 준비 상태 경로는 노드가 드레인하는 동안 "
 "503으로 바뀝니다."
 
-#: ../../edge.rst:413
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:417
 msgid "The Measured Result"
 msgstr "측정 결과"
 
-#: ../../edge.rst:416
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:420
 msgid ""
 "Part X compares the edge with HAProxy 3.0.11 on one host and on three. "
 "After SID 0024, with both proxies writing the same headers, Sibuna "
@@ -2152,15 +2197,15 @@ msgstr ""
 "HAProxy의 멀티플렉서의 52 us와 대비됩니다. 더 값싼 HTTP/2 경로만이 이를 바꿀 수 있으며, SID 0017은 우리가 "
 "그것을 작성하지 않은 이유를 기록합니다."
 
-#: ../../edge.rst:418
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:422
 msgid "Exercises"
 msgstr "연습 문제"
 
-#: ../../edge.rst:421
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:425
 msgid "Exercise 8.1"
 msgstr "연습 문제 8.1"
 
-#: ../../edge.rst:423
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:427
 msgid ""
 "A pool has ten servers of equal weight, and one leaves. What fraction of "
 "flows moves under modulo hashing, under rendezvous hashing, and, from the "
@@ -2171,17 +2216,17 @@ msgstr ""
 "실행에 따르면 Sibuna의 Maglev 테이블에서 대략 얼마나 되는 플로가 옮겨 갈까요? 그다음 서버 네 개짜리 풀에 서버 하나가 "
 "합류하는 경우에 대해 같은 질문에 답하세요."
 
-#: ../../edge.rst:425
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:429
 msgid ""
 "Hint: Use the Chinese remainder theorem for modulo hashing, and the "
 "minimum of the other distances for rendezvous hashing."
 msgstr "힌트: 나머지 해싱에는 중국인의 나머지 정리를, 랑데부 해싱에는 다른 거리들의 최솟값을 쓰세요."
 
-#: ../../edge.rst:427
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:431
 msgid "Exercise 8.2"
 msgstr "연습 문제 8.2"
 
-#: ../../edge.rst:429
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:433
 msgid ""
 "A bounded-Maglev pool has servers ``a``, ``b`` and ``c`` with weights 2, "
 "1 and 1, ``load_factor_pct`` 125, and 19 active flows. Compute the bound "
@@ -2195,7 +2240,7 @@ msgstr ""
 "계산하세요. 해시는 플로 7개를 맡은 ``b``\\ 를 가리킵니다. ``a``\\ 가 9개, ``c``\\ 가 3개를 맡고 있다면 "
 "최소 연결 대체 방식에서 플로는 어디로 갈까요? 어떤 서버는 언제나 상한 아래에 있음을 보이세요."
 
-#: ../../edge.rst:431
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:435
 msgid ""
 "Hint: The bound is :math:`\\lceil c (L+1) w_p / W \\rceil`, and the "
 "contradiction argument of the worked example applies with weights."
@@ -2203,11 +2248,11 @@ msgstr ""
 "힌트: 상한은 :math:`\\lceil c (L+1) w_p / W \\rceil`\\ 이며, 풀이 예제의 모순 논증은 가중치가 "
 "있어도 적용됩니다."
 
-#: ../../edge.rst:433
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:437
 msgid "Exercise 8.3"
 msgstr "연습 문제 8.3"
 
-#: ../../edge.rst:435
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:439
 msgid ""
 "An HTTP frontend has the request chain ``[tenant, score, authz]``: a "
 "native ``require_header`` hook, a Wasm hook with ``on_failure: "
@@ -2223,17 +2268,17 @@ msgstr ""
 "담은 요청의 판정은 무엇일까요? 그 필드가 없는 요청은요? 각 요청이 agent 때문에 워커에 치르게 하는 비용은 얼마일까요? "
 "``authz``\\ 를 ``on_failure: \"admit\"``\\ 로 적으면 무엇이 달라질까요?"
 
-#: ../../edge.rst:437
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:441
 msgid ""
 "Hint: Apply the outcome rule to each hook, then the chain rule. An open "
 "breaker costs no system call."
 msgstr "힌트: 각 훅에 결과 규칙을 적용한 뒤 체인 규칙을 적용하세요. 열린 차단기는 시스템 호출을 쓰지 않습니다."
 
-#: ../../edge.rst:439
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:443
 msgid "Exercise 8.4"
 msgstr "연습 문제 8.4"
 
-#: ../../edge.rst:441
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:445
 msgid ""
 "A QUIC client sends one Initial of 1,200 bytes through a frontend with "
 "``udp_inspect: \"quic\"``, and the origin answers with eight datagrams of "
@@ -2247,29 +2292,29 @@ msgstr ""
 "클라이언트의 어느 데이터그램이 매핑을 검증하며, 클라이언트의 주소를 위조한 송신자는 왜 그것을 만들어 낼 수 없을까요? "
 "Version Negotiation 패킷에서 학습하면 왜 논증이 깨질까요?"
 
-#: ../../edge.rst:443
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:447
 msgid ""
 "Hint: The bound is three times the bytes received. Compare what the "
 "origin chose with what the client chose."
 msgstr "힌트: 상한은 받은 바이트의 세 배입니다. 원본 서버가 고른 것과 클라이언트가 고른 것을 비교하세요."
 
-#: ../../edge.rst:445
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:449
 msgid "Limits"
 msgstr "한계"
 
-#: ../../edge.rst:448
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:452
 msgid ""
 "The known gaps of these records, and one consequence of the design, "
 "stated where an operator meets them:"
 msgstr "이 기록들에 알려진 빈틈과 설계의 귀결 하나를, 운영자가 마주치는 곳에서 밝힙니다."
 
-#: ../../edge.rst:450
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:454
 msgid ""
 "*Ownership balances counts, not work.* A connection stays on the worker "
 "it was given; the assignment equalizes connection counts only."
 msgstr "*소유권은 작업량이 아니라 개수를 맞춥니다.* 연결은 배정받은 워커에 머물며, 배정은 연결 수만 고르게 합니다."
 
-#: ../../edge.rst:451
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:455
 msgid ""
 "*A reload that changes binds, the mesh roster or the spill section needs "
 "a restart.* Two reloads within the decision time of one request still "
@@ -2282,7 +2327,7 @@ msgstr ""
 "두 번 일어나면 그 요청은 여전히 거부되며, 다시 불러오기 뒤 10초 안에 명령한 드레인은 퇴역한 리비전에 닿지 않습니다(SID "
 "0018). 실행 중 변경은 재시작을 거치면 남지 않으며, Maglev 풀은 실행 중에 ``drain``\\ 만 받습니다."
 
-#: ../../edge.rst:452
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:456
 msgid ""
 "*HTTP/2 runs on the runtime, not on the workers.* It carries 0.67 to 0.74 "
 "of HAProxy's rate on one host. HTTP/1.1 over TLS from a client that "
@@ -2298,7 +2343,7 @@ msgstr ""
 "없습니다(SID 0016). 런타임은 ``http.workers``\\ 가 무엇이든 스레드를 많아야 여덟 개 쓰며, 런타임의 유휴 "
 "풀은 락 하나입니다. 평문 HTTP/2 클라이언트의 gRPC는 받지 않습니다."
 
-#: ../../edge.rst:453
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:457
 msgid ""
 "*The choice of a server still writes shared memory:* reference counts and "
 "the chosen server's counters, about a microsecond per call under eight "
@@ -2309,7 +2354,7 @@ msgstr ""
 "1마이크로초입니다. 같은 순간에 고르는 두 요청은 부하가 가장 적은 같은 서버를 가져갈 수 있습니다. 한도는 여전히 "
 "지켜집니다(SID 0019)."
 
-#: ../../edge.rst:454
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:458
 msgid ""
 "*Bounded loads with the pewma fallback are not a guarantee,* and the "
 "overflow is not placed consistently across nodes. The slot table of "
@@ -2318,7 +2363,7 @@ msgstr ""
 "*pewma 대체 방식을 쓰는 부하 상한은 보장이 아니며,* 넘친 플로는 노드들에 걸쳐 일관되게 배치되지 않습니다. 소스 고정의 "
 "슬롯 테이블은 슬롯 1,021개의 입도를 가집니다."
 
-#: ../../edge.rst:455
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:459
 msgid ""
 "*Failover cannot move everything.* A body longer than 64 KiB is streamed "
 "and cannot be sent again. A non-idempotent request to an HTTP/3 server "
@@ -2329,7 +2374,7 @@ msgstr ""
 "가는 멱등이 아닌 요청은 보낸 뒤에는 결코 옮겨 가지 않습니다. 클라이언트 라이브러리가 우리가 읽을 수 있는 거절을 보고하지 않기 "
 "때문입니다(SID 0019)."
 
-#: ../../edge.rst:456
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:460
 msgid ""
 "*Admission at the socket is incomplete for TCP and UDP.* TCP and UDP "
 "frontends do not consult the ban table. Per-prefix byte budgets for UDP "
@@ -2346,7 +2391,7 @@ msgstr ""
 "GREASE 값의 Encrypted ClientHello와 진짜 Encrypted ClientHello는 한 클래스입니다. 커널 "
 "허용은 Linux용으로만 만들어졌고, 가득 찬 큐에서 ``backlog``\\ 의 효과는 측정하지 않았습니다(SID 0032)."
 
-#: ../../edge.rst:457
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:461
 msgid ""
 "*An agent call at the request stage holds its thread.* A QUIC "
 "connection's verdict does not stop its handshake. Parked flows cost two "
@@ -2361,7 +2406,7 @@ msgstr ""
 "인스턴스를 쥐며, 다시 불러오기는 모든 인스턴스를 다시 만듭니다. 인터프리터는 wasmi보다 두세 배 느리며 외부 검토를 받은 적이 "
 "없습니다. 훅 측정은 바쁜 기계에서 했습니다(SID 0030)."
 
-#: ../../edge.rst:458
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:462
 msgid ""
 "*Observation has holes.* Chunk framing is not counted in ``bytes_in``; "
 "``tls_cipher`` is ``-`` for HTTP/3; a long-lived TCP connection writes "
@@ -2370,7 +2415,7 @@ msgstr ""
 "*관측에는 구멍이 있습니다.* 청크 프레이밍은 ``bytes_in``\\ 에 세지 않습니다. HTTP/3에서 "
 "``tls_cipher``\\ 는 ``-``\\ 입니다. 오래 사는 TCP 연결은 끝날 때에만 줄을 씁니다(SID 0020)."
 
-#: ../../edge.rst:459
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:463
 msgid ""
 "*Automatic HTTPS* has no bound per client for issuance on demand beyond "
 "its guards and its bucket; the local authority's ACME server has no limit "
@@ -2381,7 +2426,7 @@ msgstr ""
 "서버에는 주소별 한도가 없고, 주문을 노드 하나의 메모리에 보관합니다. Cloudflare DNS 공급자는 Cloudflare를 "
 "상대로 실행해 본 적이 없습니다(SID 0021)."
 
-#: ../../edge.rst:460
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:464
 msgid ""
 "*Scale is not yet qualified.* The flow table is configurable to one "
 "million entries; the ten-million-flow experiment and cooperative platform "

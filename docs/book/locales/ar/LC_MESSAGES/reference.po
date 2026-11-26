@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
 "n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
-#: ../../reference.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:1
 msgid "Part XII: Desk Reference and Diagnostics"
 msgstr "الجزء الثاني عشر: المرجع التفصيلي والتشخيص"
 
-#: ../../reference.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:4
 msgid ""
 "Endpoints, metrics, error catalog, policy schema, and storage tables in "
 "one place, for the firewall daemon and for the edge load balancer (Part "
@@ -33,55 +33,71 @@ msgstr ""
 "مكان واحد، للبرنامج الخدمي للجدار الناري ولموازن الحمل على الحافة (الجزء "
 "الثامن، الجزء التاسع). وقد قُرئت جداول الحافة من الشيفرة، لا من سجلات SID."
 
-#: ../../reference.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:6
 msgid "Endpoints"
 msgstr "نقاط النهاية"
 
-#: ../../reference.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:9
 msgid "Objectives"
 msgstr "الأهداف"
 
-#: ../../reference.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:11
 msgid "Know every route under ``/__sibuna/`` and what each returns."
 msgstr "معرفة كل مسار تحت ``/__sibuna/`` وما يعيده كل منها."
 
-#: ../../reference.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:13
 msgid "Reserved routes"
 msgstr "المسارات المحجوزة"
 
-#: ../../reference.rst:17 ../../reference.rst:58 ../../reference.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:160
 msgid "Endpoint"
 msgstr "نقطة النهاية"
 
-#: ../../reference.rst:18 ../../reference.rst:59 ../../reference.rst:161
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:161
 msgid "Method"
 msgstr "الطريقة"
 
-#: ../../reference.rst:19 ../../reference.rst:60 ../../reference.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:162
 msgid "Function"
 msgstr "الوظيفة"
 
-#: ../../reference.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:20
 msgid "``/__sibuna/challenge``"
 msgstr "``/__sibuna/challenge``"
 
-#: ../../reference.rst:21 ../../reference.rst:24 ../../reference.rst:30
-#: ../../reference.rst:33 ../../reference.rst:36 ../../reference.rst:39
-#: ../../reference.rst:42 ../../reference.rst:62 ../../reference.rst:65
-#: ../../reference.rst:68 ../../reference.rst:71 ../../reference.rst:80
-#: ../../reference.rst:164 ../../reference.rst:167 ../../reference.rst:173
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:42
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:65
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:71
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:80
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:173
 msgid "GET"
 msgstr "GET"
 
-#: ../../reference.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:22
 msgid "The interstitial page"
 msgstr "الصفحة الوسيطة"
 
-#: ../../reference.rst:23
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:23
 msgid "``/__sibuna/challenge.json?need=&path=``"
 msgstr "``/__sibuna/challenge.json?need=&path=``"
 
-#: ../../reference.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:25
 msgid ""
 "Issues a stateless challenge: the requirement ticket from the challenged "
 "response decides it, otherwise the reported URL is evaluated in normal "
@@ -93,15 +109,17 @@ msgstr ""
 "تجاوز 8 KiB، و\\ ``400`` لمسار ليست له صيغة مُطبَّعة). يعيد ``{id, "
 "algorithm, difficulty, challenges, expires_at}``"
 
-#: ../../reference.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:26
 msgid "``/__sibuna/verify``"
 msgstr "``/__sibuna/verify``"
 
-#: ../../reference.rst:27 ../../reference.rst:77 ../../reference.rst:170
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:77
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:170
 msgid "POST"
 msgstr "POST"
 
-#: ../../reference.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:28
 msgid ""
 "Accepts ``{\"challenge_id\", \"nonce\"}`` or ``{\"challenge_id\", "
 "\"proof\"}``; ``200`` with ``Set-Cookie``, ``400`` with a diagnostic, or "
@@ -111,11 +129,11 @@ msgstr ""
 "\"proof\"}``؛ ويعيد ``200`` مع ``Set-Cookie``، أو ``400`` مع تشخيص، أو "
 "``413`` لجسم أكبر من مخزن الاتصال المؤقت"
 
-#: ../../reference.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:29
 msgid "``/__sibuna/wasm/sibuna-pow.wasm``"
 msgstr "``/__sibuna/wasm/sibuna-pow.wasm``"
 
-#: ../../reference.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:31
 msgid ""
 "The solver module, 14,744 bytes (``wasm_bytes`` in "
 "``benchmarks/results/primitives-latest.json``), cacheable for one hour"
@@ -124,21 +142,21 @@ msgstr ""
 "``benchmarks/results/primitives-latest.json``)، قابلة للتخزين المؤقت ساعة "
 "واحدة"
 
-#: ../../reference.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:32
 msgid "``/__sibuna/worker.js``"
 msgstr "``/__sibuna/worker.js``"
 
-#: ../../reference.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:34
 msgid ""
 "The Web Worker with WASM and JavaScript provers, cacheable for one hour"
 msgstr ""
 "Web Worker يضم مُبرهِنَي WASM وJavaScript، قابل للتخزين المؤقت ساعة واحدة"
 
-#: ../../reference.rst:35
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:35
 msgid "``/__sibuna/honeypot``"
 msgstr "``/__sibuna/honeypot``"
 
-#: ../../reference.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:37
 msgid ""
 "Bans the caller for ``--ban-seconds`` and records an incident; ``403``. "
 "Only a top-level request bans (no ``Sec-Fetch-Dest`` or ``document``, and "
@@ -149,11 +167,11 @@ msgstr ""
 "طلب المستوى الأعلى (بلا ``Sec-Fetch-Dest`` أو بقيمة ``document``، وبلا "
 "``Sec-Fetch-Site`` عابر للمواقع)؛ ويُجاب أي طلب آخر بـ ``404`` ويُحتسب"
 
-#: ../../reference.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:38
 msgid "``/__sibuna/health``"
 msgstr "``/__sibuna/health``"
 
-#: ../../reference.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:40
 msgid ""
 "JSON liveness status with engine name, version, proxy mode and proof "
 "algorithm"
@@ -161,15 +179,15 @@ msgstr ""
 "حالة الحيوية بصيغة JSON مع اسم المحرك، والإصدار، ووضع الوكيل، وخوارزمية "
 "الإثبات"
 
-#: ../../reference.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:41
 msgid "``/__sibuna/metrics``"
 msgstr "``/__sibuna/metrics``"
 
-#: ../../reference.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:43
 msgid "Prometheus text format (version 0.0.4)"
 msgstr "تنسيق نص Prometheus (الإصدار 0.0.4)"
 
-#: ../../reference.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:45
 msgid ""
 "Any other path under ``/__sibuna/`` is answered ``404``. Issuance and "
 "verification spend the separate ``--challenge-rate-limit`` budget, and a "
@@ -188,7 +206,7 @@ msgstr ""
 "forward-auth). يتلقى العميل الذي لا يقبل HTML الحالة ``401`` مع "
 "``{\"error\":\"challenge_required\",\"challenge\":\"/__sibuna/challenge.json?need=<ticket>\"}``."
 
-#: ../../reference.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:47
 msgid ""
 "The separate opt-in management listener serves ``/console/``. Initialize "
 "its administrator locally with ``sibuna init-admin``, then replace the "
@@ -211,11 +229,11 @@ msgstr ""
 "forward-auth. يوثق الجزء الحادي عشر مسارات عمل وحدة التحكم، ونشرها عبر "
 "HTTPS، والحدود الحالية لـ SID 0007."
 
-#: ../../reference.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:49
 msgid "Routes of the edge"
 msgstr "مسارات الحافة"
 
-#: ../../reference.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:52
 msgid ""
 "An edge started with ``--config-file`` or ``sibuna lb`` serves the routes "
 "of the firewall on the HTTP frontends whose surface is ``gate`` or "
@@ -229,15 +247,15 @@ msgstr ""
 "``cmd/sibuna/src/edge/probe.rs`` و\\ ``cmd/sibuna/src/acme.rs`` و\\ "
 "``crates/acme/src/server.rs``."
 
-#: ../../reference.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:54
 msgid "HTTP routes of the edge"
 msgstr "مسارات HTTP في الحافة"
 
-#: ../../reference.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:61
 msgid "``/__sibuna/ready`` on an HTTP frontend"
 msgstr "``/__sibuna/ready`` على واجهة أمامية HTTP"
 
-#: ../../reference.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:63
 msgid ""
 "``200`` with ``{\"status\":\"ready\"}``; ``503`` with "
 "``{\"status\":\"draining\"}`` from the start of a shutdown (SID 0020)"
@@ -245,20 +263,20 @@ msgstr ""
 "``200`` مع ``{\"status\":\"ready\"}``؛ و\\ ``503`` مع "
 "``{\"status\":\"draining\"}`` منذ بدء الإيقاف (SID 0020)"
 
-#: ../../reference.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:64
 msgid "``/__sibuna/health``, ``/__sibuna/metrics`` on an HTTP frontend"
 msgstr "``/__sibuna/health``، ``/__sibuna/metrics`` على واجهة أمامية HTTP"
 
-#: ../../reference.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:66
 msgid ""
 "As in the firewall. The metrics text adds the series of the edge (below)"
 msgstr "كما في الجدار الناري. ويضيف نص المقاييس سلاسل الحافة (أدناه)"
 
-#: ../../reference.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:67
 msgid "``/health``, ``/ready``, ``/metrics`` on ``observability.listen``"
 msgstr "``/health``، ``/ready``، ``/metrics`` على ``observability.listen``"
 
-#: ../../reference.rst:69
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:69
 msgid ""
 "The same three answers on a separate listener, which also accepts the "
 "``/__sibuna/`` spelling. It applies no address list: its address is its "
@@ -267,11 +285,11 @@ msgstr ""
 "الإجابات الثلاث نفسها على مستمع منفصل، يقبل أيضًا الصيغة ``/__sibuna/``. "
 "ولا يطبّق قائمة عناوين: عنوانه هو ضابط الوصول إليه"
 
-#: ../../reference.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:70
 msgid "``/.well-known/acme-challenge/TOKEN``"
 msgstr ""
 
-#: ../../reference.rst:72
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:72
 msgid ""
 "The HTTP-01 answer of automatic HTTPS, before the firewall and before a "
 "redirect (SID 0021)"
@@ -279,15 +297,15 @@ msgstr ""
 "إجابة HTTP-01 في HTTPS التلقائي، قبل الجدار الناري وقبل إعادة التوجيه "
 "(SID 0021)"
 
-#: ../../reference.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:73
 msgid "``URL/directory``, ``URL/new-nonce``"
 msgstr ""
 
-#: ../../reference.rst:74
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:74
 msgid "GET (``HEAD`` for the nonce)"
 msgstr "GET (``HEAD`` للقيمة المؤقتة)"
 
-#: ../../reference.rst:75
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:75
 msgid ""
 "The ACME server of the local authority, where ``URL`` is "
 "``global.acme.internal.server.url``; off by default"
@@ -295,26 +313,26 @@ msgstr ""
 "خادم ACME للسلطة المحلية، حيث ``URL`` هو "
 "``global.acme.internal.server.url``؛ معطّل افتراضيًا"
 
-#: ../../reference.rst:76
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:76
 msgid ""
 "``URL/new-account``, ``account``, ``new-order``, ``order``, ``authz``, "
 "``chall``, ``finalize``, ``cert``"
 msgstr ""
 
-#: ../../reference.rst:78
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:78
 msgid ""
 "Signed ACME requests of at most 32 KiB; HTTP-01 is the only challenge"
 msgstr "طلبات ACME موقّعة لا تتجاوز 32 KiB؛ وHTTP-01 هو التحدي الوحيد"
 
-#: ../../reference.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:79
 msgid "``URL/crl``"
 msgstr ""
 
-#: ../../reference.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:81
 msgid "The revocation list of the present intermediate, in DER"
 msgstr "قائمة الإبطال للشهادة الوسيطة الحالية، بصيغة DER"
 
-#: ../../reference.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:83
 msgid ""
 "The three routes of ``/__sibuna/`` answer a client inside "
 "``observability.internal_allow`` (the loopback networks by default) whose "
@@ -328,11 +346,11 @@ msgstr ""
 "ويتلقى كل عميل آخر ``404`` الخاص بالمسار المجهول. و\\ ``/__sibuna/ready`` "
 "موجود في الحافة فقط."
 
-#: ../../reference.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:85
 msgid "The admin socket"
 msgstr "مقبس الإدارة"
 
-#: ../../reference.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:88
 msgid ""
 "``global.admin_socket`` (or ``sibuna lb --admin``) opens a Unix socket of "
 "mode 0600. ``sibuna ctl SOCKET COMMAND`` sends one line of at most 512 "
@@ -348,27 +366,29 @@ msgstr ""
 "مسرودة من الأسطر نفسها عبر المحلل نفسه. وتضم "
 "``cmd/sibuna/src/edge/control.rs`` القواعد النحوية."
 
-#: ../../reference.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:90
 msgid "Commands of the admin socket"
 msgstr "أوامر مقبس الإدارة"
 
-#: ../../reference.rst:94 ../../reference.rst:892 ../../reference.rst:916
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:907
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:931
 msgid "Command"
 msgstr "الأمر"
 
-#: ../../reference.rst:95
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:95
 msgid "Answer or effect"
 msgstr "الإجابة أو الأثر"
 
-#: ../../reference.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:96
 msgid "Console"
 msgstr "وحدة التحكم"
 
-#: ../../reference.rst:97
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:97
 msgid "``show servers``"
 msgstr ""
 
-#: ../../reference.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:98
 msgid ""
 "One line per server: pool, name, address, state, weight, flows, health, "
 "ejection, ramp, change"
@@ -376,17 +396,22 @@ msgstr ""
 "سطر واحد لكل خادم: المجمّع، والاسم، والعنوان، والحالة، والوزن، والتدفقات، "
 "والسلامة، والإخراج، والتصاعد، والتغيير"
 
-#: ../../reference.rst:99 ../../reference.rst:108 ../../reference.rst:117
-#: ../../reference.rst:126 ../../reference.rst:129 ../../reference.rst:132
-#: ../../reference.rst:135 ../../reference.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:99
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:108
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:117
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:141
 msgid "yes"
 msgstr "نعم"
 
-#: ../../reference.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:100
 msgid "``show info``"
 msgstr ""
 
-#: ../../reference.rst:101
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:101
 msgid ""
 "``key: value`` lines: version, process, source, reloads, watcher, flows, "
 "drops, run-time changes, and the counters of the spill cache (SID 0027)"
@@ -395,27 +420,33 @@ msgstr ""
 "والمراقب، والتدفقات، والإسقاطات، وتغييرات وقت التشغيل، وعدادات ذاكرة "
 "الإفاضة المؤقتة (SID 0027)"
 
-#: ../../reference.rst:102 ../../reference.rst:105 ../../reference.rst:111
-#: ../../reference.rst:114 ../../reference.rst:120 ../../reference.rst:123
-#: ../../reference.rst:138 ../../reference.rst:144 ../../reference.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:102
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:114
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:120
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:144
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:147
 msgid "no"
 msgstr "لا"
 
-#: ../../reference.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:103
 msgid "``show stats``"
 msgstr ""
 
-#: ../../reference.rst:104
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:104
 msgid ""
 "The series of the edge in the Prometheus text format, as the metrics "
 "route prints them"
 msgstr "سلاسل الحافة بتنسيق نص Prometheus، كما يطبعها مسار المقاييس"
 
-#: ../../reference.rst:106
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:106
 msgid "``show certs``, ``show ca``"
 msgstr ""
 
-#: ../../reference.rst:107
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:107
 msgid ""
 "The names of automatic HTTPS with their state and staple; the root of the "
 "local authority as PEM (SID 0021)"
@@ -423,21 +454,21 @@ msgstr ""
 "أسماء HTTPS التلقائي مع حالتها وإرفاق OCSP الخاص بها؛ وجذر السلطة المحلية "
 "بصيغة PEM (SID 0021)"
 
-#: ../../reference.rst:109
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:109
 msgid "``revoke cert NAME|SERIAL``"
 msgstr ""
 
-#: ../../reference.rst:110
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:110
 msgid ""
 "Revokes a certificate of the local authority and writes the revocation "
 "list"
 msgstr "يبطل شهادة من السلطة المحلية ويكتب قائمة الإبطال"
 
-#: ../../reference.rst:112
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:112
 msgid "``show hooks``"
 msgstr ""
 
-#: ../../reference.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:113
 msgid ""
 "The plugins with their calls, verdicts, failures and open breakers (SID "
 "0030)"
@@ -445,11 +476,11 @@ msgstr ""
 "الإضافات مع استدعاءاتها وأحكامها وإخفاقاتها وقواطع الدارة المفتوحة (SID "
 "0030)"
 
-#: ../../reference.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:115
 msgid "``show cluster``"
 msgstr ""
 
-#: ../../reference.rst:116
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:116
 msgid ""
 "Each node of the mesh with the digest of its file, or with the revision "
 "it serves in persistent mode (SID 0023, SID 0028)"
@@ -457,27 +488,27 @@ msgstr ""
 "كل عقدة في الشبكة المتداخلة مع خلاصة ملفها، أو مع المراجعة التي تخدمها في "
 "الوضع الدائم (SID 0023، SID 0028)"
 
-#: ../../reference.rst:118
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:118
 msgid "``show affinity``"
 msgstr ""
 
-#: ../../reference.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:119
 msgid "The sticky table and the shares of fleet-wide limits (SID 0025)"
 msgstr "جدول التثبيت وحصص الحدود على مستوى الأسطول (SID 0025)"
 
-#: ../../reference.rst:121
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:121
 msgid "``show authority``"
 msgstr ""
 
-#: ../../reference.rst:122
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:122
 msgid "The revision of the database that this node serves (SID 0028)"
 msgstr "مراجعة قاعدة البيانات التي تخدمها هذه العقدة (SID 0028)"
 
-#: ../../reference.rst:124
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:124
 msgid "``set server POOL/NAME state ready|drain [local]``"
 msgstr ""
 
-#: ../../reference.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:125
 msgid ""
 "Admits a server, or stops new flows to it; ``maint`` is another word for "
 "``drain``"
@@ -485,65 +516,65 @@ msgstr ""
 "يقبل خادمًا، أو يوقف التدفقات الجديدة إليه؛ و\\ ``maint`` كلمة أخرى لـ "
 "``drain``"
 
-#: ../../reference.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:127
 msgid "``set server POOL/NAME weight N [local]``"
 msgstr ""
 
-#: ../../reference.rst:128
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:128
 msgid "Sets the weight, 1 to 65,535"
 msgstr "يضبط الوزن، من 1 إلى 65,535"
 
-#: ../../reference.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:130
 msgid ""
 "``add server POOL/NAME IP:PORT [weight N] [local]``, ``del server "
 "POOL/NAME [local]``"
 msgstr ""
 
-#: ../../reference.rst:131
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:131
 msgid "Adds or removes a server of a pool"
 msgstr "يضيف خادمًا إلى مجمّع أو يزيله منه"
 
-#: ../../reference.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:133
 msgid "``del ban ADDRESS [local]``"
 msgstr ""
 
-#: ../../reference.rst:134
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:134
 msgid "Lifts the ban of one client (SID 0022)"
 msgstr "يرفع حظر عميل واحد (SID 0022)"
 
-#: ../../reference.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:136
 msgid "``reload``"
 msgstr ""
 
-#: ../../reference.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:137
 msgid "Loads the file as SIGHUP does and prints the result"
 msgstr "يحمّل الملف كما يفعل SIGHUP ويطبع النتيجة"
 
-#: ../../reference.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:139
 msgid "``reload cluster``"
 msgstr ""
 
-#: ../../reference.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:140
 msgid "Reloads this node, then sends the file to every peer (SID 0023)"
 msgstr "يعيد تحميل هذه العقدة، ثم يرسل الملف إلى كل نظير (SID 0023)"
 
-#: ../../reference.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:142
 msgid "``reopen log``"
 msgstr ""
 
-#: ../../reference.rst:143
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:143
 msgid "Opens the access log file again"
 msgstr "يفتح ملف سجل الوصول من جديد"
 
-#: ../../reference.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:145
 msgid "``help``"
 msgstr ""
 
-#: ../../reference.rst:146
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:146
 msgid "Lists the commands"
 msgstr "يسرد الأوامر"
 
-#: ../../reference.rst:149
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:149
 msgid ""
 "With a mesh, a change to a server and a lifted ban reach every node "
 "unless the last word is ``local`` (SID 0022). A failure prints a "
@@ -554,11 +585,11 @@ msgstr ""
 "الكلمة الأخيرة ``local`` (SID 0022). ويطبع الإخفاق تشخيصًا برمز من "
 "العائلتين ``ADM`` أو ``DBA`` أدناه، ولا يكون شيء قد تغير."
 
-#: ../../reference.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:151
 msgid "The console of the edge"
 msgstr "وحدة تحكم الحافة"
 
-#: ../../reference.rst:154
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:154
 msgid ""
 "With a ``console`` section the edge serves the console of SID 0031 on a "
 "listener of its own. Besides the routes of the firewall console, three "
@@ -569,15 +600,15 @@ msgstr ""
 "وإلى جانب مسارات وحدة تحكم الجدار الناري، تخص ثلاثة مسارات الحافة "
 "(``crates/console/src/routes.rs``، ``crates/console/src/api/edge.rs``)."
 
-#: ../../reference.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:156
 msgid "Console routes of the edge"
 msgstr "مسارات وحدة التحكم في الحافة"
 
-#: ../../reference.rst:163
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:163
 msgid "``/console/api/edge``"
 msgstr ""
 
-#: ../../reference.rst:165
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:165
 msgid ""
 "The node, its refusals by reason, its frontends and its pools, at most "
 "256 servers. Needs a session, or a token with the scope ``stats_read``"
@@ -585,11 +616,11 @@ msgstr ""
 "العقدة، ورفضها بحسب السبب، وواجهاتها الأمامية، ومجمّعاتها، 256 خادمًا على "
 "الأكثر. يحتاج إلى جلسة، أو رمز بالنطاق ``stats_read``"
 
-#: ../../reference.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:166
 msgid "``/console/api/edge/fleet``"
 msgstr ""
 
-#: ../../reference.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:168
 msgid ""
 "One row for each member of the fleet, asked all at once, waiting at most "
 "five seconds"
@@ -597,11 +628,11 @@ msgstr ""
 "صف واحد لكل عضو في الأسطول، يُسأل الجميع دفعة واحدة، مع انتظار خمس ثوانٍ "
 "على الأكثر"
 
-#: ../../reference.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:169
 msgid "``/console/api/edge/command``"
 msgstr ""
 
-#: ../../reference.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:171
 msgid ""
 "``{\"line\": \"...\"}``: one listed line of the admin socket. Needs the "
 "role operator or administrator, the ``Origin`` field, the CSRF token and "
@@ -611,17 +642,17 @@ msgstr ""
 "المشغّل أو المسؤول، والحقل ``Origin``، ورمز CSRF، وإذن التعديل؛ ويُدقَّق "
 "التغيير قبل تشغيله وبعده"
 
-#: ../../reference.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:172
 msgid "``/console/peer``"
 msgstr ""
 
-#: ../../reference.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:174
 msgid ""
 "The stream of a peer console, from the ``allow_ips`` of its entry, with "
 "the peer key"
 msgstr "تدفق وحدة تحكم نظيرة، من ``allow_ips`` في مدخلها، مع مفتاح النظير"
 
-#: ../../reference.rst:176
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:176
 msgid ""
 "A console without an edge answers ``404`` with ``CONSOLE404`` on the "
 "three ``edge`` routes."
@@ -629,11 +660,11 @@ msgstr ""
 "وحدة التحكم بلا حافة تجيب بـ ``404`` مع ``CONSOLE404`` على مسارات "
 "``edge`` الثلاثة."
 
-#: ../../reference.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:178
 msgid "Metrics"
 msgstr "المقاييس"
 
-#: ../../reference.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:181
 msgid ""
 "Counters exposed as ``sibuna_<name>_total`` in Prometheus text format, in "
 "this order:"
@@ -641,110 +672,110 @@ msgstr ""
 "عدادات معروضة بالصيغة ``sibuna_<name>_total`` بتنسيق نص Prometheus، بهذا "
 "الترتيب:"
 
-#: ../../reference.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:183
 msgid "Counters"
 msgstr "العدادات"
 
-#: ../../reference.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:187
 msgid "Counter"
 msgstr "العداد"
 
-#: ../../reference.rst:188
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:188
 msgid "Incremented when"
 msgstr "يزداد عندما"
 
-#: ../../reference.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:189
 msgid "``incidents_persisted``, ``incident_batches``"
 msgstr "``incidents_persisted``، ``incident_batches``"
 
-#: ../../reference.rst:190
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:190
 msgid "Records and transactions whose commit the storage thread confirmed"
 msgstr "السجلات والمعاملات التي أكد خيط التخزين تثبيتها"
 
-#: ../../reference.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:191
 msgid "``incidents_dropped``, ``incident_write_failures``"
 msgstr "``incidents_dropped``، ``incident_write_failures``"
 
-#: ../../reference.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:192
 msgid ""
 "Queue pushes rejected because the ring was full, and failed commit "
 "attempts"
 msgstr "إضافات إلى الطابور رُفضت لامتلاء الحلقة، ومحاولات تثبيت فاشلة"
 
-#: ../../reference.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:193
 msgid "``requests``"
 msgstr "``requests``"
 
-#: ../../reference.rst:194
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:194
 msgid "A parsed request reached dispatch (reserved routes included)"
 msgstr "وصل طلب مُحلَّل إلى مرحلة التوجيه (بما في ذلك المسارات المحجوزة)"
 
-#: ../../reference.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:195
 msgid "``allowed``, ``denied``, ``challenged``"
 msgstr "``allowed``، ``denied``، ``challenged``"
 
-#: ../../reference.rst:196
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:196
 msgid ""
 "A policy decision was made (admitted, refused, challenge issued or "
 "reissued)"
 msgstr "اتُخذ قرار سياسة (قبول، أو رفض، أو إصدار تحدٍّ أو إعادة إصداره)"
 
-#: ../../reference.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:197
 msgid "``challenges_issued``"
 msgstr "``challenges_issued``"
 
-#: ../../reference.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:198
 msgid "``/__sibuna/challenge.json`` minted a challenge record"
 msgstr "أنشأ ``/__sibuna/challenge.json`` سجل تحدٍّ"
 
-#: ../../reference.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:199
 msgid "``solutions_accepted``, ``solutions_rejected``"
 msgstr "``solutions_accepted``، ``solutions_rejected``"
 
-#: ../../reference.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:200
 msgid "``/__sibuna/verify`` accepted or rejected a proof"
 msgstr "قبل ``/__sibuna/verify`` إثباتًا أو رفضه"
 
-#: ../../reference.rst:201
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:201
 msgid "``rate_limited``"
 msgstr "``rate_limited``"
 
-#: ../../reference.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:202
 msgid ""
 "GCRA refused a request (``429``): the request limit, the challenge budget "
 "or a rule's quota"
 msgstr ""
 "رفض GCRA طلبًا (``429``): حد الطلبات، أو ميزانية التحديات، أو حصة قاعدة"
 
-#: ../../reference.rst:203
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:203
 msgid "``banned``"
 msgstr "``banned``"
 
-#: ../../reference.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:204
 msgid "A banned address was refused, or the honeypot banned one"
 msgstr "رُفض عنوان محظور، أو حظرت المصيدة عنوانًا"
 
-#: ../../reference.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:205
 msgid "``bans_issued``"
 msgstr "``bans_issued``"
 
-#: ../../reference.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:206
 msgid "A ban was recorded (honeypot or a rule quota's ban)"
 msgstr "سُجّل حظر (من المصيدة، أو حظرٌ تفرضه حصة قاعدة)"
 
-#: ../../reference.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:207
 msgid "``proxied``, ``upstream_errors``"
 msgstr "``proxied``، ``upstream_errors``"
 
-#: ../../reference.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:208
 msgid "A request was relayed to the origin, or the origin failed (``502``)"
 msgstr "مُرر طلب إلى الخادم الأصلي، أو فشل الخادم الأصلي (``502``)"
 
-#: ../../reference.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:209
 msgid "``parse_errors``"
 msgstr "``parse_errors``"
 
-#: ../../reference.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:210
 msgid ""
 "A malformed head, a repeated ``Host``, a target without a normal form "
 "(``400``), or an unsupported transfer coding (``501``) was refused"
@@ -752,11 +783,11 @@ msgstr ""
 "رُفض رأس مشوه، أو ``Host`` مكرر، أو هدف ليست له صيغة مُطبَّعة (``400``)، "
 "أو ترميز نقل غير مدعوم (``501``)"
 
-#: ../../reference.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:211
 msgid "``overloaded``"
 msgstr "``overloaded``"
 
-#: ../../reference.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:212
 msgid ""
 "A connection beyond ``--max-connections`` or ``--max-connections-per-ip`` "
 "was answered ``503``"
@@ -764,49 +795,49 @@ msgstr ""
 "أُجيب اتصال يتجاوز ``--max-connections`` أو ``--max-connections-per-ip`` "
 "بـ ``503``"
 
-#: ../../reference.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:213
 msgid "``bans_refused``"
 msgstr "``bans_refused``"
 
-#: ../../reference.rst:214
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:214
 msgid ""
 "A ban was not recorded because every slot its key may take held a ban in "
 "effect"
 msgstr "لم يُسجل حظر لأن كل موضع يمكن أن يأخذه مفتاحه كان يحمل حظرًا ساريًا"
 
-#: ../../reference.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:215
 msgid "``forwarded_invalid``"
 msgstr "``forwarded_invalid``"
 
-#: ../../reference.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:216
 msgid ""
 "A trusted forwarded client address did not parse; the request was judged "
 "by the socket peer"
 msgstr ""
 "تعذر تحليل عنوان عميل ممرر موثوق؛ فحُكم على الطلب بعنوان نظير المقبس"
 
-#: ../../reference.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:217
 msgid "``honeypot_refused``"
 msgstr "``honeypot_refused``"
 
-#: ../../reference.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:218
 msgid ""
 "A honeypot hit banned nobody because a page, not a person, requested it"
 msgstr "لم يحظر طلبُ المصيدة أحدًا، لأن الذي طلبها صفحة لا شخص"
 
-#: ../../reference.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:219
 msgid "``rate_evictions``"
 msgstr "``rate_evictions``"
 
-#: ../../reference.rst:220
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:220
 msgid "A limiter arrival evicted another active client's cell"
 msgstr "أزاح وصولٌ إلى محدد المعدل خليةَ عميل نشط آخر"
 
-#: ../../reference.rst:221
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:221
 msgid "``ja4_present``"
 msgstr "``ja4_present``"
 
-#: ../../reference.rst:222
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:222
 msgid ""
 "With ``--ja4-header`` and trusted forwarding, the request carried exactly "
 "one header of that name with a JA4 fingerprint"
@@ -814,11 +845,11 @@ msgstr ""
 "مع ``--ja4-header`` والتمرير الموثوق، حمل الطلب ترويسة واحدة بالضبط بذلك "
 "الاسم تحتوي على بصمة JA4"
 
-#: ../../reference.rst:223
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:223
 msgid "``ja4_invalid``"
 msgstr "``ja4_invalid``"
 
-#: ../../reference.rst:224
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:224
 msgid ""
 "With ``--ja4-header`` and trusted forwarding, the header was malformed or "
 "repeated; the request was judged without a fingerprint"
@@ -826,49 +857,49 @@ msgstr ""
 "مع ``--ja4-header`` والتمرير الموثوق، كانت الترويسة مشوهة أو مكررة؛ فحُكم "
 "على الطلب دون بصمة"
 
-#: ../../reference.rst:225
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:225
 msgid "``tunnels_opened``"
 msgstr ""
 
-#: ../../reference.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:226
 msgid ""
 "An upgraded connection became a tunnel on an event-driven worker (SID "
 "0016)"
 msgstr "صار اتصال مُرقّى نفقًا على عامل مدفوع بالأحداث (SID 0016)"
 
-#: ../../reference.rst:227
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:227
 msgid "``origin_reused``, ``origin_connects``"
 msgstr "``origin_reused``، ``origin_connects``"
 
-#: ../../reference.rst:228
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:228
 msgid ""
 "An exchange of a worker reused an idle server socket, or opened a server "
 "connection"
 msgstr "أعاد تبادل لعامل استخدام مقبس خادم خامل، أو فتح اتصالًا بخادم"
 
-#: ../../reference.rst:229
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:229
 msgid "``origin_retries``"
 msgstr ""
 
-#: ../../reference.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:230
 msgid "A request was sent again because an idle server socket had closed"
 msgstr "أُرسل طلب مرة أخرى لأن مقبس خادم خاملًا كان قد أُغلق"
 
-#: ../../reference.rst:231
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:231
 msgid "``deadline_closes``, ``worker_faults``"
 msgstr "``deadline_closes``، ``worker_faults``"
 
-#: ../../reference.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:232
 msgid ""
 "A worker closed a connection because a deadline passed, or after a fault "
 "in its own code"
 msgstr "أغلق عامل اتصالًا لأن موعدًا نهائيًا مضى، أو بعد عطل في شيفرته هو"
 
-#: ../../reference.rst:233
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:233
 msgid "``tls_kept``, ``tls_passed``"
 msgstr "``tls_kept``، ``tls_passed``"
 
-#: ../../reference.rst:234
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:234
 msgid ""
 "A worker ended a TLS connection itself, or gave it to the protocol "
 "runtime after its ClientHello (SID 0024)"
@@ -876,7 +907,7 @@ msgstr ""
 "أنهى عامل اتصال TLS بنفسه، أو أعطاه لبيئة تشغيل البروتوكولات بعد "
 "ClientHello الخاصة به (SID 0024)"
 
-#: ../../reference.rst:236
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:236
 msgid ""
 "The last eight counters are written by the event-driven workers of the "
 "edge (SID 0016, SID 0024). ``crates/core/src/metrics.rs`` holds the list."
@@ -884,11 +915,12 @@ msgstr ""
 "العدادات الثمانية الأخيرة يكتبها عمال الحافة المدفوعون بالأحداث (SID "
 "0016، SID 0024). وتضم ``crates/core/src/metrics.rs`` القائمة."
 
-#: ../../reference.rst:238 ../../reference.rst:243
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:238
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:243
 msgid "Series of the edge"
 msgstr "سلاسل الحافة"
 
-#: ../../reference.rst:241
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:241
 msgid ""
 "The metrics text of an edge has the counters above and then these series. "
 "``show stats`` on the admin socket prints the same text. A series of a "
@@ -905,113 +937,172 @@ msgstr ""
 "``crates/lb/src/forward/counters.rs`` و\\ ``cmd/sibuna/src/access.rs`` "
 "و\\ ``cmd/sibuna/src/plugins.rs`` و\\ ``cmd/sibuna/src/acme.rs``."
 
-#: ../../reference.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:247
 msgid "Series"
 msgstr "السلسلة"
 
-#: ../../reference.rst:248
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:248
 msgid "Type"
 msgstr "النوع"
 
-#: ../../reference.rst:249
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:249
 msgid "Labels"
 msgstr "الوسوم"
 
-#: ../../reference.rst:250 ../../reference.rst:502 ../../reference.rst:550
-#: ../../reference.rst:584 ../../reference.rst:631 ../../reference.rst:689
-#: ../../reference.rst:745 ../../reference.rst:792 ../../reference.rst:814
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:250
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:514
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:562
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:599
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:646
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:704
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:760
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:807
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:829
 msgid "Meaning"
 msgstr "المعنى"
 
-#: ../../reference.rst:251
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:251
 msgid "``sibuna_edge_ready``"
 msgstr ""
 
-#: ../../reference.rst:252 ../../reference.rst:256 ../../reference.rst:300
-#: ../../reference.rst:312 ../../reference.rst:316 ../../reference.rst:344
-#: ../../reference.rst:356 ../../reference.rst:360 ../../reference.rst:368
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:252
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:256
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:276
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:312
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:324
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:356
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:368
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:372
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:380
 msgid "gauge"
 msgstr ""
 
-#: ../../reference.rst:254
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:254
 msgid "1 while readiness answers 200, 0 from the start of a shutdown"
 msgstr "1 ما دامت الجاهزية تجيب بـ 200، و0 منذ بدء الإيقاف"
 
-#: ../../reference.rst:255
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:255
 msgid "``sibuna_edge_flows_active``, ``sibuna_edge_flows_limit``"
 msgstr "``sibuna_edge_flows_active``، ``sibuna_edge_flows_limit``"
 
-#: ../../reference.rst:258
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:258
 msgid "The flows in the flow table, and ``global.max_flows``"
 msgstr "التدفقات في جدول التدفقات، و\\ ``global.max_flows``"
 
-#: ../../reference.rst:259
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:259
 msgid "``sibuna_edge_drops_total``"
 msgstr ""
 
-#: ../../reference.rst:260 ../../reference.rst:264 ../../reference.rst:268
-#: ../../reference.rst:272 ../../reference.rst:276 ../../reference.rst:280
-#: ../../reference.rst:288 ../../reference.rst:292 ../../reference.rst:296
-#: ../../reference.rst:308 ../../reference.rst:320 ../../reference.rst:324
-#: ../../reference.rst:328 ../../reference.rst:332 ../../reference.rst:336
-#: ../../reference.rst:340 ../../reference.rst:348 ../../reference.rst:352
-#: ../../reference.rst:364
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:260
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:264
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:268
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:272
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:280
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:284
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:288
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:292
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:300
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:304
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:308
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:320
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:332
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:336
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:340
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:344
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:348
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:352
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:360
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:364
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:376
 msgid "counter"
 msgstr ""
 
-#: ../../reference.rst:262
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:262
 msgid "Datagrams that the edge worker discarded and admissions it refused"
 msgstr "رزم البيانات التي تخلص منها عامل الحافة وعمليات القبول التي رفضها"
 
-#: ../../reference.rst:263
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:263
 msgid "``sibuna_edge_proxy_protocol_accepted_total``, ``_rejected_total``"
 msgstr "``sibuna_edge_proxy_protocol_accepted_total``، ``_rejected_total``"
 
-#: ../../reference.rst:266
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:266
 msgid "Connections whose PROXY header was accepted or refused"
 msgstr "الاتصالات التي قُبلت ترويسة PROXY الخاصة بها أو رُفضت"
 
-#: ../../reference.rst:267
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:267
 msgid "``sibuna_edge_flow_log_dropped_total``"
 msgstr ""
 
-#: ../../reference.rst:270
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:270
 msgid "Lines of TCP and UDP flows that did not fit the queue of the log"
 msgstr "أسطر تدفقات TCP وUDP التي لم تتسع في طابور السجل"
 
-#: ../../reference.rst:271
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:271
 msgid "``sibuna_edge_refused_total``"
 msgstr ""
 
-#: ../../reference.rst:273 ../../reference.rst:333 ../../reference.rst:337
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:273
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:345
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:349
 msgid "``reason``"
 msgstr ""
 
-#: ../../reference.rst:274
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:274
 msgid ""
 "Refused connections, requests and datagrams. The reasons are "
 "``rate_limit``, ``flow_limit``, ``draining``, ``connection_limit``, "
 "``client_limit``, ``task_limit``, ``exchange_limit``, ``bad_request``, "
 "``no_server``, ``udp_rate_limit``, ``udp_flow_limit``, "
-"``udp_reply_limit``, ``client_closed``, ``hook``, ``inspect_denied`` and "
-"``udp_not_quic``"
+"``udp_reply_limit``, ``client_closed``, ``hook``, ``inspect_denied``, "
+"``udp_not_quic``, and from SID 0034 ``banned``, ``pressure``, "
+"``frontend_limit``, ``client_flow_limit`` and ``udp_total_limit``"
 msgstr ""
 "الاتصالات والطلبات ورزم البيانات المرفوضة. والأسباب هي ``rate_limit``، "
 "و\\ ``flow_limit``، و\\ ``draining``، و\\ ``connection_limit``، و\\ "
 "``client_limit``، و\\ ``task_limit``، و\\ ``exchange_limit``، و\\ "
 "``bad_request``، و\\ ``no_server``، و\\ ``udp_rate_limit``، و\\ "
 "``udp_flow_limit``، و\\ ``udp_reply_limit``، و\\ ``client_closed``، و\\ "
-"``hook``، و\\ ``inspect_denied``، و\\ ``udp_not_quic``"
+"``hook``، و\\ ``inspect_denied``، و\\ ``udp_not_quic``، ومن SID 0034 "
+"``banned``، و\\ ``pressure``، و\\ ``frontend_limit``، و\\ "
+"``client_flow_limit``، و\\ ``udp_total_limit``"
 
-#: ../../reference.rst:275
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:275
+msgid "``sibuna_edge_pressure``"
+msgstr ""
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:278
+msgid ""
+"1 while pressure mode admits known addresses first, 0 otherwise (SID 0034)"
+msgstr ""
+"1 ما دام وضع الضغط يقبل العناوين المعروفة أولًا، و0 في غير ذلك (SID 0034)"
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:279
+msgid "``sibuna_edge_pressure_switches_total``"
+msgstr ""
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:282
+msgid "Switches of pressure mode, on or off"
+msgstr "تبديلات وضع الضغط، تفعيلًا أو تعطيلًا"
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:283
+msgid "``sibuna_edge_strikes_total``, ``sibuna_edge_auto_bans_total``"
+msgstr ""
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:286
+msgid ""
+"Refusals that counted against ``auto_ban``, and the addresses they banned"
+msgstr "حالات الرفض التي احتُسبت في ``auto_ban``، والعناوين التي حظرتها"
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:287
 msgid "``sibuna_edge_frontend_requests_total``"
 msgstr ""
 
-#: ../../reference.rst:277
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:289
 msgid "``frontend``, ``code``"
 msgstr "``frontend``، ``code``"
 
-#: ../../reference.rst:278
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:290
 msgid ""
 "HTTP requests by status class: ``1xx`` to ``5xx``, or ``none`` for an "
 "exchange that ended without a status"
@@ -1019,7 +1110,7 @@ msgstr ""
 "طلبات HTTP بحسب فئة الحالة: من ``1xx`` إلى ``5xx``، أو ``none`` لتبادل "
 "انتهى بلا حالة"
 
-#: ../../reference.rst:279
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:291
 msgid ""
 "``sibuna_edge_frontend_bytes_in_total``, ``_bytes_out_total``, "
 "``_flows_total``"
@@ -1027,41 +1118,43 @@ msgstr ""
 "``sibuna_edge_frontend_bytes_in_total``، ``_bytes_out_total``، "
 "``_flows_total``"
 
-#: ../../reference.rst:281 ../../reference.rst:285
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:293
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:297
 msgid "``frontend``"
 msgstr ""
 
-#: ../../reference.rst:282
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:294
 msgid "Bytes from and to the clients, and flows of a frontend"
 msgstr ""
 "البايتات الواردة من العملاء والصادرة إليهم، وتدفقات الواجهة الأمامية"
 
-#: ../../reference.rst:283
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:295
 msgid "``sibuna_edge_frontend_request_seconds``"
 msgstr ""
 
-#: ../../reference.rst:284 ../../reference.rst:304
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:296
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:316
 msgid "histogram"
 msgstr ""
 
-#: ../../reference.rst:286
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:298
 msgid ""
 "The duration of a request; buckets from 0.001 to 30 seconds (14 bounds)"
 msgstr "مدة الطلب؛ دلاء من 0.001 إلى 30 ثانية (14 حدًا)"
 
-#: ../../reference.rst:287
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:299
 msgid "``sibuna_edge_server_requests_total``"
 msgstr ""
 
-#: ../../reference.rst:289
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:301
 msgid "``backend``, ``server``, ``code``"
 msgstr "``backend``، ``server``، ``code``"
 
-#: ../../reference.rst:290
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:302
 msgid "Requests a server answered, by status class"
 msgstr "الطلبات التي أجاب عنها خادم، بحسب فئة الحالة"
 
-#: ../../reference.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:303
 msgid ""
 "``sibuna_edge_server_failures_total``, ``_failovers_total``, "
 "``_ejections_total``"
@@ -1069,12 +1162,14 @@ msgstr ""
 "``sibuna_edge_server_failures_total``، ``_failovers_total``، "
 "``_ejections_total``"
 
-#: ../../reference.rst:293 ../../reference.rst:297 ../../reference.rst:301
-#: ../../reference.rst:305
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:305
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:309
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:313
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:317
 msgid "``backend``, ``server``"
 msgstr "``backend``، ``server``"
 
-#: ../../reference.rst:294
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:306
 msgid ""
 "What a server did wrong, requests that left it for another server, and "
 "ejections by passive health (SID 0019)"
@@ -1082,11 +1177,11 @@ msgstr ""
 "ما أخطأ فيه الخادم، والطلبات التي تركته إلى خادم آخر، وعمليات الإخراج "
 "بالسلامة السلبية (SID 0019)"
 
-#: ../../reference.rst:295
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:307
 msgid "``sibuna_edge_server_client_closed_total``"
 msgstr ""
 
-#: ../../reference.rst:298
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:310
 msgid ""
 "Clients that left before the server answered (logged as 499); not a "
 "failure of the server"
@@ -1094,23 +1189,23 @@ msgstr ""
 "العملاء الذين غادروا قبل أن يجيب الخادم (تُسجَّل بالرمز 499)؛ وليست "
 "إخفاقًا للخادم"
 
-#: ../../reference.rst:299
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:311
 msgid "``sibuna_edge_server_up``, ``sibuna_edge_server_active_requests``"
 msgstr "``sibuna_edge_server_up``، ``sibuna_edge_server_active_requests``"
 
-#: ../../reference.rst:302
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:314
 msgid "1 while the server is in service, and its requests in flight"
 msgstr "1 ما دام الخادم في الخدمة، وطلباته الجارية"
 
-#: ../../reference.rst:303
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:315
 msgid "``sibuna_edge_server_response_seconds``"
 msgstr ""
 
-#: ../../reference.rst:306
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:318
 msgid "The wait for the first byte of the server, with the buckets above"
 msgstr "انتظار أول بايت من الخادم، بالدلاء أعلاه"
 
-#: ../../reference.rst:307
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:319
 msgid ""
 "``sibuna_edge_access_log_written_total``, ``_dropped_total``, "
 "``_errors_total``"
@@ -1118,26 +1213,26 @@ msgstr ""
 "``sibuna_edge_access_log_written_total``، ``_dropped_total``، "
 "``_errors_total``"
 
-#: ../../reference.rst:310
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:322
 msgid ""
 "Lines of the access log written, dropped because the queue was full, and "
 "failed writes"
 msgstr ""
 "أسطر سجل الوصول المكتوبة، والمُسقطة لامتلاء الطابور، والكتابات الفاشلة"
 
-#: ../../reference.rst:311
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:323
 msgid "``sibuna_edge_access_log_queue_length``"
 msgstr ""
 
-#: ../../reference.rst:314
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:326
 msgid "Entries waiting for the writer"
 msgstr "المدخلات المنتظرة للكاتب"
 
-#: ../../reference.rst:315
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:327
 msgid "``sibuna_edge_forward_active``, ``_peers_eligible``, ``_flows_out``"
 msgstr "``sibuna_edge_forward_active``، ``_peers_eligible``، ``_flows_out``"
 
-#: ../../reference.rst:318
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:330
 msgid ""
 "Peer forwarding (SID 0026): 1 while this node forwards, the peers that "
 "can take a flow, and the flows forwarded now"
@@ -1145,15 +1240,15 @@ msgstr ""
 "التمرير بين النظراء (SID 0026): 1 ما دامت هذه العقدة تمرر، والنظراء "
 "القادرون على أخذ تدفق، والتدفقات الممررة الآن"
 
-#: ../../reference.rst:319
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:331
 msgid "``sibuna_edge_forward_streams_out_total``, ``_streams_in_total``"
 msgstr "``sibuna_edge_forward_streams_out_total``، ``_streams_in_total``"
 
-#: ../../reference.rst:322
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:334
 msgid "Connections handed to an owner, and taken from peers"
 msgstr "الاتصالات المسلَّمة إلى مالك، والمأخوذة من النظراء"
 
-#: ../../reference.rst:323
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:335
 msgid ""
 "``sibuna_edge_forward_datagrams_out_total``, ``_datagrams_in_total``, "
 "``_datagrams_returned_total``"
@@ -1161,7 +1256,7 @@ msgstr ""
 "``sibuna_edge_forward_datagrams_out_total``، ``_datagrams_in_total``، "
 "``_datagrams_returned_total``"
 
-#: ../../reference.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:338
 msgid ""
 "Datagrams sent to an owner, taken from peers, and replies passed back to "
 "a client"
@@ -1169,19 +1264,19 @@ msgstr ""
 "رزم البيانات المرسلة إلى مالك، والمأخوذة من النظراء، والردود المعادة إلى "
 "عميل"
 
-#: ../../reference.rst:327
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:339
 msgid "``sibuna_edge_forward_denied_total``"
 msgstr ""
 
-#: ../../reference.rst:330
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:342
 msgid "Connections closed because the owner's rate limit denied the client"
 msgstr "الاتصالات المغلقة لأن حد المعدل لدى المالك رفض العميل"
 
-#: ../../reference.rst:331
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:343
 msgid "``sibuna_edge_forward_local_total``"
 msgstr ""
 
-#: ../../reference.rst:334
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:346
 msgid ""
 "Flows of another owner served here: ``declined``, ``connect_failed``, "
 "``timeout``, ``peer_limit``"
@@ -1189,11 +1284,11 @@ msgstr ""
 "تدفقات مالك آخر خُدمت هنا: ``declined``، ``connect_failed``، ``timeout``، "
 "``peer_limit``"
 
-#: ../../reference.rst:335
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:347
 msgid "``sibuna_edge_forward_rejected_total``"
 msgstr ""
 
-#: ../../reference.rst:338
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:350
 msgid ""
 "What the forwarding port refused: ``stranger``, ``bad_tag``, ``stale``, "
 "``malformed``, ``unknown``"
@@ -1201,7 +1296,7 @@ msgstr ""
 "ما رفضه منفذ التمرير: ``stranger``، ``bad_tag``، ``stale``، "
 "``malformed``، ``unknown``"
 
-#: ../../reference.rst:339
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:351
 msgid ""
 "``sibuna_edge_mesh_bans_sent_total``, ``_received_total``, "
 "``_applied_total``, ``_dropped_total``"
@@ -1209,7 +1304,7 @@ msgstr ""
 "``sibuna_edge_mesh_bans_sent_total``، ``_received_total``، "
 "``_applied_total``، ``_dropped_total``"
 
-#: ../../reference.rst:342
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:354
 msgid ""
 "Replicated bans (SID 0022): written into datagrams once for each peer and "
 "send, read from authentic datagrams, that added or extended a ban, and "
@@ -1219,23 +1314,23 @@ msgstr ""
 "إرسال، والمقروء من رزم بيانات أصيلة، والذي أضاف حظرًا أو مدده، والضائع "
 "بسبب حد"
 
-#: ../../reference.rst:343
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:355
 msgid "``sibuna_edge_mesh_bans_known``"
 msgstr ""
 
-#: ../../reference.rst:346
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:358
 msgid "The bans this node remembers now"
 msgstr "الحظر الذي تتذكره هذه العقدة الآن"
 
-#: ../../reference.rst:347
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:359
 msgid "``sibuna_edge_hook_calls_total``"
 msgstr ""
 
-#: ../../reference.rst:349
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:361
 msgid "``plugin``, ``tier``, ``result``"
 msgstr "``plugin``، ``tier``، ``result``"
 
-#: ../../reference.rst:350
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:362
 msgid ""
 "Calls of a plugin (SID 0030). ``tier`` is ``native``, ``wasm`` or "
 "``agent``; ``result`` is ``admit``, ``deny``, ``challenge``, ``timeout``, "
@@ -1245,7 +1340,7 @@ msgstr ""
 "``agent``؛ و\\ ``result`` هو ``admit`` أو ``deny`` أو ``challenge`` أو "
 "``timeout`` أو ``overload`` أو ``trap`` أو ``unavailable``"
 
-#: ../../reference.rst:351
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:363
 msgid ""
 "``sibuna_edge_hook_samples_dropped_total``, "
 "``sibuna_edge_hook_fields_refused_total``"
@@ -1253,11 +1348,12 @@ msgstr ""
 "``sibuna_edge_hook_samples_dropped_total``، "
 "``sibuna_edge_hook_fields_refused_total``"
 
-#: ../../reference.rst:353 ../../reference.rst:357
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:365
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:369
 msgid "``plugin``"
 msgstr ""
 
-#: ../../reference.rst:354
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:366
 msgid ""
 "Telemetry samples dropped, and request fields that the plugin tried to "
 "add and that were refused"
@@ -1265,44 +1361,44 @@ msgstr ""
 "عينات القياس عن بعد المُسقطة، وحقول الطلب التي حاولت الإضافة إضافتها "
 "فرُفضت"
 
-#: ../../reference.rst:355
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:367
 msgid "``sibuna_edge_hook_breakers_open``"
 msgstr ""
 
-#: ../../reference.rst:358
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:370
 msgid "Open breakers of an agent plugin"
 msgstr "قواطع الدارة المفتوحة لإضافة وكيل"
 
-#: ../../reference.rst:359
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:371
 msgid "``sibuna_edge_acme_certificates_managed``, ``_served``"
 msgstr "``sibuna_edge_acme_certificates_managed``، ``_served``"
 
-#: ../../reference.rst:362
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:374
 msgid ""
 "Names of automatic HTTPS, and those with a certificate in service (SID "
 "0021)"
 msgstr "أسماء HTTPS التلقائي، وتلك التي لها شهادة في الخدمة (SID 0021)"
 
-#: ../../reference.rst:363
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:375
 msgid "``sibuna_edge_acme_failures_total``"
 msgstr ""
 
-#: ../../reference.rst:366
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:378
 msgid "Failed attempts to obtain or renew a certificate"
 msgstr "المحاولات الفاشلة للحصول على شهادة أو تجديدها"
 
-#: ../../reference.rst:367
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:379
 msgid "``sibuna_edge_acme_nearest_expiry_seconds``"
 msgstr ""
 
-#: ../../reference.rst:370
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:382
 msgid ""
 "Seconds until the first served certificate expires; absent while none is "
 "served"
 msgstr ""
 "الثواني حتى انتهاء أول شهادة مقدَّمة؛ غائب ما دامت لا تُقدَّم أي شهادة"
 
-#: ../../reference.rst:372
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:384
 msgid ""
 "Some state of the edge has no series. The sticky table and the shares of "
 "fleet-wide limits are shown by ``show affinity`` only (SID 0025), the "
@@ -1316,7 +1412,7 @@ msgstr ""
 "``show authority`` (SID 0028). ولا تعدّ أي سلسلة الأوامرَ، ولا رفع الحظر، "
 "ولا التدفقات المركونة للإضافات."
 
-#: ../../reference.rst:374
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:386
 msgid ""
 "A retry can increment ``incident_write_failures`` without losing records, "
 "because the pending batch is retained. Monitor increments over an "
@@ -1326,30 +1422,37 @@ msgstr ""
 "الدفعة المعلقة تُستبقى. راقب الزيادات خلال فترة؛ فالمجاميع وحدها ليست عمق "
 "الطابور."
 
-#: ../../reference.rst:376
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:388
 msgid "Status Codes"
 msgstr "رموز الحالة"
 
-#: ../../reference.rst:379
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:391
 msgid "Status codes of the data plane"
 msgstr "رموز حالة مستوى البيانات"
 
-#: ../../reference.rst:383 ../../reference.rst:420 ../../reference.rst:500
-#: ../../reference.rst:548 ../../reference.rst:582 ../../reference.rst:629
-#: ../../reference.rst:687 ../../reference.rst:743 ../../reference.rst:790
-#: ../../reference.rst:812
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:395
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:432
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:512
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:560
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:597
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:644
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:702
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:758
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:805
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:827
 msgid "Code"
 msgstr "الرمز"
 
-#: ../../reference.rst:384 ../../reference.rst:421
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:396
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:433
 msgid "When"
 msgstr "متى"
 
-#: ../../reference.rst:385
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:397
 msgid "200"
 msgstr "200"
 
-#: ../../reference.rst:386
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:398
 msgid ""
 "Admitted (forward-auth), interstitial (HTML navigation needing a "
 "challenge), internal routes"
@@ -1357,22 +1460,23 @@ msgstr ""
 "مقبول (forward-auth)، والصفحة الوسيطة (تصفّح HTML يحتاج إلى تحدٍّ)، "
 "والمسارات الداخلية"
 
-#: ../../reference.rst:387
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:399
 msgid "302"
 msgstr "302"
 
-#: ../../reference.rst:388
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:400
 msgid ""
 "Not used by the current protocol; verification answers ``200`` and the "
 "page reloads"
 msgstr ""
 "لا يستخدمه البروتوكول الحالي؛ يجيب التحقق بـ ``200`` وتعيد الصفحة التحميل"
 
-#: ../../reference.rst:389 ../../reference.rst:504
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:401
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:516
 msgid "400"
 msgstr "400"
 
-#: ../../reference.rst:390
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:402
 msgid ""
 "Malformed request, a repeated ``Host`` field, a target without a normal "
 "form, invalid forwarded metadata, a malformed body, or a rejected "
@@ -1381,29 +1485,32 @@ msgstr ""
 "طلب مشوه، أو حقل ``Host`` مكرر، أو هدف ليست له صيغة مُطبَّعة، أو بيانات "
 "تمرير وصفية غير صالحة، أو جسم مشوه، أو حل مرفوض مع تشخيص بأسلوب Elm"
 
-#: ../../reference.rst:391
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:403
 msgid "401"
 msgstr "401"
 
-#: ../../reference.rst:392
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:404
 msgid ""
 "Challenge required for a client that does not accept HTML, or in "
 "forward-auth mode"
 msgstr "مطلوب تحدٍّ لعميل لا يقبل HTML، أو في وضع forward-auth"
 
-#: ../../reference.rst:393 ../../reference.rst:424
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:405
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:436
 msgid "403"
 msgstr "403"
 
-#: ../../reference.rst:394
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:406
 msgid "Policy or WAF denial, banned address, honeypot"
 msgstr "رفض من السياسة أو WAF، أو عنوان محظور، أو المصيدة"
 
-#: ../../reference.rst:395 ../../reference.rst:426 ../../reference.rst:528
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:407
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:438
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:540
 msgid "404"
 msgstr "404"
 
-#: ../../reference.rst:396
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:408
 msgid ""
 "An unknown path under ``/__sibuna/``, or a honeypot hit that is not a "
 "top-level request"
@@ -1411,72 +1518,79 @@ msgstr ""
 "مسار غير معروف تحت ``/__sibuna/``، أو طلب مصيدة ليس طلبًا من المستوى "
 "الأعلى"
 
-#: ../../reference.rst:397 ../../reference.rst:428
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:409
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:440
 msgid "413"
 msgstr "413"
 
-#: ../../reference.rst:398
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:410
 msgid "Solution body larger than the 64 KB connection buffer"
 msgstr "جسم الحل أكبر من مخزن الاتصال المؤقت البالغ 64 KB"
 
-#: ../../reference.rst:399
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:411
 msgid "414"
 msgstr "414"
 
-#: ../../reference.rst:400
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:412
 msgid "A reported challenge URL over 8 KiB"
 msgstr "عنوان URL المُبلَّغ عنه للتحدي أطول من 8 KiB"
 
-#: ../../reference.rst:401
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:413
 msgid "417"
 msgstr "417"
 
-#: ../../reference.rst:402
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:414
 msgid "Unsupported request expectation; ``100-continue`` is handled locally"
 msgstr ""
 "توقُّع (Expect) غير مدعوم في الطلب؛ ويُعالَج ``100-continue`` محليًا"
 
-#: ../../reference.rst:403 ../../reference.rst:519 ../../reference.rst:525
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:415
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:531
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:537
 msgid "429"
 msgstr "429"
 
-#: ../../reference.rst:404
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:416
 msgid "GCRA limit exceeded; ``Retry-After`` in seconds"
 msgstr "تجاوز حد GCRA؛ ``Retry-After`` بالثواني"
 
-#: ../../reference.rst:405
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:417
 msgid "431"
 msgstr "431"
 
-#: ../../reference.rst:406
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:418
 msgid "Request head over 16 KB"
 msgstr "رأس الطلب أكبر من 16 KB"
 
-#: ../../reference.rst:407 ../../reference.rst:432
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:419
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:444
 msgid "501"
 msgstr "501"
 
-#: ../../reference.rst:408
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:420
 msgid "``Transfer-Encoding`` with a coding other than chunked"
 msgstr "``Transfer-Encoding`` بترميز غير chunked"
 
-#: ../../reference.rst:409 ../../reference.rst:434
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:421
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:446
 msgid "502"
 msgstr "502"
 
-#: ../../reference.rst:410
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:422
 msgid ""
 "Origin unreachable, or its response head was malformed or larger than 16 "
 "KB"
 msgstr ""
 "الخادم الأصلي غير قابل للوصول، أو كان رأس استجابته مشوهًا أو أكبر من 16 KB"
 
-#: ../../reference.rst:411 ../../reference.rst:436 ../../reference.rst:510
-#: ../../reference.rst:513
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:423
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:448
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:522
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:525
 msgid "503"
 msgstr "503"
 
-#: ../../reference.rst:412
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:424
 msgid ""
 "Connection limit (``--max-connections`` or ``--max-connections-per-ip``) "
 "reached, or the node is draining; the socket is closed after the reply"
@@ -1485,7 +1599,7 @@ msgstr ""
 "``--max-connections-per-ip``)، أو العقدة قيد التصريف؛ ويُغلق المقبس بعد "
 "الرد"
 
-#: ../../reference.rst:414
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:426
 msgid ""
 "An HTTP frontend of the edge answers with the codes above where its "
 "firewall decides, and adds these of its own (SID 0019, SID 0020, SID "
@@ -1494,15 +1608,15 @@ msgstr ""
 "تجيب الواجهة الأمامية HTTP في الحافة بالرموز أعلاه حيث يقرر جدارها "
 "الناري، وتضيف هذه الرموز الخاصة بها (SID 0019، SID 0020، SID 0030)."
 
-#: ../../reference.rst:416
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:428
 msgid "Status codes that the edge adds"
 msgstr "رموز الحالة التي تضيفها الحافة"
 
-#: ../../reference.rst:422
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:434
 msgid "301, 308"
 msgstr ""
 
-#: ../../reference.rst:423
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:435
 msgid ""
 "``redirect_https`` on a cleartext frontend or route, or the automatic "
 "redirect of a managed name (308)"
@@ -1510,7 +1624,7 @@ msgstr ""
 "``redirect_https`` على واجهة أمامية أو مسار غير مشفر، أو إعادة التوجيه "
 "التلقائية لاسم مُدار (308)"
 
-#: ../../reference.rst:425
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:437
 msgid ""
 "A request hook denied the request, or a WebSocket upgrade carried an "
 "``Origin`` that the route does not list"
@@ -1518,7 +1632,7 @@ msgstr ""
 "رفض خطاف طلب الطلبَ، أو حملت ترقية WebSocket قيمة ``Origin`` لا يسردها "
 "المسار"
 
-#: ../../reference.rst:427
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:439
 msgid ""
 "``/__sibuna/ready``, ``health`` or ``metrics`` asked from outside "
 "``internal_allow`` or through a proxy"
@@ -1526,15 +1640,15 @@ msgstr ""
 "``/__sibuna/ready`` أو ``health`` أو ``metrics`` طُلبت من خارج "
 "``internal_allow`` أو عبر وكيل"
 
-#: ../../reference.rst:429
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:441
 msgid "A request body above ``max_body``"
 msgstr "جسم طلب يتجاوز ``max_body``"
 
-#: ../../reference.rst:430
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:442
 msgid "499"
 msgstr ""
 
-#: ../../reference.rst:431
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:443
 msgid ""
 "Written to the access log only: the client closed or reset before any "
 "response; no client receives it"
@@ -1542,11 +1656,11 @@ msgstr ""
 "يُكتب في سجل الوصول فقط: أغلق العميل الاتصال أو أعاد ضبطه قبل أي استجابة؛ "
 "ولا يتلقاه أي عميل"
 
-#: ../../reference.rst:433
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:445
 msgid "A WebSocket upgrade to a pool with ``http_version`` 2 or 3"
 msgstr "ترقية WebSocket إلى مجمّع قيمة ``http_version`` فيه 2 أو 3"
 
-#: ../../reference.rst:435
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:447
 msgid ""
 "No server could be reached, or a request that is not safe to repeat lost "
 "its server connection after it was sent"
@@ -1554,7 +1668,7 @@ msgstr ""
 "تعذر الوصول إلى أي خادم، أو فقد طلب لا يُؤمن تكراره اتصاله بالخادم بعد "
 "إرساله"
 
-#: ../../reference.rst:437
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:449
 msgid ""
 "Readiness during a shutdown, an HTTP/2 or HTTP/3 request above the "
 "request bound, or a console stream over its quota"
@@ -1562,19 +1676,19 @@ msgstr ""
 "الجاهزية أثناء الإيقاف، أو طلب HTTP/2 أو HTTP/3 يتجاوز حد الطلبات، أو "
 "تدفق وحدة تحكم تجاوز حصته"
 
-#: ../../reference.rst:438
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:450
 msgid "504"
 msgstr ""
 
-#: ../../reference.rst:439
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:451
 msgid "A server stayed silent longer than ``response_timeout``"
 msgstr "بقي خادم صامتًا أطول من ``response_timeout``"
 
-#: ../../reference.rst:441
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:453
 msgid "Error Catalog"
 msgstr "فهرس الأخطاء"
 
-#: ../../reference.rst:444
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:456
 msgid ""
 "``INVALID COMMAND LINE`` stops startup for any option the daemon does not "
 "recognise, any value outside its documented range, and an invalid, "
@@ -1613,11 +1727,11 @@ msgstr ""
 "مكررًا، ويسمي ``CONSOLE001`` إعداد وحدة تحكم يخالف قاعدة "
 "(``StorageRequired`` بلا تخزين)."
 
-#: ../../reference.rst:446
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:458
 msgid "Implementation: ``ErrorKind::explain``"
 msgstr "التنفيذ: ``ErrorKind::explain``"
 
-#: ../../reference.rst:448
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:460
 msgid ""
 "Maps every domain error to a boundary line, an explanation, and a "
 "``Hint:``. In ``crates/core/src/errors.rs`` (crate ``sibuna-core``)."
@@ -1625,168 +1739,168 @@ msgstr ""
 "يربط كل خطأ من أخطاء المجال بسطر عنوان فاصل، وشرح، و\\ ``Hint:``. في "
 "``crates/core/src/errors.rs`` (الحزمة ``sibuna-core``)."
 
-#: ../../reference.rst:450
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:462
 msgid "Challenge and session errors"
 msgstr "أخطاء التحدي والجلسة"
 
-#: ../../reference.rst:454
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:466
 msgid "Error"
 msgstr "الخطأ"
 
-#: ../../reference.rst:455
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:467
 msgid "Cause"
 msgstr "السبب"
 
-#: ../../reference.rst:456
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:468
 msgid "Hint"
 msgstr "تلميح"
 
-#: ../../reference.rst:457
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:469
 msgid "``MalformedChallenge``"
 msgstr "``MalformedChallenge``"
 
-#: ../../reference.rst:458
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:470
 msgid "The identifier is not a well-formed challenge record"
 msgstr "المعرف ليس سجل تحدٍّ سليم البنية"
 
-#: ../../reference.rst:459
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:471
 msgid "Fetch a fresh challenge and submit it unchanged"
 msgstr "اجلب تحديًا جديدًا وقدمه دون تغيير"
 
-#: ../../reference.rst:460
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:472
 msgid "``InvalidChallengeTag``"
 msgstr "``InvalidChallengeTag``"
 
-#: ../../reference.rst:461
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:473
 msgid "The tag does not authenticate; not issued by this cluster or edited"
 msgstr "الوسم لا يجتاز المصادقة؛ لم يصدره هذا العنقود، أو عُدّل"
 
-#: ../../reference.rst:462
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:474
 msgid "Challenges cannot be forged; request a new one"
 msgstr "لا يمكن تزوير التحديات؛ اطلب تحديًا جديدًا"
 
-#: ../../reference.rst:463
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:475
 msgid "``ChallengeExpired``"
 msgstr "``ChallengeExpired``"
 
-#: ../../reference.rst:464
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:476
 msgid "Older than the challenge TTL, or minted in the future"
 msgstr "أقدم من TTL التحدي، أو يحمل وقت إصدار في المستقبل"
 
-#: ../../reference.rst:465
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:477
 msgid "Request a new challenge"
 msgstr "اطلب تحديًا جديدًا"
 
-#: ../../reference.rst:466
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:478
 msgid "``FingerprintMismatch``"
 msgstr "``FingerprintMismatch``"
 
-#: ../../reference.rst:467
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:479
 msgid "Submitted from a different address or User-Agent"
 msgstr "قُدم من عنوان أو User-Agent مختلف"
 
-#: ../../reference.rst:468
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:480
 msgid "Submit from the client that fetched it"
 msgstr "قدمه من العميل الذي جلبه"
 
-#: ../../reference.rst:469
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:481
 msgid "``DifficultyNotMet``"
 msgstr "``DifficultyNotMet``"
 
-#: ../../reference.rst:470
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:482
 msgid "Hashcash nonce lacks the required zero bits"
 msgstr "لا تحقق قيمة Hashcash المؤقتة البتات الصفرية المطلوبة"
 
-#: ../../reference.rst:471
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:483
 msgid "Keep searching nonces"
 msgstr "واصل البحث عن قيم مؤقتة"
 
-#: ../../reference.rst:472
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:484
 msgid "``InvalidProof``"
 msgstr "``InvalidProof``"
 
-#: ../../reference.rst:473
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:485
 msgid "The sequential-work proof does not open the committed labels"
 msgstr "لا يفتح إثبات العمل المتسلسل التسميات المُلتزَم بها"
 
-#: ../../reference.rst:474
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:486
 msgid "Run the prover to completion for the issued depth and openings"
 msgstr ""
 "شغّل المُبرهِن حتى النهاية بالعمق وعدد عمليات الفتح المحددين في التحدي"
 
-#: ../../reference.rst:475
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:487
 msgid "``WrongSolutionType``"
 msgstr "``WrongSolutionType``"
 
-#: ../../reference.rst:476
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:488
 msgid "A nonce for a PoSW challenge or a proof for Hashcash"
 msgstr "قيمة مؤقتة لتحدي PoSW أو إثبات لتحدي Hashcash"
 
-#: ../../reference.rst:477
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:489
 msgid "Match the solution field to the algorithm"
 msgstr "طابق حقل الحل مع الخوارزمية"
 
-#: ../../reference.rst:478
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:490
 msgid "``DoubleSpendAttempt``"
 msgstr "``DoubleSpendAttempt``"
 
-#: ../../reference.rst:479
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:491
 msgid "The challenge was already spent"
 msgstr "أُنفق التحدي من قبل"
 
-#: ../../reference.rst:480
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:492
 msgid "Challenges are single use"
 msgstr "التحديات للاستخدام مرة واحدة"
 
-#: ../../reference.rst:481
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:493
 msgid "``StoreFull``"
 msgstr "``StoreFull``"
 
-#: ../../reference.rst:482
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:494
 msgid "The spent set is full"
 msgstr "امتلأت مجموعة الحلول المُنفَقة"
 
-#: ../../reference.rst:483
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:495
 msgid "Lower the challenge TTL or raise ``--spent-tags``"
 msgstr "اخفض TTL التحدي أو ارفع ``--spent-tags``"
 
-#: ../../reference.rst:484
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:496
 msgid "``InvalidTokenSignature``"
 msgstr "``InvalidTokenSignature``"
 
-#: ../../reference.rst:485
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:497
 msgid "Cookie tag or signature fails"
 msgstr "فشل التحقق من وسم ملف تعريف الارتباط أو توقيعه"
 
-#: ../../reference.rst:486
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:498
 msgid "Re-authenticate through the interstitial"
 msgstr "أعد المصادقة عبر الصفحة الوسيطة"
 
-#: ../../reference.rst:487
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:499
 msgid "``TokenExpired``"
 msgstr "``TokenExpired``"
 
-#: ../../reference.rst:488
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:500
 msgid "Cookie past its expiry"
 msgstr "تجاوز ملف تعريف الارتباط مدة صلاحيته"
 
-#: ../../reference.rst:489
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:501
 msgid "Re-authenticate"
 msgstr "أعد المصادقة"
 
-#: ../../reference.rst:490
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:502
 msgid "``TokenBoundAddressMismatch``"
 msgstr "``TokenBoundAddressMismatch``"
 
-#: ../../reference.rst:491
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:503
 msgid "Cookie presented from a different client identity"
 msgstr "قُدم ملف تعريف الارتباط من هوية عميل مختلفة"
 
-#: ../../reference.rst:492
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:504
 msgid "Cookies cannot be shared"
 msgstr "لا يمكن مشاركة ملفات تعريف الارتباط"
 
-#: ../../reference.rst:494
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:506
 msgid ""
 "The console's API answers a failure with "
 "``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}``; the hint is the text "
@@ -1796,40 +1910,40 @@ msgstr ""
 "``{\"error\":\"<CODE>\",\"hint\":\"<sentence>\"}``؛ والتلميح هو النص الذي "
 "تعرضه الواجهة (``crates/console/src/http/reply.rs``)."
 
-#: ../../reference.rst:496
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:508
 msgid "Console failure codes that concern operators"
 msgstr "رموز فشل وحدة التحكم التي تهم المشغلين"
 
-#: ../../reference.rst:501
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:513
 msgid "Status"
 msgstr "الحالة"
 
-#: ../../reference.rst:503
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:515
 msgid "``CONSOLE002``"
 msgstr "``CONSOLE002``"
 
-#: ../../reference.rst:505
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:517
 msgid "The request is malformed, too large or not allowed in its form"
 msgstr "الطلب مشوه، أو كبير جدًا، أو غير مسموح بصيغته"
 
-#: ../../reference.rst:506
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:518
 msgid "``CONSOLE003``"
 msgstr "``CONSOLE003``"
 
-#: ../../reference.rst:507
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:519
 msgid "503 / 429"
 msgstr "503 / 429"
 
-#: ../../reference.rst:508
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:520
 msgid ""
 "The storage job queue is full (32 jobs), or the password verifier is busy"
 msgstr "طابور مهام التخزين ممتلئ (32 مهمة)، أو متحقق كلمات المرور مشغول"
 
-#: ../../reference.rst:509
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:521
 msgid "``CONSOLEQUORUM``"
 msgstr "``CONSOLEQUORUM``"
 
-#: ../../reference.rst:511
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:523
 msgid ""
 "The database did not answer within the request's wait of 10 seconds; the "
 "outcome is unknown, and the data plane continues from the last applied "
@@ -1838,11 +1952,11 @@ msgstr ""
 "لم تجب قاعدة البيانات خلال مدة انتظار الطلب البالغة 10 ثوانٍ؛ النتيجة غير "
 "معروفة، ويواصل مستوى البيانات العمل بآخر سياسة مطبقة"
 
-#: ../../reference.rst:512
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:524
 msgid "``CONSOLE004``"
 msgstr "``CONSOLE004``"
 
-#: ../../reference.rst:514
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:526
 msgid ""
 "The service cannot answer: not available in this build, stopping, or an "
 "internal failure"
@@ -1850,15 +1964,15 @@ msgstr ""
 "لا تستطيع الخدمة الإجابة: غير متاحة في هذا البناء، أو في طور التوقف، أو "
 "فشل داخلي"
 
-#: ../../reference.rst:515
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:527
 msgid "``CONSOLENODE``"
 msgstr "``CONSOLENODE``"
 
-#: ../../reference.rst:516
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:528
 msgid "400 / 409 / 503"
 msgstr "400 / 409 / 503"
 
-#: ../../reference.rst:517
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:529
 msgid ""
 "A node command was refused: it names another node (400), a stale boot or "
 "control revision (409), or it arrived while another command ran or a "
@@ -1869,23 +1983,23 @@ msgstr ""
 "أو وصل أثناء تنفيذ أمر آخر أو تعذر تسجيل اكتماله (503)؛ افحص إيصال "
 "العملية قبل إعادة المحاولة"
 
-#: ../../reference.rst:518
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:530
 msgid "``CONSOLEMUTATION``"
 msgstr "``CONSOLEMUTATION``"
 
-#: ../../reference.rst:520
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:532
 msgid "More than sixty management mutations in a minute from one session"
 msgstr "أكثر من ستين تعديلًا إداريًا في دقيقة واحدة من جلسة واحدة"
 
-#: ../../reference.rst:521
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:533
 msgid "``CONSOLEEDGE``"
 msgstr ""
 
-#: ../../reference.rst:522
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:534
 msgid "400 / 503"
 msgstr ""
 
-#: ../../reference.rst:523
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:535
 msgid ""
 "A line on the page *Edge* is malformed or not on the list of the console "
 "(400), or the edge worker did not answer or the audit row could not be "
@@ -1894,27 +2008,27 @@ msgstr ""
 "سطر في الصفحة *Edge* مشوه أو ليس في قائمة وحدة التحكم (400)، أو لم يجب "
 "عامل الحافة أو تعذرت كتابة صف التدقيق (503)"
 
-#: ../../reference.rst:524
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:536
 msgid "``CONSOLEQUERY``"
 msgstr ""
 
-#: ../../reference.rst:526
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:538
 msgid "A read of the page *Edge* past the query allowance of the session"
 msgstr "قراءة من الصفحة *Edge* تتجاوز حصة الاستعلامات للجلسة"
 
-#: ../../reference.rst:527
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:539
 msgid "``CONSOLE404``"
 msgstr ""
 
-#: ../../reference.rst:529
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:541
 msgid "An ``edge`` route on a console that runs without an edge"
 msgstr "مسار ``edge`` على وحدة تحكم تعمل بلا حافة"
 
-#: ../../reference.rst:531
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:543
 msgid "Operator codes of the edge"
 msgstr "رموز المشغّل في الحافة"
 
-#: ../../reference.rst:534
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:546
 msgid ""
 "The edge renders a failure as a diagnostic with a title rule that carries "
 "the code, the explanation and a ``Hint:``. The tables list every code "
@@ -1927,7 +2041,7 @@ msgstr ""
 "الخدمي. والرمز الموسوم *سجل* ليس إخفاقًا: إنه رمز سطر على الخطأ القياسي "
 "يبلّغ عن حدث."
 
-#: ../../reference.rst:536
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:548
 msgid ""
 "-- REVISION CONFLICT (DBA002) "
 "---------------------------------------------\n"
@@ -1939,7 +2053,7 @@ msgid ""
 "`--expect`."
 msgstr ""
 
-#: ../../reference.rst:544
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:556
 msgid ""
 "``EDGE``: start, reload and notes of the edge "
 "(``cmd/sibuna/src/edge/failure.rs``, ``cmd/sibuna/src/edge.rs``)"
@@ -1947,17 +2061,21 @@ msgstr ""
 "``EDGE``: البدء، وإعادة التحميل، وملاحظات الحافة "
 "(``cmd/sibuna/src/edge/failure.rs``، ``cmd/sibuna/src/edge.rs``)"
 
-#: ../../reference.rst:549 ../../reference.rst:583 ../../reference.rst:630
-#: ../../reference.rst:688 ../../reference.rst:744 ../../reference.rst:791
-#: ../../reference.rst:813
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:561
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:598
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:645
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:703
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:759
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:806
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:828
 msgid "Title"
 msgstr "العنوان"
 
-#: ../../reference.rst:551
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:563
 msgid "``EDGE001``"
 msgstr ""
 
-#: ../../reference.rst:552
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:564
 msgid ""
 "``CONFIGURATION FILE NOT FOUND``, ``ADDRESS IN USE``, ``ADDRESS NOT "
 "AVAILABLE``, ``PERMISSION DENIED``, ``SPILL CACHE NOT USABLE``, "
@@ -1965,7 +2083,7 @@ msgid ""
 "READABLE``, ``EDGE NOT STARTED``"
 msgstr ""
 
-#: ../../reference.rst:553
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:565
 msgid ""
 "The edge did not start, or ``sibuna check`` refused the file. Automatic "
 "HTTPS adds ``NAME NOT PUBLIC``, ``NAME OUTSIDE CONSTRAINTS``, ``UPDATE "
@@ -1979,30 +2097,45 @@ msgstr ""
 "وإخفاق المرجعية في قاعدة البيانات يحمل عنوان رمز ``DBA`` الخاص به تحت "
 "``EDGE001``"
 
-#: ../../reference.rst:554
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:566
 msgid "``EDGE002``"
 msgstr ""
 
-#: ../../reference.rst:555 ../../reference.rst:558 ../../reference.rst:561
-#: ../../reference.rst:564 ../../reference.rst:567 ../../reference.rst:570
-#: ../../reference.rst:573 ../../reference.rst:633 ../../reference.rst:672
-#: ../../reference.rst:718 ../../reference.rst:721 ../../reference.rst:724
-#: ../../reference.rst:727 ../../reference.rst:730 ../../reference.rst:733
-#: ../../reference.rst:736 ../../reference.rst:771 ../../reference.rst:774
-#: ../../reference.rst:777 ../../reference.rst:780 ../../reference.rst:783
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:567
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:570
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:573
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:576
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:579
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:582
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:585
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:588
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:648
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:687
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:733
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:736
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:739
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:742
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:745
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:748
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:751
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:786
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:789
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:792
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:795
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:798
 msgid "*log*"
 msgstr "*سجل*"
 
-#: ../../reference.rst:556
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:568
 msgid ""
 "A reload was rejected; the serving routes stay, and the line says why"
 msgstr "رُفضت إعادة تحميل؛ وتبقى المسارات العاملة، ويقول السطر السبب"
 
-#: ../../reference.rst:557
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:569
 msgid "``EDGE010``"
 msgstr ""
 
-#: ../../reference.rst:559
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:571
 msgid ""
 "A command changed state: from the admin socket, from the mesh, or from "
 "the console; also a failed write of the access log"
@@ -2010,19 +2143,19 @@ msgstr ""
 "غيّر أمرٌ الحالة: من مقبس الإدارة، أو من الشبكة المتداخلة، أو من وحدة "
 "التحكم؛ وكذلك كتابة فاشلة في سجل الوصول"
 
-#: ../../reference.rst:560
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:572
 msgid "``EDGE011``"
 msgstr ""
 
-#: ../../reference.rst:562
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:574
 msgid "A configuration file was received from a peer (SID 0023)"
 msgstr "استُلم ملف إعدادات من نظير (SID 0023)"
 
-#: ../../reference.rst:563
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:575
 msgid "``EDGE012``"
 msgstr ""
 
-#: ../../reference.rst:565
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:577
 msgid ""
 "The mesh address cannot serve ``show cluster``; the node serves without "
 "that answer"
@@ -2030,11 +2163,11 @@ msgstr ""
 "لا يستطيع عنوان الشبكة المتداخلة خدمة ``show cluster``؛ وتخدم العقدة دون "
 "تلك الإجابة"
 
-#: ../../reference.rst:566
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:578
 msgid "``EDGE013``"
 msgstr ""
 
-#: ../../reference.rst:568
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:580
 msgid ""
 "The kernel refused a listener option such as ``defer_accept``; the "
 "frontend serves without it (SID 0032)"
@@ -2042,20 +2175,20 @@ msgstr ""
 "رفضت النواة خيار مستمع مثل ``defer_accept``؛ وتخدم الواجهة الأمامية دونه "
 "(SID 0032)"
 
-#: ../../reference.rst:569
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:581
 msgid "``EDGE014``"
 msgstr ""
 
-#: ../../reference.rst:571
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:583
 msgid ""
 "A console peer is new or changed and is used after a restart (SID 0031)"
 msgstr "نظير وحدة تحكم جديد أو متغير، ويُستخدم بعد إعادة التشغيل (SID 0031)"
 
-#: ../../reference.rst:572
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:584
 msgid "``EDGE015``"
 msgstr ""
 
-#: ../../reference.rst:574
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:586
 msgid ""
 "The spill cache at start: created, reused, discarded, or in use by "
 "another process, with its size (SID 0027)"
@@ -2063,11 +2196,19 @@ msgstr ""
 "ذاكرة الإفاضة المؤقتة عند البدء: أُنشئت، أو أُعيد استخدامها، أو أُهملت، "
 "أو تستخدمها عملية أخرى، مع حجمها (SID 0027)"
 
-#: ../../reference.rst:576
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:587
+msgid "``EDGE016``"
+msgstr ""
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:589
+msgid "Pressure mode switched on or off (SID 0034)"
+msgstr "تفعيل وضع الضغط أو تعطيله (SID 0034)"
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:591
 msgid "The code holds no ``EDGE003`` to ``EDGE009``."
 msgstr "لا تضم الشيفرة الرموز من ``EDGE003`` إلى ``EDGE009``."
 
-#: ../../reference.rst:578
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:593
 msgid ""
 "``ADM``: the admin socket and the console commands "
 "(``cmd/sibuna/src/edge/control.rs``, ``crates/lb/src/runtime.rs``)"
@@ -2075,15 +2216,15 @@ msgstr ""
 "``ADM``: مقبس الإدارة وأوامر وحدة التحكم "
 "(``cmd/sibuna/src/edge/control.rs``، ``crates/lb/src/runtime.rs``)"
 
-#: ../../reference.rst:585
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:600
 msgid "``ADM001``"
 msgstr ""
 
-#: ../../reference.rst:586
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:601
 msgid "``MALFORMED COMMAND``"
 msgstr ""
 
-#: ../../reference.rst:587
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:602
 msgid ""
 "The line holds a byte outside printable ASCII, is longer than 512 bytes, "
 "or did not arrive within two seconds"
@@ -2091,77 +2232,77 @@ msgstr ""
 "يحمل السطر بايتًا خارج ASCII القابلة للطباعة، أو يزيد طوله على 512 "
 "بايتًا، أو لم يصل خلال ثانيتين"
 
-#: ../../reference.rst:588
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:603
 msgid "``ADM002``"
 msgstr ""
 
-#: ../../reference.rst:589
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:604
 msgid "``UNKNOWN COMMAND``"
 msgstr ""
 
-#: ../../reference.rst:590
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:605
 msgid "The words are not a command"
 msgstr "الكلمات ليست أمرًا"
 
-#: ../../reference.rst:591
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:606
 msgid "``ADM003``"
 msgstr ""
 
-#: ../../reference.rst:592
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:607
 msgid "``UNKNOWN POOL``"
 msgstr ""
 
-#: ../../reference.rst:593
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:608
 msgid "No pool has this name"
 msgstr "لا يوجد مجمّع بهذا الاسم"
 
-#: ../../reference.rst:594
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:609
 msgid "``ADM004``"
 msgstr ""
 
-#: ../../reference.rst:595
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:610
 msgid "``UNKNOWN SERVER``"
 msgstr ""
 
-#: ../../reference.rst:596
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:611
 msgid "The pool has no server of this name; the hint names a near one"
 msgstr "ليس في المجمّع خادم بهذا الاسم؛ ويسمي التلميح اسمًا قريبًا"
 
-#: ../../reference.rst:597
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:612
 msgid "``ADM005``"
 msgstr ""
 
-#: ../../reference.rst:598
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:613
 msgid "``INVALID VALUE``"
 msgstr ""
 
-#: ../../reference.rst:599
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:614
 msgid ""
 "A weight, an address, a state, a server name or a client address is not "
 "valid"
 msgstr "وزن، أو عنوان، أو حالة، أو اسم خادم، أو عنوان عميل غير صالح"
 
-#: ../../reference.rst:600
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:615
 msgid "``ADM006``"
 msgstr ""
 
-#: ../../reference.rst:601
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:616
 msgid "``DUPLICATE SERVER``"
 msgstr ""
 
-#: ../../reference.rst:602
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:617
 msgid "The pool already has a server with this name or this address"
 msgstr "في المجمّع خادم بهذا الاسم أو بهذا العنوان من قبل"
 
-#: ../../reference.rst:603
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:618
 msgid "``ADM007``"
 msgstr ""
 
-#: ../../reference.rst:604
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:619
 msgid "``CHANGE REFUSED``"
 msgstr ""
 
-#: ../../reference.rst:605
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:620
 msgid ""
 "The pool changes only by reload (a Maglev table or protocol adapters), is "
 "full, or would lose its last server"
@@ -2169,15 +2310,15 @@ msgstr ""
 "المجمّع لا يتغير إلا بإعادة التحميل (جدول Maglev أو محولات البروتوكول)، "
 "أو ممتلئ، أو سيفقد آخر خادم فيه"
 
-#: ../../reference.rst:606
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:621
 msgid "``ADM008``"
 msgstr ""
 
-#: ../../reference.rst:607
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:622
 msgid "``RELOAD REJECTED``"
 msgstr ""
 
-#: ../../reference.rst:608
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:623
 msgid ""
 "The file does not check, or the daemon was started by ``sibuna lb`` and "
 "has no file"
@@ -2185,40 +2326,40 @@ msgstr ""
 "الملف لا يجتاز الفحص، أو شُغّل البرنامج الخدمي بـ ``sibuna lb`` وليس له "
 "ملف"
 
-#: ../../reference.rst:609
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:624
 msgid "``ADM009``"
 msgstr ""
 
-#: ../../reference.rst:610
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:625
 msgid "``TOO MANY COMMANDS``"
 msgstr ""
 
-#: ../../reference.rst:611
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:626
 msgid ""
 "More than a burst of 20 commands, or more than 10 per second after it"
 msgstr "أكثر من دفعة من 20 أمرًا، أو أكثر من 10 في الثانية بعدها"
 
-#: ../../reference.rst:612
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:627
 msgid "``ADM010``"
 msgstr ""
 
-#: ../../reference.rst:613
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:628
 msgid "``NO ANSWER``"
 msgstr ""
 
-#: ../../reference.rst:614
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:629
 msgid "The edge worker did not answer within five seconds"
 msgstr "لم يجب عامل الحافة خلال خمس ثوانٍ"
 
-#: ../../reference.rst:615
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:630
 msgid "``ADM011``"
 msgstr ""
 
-#: ../../reference.rst:616
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:631
 msgid "``NO CLUSTER``"
 msgstr ""
 
-#: ../../reference.rst:617
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:632
 msgid ""
 "``reload cluster`` or ``show cluster`` on an edge without a mesh or "
 "without a file"
@@ -2226,34 +2367,34 @@ msgstr ""
 "``reload cluster`` أو ``show cluster`` على حافة بلا شبكة متداخلة أو بلا "
 "ملف"
 
-#: ../../reference.rst:618
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:633
 msgid "``ADM012``"
 msgstr ""
 
-#: ../../reference.rst:619
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:634
 msgid "``CLUSTER RELOAD INCOMPLETE``"
 msgstr ""
 
-#: ../../reference.rst:620
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:635
 msgid "This node reloaded, and some peers did not take the file"
 msgstr "أُعيد تحميل هذه العقدة، ولم يأخذ بعض النظراء الملف"
 
-#: ../../reference.rst:621
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:636
 msgid "``ADM013``"
 msgstr ""
 
-#: ../../reference.rst:622
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:637
 msgid "``NOT REVOKED``"
 msgstr ""
 
-#: ../../reference.rst:623
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:638
 msgid ""
 "``revoke cert`` named nothing that the local authority issued, or the "
 "build has no TLS"
 msgstr ""
 "لم يسمِّ ``revoke cert`` شيئًا أصدرته السلطة المحلية، أو البناء بلا TLS"
 
-#: ../../reference.rst:625
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:640
 msgid ""
 "``ACME``: automatic HTTPS (``crates/acme/src/error.rs``, "
 "``cmd/sibuna/src/acme.rs``)"
@@ -2261,11 +2402,11 @@ msgstr ""
 "``ACME``: HTTPS التلقائي (``crates/acme/src/error.rs``، "
 "``cmd/sibuna/src/acme.rs``)"
 
-#: ../../reference.rst:632
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:647
 msgid "``ACME000``"
 msgstr ""
 
-#: ../../reference.rst:634
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:649
 msgid ""
 "An event of a certificate: obtained, renewed, loaded, stapled, held or "
 "released on demand, or validated and issued by the ACME server"
@@ -2273,103 +2414,103 @@ msgstr ""
 "حدث يخص شهادة: الحصول عليها، أو تجديدها، أو تحميلها، أو إرفاق OCSP بها، "
 "أو احتجازها أو إطلاقها عند الطلب، أو التحقق منها وإصدارها بخادم ACME"
 
-#: ../../reference.rst:635
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:650
 msgid "``ACME001``"
 msgstr ""
 
-#: ../../reference.rst:636
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:651
 msgid "``STORAGE NOT WRITABLE``"
 msgstr ""
 
-#: ../../reference.rst:637
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:652
 msgid "The directory of ``global.acme.storage`` cannot be read or written"
 msgstr "لا يمكن القراءة من الدليل ``global.acme.storage`` أو الكتابة فيه"
 
-#: ../../reference.rst:638
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:653
 msgid "``ACME002``"
 msgstr ""
 
-#: ../../reference.rst:639
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:654
 msgid "``AUTHORITY UNREACHABLE``"
 msgstr ""
 
-#: ../../reference.rst:640
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:655
 msgid ""
 "The ACME authority could not be reached, or no trust root could be loaded"
 msgstr "تعذر الوصول إلى سلطة ACME، أو تعذر تحميل أي جذر ثقة"
 
-#: ../../reference.rst:641
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:656
 msgid "``ACME003``"
 msgstr ""
 
-#: ../../reference.rst:642
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:657
 msgid "``AUTHORITY REFUSED``"
 msgstr ""
 
-#: ../../reference.rst:643
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:658
 msgid "The authority answered with a problem; the daemon tries again later"
 msgstr "أجابت السلطة بمشكلة؛ ويحاول البرنامج الخدمي مرة أخرى لاحقًا"
 
-#: ../../reference.rst:644
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:659
 msgid "``ACME004``"
 msgstr ""
 
-#: ../../reference.rst:645
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:660
 msgid "``RATE LIMITED``"
 msgstr ""
 
-#: ../../reference.rst:646
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:661
 msgid "The authority limits our requests; the daemon waits as it was told"
 msgstr "السلطة تحد طلباتنا؛ وينتظر البرنامج الخدمي كما قيل له"
 
-#: ../../reference.rst:647
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:662
 msgid "``ACME005``"
 msgstr ""
 
-#: ../../reference.rst:648
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:663
 msgid "``VALIDATION FAILED``"
 msgstr ""
 
-#: ../../reference.rst:649
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:664
 msgid ""
 "The authority could not validate the name over HTTP-01, TLS-ALPN-01 or "
 "DNS-01"
 msgstr ""
 "تعذر على السلطة التحقق من الاسم عبر HTTP-01 أو TLS-ALPN-01 أو DNS-01"
 
-#: ../../reference.rst:650
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:665
 msgid "``ACME006``"
 msgstr ""
 
-#: ../../reference.rst:651
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:666
 msgid "``UNEXPECTED ANSWER``"
 msgstr ""
 
-#: ../../reference.rst:652
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:667
 msgid "An answer broke the protocol or a bound"
 msgstr "إجابة خرقت البروتوكول أو حدًا"
 
-#: ../../reference.rst:653
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:668
 msgid "``ACME008``"
 msgstr ""
 
-#: ../../reference.rst:654
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:669
 msgid "``CERTIFICATE REJECTED``"
 msgstr ""
 
-#: ../../reference.rst:655
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:670
 msgid "The issued certificate cannot be served"
 msgstr "لا يمكن تقديم الشهادة الصادرة"
 
-#: ../../reference.rst:656
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:671
 msgid "``ACME009``"
 msgstr ""
 
-#: ../../reference.rst:657
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:672
 msgid "``DNS PROVIDER FAILED``"
 msgstr ""
 
-#: ../../reference.rst:658
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:673
 msgid ""
 "The DNS provider (hook, RFC 2136 or Cloudflare) could not write or remove "
 "the record, or its key or roots could not be read"
@@ -2377,27 +2518,27 @@ msgstr ""
 "تعذر على مزود DNS (خطاف، أو RFC 2136، أو Cloudflare) كتابة السجل أو "
 "إزالته، أو تعذرت قراءة مفتاحه أو جذوره"
 
-#: ../../reference.rst:659
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:674
 msgid "``ACME010``"
 msgstr ""
 
-#: ../../reference.rst:660
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:675
 msgid "``RECORD NOT VISIBLE``"
 msgstr ""
 
-#: ../../reference.rst:661
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:676
 msgid "The authoritative servers did not show the TXT record in time"
 msgstr "لم تُظهر الخوادم المرجعية سجل TXT في الوقت المناسب"
 
-#: ../../reference.rst:662
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:677
 msgid "``ACME011``"
 msgstr ""
 
-#: ../../reference.rst:663
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:678
 msgid "``LOCAL AUTHORITY FAILED``"
 msgstr ""
 
-#: ../../reference.rst:664
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:679
 msgid ""
 "The local authority could not be created, read or used, or its root has "
 "other name constraints than the file lists"
@@ -2405,67 +2546,67 @@ msgstr ""
 "تعذر إنشاء السلطة المحلية أو قراءتها أو استخدامها، أو لجذرها قيود أسماء "
 "غير التي يسردها الملف"
 
-#: ../../reference.rst:665
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:680
 msgid "``ACME012``"
 msgstr ""
 
-#: ../../reference.rst:666
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:681
 msgid "``ACCOUNT NOT BOUND``"
 msgstr ""
 
-#: ../../reference.rst:667
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:682
 msgid "The authority wants an external account binding, or refused ours"
 msgstr "تريد السلطة ربطًا بحساب خارجي، أو رفضت ربطنا"
 
-#: ../../reference.rst:668
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:683
 msgid "``ACME013``"
 msgstr ""
 
-#: ../../reference.rst:669
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:684
 msgid "``NO OCSP RESPONSE``"
 msgstr ""
 
-#: ../../reference.rst:670
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:685
 msgid ""
 "The OCSP responder did not answer, or its answer cannot be stapled; the "
 "certificate is served without a staple"
 msgstr ""
 "لم يجب مستجيب OCSP، أو لا يمكن إرفاق إجابته؛ وتُقدَّم الشهادة دون إرفاق"
 
-#: ../../reference.rst:671
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:686
 msgid "``ACME014``"
 msgstr ""
 
-#: ../../reference.rst:673
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:688
 msgid ""
 "The certificate thread stopped on a defect and starts again; the served "
 "certificates stay"
 msgstr "توقف خيط الشهادات بسبب عيب ويبدأ من جديد؛ وتبقى الشهادات المقدَّمة"
 
-#: ../../reference.rst:674
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:689
 msgid "``ACME015``"
 msgstr ""
 
-#: ../../reference.rst:675
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:690
 msgid "``KEY TOOL FAILED``"
 msgstr ""
 
-#: ../../reference.rst:676
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:691
 msgid ""
 "The program ``openssl`` that makes RSA keys could not be run, or wrote no "
 "key"
 msgstr ""
 "تعذر تشغيل البرنامج ``openssl`` الذي يصنع مفاتيح RSA، أو لم يكتب أي مفتاح"
 
-#: ../../reference.rst:677
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:692
 msgid "``ACME016``"
 msgstr ""
 
-#: ../../reference.rst:678
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:693
 msgid "``REVOCATION LIST FAILED``"
 msgstr ""
 
-#: ../../reference.rst:679
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:694
 msgid ""
 "The revoked certificates or the revocation list of the local authority "
 "could not be read or written, or the list is full"
@@ -2473,11 +2614,11 @@ msgstr ""
 "تعذرت قراءة الشهادات المبطلة أو قائمة الإبطال للسلطة المحلية أو كتابتها، "
 "أو القائمة ممتلئة"
 
-#: ../../reference.rst:681
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:696
 msgid "The code holds no ``ACME007``."
 msgstr "لا تضم الشيفرة ``ACME007``."
 
-#: ../../reference.rst:683
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:698
 msgid ""
 "``DBA``: the database authority (``crates/authority/src/error.rs``, "
 "``cmd/sibuna/src/edge/authority/``)"
@@ -2485,140 +2626,140 @@ msgstr ""
 "``DBA``: المرجعية في قاعدة البيانات (``crates/authority/src/error.rs``، "
 "``cmd/sibuna/src/edge/authority/``)"
 
-#: ../../reference.rst:690
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:705
 msgid "``DBA001``"
 msgstr ""
 
-#: ../../reference.rst:691
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:706
 msgid "``SOURCE REJECTED``"
 msgstr ""
 
-#: ../../reference.rst:692
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:707
 msgid "A source or a stored document does not evaluate or does not check"
 msgstr "مصدر أو وثيقة مخزنة لا تُقيَّم أو لا تجتاز الفحص"
 
-#: ../../reference.rst:693
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:708
 msgid "``DBA002``"
 msgstr ""
 
-#: ../../reference.rst:694
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:709
 msgid "``REVISION CONFLICT``"
 msgstr ""
 
-#: ../../reference.rst:695
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:710
 msgid "The head is not the revision that the commit expected"
 msgstr "الرأس ليس المراجعة التي توقعها التثبيت"
 
-#: ../../reference.rst:696
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:711
 msgid "``DBA003``"
 msgstr ""
 
-#: ../../reference.rst:697
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:712
 msgid "``DATABASE UNAVAILABLE``"
 msgstr ""
 
-#: ../../reference.rst:698
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:713
 msgid ""
 "The database cannot be reached, or it refused the statement (also for a "
 "role that lacks a right)"
 msgstr ""
 "تعذر الوصول إلى قاعدة البيانات، أو رفضت العبارة (وكذلك لدور ينقصه حق)"
 
-#: ../../reference.rst:699
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:714
 msgid "``DBA004``"
 msgstr ""
 
-#: ../../reference.rst:700
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:715
 msgid "``NO REVISION``"
 msgstr ""
 
-#: ../../reference.rst:701
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:716
 msgid "Nothing is published yet, or no revision has this number"
 msgstr "لم يُنشر شيء بعد، أو لا توجد مراجعة بهذا الرقم"
 
-#: ../../reference.rst:702
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:717
 msgid "``DBA005``"
 msgstr ""
 
-#: ../../reference.rst:703
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:718
 msgid "``INVALID AUTHORITY``"
 msgstr ""
 
-#: ../../reference.rst:704
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:719
 msgid ""
 "The ``authority`` section or its file is wrong, or the build has no "
 "storage"
 msgstr "القسم ``authority`` أو ملفه خاطئ، أو البناء بلا تخزين"
 
-#: ../../reference.rst:705
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:720
 msgid "``DBA006``"
 msgstr ""
 
-#: ../../reference.rst:706
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:721
 msgid "``NO AUTHORITY``"
 msgstr ""
 
-#: ../../reference.rst:707
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:722
 msgid "``show authority`` on an edge that serves its file"
 msgstr "``show authority`` على حافة تخدم ملفها"
 
-#: ../../reference.rst:708
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:723
 msgid "``DBA007``"
 msgstr ""
 
-#: ../../reference.rst:709
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:724
 msgid "``MISSING COMMAND``"
 msgstr ""
 
-#: ../../reference.rst:710
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:725
 msgid "``sibuna authority`` without a known command, or with a bad option"
 msgstr "``sibuna authority`` بلا أمر معروف، أو بخيار سيئ"
 
-#: ../../reference.rst:711
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:726
 msgid "``DBA008``"
 msgstr ""
 
-#: ../../reference.rst:712
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:727
 msgid "``REVISION DAMAGED``"
 msgstr ""
 
-#: ../../reference.rst:713
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:728
 msgid "A stored revision is not what its row says"
 msgstr "مراجعة مخزنة ليست ما يقوله صفها"
 
-#: ../../reference.rst:714
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:729
 msgid "``DBA009``"
 msgstr ""
 
-#: ../../reference.rst:715
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:730
 msgid "``FILE IS LOCAL``"
 msgstr ""
 
-#: ../../reference.rst:716
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:731
 msgid "``reload cluster`` on a node that follows a database"
 msgstr "``reload cluster`` على عقدة تتابع قاعدة بيانات"
 
-#: ../../reference.rst:717
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:732
 msgid "``DBA010``"
 msgstr ""
 
-#: ../../reference.rst:719
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:734
 msgid "A revision was applied"
 msgstr "طُبّقت مراجعة"
 
-#: ../../reference.rst:720
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:735
 msgid "``DBA011``"
 msgstr ""
 
-#: ../../reference.rst:722
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:737
 msgid "A revision was refused; the node keeps the one it serves"
 msgstr "رُفضت مراجعة؛ وتحتفظ العقدة بالمراجعة التي تخدمها"
 
-#: ../../reference.rst:723
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:738
 msgid "``DBA012``"
 msgstr ""
 
-#: ../../reference.rst:725
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:740
 msgid ""
 "The database cannot be reached; the node keeps its revision and asks "
 "again every two seconds"
@@ -2626,36 +2767,36 @@ msgstr ""
 "تعذر الوصول إلى قاعدة البيانات؛ وتحتفظ العقدة بمراجعتها وتسأل من جديد كل "
 "ثانيتين"
 
-#: ../../reference.rst:726
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:741
 msgid "``DBA013``"
 msgstr ""
 
-#: ../../reference.rst:728
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:743
 msgid "The database answers again"
 msgstr "قاعدة البيانات تجيب من جديد"
 
-#: ../../reference.rst:729
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:744
 msgid "``DBA014``"
 msgstr ""
 
-#: ../../reference.rst:731
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:746
 msgid "The node started from its cache"
 msgstr "بدأت العقدة من ذاكرتها المؤقتة"
 
-#: ../../reference.rst:732
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:747
 msgid "``DBA015``"
 msgstr ""
 
-#: ../../reference.rst:734
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:749
 msgid ""
 "``authority.binds`` names a frontend that the revision does not publish"
 msgstr "يسمي ``authority.binds`` واجهة أمامية لا تنشرها المراجعة"
 
-#: ../../reference.rst:735
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:750
 msgid "``DBA016``"
 msgstr ""
 
-#: ../../reference.rst:737
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:752
 msgid ""
 "The cache is ignored or cannot be written, or the report to the database "
 "failed"
@@ -2663,7 +2804,7 @@ msgstr ""
 "الذاكرة المؤقتة متجاهلة أو تتعذر الكتابة فيها، أو فشل التقرير إلى قاعدة "
 "البيانات"
 
-#: ../../reference.rst:739
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:754
 msgid ""
 "``UPG``: replacing the binary (``crates/upgrade/src/error.rs``, "
 "``cmd/sibuna/src/edge/upgrade.rs``)"
@@ -2671,102 +2812,102 @@ msgstr ""
 "``UPG``: استبدال الملف التنفيذي (``crates/upgrade/src/error.rs``، "
 "``cmd/sibuna/src/edge/upgrade.rs``)"
 
-#: ../../reference.rst:746
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:761
 msgid "``UPG001``"
 msgstr ""
 
-#: ../../reference.rst:747
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:762
 msgid "``UPGRADE PEER REFUSED``"
 msgstr ""
 
-#: ../../reference.rst:748
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:763
 msgid "The replacement runs as another user than the running daemon"
 msgstr "يعمل البديل بمستخدم غير مستخدم البرنامج الخدمي العامل"
 
-#: ../../reference.rst:749
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:764
 msgid "``UPG002``"
 msgstr ""
 
-#: ../../reference.rst:750
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:765
 msgid "``UPGRADE VERSION NOT SHARED``"
 msgstr ""
 
-#: ../../reference.rst:751
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:766
 msgid "The two binaries share no version of the handoff protocol"
 msgstr "لا يتشارك الملفان التنفيذيان أي إصدار من بروتوكول التسليم"
 
-#: ../../reference.rst:752
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:767
 msgid "``UPG003``"
 msgstr ""
 
-#: ../../reference.rst:753
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:768
 msgid "``UPGRADE PROTOCOL ERROR``"
 msgstr ""
 
-#: ../../reference.rst:754
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:769
 msgid ""
 "A malformed, oversized or unexpected frame, or a descriptor that is not "
 "what the frame says"
 msgstr "إطار مشوه أو كبير الحجم أو غير متوقع، أو واصف ليس ما يقوله الإطار"
 
-#: ../../reference.rst:755
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:770
 msgid "``UPG004``"
 msgstr ""
 
-#: ../../reference.rst:756
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:771
 msgid "``UPGRADE TIMED OUT``"
 msgstr ""
 
-#: ../../reference.rst:757
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:772
 msgid "The running daemon did not answer in time; it keeps serving"
 msgstr "لم يجب البرنامج الخدمي العامل في الوقت المناسب؛ ويظل يخدم"
 
-#: ../../reference.rst:758
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:773
 msgid "``UPG005``"
 msgstr ""
 
-#: ../../reference.rst:759
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:774
 msgid "``UPGRADE CONNECTION CLOSED``"
 msgstr ""
 
-#: ../../reference.rst:760
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:775
 msgid "The running daemon ended the handoff; its log says why"
 msgstr "أنهى البرنامج الخدمي العامل التسليم؛ ويقول سجله السبب"
 
-#: ../../reference.rst:761
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:776
 msgid "``UPG006``"
 msgstr ""
 
-#: ../../reference.rst:762
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:777
 msgid "``UPGRADE NOT POSSIBLE NOW``"
 msgstr ""
 
-#: ../../reference.rst:763
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:778
 msgid ""
 "Another replacement is in progress, or the running daemon is stopping"
 msgstr "استبدال آخر جارٍ، أو البرنامج الخدمي العامل يتوقف"
 
-#: ../../reference.rst:764
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:779
 msgid "``UPG007``"
 msgstr ""
 
-#: ../../reference.rst:765
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:780
 msgid "``UPGRADE SOCKET NOT SUPPORTED``"
 msgstr ""
 
-#: ../../reference.rst:766
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:781
 msgid "The platform cannot pass descriptors (Linux only)"
 msgstr "لا تستطيع المنصة تمرير الواصفات (Linux فقط)"
 
-#: ../../reference.rst:767
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:782
 msgid "``UPG008``"
 msgstr ""
 
-#: ../../reference.rst:768
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:783
 msgid "``UPGRADE SOCKET OF ANOTHER DAEMON``"
 msgstr ""
 
-#: ../../reference.rst:769
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:784
 msgid ""
 "The daemon at ``global.upgrade_socket`` listens on none of the addresses "
 "of this file"
@@ -2774,84 +2915,84 @@ msgstr ""
 "البرنامج الخدمي عند ``global.upgrade_socket`` لا يستمع على أي من عناوين "
 "هذا الملف"
 
-#: ../../reference.rst:770
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:785
 msgid "``UPG010``"
 msgstr ""
 
-#: ../../reference.rst:772
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:787
 msgid ""
 "The old process handed its listeners and UDP mappings to the replacement"
 msgstr "سلّمت العملية القديمة مستمعيها وتعيينات UDP إلى البديل"
 
-#: ../../reference.rst:773
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:788
 msgid "``UPG011``"
 msgstr ""
 
-#: ../../reference.rst:775
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:790
 msgid "The replacement failed before the cutover; the old process serves on"
 msgstr "فشل البديل قبل التحول؛ وتواصل العملية القديمة الخدمة"
 
-#: ../../reference.rst:776
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:791
 msgid "``UPG012``"
 msgstr ""
 
-#: ../../reference.rst:778
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:793
 msgid "The old process refused an upgrade peer"
 msgstr "رفضت العملية القديمة نظير ترقية"
 
-#: ../../reference.rst:779
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:794
 msgid "``UPG013``"
 msgstr ""
 
-#: ../../reference.rst:781
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:796
 msgid "The replacement cannot be ended; UDP stays unread until it is gone"
 msgstr "لا يمكن إنهاء البديل؛ ويبقى UDP غير مقروء حتى يزول"
 
-#: ../../reference.rst:782
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:797
 msgid "``UPG020``"
 msgstr ""
 
-#: ../../reference.rst:784
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:799
 msgid "The replacement took the listeners and UDP mappings"
 msgstr "أخذ البديل المستمعين وتعيينات UDP"
 
-#: ../../reference.rst:786
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:801
 msgid "``SPILL``: the spill cache (``crates/spill/src/error.rs``)"
 msgstr "``SPILL``: ذاكرة الإفاضة المؤقتة (``crates/spill/src/error.rs``)"
 
-#: ../../reference.rst:793
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:808
 msgid "``SPILL001``"
 msgstr ""
 
-#: ../../reference.rst:794
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:809
 msgid "``SPILL CACHE SIZE OUT OF RANGE``"
 msgstr ""
 
-#: ../../reference.rst:795
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:810
 msgid "The size lies outside 64 KiB to 64 GiB"
 msgstr "الحجم خارج النطاق من 64 KiB إلى 64 GiB"
 
-#: ../../reference.rst:796
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:811
 msgid "``SPILL002``"
 msgstr ""
 
-#: ../../reference.rst:797
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:812
 msgid "``NOT A SPILL CACHE``"
 msgstr ""
 
-#: ../../reference.rst:798
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:813
 msgid "The file at the path exists and is not a cache; it is left alone"
 msgstr "الملف عند المسار موجود وليس ذاكرة مؤقتة؛ ويُترك دون مساس"
 
-#: ../../reference.rst:799
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:814
 msgid "``SPILL003``"
 msgstr ""
 
-#: ../../reference.rst:800
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:815
 msgid "``SPILL CACHE IN USE``"
 msgstr ""
 
-#: ../../reference.rst:801
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:816
 msgid ""
 "Another process holds the lock of the file; the daemon then runs with the "
 "sticky table in memory only"
@@ -2859,19 +3000,19 @@ msgstr ""
 "عملية أخرى تمسك قفل الملف؛ فيعمل البرنامج الخدمي حينئذ وجدول التثبيت في "
 "الذاكرة فقط"
 
-#: ../../reference.rst:802
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:817
 msgid "``SPILL004``"
 msgstr ""
 
-#: ../../reference.rst:803
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:818
 msgid "``SPILL CACHE UNAVAILABLE``"
 msgstr ""
 
-#: ../../reference.rst:804
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:819
 msgid "The system refused an operation on the file"
 msgstr "رفض النظام عملية على الملف"
 
-#: ../../reference.rst:806
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:821
 msgid ""
 "A ``SPILL`` failure other than ``SPILL003`` stops the start under "
 "``EDGE001`` with the title ``SPILL CACHE NOT USABLE``, and the message "
@@ -2880,124 +3021,124 @@ msgstr ""
 "إخفاق ``SPILL`` غير ``SPILL003`` يوقف البدء تحت ``EDGE001`` بالعنوان "
 "``SPILL CACHE NOT USABLE``، وتحمل الرسالة رمز ``SPILL``."
 
-#: ../../reference.rst:808
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:823
 msgid "``HOOK``: plugins (``crates/plugin/src/spec.rs``)"
 msgstr "``HOOK``: الإضافات (``crates/plugin/src/spec.rs``)"
 
-#: ../../reference.rst:815
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:830
 msgid "``HOOK001``"
 msgstr ""
 
-#: ../../reference.rst:816
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:831
 msgid "``UNKNOWN PLUGIN``"
 msgstr ""
 
-#: ../../reference.rst:817
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:832
 msgid "A frontend lists a plugin that ``plugins`` does not define"
 msgstr "تسرد واجهة أمامية إضافة لا يعرّفها ``plugins``"
 
-#: ../../reference.rst:818
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:833
 msgid "``HOOK002``"
 msgstr ""
 
-#: ../../reference.rst:819
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:834
 msgid "``INVALID PLUGIN SETTINGS``"
 msgstr ""
 
-#: ../../reference.rst:820
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:835
 msgid "A key of a plugin is missing, unknown or out of range"
 msgstr "مفتاح من مفاتيح إضافة مفقود أو مجهول أو خارج النطاق"
 
-#: ../../reference.rst:821
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:836
 msgid "``HOOK003``"
 msgstr ""
 
-#: ../../reference.rst:822
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:837
 msgid "``MODULE NOT READABLE``"
 msgstr ""
 
-#: ../../reference.rst:823
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:838
 msgid "The Wasm module cannot be read"
 msgstr "لا يمكن قراءة وحدة Wasm"
 
-#: ../../reference.rst:824
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:839
 msgid "``HOOK004``"
 msgstr ""
 
-#: ../../reference.rst:825
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:840
 msgid "``MODULE NOT LOADED``"
 msgstr ""
 
-#: ../../reference.rst:826
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:841
 msgid ""
 "The module does not validate, or its memory does not fit ``memory_pages``"
 msgstr "الوحدة لا تجتاز التحقق، أو ذاكرتها لا تتسع في ``memory_pages``"
 
-#: ../../reference.rst:827
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:842
 msgid "``HOOK005``"
 msgstr ""
 
-#: ../../reference.rst:828
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:843
 msgid "``FORBIDDEN IMPORT``"
 msgstr ""
 
-#: ../../reference.rst:829
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:844
 msgid ""
 "The module imports something other than ``sibuna.add_header`` and "
 "``sibuna.now_ms``"
 msgstr "تستورد الوحدة شيئًا غير ``sibuna.add_header`` و\\ ``sibuna.now_ms``"
 
-#: ../../reference.rst:830
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:845
 msgid "``HOOK006``"
 msgstr ""
 
-#: ../../reference.rst:831
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:846
 msgid "``ABI MISMATCH``"
 msgstr ""
 
-#: ../../reference.rst:832
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:847
 msgid ""
 "The module lacks an export of the interface, or ``sibuna_abi`` does not "
 "return 1"
 msgstr "تفتقد الوحدة تصديرًا من الواجهة، أو لا يعيد ``sibuna_abi`` القيمة 1"
 
-#: ../../reference.rst:833
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:848
 msgid "``HOOK007``"
 msgstr ""
 
-#: ../../reference.rst:834
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:849
 msgid "``UNKNOWN NATIVE HOOK``"
 msgstr ""
 
-#: ../../reference.rst:835
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:850
 msgid "The build has no native hook of this name"
 msgstr "ليس في البناء خطاف أصلي بهذا الاسم"
 
-#: ../../reference.rst:836
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:851
 msgid "``HOOK008``"
 msgstr ""
 
-#: ../../reference.rst:837
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:852
 msgid "``NATIVE HOOK REFUSED ITS SETTINGS``"
 msgstr ""
 
-#: ../../reference.rst:838
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:853
 msgid "A native hook refused the ``settings`` of the plugin"
 msgstr "رفض خطاف أصلي ``settings`` الخاصة بالإضافة"
 
-#: ../../reference.rst:839
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:854
 msgid "``HOOK009``"
 msgstr ""
 
-#: ../../reference.rst:840
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:855
 msgid "``AGENTS NOT SUPPORTED``"
 msgstr ""
 
-#: ../../reference.rst:841
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:856
 msgid "An agent needs a Unix socket, which this platform lacks"
 msgstr "يحتاج الوكيل إلى مقبس Unix، وهذه المنصة تفتقده"
 
-#: ../../reference.rst:843
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:858
 msgid ""
 "A set of plugins that does not load at a reload leaves the serving set in "
 "place. Two more families concern the build and the console rather than "
@@ -3015,11 +3156,11 @@ msgstr ""
 "و\\ ``RULEHITS``، و\\ ``TIMELINE``، و\\ ``MINUTES``)، تعرض الواجهة "
 "تلميحاتها."
 
-#: ../../reference.rst:845
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:860
 msgid "Policy Schema"
 msgstr "مخطط السياسة"
 
-#: ../../reference.rst:848
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:863
 msgid ""
 "{\n"
 "  \"default_action\": \"ALLOW\" | \"DENY\" | \"CHALLENGE\",\n"
@@ -3089,7 +3230,7 @@ msgstr ""
 "  ]\n"
 "}"
 
-#: ../../reference.rst:872
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:887
 msgid ""
 "``challenge_at`` and ``deny_at`` lie in -1000 to 1000 with ``deny_at`` at "
 "or above ``challenge_at``, and ``bits_step`` in 1 to 1000. A "
@@ -3118,7 +3259,7 @@ msgstr ""
 "من وكيل الدخول). تحمل شجرة السمعة في ``ip_rules`` 8,192 عقدة على الأكثر. "
 "يمكن لكل قاعدة استخدام صيغة واحدة لكل معيار."
 
-#: ../../reference.rst:874
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:889
 msgid ""
 "Pattern grammar: ``.*`` or ``*`` match anything; ``^...$`` anchors an "
 "exact path; a trailing ``*``, ``/*``, or ``.*`` is a prefix; a pattern "
@@ -3138,11 +3279,11 @@ msgstr ""
 "يحمل ``;`` أو ``%2F`` أو ``%5C`` أو ``\\`` أي شيء، ومطابقة المسار حساسة "
 "لحالة الأحرف (SID 0003)."
 
-#: ../../reference.rst:876
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:891
 msgid "Storage Tables"
 msgstr "جداول التخزين"
 
-#: ../../reference.rst:879
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:894
 msgid ""
 "``policy_revision``, ``policies`` (with the nullable ``ja4_pattern`` "
 "criterion of at most 37 bytes), ``policy_inspection``, ``ip_reputation``, "
@@ -3166,7 +3307,7 @@ msgstr ""
 "معرفات الحوادث هي ``node_id << 40 | sequence``، فريدة عبر العنقود دون "
 "تنسيق؛ وتمتد معرفات العقد من 1 إلى 8,388,607."
 
-#: ../../reference.rst:881
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:896
 msgid ""
 "The database authority of the edge (SID 0028) adds three tables as the "
 "component ``authority`` of ``sibuna_schema``, in the database of the "
@@ -3192,11 +3333,11 @@ msgstr ""
 "القناة ``sibuna_edge``. ولا يُقلَّم السجل التاريخي أبدًا. وتضم "
 "``crates/authority/src/sql.rs`` المخطط."
 
-#: ../../reference.rst:883
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:898
 msgid "Commands of the Binary"
 msgstr "أوامر الملف التنفيذي"
 
-#: ../../reference.rst:886
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:901
 msgid ""
 "One binary holds the firewall daemon, the edge and their tools. Part XI "
 "describes each command; this table says where."
@@ -3204,27 +3345,27 @@ msgstr ""
 "يضم ملف تنفيذي واحد البرنامج الخدمي للجدار الناري، والحافة، وأدواتهما. "
 "ويصف الجزء الحادي عشر كل أمر؛ ويقول هذا الجدول أين."
 
-#: ../../reference.rst:888
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:903
 msgid "Commands of ``sibuna``"
 msgstr "أوامر ``sibuna``"
 
-#: ../../reference.rst:893
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:908
 msgid "Purpose, and where Part XI describes it"
 msgstr "الغرض، وأين يصفه الجزء الحادي عشر"
 
-#: ../../reference.rst:894
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:909
 msgid "``sibuna [options]``"
 msgstr ""
 
-#: ../../reference.rst:895
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:910
 msgid "The firewall daemon (*Command-Line Reference*)"
 msgstr "البرنامج الخدمي للجدار الناري (*مرجع سطر الأوامر*)"
 
-#: ../../reference.rst:896
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:911
 msgid "``sibuna --config-file FILE``"
 msgstr ""
 
-#: ../../reference.rst:897
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:912
 msgid ""
 "The edge from a JSON or JLV topology; it takes no other option (*Edge "
 "Load Balancing*)"
@@ -3232,20 +3373,20 @@ msgstr ""
 "الحافة من بنية نشر بصيغة JSON أو JLV؛ ولا تأخذ أي خيار آخر (*موازنة الحمل "
 "على الحافة*)"
 
-#: ../../reference.rst:898
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:913
 msgid "``sibuna check -f FILE``"
 msgstr ""
 
-#: ../../reference.rst:899
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:914
 msgid ""
 "Checks a topology offline, with its certificates and CA files, and exits"
 msgstr "يفحص بنية نشر دون اتصال، مع شهاداتها وملفات CA الخاصة بها، ثم يخرج"
 
-#: ../../reference.rst:900
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:915
 msgid "``sibuna lb --bind IP:PORT --server IP:PORT ...``"
 msgstr ""
 
-#: ../../reference.rst:901
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:916
 msgid ""
 "The edge from a few options, without a file; ``--print-config`` writes "
 "the file (*Starting with one command*)"
@@ -3253,33 +3394,33 @@ msgstr ""
 "الحافة من خيارات قليلة، بلا ملف؛ و\\ ``--print-config`` يكتب الملف "
 "(*البدء بأمر واحد*)"
 
-#: ../../reference.rst:902
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:917
 msgid "``sibuna ctl SOCKET COMMAND``"
 msgstr ""
 
-#: ../../reference.rst:903
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:918
 msgid ""
 "One command of the admin socket (*Changing servers at run time*, and the "
 "table above)"
 msgstr ""
 "أمر واحد لمقبس الإدارة (*تغيير الخوادم في وقت التشغيل*، والجدول أعلاه)"
 
-#: ../../reference.rst:904
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:919
 msgid ""
 "``sibuna authority apply|diff|dump|history|rollback|status -c FILE ...``"
 msgstr ""
 
-#: ../../reference.rst:905
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:920
 msgid ""
 "Publishes and inspects the topology in a database (*A database for the "
 "topology*)"
 msgstr "ينشر بنية النشر في قاعدة بيانات ويفحصها (*قاعدة بيانات للبنية*)"
 
-#: ../../reference.rst:906
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:921
 msgid "``sibuna init-admin``, ``sibuna console ...``"
 msgstr "``sibuna init-admin``، ``sibuna console ...``"
 
-#: ../../reference.rst:907
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:922
 msgid ""
 "The accounts, tokens, policies and GeoIP data of the console (*Console "
 "Preview*)"
@@ -3287,23 +3428,23 @@ msgstr ""
 "حسابات وحدة التحكم، ورموزها، وسياساتها، وبيانات GeoIP الخاصة بها (*لمحة "
 "عن وحدة التحكم*)"
 
-#: ../../reference.rst:909
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:924
 msgid "Build Targets"
 msgstr "أهداف البناء"
 
-#: ../../reference.rst:912
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:927
 msgid "Build and repository commands"
 msgstr "أوامر البناء والمستودع"
 
-#: ../../reference.rst:917
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:932
 msgid "Result"
 msgstr "النتيجة"
 
-#: ../../reference.rst:918
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:933
 msgid "``cargo build --release -p sibuna``"
 msgstr "``cargo build --release -p sibuna``"
 
-#: ../../reference.rst:919
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:934
 msgid ""
 "Daemon with SQLite storage, the console, JLV and automatic HTTPS (the "
 "default features ``sqlite``, ``console``, ``jlv`` and ``https``)"
@@ -3311,20 +3452,20 @@ msgstr ""
 "البرنامج الخدمي مع تخزين SQLite، ووحدة التحكم، وJLV، وHTTPS التلقائي "
 "(الميزات الافتراضية ``sqlite`` و\\ ``console`` و\\ ``jlv`` و\\ ``https``)"
 
-#: ../../reference.rst:920
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:935
 msgid "``cargo build --release -p sibuna --no-default-features``"
 msgstr "``cargo build --release -p sibuna --no-default-features``"
 
-#: ../../reference.rst:921
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:936
 msgid ""
 "In-memory daemon without storage or console and without any external crate"
 msgstr "برنامج خدمي في الذاكرة بلا تخزين ولا وحدة تحكم، وبلا أي حزمة خارجية"
 
-#: ../../reference.rst:922
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:937
 msgid "``cargo build --release -p sibuna --features postgres-tls``"
 msgstr "``cargo build --release -p sibuna --features postgres-tls``"
 
-#: ../../reference.rst:923
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:938
 msgid ""
 "Daemon that also connects to a shared PostgreSQL database, with verified "
 "TLS (the ``postgres`` feature alone connects without TLS)"
@@ -3332,11 +3473,11 @@ msgstr ""
 "برنامج خدمي يتصل أيضًا بقاعدة بيانات PostgreSQL مشتركة عبر TLS مُتحقَّق "
 "منه (الميزة ``postgres`` وحدها تتصل دون TLS)"
 
-#: ../../reference.rst:924
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:939
 msgid "``cargo test``"
 msgstr "``cargo test``"
 
-#: ../../reference.rst:925
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:940
 msgid ""
 "Unit tests, integration tests against a live daemon, storage and console "
 "tests (PostgreSQL ones when ``SIBUNA_TEST_DATABASE_URL`` is set)"
@@ -3345,19 +3486,19 @@ msgstr ""
 "واختبارات التخزين ووحدة التحكم (واختبارات PostgreSQL عند ضبط "
 "``SIBUNA_TEST_DATABASE_URL``)"
 
-#: ../../reference.rst:926
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:941
 msgid "``cargo clippy --all-targets``, ``cargo fmt --check``"
 msgstr "``cargo clippy --all-targets``، ``cargo fmt --check``"
 
-#: ../../reference.rst:927
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:942
 msgid "Lints and formatting (``max_width = 99``)"
 msgstr "فحوص lint والتنسيق (``max_width = 99``)"
 
-#: ../../reference.rst:928
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:943
 msgid "``cargo xtask check``"
 msgstr "``cargo xtask check``"
 
-#: ../../reference.rst:929
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:944
 msgid ""
 "The 70-line function, 1,408-line file and 99/108-column line limits; no "
 "tabs"
@@ -3365,19 +3506,19 @@ msgstr ""
 "حدود الدالة ذات 70 سطرًا، والملف ذي 1,408 سطرًا، وطول السطر 99/108 "
 "عمودًا؛ وبلا محارف جدولة"
 
-#: ../../reference.rst:930
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:945
 msgid "``cargo xtask browser``"
 msgstr "``cargo xtask browser``"
 
-#: ../../reference.rst:931
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:946
 msgid "Checks in headless Chromium (``sibuna-browser``)"
 msgstr "فحوص في Chromium بلا واجهة (``sibuna-browser``)"
 
-#: ../../reference.rst:932
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:947
 msgid "``cargo xtask bench <primitives|product|latency>``"
 msgstr "``cargo xtask bench <primitives|product|latency>``"
 
-#: ../../reference.rst:933
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:948
 msgid ""
 "Release-mode benchmarks; results in "
 "``benchmarks/results/<command>-latest.json``"
@@ -3385,7 +3526,7 @@ msgstr ""
 "قياسات أداء في وضع الإصدار (release)؛ والنتائج في "
 "``benchmarks/results/<command>-latest.json``"
 
-#: ../../reference.rst:934
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:949
 msgid ""
 "``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown "
 "--profile wasm``"
@@ -3393,29 +3534,29 @@ msgstr ""
 "``cargo build -p sibuna-pow-wasm --target wasm32-unknown-unknown "
 "--profile wasm``"
 
-#: ../../reference.rst:935
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:950
 msgid ""
 "The browser module only (``-p sibuna-console-ui`` for the console "
 "interface)"
 msgstr "وحدة المتصفح فقط (``-p sibuna-console-ui`` لواجهة وحدة التحكم)"
 
-#: ../../reference.rst:936
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:951
 msgid "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
 msgstr "``cargo run -p sibuna-geoip --bin geoip-snapshot -- ...``"
 
-#: ../../reference.rst:937
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:952
 msgid "Validate country data and write an embeddable GeoIP snapshot"
 msgstr "تحقق من بيانات البلدان واكتب لقطة GeoIP قابلة للتضمين"
 
-#: ../../reference.rst:938
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:953
 msgid "``guidedog build`` / ``guidedog dsc``"
 msgstr "``guidedog build`` / ``guidedog dsc``"
 
-#: ../../reference.rst:939
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:954
 msgid "This book / the SID records"
 msgstr "هذا الكتاب / سجلات SID"
 
-#: ../../reference.rst:941
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:956
 msgid ""
 "The daemon's build script (``cmd/sibuna/build.rs``) builds both "
 "WebAssembly modules with the ``wasm`` profile into the workspace's target "
@@ -3433,11 +3574,11 @@ msgstr ""
 "يسمي ``SIBUNA_GEOIP_DATA`` لقطة GeoIP للتضمين؛ ويُفك ترميزها وقت البناء، "
 "ويرفضها البناء الذي لا يضم وحدة التحكم (``GEOIP001``)."
 
-#: ../../reference.rst:943
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:958
 msgid "Exercise 12.1"
 msgstr "تمرين 12.1"
 
-#: ../../reference.rst:945
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:960
 msgid ""
 "A client receives ``400`` with the title ``CLIENT FINGERPRINT MISMATCH`` "
 "after switching from Wi-Fi to cellular mid-solve. Explain the cause from "
@@ -3449,11 +3590,11 @@ msgstr ""
 "تنسيقي الرمز والتحدي، واقترح أصغر تغيير في الصفحة الوسيطة يسمح بالتعافي "
 "السلس."
 
-#: ../../reference.rst:947
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:962
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../reference.rst:949
+#: ../../../../../../home/insan/projects/sibuna/docs/book/reference.rst:964
 msgid ""
 "Without looking, list the endpoints a reverse proxy in front of Sibuna "
 "must route to the daemon rather than to the origin, and say why each is "

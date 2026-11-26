@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../zero-allocation.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:1
 msgid "Part V: Zero-Allocation Engineering in Rust"
 msgstr "Parte V: Ingeniería sin asignaciones en Rust"
 
-#: ../../zero-allocation.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:4
 msgid ""
 "We follow a connection from accept to response through one fixed buffer, "
 "and examine the concurrent data structures that let many connection "
@@ -38,15 +38,16 @@ msgstr ""
 "arenas, tablas de descriptores, cadenas de desmontaje), mostramos cómo la "
 "aporta, en su lugar, el sistema de propiedad (ownership) de Rust."
 
-#: ../../zero-allocation.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:6
 msgid "The Connection Loop"
 msgstr "El bucle de conexión"
 
-#: ../../zero-allocation.rst:9 ../../zero-allocation.rst:400
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:400
 msgid "Objectives"
 msgstr "Objetivos"
 
-#: ../../zero-allocation.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:11
 msgid ""
 "By the end of this chapter, we should be able to explain how one 64 KiB "
 "buffer serves an entire keep-alive connection, how the head and body are "
@@ -63,11 +64,11 @@ msgstr ""
 "pueda seguir abierta, y cuáles de estas garantías demuestra por nosotros "
 "el comprobador de préstamos."
 
-#: ../../zero-allocation.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:13
 msgid "One Thread per Connection, Bounded"
 msgstr "Un hilo por conexión, con un límite"
 
-#: ../../zero-allocation.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:16
 msgid ""
 "Accept workers (``--workers``, one per CPU by default, at most 64) share "
 "the listening socket. Each accepted connection is handed to a thread of "
@@ -98,7 +99,7 @@ msgstr ""
 "cargas de trabajo del producto completo, de 305 us a 857 us "
 "(``benchmarks/results/product-latest.md``; parte X)."
 
-#: ../../zero-allocation.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:18
 msgid ""
 "The number of connection threads is bounded by ``--max-connections`` "
 "(1,024 by default, at most 8,192). Past the bound the accept loop answers "
@@ -111,11 +112,11 @@ msgstr ""
 "cierra sin crear ningún hilo y cuenta el evento en "
 "``sibuna_overloaded_total``."
 
-#: ../../zero-allocation.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:20
 msgid "Implementation: ``accept_loop``"
 msgstr "Implementación: ``accept_loop``"
 
-#: ../../zero-allocation.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:22
 msgid ""
 "Accepts connections, checks each against the connection bound, and "
 "launches it on a thread of its own from the task pool. In "
@@ -125,7 +126,7 @@ msgstr ""
 "lanza en un hilo propio tomado del conjunto de tareas. En "
 "``cmd/sibuna/src/server.rs`` (crate ``sibuna``)."
 
-#: ../../zero-allocation.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:24
 msgid ""
 "fn accept_loop(server: &Arc<Server>, listener: &TcpListener) {\n"
 "    while !server.is_stopping() {\n"
@@ -181,7 +182,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:50
 msgid ""
 "``Counted`` is a guard whose ``Drop`` gives the connection's place in the "
 "bound back however the thread ends, by return or by panic. The ``503`` "
@@ -195,7 +196,7 @@ msgstr ""
 "cerrar su lado del socket: cerrar un socket con bytes sin leer provoca un "
 "reset, y el reset descartaría el ``503``."
 
-#: ../../zero-allocation.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:52
 msgid ""
 "Threads come from a ``TaskPool`` (``cmd/sibuna/src/tasks.rs``), a fixed "
 "table of joinable slots. A finished thread keeps its stack until it is "
@@ -219,7 +220,7 @@ msgstr ""
 "cuando la tarea termina, así que una conexión que entra en pánico también "
 "libera la suya."
 
-#: ../../zero-allocation.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:54
 msgid ""
 "Memory is bounded the same way. A connection thread holds its 64 KiB read "
 "buffer and 16 KiB write buffer on its stack, and a 40 KiB proxy workspace "
@@ -237,11 +238,11 @@ msgstr ""
 "enviar, así que un cliente lento no puede retener un hilo más allá de "
 "``--idle-timeout``."
 
-#: ../../zero-allocation.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:56
 msgid "Allocator selection"
 msgstr "Selección del asignador"
 
-#: ../../zero-allocation.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:59
 msgid ""
 "Rust 1.100 stabilizes the core ``Allocator`` API and allocator parameters "
 "for ``Vec`` and ``Box`` (`release notes "
@@ -269,7 +270,7 @@ msgstr ""
 "inicializadas a cero permiten que las páginas sin tocar sigan sin ocupar "
 "memoria residente, como comprueba ``crates/store/tests/resident.rs``."
 
-#: ../../zero-allocation.rst:65
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:65
 msgid ""
 "We would first measure policy snapshot construction and console JSON "
 "parsing when investigating an allocator change. Their temporary "
@@ -298,7 +299,7 @@ msgstr ""
 "memoria que aún usa un motor anterior. Una arena tendría que conservar "
 "esos tiempos de vida y los límites de entrada del analizador."
 
-#: ../../zero-allocation.rst:72
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:72
 msgid ""
 "We retain the console WebAssembly module's existing ``WipeOnFree`` global "
 "allocator in ``cmd/console-ui/src/abi.rs``. It erases freed blocks, "
@@ -321,11 +322,11 @@ msgstr ""
 "residente y conservar el borrado, el procesamiento acotado de la entrada "
 "y el recorrido de peticiones sin asignaciones."
 
-#: ../../zero-allocation.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:79
 msgid "One Buffer per Connection"
 msgstr "Un búfer por conexión"
 
-#: ../../zero-allocation.rst:82
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:82
 msgid ""
 "Every dynamic allocation on a request path is a denial-of-service lever: "
 "fragmentation over days, allocator lock contention across threads, and "
@@ -344,11 +345,11 @@ msgstr ""
 "posee un búfer de lectura de 64 KiB y un búfer de escritura de 16 KiB "
 "durante toda la vida del socket; todo lo demás son slices de ellos."
 
-#: ../../zero-allocation.rst:84
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:84
 msgid "Implementation: ``connection::serve``"
 msgstr "Implementación: ``connection::serve``"
 
-#: ../../zero-allocation.rst:86
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:86
 msgid ""
 "Registers the connection with the idle reaper, sets up the buffers, the "
 "proxy workspace and the engine cache once, and serves up to 4,096 "
@@ -359,7 +360,7 @@ msgstr ""
 "motor, y sirve hasta 4.096 peticiones. En "
 "``cmd/sibuna/src/connection.rs`` (crate ``sibuna``)."
 
-#: ../../zero-allocation.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:88
 msgid ""
 "pub fn serve(server: &Server, stream: &TcpStream) {\n"
 "    let Some(lease) = server.idle.register(stream) else { return };\n"
@@ -413,7 +414,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:116
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:116
 msgid ""
 "``read_head`` fills the buffer until the blank line appears, searching "
 "only the bytes that arrived since the last search, and refuses heads over "
@@ -448,7 +449,7 @@ msgstr ""
 "entero en el búfer; las secciones siguientes muestran cómo decide el "
 "proxy."
 
-#: ../../zero-allocation.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:119
 msgid ""
 "The 64 KiB read buffer of one connection: a served part, then the unread "
 "window of request head (at most 16 KiB), body prefix and pending bytes, "
@@ -467,7 +468,7 @@ msgstr ""
 "envía primero al origen. Tras la respuesta, reader.consume(head_len + "
 "body_len) lleva el inicio de la ventana a los bytes pendientes."
 
-#: ../../zero-allocation.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:119
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/read-buffer.typ\": draw\n"
@@ -479,7 +480,7 @@ msgstr ""
 "#show: chart.with(lang: \"es\")\n"
 "#draw()\n"
 
-#: ../../zero-allocation.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:119
 msgid ""
 "The connection's read buffer while one request is served. Every field of "
 "the request is a slice of it."
@@ -487,7 +488,7 @@ msgstr ""
 "El búfer de lectura de la conexión mientras se sirve una petición. Cada "
 "campo de la petición es un slice de él."
 
-#: ../../zero-allocation.rst:122
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:122
 msgid ""
 "fn serve_one<W: Write>(\n"
 "    reader: &mut Reader<'_, &TcpStream>,\n"
@@ -555,11 +556,11 @@ msgstr ""
 "    serve_with_body(reader, link, peer, head_len, framing)\n"
 "}"
 
-#: ../../zero-allocation.rst:155
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:155
 msgid "What the borrow checker proves"
 msgstr "Lo que demuestra el comprobador de préstamos"
 
-#: ../../zero-allocation.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:157
 msgid ""
 "The request slices stay valid only until the next fill of the buffer. "
 "Sibuna states that rule as a type, not as a comment: the request is a "
@@ -579,7 +580,7 @@ msgstr ""
 "solo cuando esa llamada vuelve puede ejecutarse ``reader.consume``; si se "
 "escriben en el orden inverso, el código no compila."
 
-#: ../../zero-allocation.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:159
 msgid ""
 "The same rule explains two choices that look odd at first. First, "
 "``serve_with_body`` parses the head a second time. The first parse must "
@@ -609,11 +610,11 @@ msgstr ""
 "conexión del cliente solo se conserva cuando el cuerpo se almacenó entero "
 "en el búfer."
 
-#: ../../zero-allocation.rst:161
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:161
 msgid "The Proxy Head Rewrite"
 msgstr "La reescritura del encabezado en el proxy"
 
-#: ../../zero-allocation.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:164
 msgid ""
 "The head is not forwarded verbatim. ``write_request_head`` "
 "(``crates/net/src/request.rs``, crate ``sibuna-net``) re-emits the "
@@ -640,7 +641,7 @@ msgstr ""
 "``Connection`` de la petición. Después añade el conjunto de auditoría. La "
 "delimitación del cuerpo se genera, nunca se copia:"
 
-#: ../../zero-allocation.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:166
 msgid ""
 "for header in request.headers() {\n"
 "    if is_hop_by_hop(header.name) || nominated(request, header.name) {\n"
@@ -682,7 +683,7 @@ msgstr ""
 "chunked\\r\\n\")?,\n"
 "}"
 
-#: ../../zero-allocation.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:187
 msgid ""
 "A ``Content-Length`` is re-emitted. A chunked body that ended within the "
 "connection buffer is decoded in place and sent with its length. A longer "
@@ -701,7 +702,7 @@ msgstr ""
 "de chunk, las extensiones ni los trailers del cliente. El conjunto de "
 "auditoría:"
 
-#: ../../zero-allocation.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:189
 msgid ""
 "Connection: keep-alive\n"
 "X-Forwarded-For: <client>\n"
@@ -717,7 +718,7 @@ msgstr ""
 "X-Sibuna-Status: PASS\n"
 "X-Sibuna-Rule: session | robots-txt | ip/cidr-trie | ..."
 
-#: ../../zero-allocation.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:198
 msgid ""
 "Bodies larger than the buffer are relayed in 16 KiB pieces from the "
 "client to the origin writer (``relay_body``) before the response is "
@@ -733,7 +734,7 @@ msgstr ""
 "de ``crates/net/src/request.rs`` comprueba que la reescritura descarta un "
 "``X-Forwarded-For`` falsificado e inyecta los campos de auditoría."
 
-#: ../../zero-allocation.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:200
 msgid ""
 "The proxy's three buffers, the origin read buffer (one response head, 16 "
 "KiB), the origin write buffer (8 KiB) and the upload buffer (16 KiB), "
@@ -750,11 +751,11 @@ msgstr ""
 "lector y el escritor del origen los toman prestados para un intercambio "
 "cada vez."
 
-#: ../../zero-allocation.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:202
 msgid "Relaying the Origin Response"
 msgstr "Retransmisión de la respuesta del origen"
 
-#: ../../zero-allocation.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:205
 msgid ""
 "The first proxy streamed the origin's bytes until the origin closed and "
 "then closed the client: correct framing with no parsing, at the price of "
@@ -771,11 +772,11 @@ msgstr ""
 "agotados. Ahora el proxy lee el encabezado del origen (16 KiB como "
 "máximo) y clasifica el cuerpo según las reglas de RFC 9112:"
 
-#: ../../zero-allocation.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:207
 msgid "Implementation: ``parse_response_head``"
 msgstr "Implementación: ``parse_response_head``"
 
-#: ../../zero-allocation.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:209
 msgid ""
 "Returns the status, one of four framings (no body for HEAD, 1xx, 204 and "
 "304; a ``Content-Length``; chunked transfer coding; or close-delimited) "
@@ -787,7 +788,7 @@ msgstr ""
 "chunked; o delimitado por cierre) y si el origen mantiene la conexión. En "
 "``crates/net/src/response.rs`` (crate ``sibuna-net``)."
 
-#: ../../zero-allocation.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:211
 msgid ""
 "pub enum Framing { None, Length(u64), Chunked, UntilClose }\n"
 "\n"
@@ -865,7 +866,7 @@ msgstr ""
 "    Some(ResponseHead { status, framing, keep_alive })\n"
 "}"
 
-#: ../../zero-allocation.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:247
 msgid ""
 "The parser refuses what the proxy must not relay: a bad status line, a "
 "field name that is not a token, a control byte in a value, conflicting "
@@ -880,7 +881,7 @@ msgstr ""
 "nombra ``Content-Length`` o ``Transfer-Encoding``. Su trabajo es lineal "
 "en el encabezado y nunca entra en pánico."
 
-#: ../../zero-allocation.rst:249
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:249
 msgid ""
 "The head is re-emitted to the client with the origin's ``Connection`` "
 "headers replaced by Sibuna's own decision, and the body is relayed "
@@ -904,7 +905,7 @@ msgstr ""
 "transferencia masiva sigue moviendo un búfer completo por lectura y "
 "escritura."
 
-#: ../../zero-allocation.rst:251
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:251
 msgid ""
 "let keep = client_keep_alive && parsed.framing != Framing::UntilClose;\n"
 "write_client_head(client, head, keep).map_err(client_head_error)?;\n"
@@ -932,7 +933,7 @@ msgstr ""
 "client.flush().map_err(|_| ProxyError::ClientFailed)?;\n"
 "Ok(Relayed { client_keep: keep, origin_reusable: parsed.keep_alive })"
 
-#: ../../zero-allocation.rst:265
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:265
 msgid ""
 "Parsing an eight-field origin head takes 322 ns, and a keep-alive ``GET`` "
 "with a 1 KiB response proxied over loopback takes 29.8 us (measured in "
@@ -943,11 +944,11 @@ msgstr ""
 "loopback tarda 29,8 us (medido en octubre de 2026; "
 "``crates/net/src/lib.rs`` documenta la medición)."
 
-#: ../../zero-allocation.rst:267
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:267
 msgid "The Origin Pool"
 msgstr "El conjunto de conexiones al origen"
 
-#: ../../zero-allocation.rst:270
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:270
 msgid ""
 "Parsing the framing also tells the proxy whether the *origin* socket can "
 "be used again: an HTTP/1.1 response without ``Connection: close`` (or an "
@@ -970,7 +971,7 @@ msgstr ""
 "en ``TIME_WAIT``; bajo carga, un proxy en loopback se queda pronto sin "
 "puertos efímeros y su rendimiento se desploma."
 
-#: ../../zero-allocation.rst:272
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:272
 msgid ""
 "A pool under one lock would make every proxied request contend for that "
 "lock. So the pool (``crates/net/src/pool.rs``) is striped: 16 stripes of "
@@ -988,7 +989,7 @@ msgstr ""
 "las demás franjas, sin esperar a un cerrojo ocupado, antes de abrir una "
 "conexión nueva."
 
-#: ../../zero-allocation.rst:274
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:274
 msgid ""
 "pub fn take(&self) -> Option<Arc<TcpStream>> {\n"
 "    if self.is_stopping() {\n"
@@ -1022,7 +1023,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../zero-allocation.rst:292
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:292
 msgid ""
 "A pooled socket may have been closed by the origin while idle. The proxy "
 "notices in one of two ways, a failed write or an end-of-stream before the "
@@ -1052,7 +1053,7 @@ msgstr ""
 "por trozos no puede volver a enviarse; en ambos casos el cliente recibe "
 "``502``."
 
-#: ../../zero-allocation.rst:294
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:294
 msgid ""
 "let safe = matches!(request.method, Method::Get | Method::Head | "
 "Method::Options);\n"
@@ -1119,7 +1120,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:324
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:324
 msgid ""
 "Unit tests relay fixed byte strings through the same functions and assert "
 "the output is byte-identical apart from the connection header "
@@ -1141,11 +1142,11 @@ msgstr ""
 "petición de cliente en bruto y una respuesta de origen predefinida) y "
 "compara cada byte que reciben el origen y el cliente."
 
-#: ../../zero-allocation.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:326
 msgid "Why the origin socket is an ``Arc``"
 msgstr "Por qué el socket del origen es un ``Arc``"
 
-#: ../../zero-allocation.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:328
 msgid ""
 "A socket descriptor is a small integer that the kernel reuses as soon as "
 "it is closed. Shutdown must interrupt an exchange in flight, yet it must "
@@ -1170,11 +1171,11 @@ msgstr ""
 "puede cerrarse, ni reutilizarse, mientras alguien pueda todavía acceder a "
 "él."
 
-#: ../../zero-allocation.rst:330
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:330
 msgid "Idle Deadlines"
 msgstr "Plazos de inactividad"
 
-#: ../../zero-allocation.rst:333
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:333
 msgid ""
 "Every client connection registers its socket in an ``IdleTable`` "
 "(``crates/net/src/idle.rs``) and receives a ``Lease``. The lease's "
@@ -1198,7 +1199,7 @@ msgstr ""
 "junto con el socket del origen adjunto, de modo que el hilo bloqueado en "
 "cualquiera de los dos lados ve el fin del flujo y libera su posición."
 
-#: ../../zero-allocation.rst:335
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:335
 msgid ""
 "Deadlines therefore measure silence, never the length of a response: a "
 "large download that keeps moving is never cut. Upload bytes come from the "
@@ -1213,7 +1214,7 @@ msgstr ""
 "de inactividad: la misma defensa contra cuerpos lentos que dan los plazos "
 "de petición con tasa mínima de transferencia."
 
-#: ../../zero-allocation.rst:337
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:337
 msgid ""
 "The table has one small lock per slot and no table-wide lock. It holds a "
 "``try_clone`` of each client socket and an ``Arc`` of each attached "
@@ -1228,11 +1229,11 @@ msgstr ""
 "sigue perteneciendo a su lease hasta entonces, así que una conexión "
 "antigua nunca puede liberar una posición que haya tomado una nueva."
 
-#: ../../zero-allocation.rst:339
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:339
 msgid "Upgraded Connections"
 msgstr "Conexiones con cambio de protocolo"
 
-#: ../../zero-allocation.rst:342
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:342
 msgid ""
 "After a validated ``101``, a WebSocket upgrade is relayed both ways. Each "
 "direction runs on a thread of its own with one fixed buffer: the "
@@ -1256,7 +1257,7 @@ msgstr ""
 "doble de ``--max-connections`` cuando todas las conexiones han cambiado "
 "de protocolo."
 
-#: ../../zero-allocation.rst:344
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:344
 msgid ""
 "Both directions share one idle deadline (``--websocket-idle-timeout``, "
 "300 seconds by default): bytes moving either way refresh one stamp. Each "
@@ -1280,11 +1281,11 @@ msgstr ""
 "libera su motor de políticas en caché, para que una conexión que puede "
 "vivir horas no mantenga vivo un motor antiguo."
 
-#: ../../zero-allocation.rst:346
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:346
 msgid "Stopping"
 msgstr "Parada"
 
-#: ../../zero-allocation.rst:349
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:349
 msgid ""
 "``Running::stop``, and equally ``Drop`` for ``Running``, stops the daemon "
 "in a fixed order. It sets the stopping flag and wakes every accept worker "
@@ -1301,7 +1302,7 @@ msgstr ""
 "hace join de cada hilo de conexión, hace join del recolector y cierra los "
 "sockets del conjunto."
 
-#: ../../zero-allocation.rst:351
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:351
 msgid ""
 "SIGINT and SIGTERM reach that sequence through ordinary Rust. Before it "
 "spawns any thread, the daemon blocks both signals (every later thread "
@@ -1322,11 +1323,11 @@ msgstr ""
 "daemon: las declaraciones de las pocas funciones de la biblioteca de C "
 "que ``std`` no envuelve."
 
-#: ../../zero-allocation.rst:353
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:353
 msgid "Release by ``Drop``"
 msgstr "Liberación mediante ``Drop``"
 
-#: ../../zero-allocation.rst:355
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:355
 msgid ""
 "Explicit cleanup calls must be written in reverse order of setup, and "
 "every early return must be read against them. In Sibuna each resource "
@@ -1345,11 +1346,11 @@ msgstr ""
 "liberación en todas las salidas del ámbito, incluido un pánico que se "
 "propaga a través de él, así que ningún camino puede olvidar una."
 
-#: ../../zero-allocation.rst:357
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:357
 msgid "What We Measured"
 msgstr "Lo que medimos"
 
-#: ../../zero-allocation.rst:360
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:360
 msgid ""
 "The table shows Shield in reverse-proxy mode on one Ryzen 9 5950X: the "
 "daemon pinned to four CPUs, ``wrk`` with two threads and 64 connections "
@@ -1363,7 +1364,7 @@ msgstr ""
 "filas se copian de ``benchmarks/results/product-latest.md``; la parte X "
 "contiene el registro completo."
 
-#: ../../zero-allocation.rst:362
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:362
 msgid ""
 "Shield in reverse-proxy mode, from "
 "``benchmarks/results/product-latest.md``"
@@ -1371,100 +1372,102 @@ msgstr ""
 "Shield en modo proxy inverso, según "
 "``benchmarks/results/product-latest.md``"
 
-#: ../../zero-allocation.rst:365 ../../zero-allocation.rst:416
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:365
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:416
 msgid "Workload"
 msgstr "Carga de trabajo"
 
-#: ../../zero-allocation.rst:366
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:366
 msgid "Status"
 msgstr "Estado"
 
-#: ../../zero-allocation.rst:367
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:367
 msgid "req/s"
 msgstr "req/s"
 
-#: ../../zero-allocation.rst:368
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:368
 msgid "p50 / p99 (us)"
 msgstr "p50 / p99 (us)"
 
-#: ../../zero-allocation.rst:369
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:369
 msgid "CPU per request (us)"
 msgstr "CPU por petición (us)"
 
-#: ../../zero-allocation.rst:370
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:370
 msgid "admitted with session, proxied"
 msgstr "admitida con sesión, a través del proxy"
 
-#: ../../zero-allocation.rst:371 ../../zero-allocation.rst:376
-#: ../../zero-allocation.rst:381
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:371
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:376
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:381
 msgid "200"
 msgstr "200"
 
-#: ../../zero-allocation.rst:372
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:372
 msgid "138,965"
 msgstr "138.965"
 
-#: ../../zero-allocation.rst:373
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:373
 msgid "438 / 857"
 msgstr "438 / 857"
 
-#: ../../zero-allocation.rst:374
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:374
 msgid "28.57"
 msgstr "28,57"
 
-#: ../../zero-allocation.rst:375
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:375
 msgid "challenged (interstitial)"
 msgstr "desafiada (página intermedia)"
 
-#: ../../zero-allocation.rst:377
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:377
 msgid "195,188"
 msgstr "195.188"
 
-#: ../../zero-allocation.rst:378
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:378
 msgid "162 / 328"
 msgstr "162 / 328"
 
-#: ../../zero-allocation.rst:379
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:379
 msgid "13.73"
 msgstr "13,73"
 
-#: ../../zero-allocation.rst:380
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:380
 msgid "static allowed, proxied"
 msgstr "estática permitida, a través del proxy"
 
-#: ../../zero-allocation.rst:382
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:382
 msgid "145,673"
 msgstr "145.673"
 
-#: ../../zero-allocation.rst:383
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:383
 msgid "415 / 746"
 msgstr "415 / 746"
 
-#: ../../zero-allocation.rst:384
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:384
 msgid "27.27"
 msgstr "27,27"
 
-#: ../../zero-allocation.rst:385
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:385
 msgid "WAF denied (with session)"
 msgstr "denegada por el WAF (con sesión)"
 
-#: ../../zero-allocation.rst:386
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:386
 msgid "403"
 msgstr "403"
 
-#: ../../zero-allocation.rst:387
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:387
 msgid "209,507"
 msgstr "209.507"
 
-#: ../../zero-allocation.rst:388
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:388
 msgid "151 / 306"
 msgstr "151 / 306"
 
-#: ../../zero-allocation.rst:389
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:389
 msgid "12.17"
 msgstr "12,17"
 
-#: ../../zero-allocation.rst:391
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:391
 msgid ""
 "``wrk`` keeps 64 requests in flight, so on the CPU-bound proxied paths "
 "requests queue for the four CPUs, and the p99 there is the scheduler's "
@@ -1495,11 +1498,11 @@ msgstr ""
 "y ``crates/net/tests/steady_state.rs`` no encuentra ninguna en 500 "
 "peticiones keep-alive a través del proxy."
 
-#: ../../zero-allocation.rst:393
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:393
 msgid "Exercise 5.1"
 msgstr "Ejercicio 5.1"
 
-#: ../../zero-allocation.rst:395
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:395
 msgid ""
 "A client sends a 200 KB upload. Trace which bytes live in the 64 KiB "
 "buffer, which are relayed by ``relay_body`` through the upload buffer, "
@@ -1510,11 +1513,11 @@ msgstr ""
 "y por qué el proxy debe escribir el encabezado hacia el origen *antes* de "
 "retransmitir."
 
-#: ../../zero-allocation.rst:397
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:397
 msgid "Concurrent State Without Allocation"
 msgstr "Estado concurrente sin asignaciones"
 
-#: ../../zero-allocation.rst:402
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:402
 msgid ""
 "Analyse the shard locks, the Robin Hood spent set, the GCRA limiter, the "
 "versioned ban table, the MPSC incident ring, and the read-copy-update "
@@ -1526,7 +1529,7 @@ msgstr ""
 "MPSC de incidentes y la publicación read-copy-update del motor de "
 "políticas con ``Arc`` y una caché comprobada por generación."
 
-#: ../../zero-allocation.rst:404
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:404
 msgid ""
 "Every store in ``sibuna-store`` allocates its fixed capacity once, when "
 "it is built, and never allocates or blocks on a global lock afterwards. "
@@ -1537,11 +1540,11 @@ msgstr ""
 "cerrojo global. Ninguno necesita un barrido en segundo plano: el estado "
 "caducado se recupera in situ."
 
-#: ../../zero-allocation.rst:406
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:406
 msgid "Locks and Sharding"
 msgstr "Cerrojos y particiones"
 
-#: ../../zero-allocation.rst:409
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:409
 msgid ""
 "The critical sections in Sibuna's tables are tens of instructions long, "
 "far shorter than a kernel futex round trip. Tables are split into 16 "
@@ -1556,7 +1559,7 @@ msgstr ""
 ":math:`1/16`, y cada partición ocupa su propia línea de caché, así que "
 "los cerrojos vecinos no sufren falso compartimiento (false sharing)."
 
-#: ../../zero-allocation.rst:411
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:411
 msgid ""
 "The tables use ``std::sync::Mutex``: one compare-and-swap when "
 "uncontended, a short spin while the holder runs, then a futex wait. The "
@@ -1573,69 +1576,69 @@ msgstr ""
 "spin lock ahorra alrededor de un nanosegundo por operación sin "
 "contención, pero pierde con contención:"
 
-#: ../../zero-allocation.rst:413
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:413
 msgid "Shard lock throughput on a Ryzen 9 5950X (October 2026)"
 msgstr ""
 "Rendimiento de los cerrojos de partición en un Ryzen 9 5950X (octubre de "
 "2026)"
 
-#: ../../zero-allocation.rst:417
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:417
 msgid "``Mutex``"
 msgstr "``Mutex``"
 
-#: ../../zero-allocation.rst:418
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:418
 msgid "Spin lock"
 msgstr "Spin lock"
 
-#: ../../zero-allocation.rst:419
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:419
 msgid "spent set, 16 threads"
 msgstr "conjunto de desafíos gastados, 16 hilos"
 
-#: ../../zero-allocation.rst:420
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:420
 msgid "10.8 M/s"
 msgstr "10,8 M/s"
 
-#: ../../zero-allocation.rst:421
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:421
 msgid "8.6 M/s"
 msgstr "8,6 M/s"
 
-#: ../../zero-allocation.rst:422
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:422
 msgid "spent set, 64 threads (more than the CPUs)"
 msgstr "conjunto de desafíos gastados, 64 hilos (más hilos que CPU)"
 
-#: ../../zero-allocation.rst:423
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:423
 msgid "11.2 M/s"
 msgstr "11,2 M/s"
 
-#: ../../zero-allocation.rst:424
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:424
 msgid "6.9 M/s"
 msgstr "6,9 M/s"
 
-#: ../../zero-allocation.rst:425
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:425
 msgid "GCRA on six hot addresses, 16 threads"
 msgstr "GCRA sobre seis direcciones calientes, 16 hilos"
 
-#: ../../zero-allocation.rst:426
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:426
 msgid "44.9 M/s"
 msgstr "44,9 M/s"
 
-#: ../../zero-allocation.rst:427
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:427
 msgid "19.3 M/s"
 msgstr "19,3 M/s"
 
-#: ../../zero-allocation.rst:428
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:428
 msgid "GCRA on six hot addresses, 64 threads"
 msgstr "GCRA sobre seis direcciones calientes, 64 hilos"
 
-#: ../../zero-allocation.rst:429
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:429
 msgid "37.4 M/s"
 msgstr "37,4 M/s"
 
-#: ../../zero-allocation.rst:430
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:430
 msgid "6.5 M/s"
 msgstr "6,5 M/s"
 
-#: ../../zero-allocation.rst:432
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:432
 msgid ""
 "An edge server runs more connection threads than CPUs, and a spin lock "
 "whose holder is preempted makes every waiter burn its time slice, so we "
@@ -1650,11 +1653,11 @@ msgstr ""
 "en pánico mientras tiene tomada una partición, y la partición sigue "
 "siendo estructuralmente válida aunque alguna lo hiciera."
 
-#: ../../zero-allocation.rst:434
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:434
 msgid "The Robin Hood Spent Set"
 msgstr "El conjunto Robin Hood de desafíos gastados"
 
-#: ../../zero-allocation.rst:437
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:437
 msgid ""
 "Only accepted proofs enter the spent set (Part III). It has 16 shards, "
 "each an open-addressed array of 4,096 slots of ``Option<Entry>``, where "
@@ -1673,11 +1676,11 @@ msgstr ""
 "longitudes de sondeo; las búsquedas se detienen en cuanto encuentran una "
 "entrada más cerca de su posición inicial de lo que ellas están de la suya."
 
-#: ../../zero-allocation.rst:439
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:439
 msgid "Implementation: ``Table::insert``"
 msgstr "Implementación: ``Table::insert``"
 
-#: ../../zero-allocation.rst:441
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:441
 msgid ""
 "Inserts a spent tag with its expiry, reclaiming expired slots on the way. "
 "In ``crates/store/src/spent.rs`` (crate ``sibuna-store``)."
@@ -1686,7 +1689,7 @@ msgstr ""
 "caducadas que encuentra a su paso. En ``crates/store/src/spent.rs`` "
 "(crate ``sibuna-store``)."
 
-#: ../../zero-allocation.rst:443
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:443
 msgid ""
 "fn insert(\n"
 "    &mut self,\n"
@@ -1766,7 +1769,7 @@ msgstr ""
 "    Err(SpendError::Full)\n"
 "}"
 
-#: ../../zero-allocation.rst:482
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:482
 msgid ""
 "The expired-slot rule is the subtle part: an expired entry may be "
 "overwritten in place only by a key at least as far from its home, "
@@ -1786,11 +1789,12 @@ msgstr ""
 "comprueba que el desplazamiento acotado puede tener éxito sin perder una "
 "etiqueta vigente."
 
-#: ../../zero-allocation.rst:484 ../../zero-allocation.rst:683
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:484
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:683
 msgid "Invariant"
 msgstr "Invariante"
 
-#: ../../zero-allocation.rst:486
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:486
 msgid ""
 "A refused insertion never evicts a live tag. A tag that was spent and has "
 "not expired is therefore always found, and the refusal "
@@ -1801,7 +1805,7 @@ msgstr ""
 "(``SpendError::Full``) puede denegar el servicio, pero nunca permitir una "
 "reutilización."
 
-#: ../../zero-allocation.rst:488
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:488
 msgid ""
 "A slot is ``Option<Entry>``. An empty slot has no tag to read, so there "
 "is no ``occupied`` flag that a reader could forget to check, and "
@@ -1816,11 +1820,11 @@ msgstr ""
 "gastados puede fallar de dos maneras (``DoubleSpend`` y ``Full``), y "
 "``SpendError`` nombra exactamente esas dos."
 
-#: ../../zero-allocation.rst:490
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:490
 msgid "GCRA: Rate Limiting in One Integer"
 msgstr "GCRA: limitar la tasa con un entero"
 
-#: ../../zero-allocation.rst:493
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:493
 msgid ""
 "The Generic Cell Rate Algorithm (ATM Forum, 1996) is the "
 "virtual-scheduling form of the leaky bucket. Per client it stores one "
@@ -1835,7 +1839,7 @@ msgstr ""
 ":math:`N` por ventana :math:`W`, y la tolerancia de ráfaga :math:`\\tau = "
 "(N - 1) T`:"
 
-#: ../../zero-allocation.rst:495
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:495
 msgid ""
 "\\text{arrival at } t \\text{ conforms} \\iff \\mathrm{TAT} \\le t + "
 "\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
@@ -1845,11 +1849,11 @@ msgstr ""
 "+ \\tau, \\quad \\text{y entonces } \\mathrm{TAT} \\leftarrow "
 "\\max(\\mathrm{TAT}, t) + T."
 
-#: ../../zero-allocation.rst:499
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:499
 msgid "Theorem (token-bucket bound)"
 msgstr "Teorema (cota del cubo de tokens)"
 
-#: ../../zero-allocation.rst:501
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:501
 msgid ""
 "After the first conforming arrival at :math:`t_1`, the :math:`k`-th "
 "conforming arrival satisfies :math:`t_k - t_1 \\ge (k - 1) T - \\tau`. "
@@ -1866,7 +1870,7 @@ msgstr ""
 "frontera de ventana fija más allá de la ráfaga definida, ni historial por "
 "petición."
 
-#: ../../zero-allocation.rst:504
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:504
 msgid ""
 "A chart of TAT against arrival time for T = 200 ms and tau = 800 ms. Five "
 "arrivals at t = 0 are admitted while TAT rises from 0 to 1000 ms; a sixth "
@@ -1881,7 +1885,7 @@ msgstr ""
 "ms se rechaza, y una en cada múltiplo de 200 ms encuentra el TAT justo "
 "sobre la recta y se admite."
 
-#: ../../zero-allocation.rst:504
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:504
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/gcra.typ\": draw\n"
@@ -1893,7 +1897,7 @@ msgstr ""
 "#show: chart.with(lang: \"es\")\n"
 "#draw()\n"
 
-#: ../../zero-allocation.rst:504
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:504
 msgid ""
 "GCRA admission for a limit of 5 per second: a burst of five, then one "
 "every 200 ms. An arrival is admitted when the TAT it finds lies on or "
@@ -1903,11 +1907,11 @@ msgstr ""
 "después una cada 200 ms. Una llegada se admite cuando el TAT que "
 "encuentra está sobre la recta :math:`t + \\tau` o por debajo de ella."
 
-#: ../../zero-allocation.rst:507
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:507
 msgid "Worked example: five per second by hand"
 msgstr "Ejemplo resuelto: cinco por segundo a mano"
 
-#: ../../zero-allocation.rst:509
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:509
 msgid ""
 "Take :math:`N = 5` and :math:`W = 1000` ms, so :math:`T = 200` ms and "
 ":math:`\\tau = 800` ms, and let a client that has been idle send six "
@@ -1936,11 +1940,11 @@ msgstr ""
 "``gcra_admits_exactly_the_burst_then_drains_at_the_emission_rate`` de "
 "``crates/store/src/limiter.rs`` comprueba exactamente estas cifras."
 
-#: ../../zero-allocation.rst:511
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:511
 msgid "Implementation: ``arrive``"
 msgstr "Implementación: ``arrive``"
 
-#: ../../zero-allocation.rst:513
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:513
 msgid ""
 "Applies one arrival to the cells of a locked shard and returns the "
 "decision, the retry delay and the remaining budget. In "
@@ -1950,7 +1954,7 @@ msgstr ""
 "tomado y devuelve la decisión, el retardo de reintento y el presupuesto "
 "restante. En ``crates/store/src/limiter.rs`` (crate ``sibuna-store``)."
 
-#: ../../zero-allocation.rst:515
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:515
 msgid ""
 "fn arrive(\n"
 "    cells: &mut [Cell; SLOTS_PER_SHARD],\n"
@@ -2012,7 +2016,7 @@ msgstr ""
 "    // ... remaining = min(rate, floor((t + tau - TAT) / T) + 1)\n"
 "}"
 
-#: ../../zero-allocation.rst:547
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:547
 msgid ""
 "The shard's ``check`` takes the lock and calls ``arrive`` with the locked "
 "cells; the guard releases the lock when ``check`` returns. Cells are 16 "
@@ -2042,11 +2046,11 @@ msgstr ""
 "del ámbito de la regla, de modo que el mismo cliente tiene presupuestos "
 "independientes en ámbitos distintos."
 
-#: ../../zero-allocation.rst:549
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:549
 msgid "The Versioned Ban Table"
 msgstr "La tabla versionada de bloqueos"
 
-#: ../../zero-allocation.rst:552
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:552
 msgid ""
 "Bans use 4,096 slots with atomic version, key and expiry fields, "
 "open-addressed by a keyed hash of the banned address with an 8-slot probe "
@@ -2062,11 +2066,11 @@ msgstr ""
 "ningún cerrojo, solo aceptan una versión par estable y reintentan si hay "
 "cambios concurrentes."
 
-#: ../../zero-allocation.rst:554
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:554
 msgid "Implementation: ``BanTable::ban`` and ``BanTable::read_slot``"
 msgstr "Implementación: ``BanTable::ban`` y ``BanTable::read_slot``"
 
-#: ../../zero-allocation.rst:556
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:556
 msgid ""
 "The writer's bracket and the reader's consistent snapshot. In "
 "``crates/store/src/ban_table.rs`` (crate ``sibuna-store``)."
@@ -2075,7 +2079,7 @@ msgstr ""
 "coherente del lector. En ``crates/store/src/ban_table.rs`` (crate "
 "``sibuna-store``)."
 
-#: ../../zero-allocation.rst:558
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:558
 msgid ""
 "pub fn ban(&self, banned: &[u8], until: u64, now: u64) {\n"
 "    let key = slot_key(banned);\n"
@@ -2137,7 +2141,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:588
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:588
 msgid ""
 "Sequential consistency prevents mixing an old identity with a replacement "
 "expiry: every access belongs to one total order, which keeps the argument "
@@ -2159,11 +2163,11 @@ msgstr ""
 "claves en su sitio, porque una posición vaciada podría ocultar una clave "
 "en colisión situada más adelante en una cadena de sondeo."
 
-#: ../../zero-allocation.rst:590
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:590
 msgid "The MPSC Incident Ring"
 msgstr "El anillo MPSC de incidentes"
 
-#: ../../zero-allocation.rst:593
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:593
 msgid ""
 "When the Shield surface denies a request or the honeypot fires, the "
 "incident is copied into a fixed record of about 1.3 KB (client address, "
@@ -2187,7 +2191,7 @@ msgstr ""
 "una garantía de durabilidad. El contador de descartes hace observable esa "
 "pérdida."
 
-#: ../../zero-allocation.rst:595
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:595
 msgid ""
 "/// Copies `incident` into the ring; a full ring drops it and counts the "
 "drop.\n"
@@ -2207,7 +2211,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:604
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:604
 msgid ""
 "After moving a record into a pending batch, the storage thread retains "
 "it, together with the prepared rows, until the commit is confirmed; it "
@@ -2219,7 +2223,7 @@ msgstr ""
 "transacción; no lo descarta en silencio ante un error de la base de "
 "datos, y un reintento escribe exactamente el mismo lote."
 
-#: ../../zero-allocation.rst:606
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:606
 msgid ""
 "Each slot carries a sequence number that tells producers whether the slot "
 "is free and the consumer whether it is full, so neither side takes a "
@@ -2240,7 +2244,7 @@ msgstr ""
 "``UnsafeCell<MaybeUninit<T>>``, y cada bloque ``unsafe`` nombra el paso "
 "del protocolo que lo justifica:"
 
-#: ../../zero-allocation.rst:608
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:608
 msgid ""
 "if diff == 0 {\n"
 "    // Relaxed: the CAS only arbitrates which producer owns position "
@@ -2290,7 +2294,7 @@ msgstr ""
 "    return Err(value);\n"
 "}"
 
-#: ../../zero-allocation.rst:631
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:631
 msgid ""
 "Two conventions of the ring are types, not comments. On a full ring "
 "``push`` returns ``Err(value)``, handing the record back so the caller "
@@ -2307,11 +2311,11 @@ msgstr ""
 "``Consumer`` único, de modo que un segundo consumidor no compila o se "
 "rechaza en tiempo de ejecución."
 
-#: ../../zero-allocation.rst:633
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:633
 msgid "Read-Copy-Update Engine Publication"
 msgstr "Publicación read-copy-update del motor"
 
-#: ../../zero-allocation.rst:636
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:636
 msgid ""
 "The policy engine is rebuilt off the hot path when policies change. "
 "Requests must never observe a half-built engine, and an engine must never "
@@ -2325,7 +2329,7 @@ msgstr ""
 "esté leyendo. Sibuna publica cada motor como un ``Arc<Engine>`` en un "
 "``EngineSlot``, y cada conexión lo lee a través de una ``EngineCache``:"
 
-#: ../../zero-allocation.rst:639
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:639
 msgid ""
 "The storage thread builds Engine v2 off the request path and publishes it "
 "into the EngineSlot, which holds an RwLock around the current Arc and an "
@@ -2345,7 +2349,7 @@ msgstr ""
 "siguiente actualización ve que la generación ha cambiado, toma el cerrojo "
 "de lectura y clona el Arc de v2. Engine v1 se libera cuando B lo suelta."
 
-#: ../../zero-allocation.rst:639
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:639
 msgid ""
 "// zero-allocation.rst: engine publication. After EngineSlot::publish "
 "and\n"
@@ -2425,7 +2429,7 @@ msgstr ""
 "    label-side: left),\n"
 ")\n"
 
-#: ../../zero-allocation.rst:639
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:639
 msgid ""
 "Engine publication. The storage thread publishes a complete engine and "
 "advances the generation; each connection checks the generation with one "
@@ -2438,11 +2442,11 @@ msgstr ""
 "publicación. Un motor antiguo se libera cuando lo suelta la última caché "
 "que lo retiene."
 
-#: ../../zero-allocation.rst:642
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:642
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
 msgstr "Implementación: ``EngineSlot::publish`` y ``EngineCache::refresh``"
 
-#: ../../zero-allocation.rst:644
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:644
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
@@ -2450,7 +2454,7 @@ msgstr ""
 "La publicación de un motor completo y la vista que tiene de él una "
 "conexión. En ``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
 
-#: ../../zero-allocation.rst:646
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:646
 msgid ""
 "pub struct EngineSlot {\n"
 "    current: RwLock<Arc<Engine>>,\n"
@@ -2526,7 +2530,7 @@ msgstr ""
 "    self.engine.get_or_insert_with(|| slot.load())\n"
 "}"
 
-#: ../../zero-allocation.rst:681
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:681
 msgid ""
 "The generation is stored with release ordering after the engine is in "
 "place, and loaded with acquire ordering: a reader that sees a new "
@@ -2549,7 +2553,7 @@ msgstr ""
 "un motor a medio construir, porque en el espacio solo se almacenan "
 "motores completos."
 
-#: ../../zero-allocation.rst:685
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:685
 msgid ""
 "Every engine a request reads is complete, and no engine is freed while "
 "any request or connection cache holds it. The first holds because an "
@@ -2563,7 +2567,7 @@ msgstr ""
 "lo almacene; lo segundo, porque cada lector tiene un ``Arc`` y el motor "
 "solo se libera con su último ``Arc``."
 
-#: ../../zero-allocation.rst:687
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:687
 msgid ""
 "Why a cache and not simply a lock? SID 0010 asked us to measure the read "
 "cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a "
@@ -2580,7 +2584,7 @@ msgstr ""
 "cambio, se escribe una vez por publicación y por lo demás solo se lee, "
 "así que cada núcleo conserva su copia:"
 
-#: ../../zero-allocation.rst:689
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:689
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
@@ -2588,55 +2592,55 @@ msgstr ""
 "Coste de una lectura del motor, Ryzen 9 5950X, 16 hilos leyendo en bucle "
 "(octubre de 2026)"
 
-#: ../../zero-allocation.rst:692
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:692
 msgid "Reader"
 msgstr "Lector"
 
-#: ../../zero-allocation.rst:693
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:693
 msgid "1 thread"
 msgstr "1 hilo"
 
-#: ../../zero-allocation.rst:694
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:694
 msgid "16 threads"
 msgstr "16 hilos"
 
-#: ../../zero-allocation.rst:695
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:695
 msgid "``RwLock`` read guard only"
 msgstr "solo el guardián de lectura de ``RwLock``"
 
-#: ../../zero-allocation.rst:696
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:696
 msgid "4.2 ns"
 msgstr "4,2 ns"
 
-#: ../../zero-allocation.rst:697
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:697
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../zero-allocation.rst:698
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:698
 msgid "``RwLock`` read and ``Arc`` clone"
 msgstr "lectura de ``RwLock`` y clonación de ``Arc``"
 
-#: ../../zero-allocation.rst:699
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:699
 msgid "7.6 ns"
 msgstr "7,6 ns"
 
-#: ../../zero-allocation.rst:700
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:700
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../zero-allocation.rst:701
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:701
 msgid "generation check with a cached ``Arc``"
 msgstr "comprobación de generación con un ``Arc`` en caché"
 
-#: ../../zero-allocation.rst:702
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:702
 msgid "0.8 ns"
 msgstr "0,8 ns"
 
-#: ../../zero-allocation.rst:703
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:703
 msgid "1.8 ns"
 msgstr "1,8 ns"
 
-#: ../../zero-allocation.rst:705
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:705
 msgid ""
 "Under contention the cached read is more than 400 times cheaper than the "
 "lock, so the request path uses the cache and the ``RwLock`` only on the "
@@ -2659,11 +2663,11 @@ msgstr ""
 "capacidad para 128 reglas, nombres de regla de 128 bytes y 8.192 nodos "
 "del trie."
 
-#: ../../zero-allocation.rst:707
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:707
 msgid "Why ``Arc`` and not reader counts"
 msgstr "Por qué ``Arc`` y no contadores de lectores"
 
-#: ../../zero-allocation.rst:709
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:709
 msgid ""
 "The fixed-memory alternative keeps two engine slots, each with a reader "
 "count and its own allocation arena. A request pins a slot by incrementing "
@@ -2689,7 +2693,7 @@ msgstr ""
 "origen lento detendría la siguiente publicación a menos que cada petición "
 "liberara su espacio antes de empezar la E/S del proxy."
 
-#: ../../zero-allocation.rst:711
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:711
 msgid ""
 "``Arc`` reference counting needs none of this. The storage thread builds "
 "a fresh ``Engine`` from each snapshot and publishes it; nothing is "
@@ -2715,11 +2719,11 @@ msgstr ""
 "mutable. Una conexión que ha cambiado de protocolo, y que puede vivir "
 "horas, libera su motor en caché antes de pasar por el proxy."
 
-#: ../../zero-allocation.rst:713
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:713
 msgid "Exercise 5.2"
 msgstr "Ejercicio 5.2"
 
-#: ../../zero-allocation.rst:715
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:715
 msgid ""
 "Using the GCRA theorem, compute the maximum number of requests a single "
 "client can get through in the first 3 seconds after being idle, for "
@@ -2732,11 +2736,11 @@ msgstr ""
 "Compáralo con un contador de ventana fija de 10 segundos y con un "
 "registro de ventana deslizante real."
 
-#: ../../zero-allocation.rst:717
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:717
 msgid "Explain the invariant"
 msgstr "Explica el invariante"
 
-#: ../../zero-allocation.rst:719
+#: ../../../../../../home/insan/projects/sibuna/docs/book/zero-allocation.rst:719
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."

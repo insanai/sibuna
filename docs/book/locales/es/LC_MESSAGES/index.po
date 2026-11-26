@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:14+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../index.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/index.rst:1
 msgid "The Sibuna Book"
 msgstr "El libro de Sibuna"
 
-#: ../../index.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/index.rst:4
 msgid ""
 "This book follows a request from a browser to the application that "
 "answers it. We begin with a railway timetable served by two computers. "

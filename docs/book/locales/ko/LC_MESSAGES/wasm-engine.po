@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../wasm-engine.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:1
 msgid "Part VII: The Browser Proof-of-Work Engine"
 msgstr "제VII부: 브라우저 작업 증명 엔진"
 
-#: ../../wasm-engine.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:4
 msgid ""
 "We look at the WebAssembly module that compiles the server's own verifier "
 "crate, the Web Worker protocol, the JavaScript fallback provers, and the "
@@ -30,16 +30,17 @@ msgstr ""
 "서버 자신의 검증자 crate를 컴파일한 WebAssembly 모듈, Web Worker 프로토콜, JavaScript 대체 "
 "증명자, 그리고 중간 페이지를 살펴봅니다."
 
-#: ../../wasm-engine.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:6
 msgid "One Source, Two Targets"
 msgstr "소스 하나, 타깃 두 개"
 
-#: ../../wasm-engine.rst:9 ../../wasm-engine.rst:172
-#: ../../wasm-engine.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:211
 msgid "Objectives"
 msgstr "학습 목표"
 
-#: ../../wasm-engine.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:11
 msgid ""
 "By the end of this chapter, we should be able to explain how the browser "
 "module is built from the server's own ``sibuna-pow`` crate, name the "
@@ -49,11 +50,11 @@ msgstr ""
 "이 장을 마치면 브라우저 모듈이 서버 자신의 ``sibuna-pow`` crate로부터 어떻게 빌드되는지 설명하고, 내보낸 함수의 "
 "이름을 대며, 순차 작업 증명자가 탭 안에서 필요로 하는 메모리를 설명할 수 있어야 합니다."
 
-#: ../../wasm-engine.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:13
 msgid "Build Wiring"
 msgstr "빌드 연결"
 
-#: ../../wasm-engine.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:16
 msgid ""
 "The browser solver compiles the exact sources the server verifies with. "
 "``cmd/sibuna-pow-wasm`` is a ``no_std`` library crate of type ``cdylib``, "
@@ -64,7 +65,7 @@ msgstr ""
 "``wasm32-unknown-unknown``\\ 용으로 빌드하는 ``cdylib`` 유형의 ``no_std`` 라이브러리 "
 "crate이며, 의존성은 워크스페이스 crate인 ``sibuna-pow``\\ 와 ``sibuna-crypto``\\ 뿐입니다."
 
-#: ../../wasm-engine.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:18
 msgid ""
 "# cmd/sibuna-pow-wasm/Cargo.toml\n"
 "[lib]\n"
@@ -94,7 +95,7 @@ msgstr ""
 "debug = false\n"
 "strip = true"
 
-#: ../../wasm-engine.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:34
 msgid ""
 "The daemon embeds the module. Its build script (``cmd/sibuna/build.rs``) "
 "runs a nested ``cargo rustc -p sibuna-pow-wasm --target "
@@ -116,7 +117,7 @@ msgstr ""
 "``SIBUNA_POW_WASM=<path>``\\ 로 미리 빌드한 모듈을 대신 내장합니다. 그런 다음 데몬은 그 바이트를 "
 "바이너리에 포함합니다."
 
-#: ../../wasm-engine.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:36
 msgid ""
 "/// The browser solver, built by `build.rs` from `cmd/sibuna-pow-wasm`.\n"
 "pub const WASM_SOLVER: &[u8] =\n"
@@ -130,7 +131,7 @@ msgstr ""
 "/// 솔버의 Web Worker.\n"
 "pub const WORKER_JS: &str = include_str!(\"../../../web/worker.js\");"
 
-#: ../../wasm-engine.rst:44
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:44
 msgid ""
 "There is no second implementation to drift. The module is served from the "
 "daemon at ``/__sibuna/wasm/sibuna-pow.wasm`` with a one-hour cache header "
@@ -144,37 +145,37 @@ msgstr ""
 "14,744바이트입니다(``benchmarks/results/primitives-latest.json``\\ 의 "
 "``wasm_bytes``)."
 
-#: ../../wasm-engine.rst:46
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:46
 msgid "Exports"
 msgstr "내보낸 함수"
 
-#: ../../wasm-engine.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:49
 msgid ""
 "The module exports six functions, and the worker script calls them by "
 "name:"
 msgstr "모듈은 함수 여섯 개를 내보내며, 워커 스크립트는 이름으로 이 함수들을 호출합니다."
 
-#: ../../wasm-engine.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:55
 msgid "Export"
 msgstr "내보낸 함수"
 
-#: ../../wasm-engine.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:56
 msgid "Purpose"
 msgstr "용도"
 
-#: ../../wasm-engine.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:57
 msgid "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
 msgstr "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
 
-#: ../../wasm-engine.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:58
 msgid "256-byte input buffer the worker writes the challenge string into"
 msgstr "워커가 챌린지 문자열을 써 넣는 256바이트 입력 버퍼"
 
-#: ../../wasm-engine.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:59
 msgid "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
 msgstr "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
 
-#: ../../wasm-engine.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:60
 msgid ""
 "Hashcash: search ``max_steps`` nonces from ``start``; returns the nonce "
 "or the all-ones sentinel"
@@ -182,11 +183,11 @@ msgstr ""
 "Hashcash: ``start``\\ 부터 nonce ``max_steps``\\ 개를 탐색하고, nonce 또는 모든 비트가 "
 "1인 표식 값을 반환합니다"
 
-#: ../../wasm-engine.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:61
 msgid "``sibuna_solve_sha256(ptr, len, bits)``"
 msgstr "``sibuna_solve_sha256(ptr, len, bits)``"
 
-#: ../../wasm-engine.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:62
 msgid ""
 "Hashcash in one batch from nonce 0 (``sibuna_solve_step`` with "
 "``u32::MAX`` steps)"
@@ -194,25 +195,25 @@ msgstr ""
 "nonce 0부터 한 번의 배치로 실행하는 Hashcash(``u32::MAX`` 단계로 호출한 "
 "``sibuna_solve_step``)"
 
-#: ../../wasm-engine.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:63
 msgid "``sibuna_posw_solve(len, depth, challenges)``"
 msgstr "``sibuna_posw_solve(len, depth, challenges)``"
 
-#: ../../wasm-engine.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:64
 msgid ""
 "Sequential work: runs the prover over the buffer and returns the proof "
 "length, or 0 for invalid arguments"
 msgstr "순차 작업: 버퍼에 대해 증명자를 실행하고 증명 길이를 반환하며, 인수가 잘못되면 0을 반환합니다"
 
-#: ../../wasm-engine.rst:65
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:65
 msgid "``sibuna_posw_proof_ptr()``"
 msgstr "``sibuna_posw_proof_ptr()``"
 
-#: ../../wasm-engine.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:66
 msgid "Start of the proof bytes in the prover workspace"
 msgstr "증명자 작업 공간 안에서 증명 바이트가 시작하는 위치"
 
-#: ../../wasm-engine.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:68
 msgid ""
 "The prover's workspace, the retained top levels, the sibling stack, and "
 "the proof, is a static region of about 92 KiB; no allocator is linked, "
@@ -223,11 +224,11 @@ msgstr ""
 "모듈에는 가져오기(import)가 없습니다. ``Workspace::new``\\ 는 ``const fn``\\ 이므로 이 정적 "
 "영역은 모듈 안의 초기화된 데이터가 아니라 0으로 채운 메모리만 차지합니다."
 
-#: ../../wasm-engine.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:70
 msgid "Implementation: ``sibuna_solve_step``"
 msgstr "구현: ``sibuna_solve_step``"
 
-#: ../../wasm-engine.rst:72
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:72
 msgid ""
 "The Hashcash export: borrows the challenge from linear memory and runs "
 "one batch of the shared nonce search. In "
@@ -236,7 +237,7 @@ msgstr ""
 "Hashcash 내보내기 함수입니다. 선형 메모리에서 챌린지를 빌려 공유 nonce 탐색을 한 배치 실행합니다. "
 "``cmd/sibuna-pow-wasm/src/lib.rs``\\ (crate ``sibuna-pow-wasm``)에 있습니다."
 
-#: ../../wasm-engine.rst:74
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:74
 msgid ""
 "#[unsafe(no_mangle)]\n"
 "pub unsafe extern \"C\" fn sibuna_solve_step(\n"
@@ -282,7 +283,7 @@ msgstr ""
 "        .unwrap_or(EXHAUSTED)\n"
 "}"
 
-#: ../../wasm-engine.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:96
 msgid ""
 "The exports are the crate's foreign function boundary, and the only place "
 "its ``unsafe`` code lives. The input buffer and the prover workspace are "
@@ -306,11 +307,11 @@ msgstr ""
 "의 함수는 모든 입력에 대해 정의된 전함수(total function)이고 결코 패닉하지 않으므로, 구조상 패닉에는 도달할 수 "
 "없습니다."
 
-#: ../../wasm-engine.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:98
 msgid "Prefix Pre-Hashing"
 msgstr "접두사 사전 해싱"
 
-#: ../../wasm-engine.rst:101
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:101
 msgid ""
 "The Hashcash inner loop absorbs the challenge and the colon once and "
 "clones the SHA-256 state per nonce, so each candidate costs one "
@@ -322,7 +323,7 @@ msgstr ""
 "압축 두 번이 아니라 한 번입니다. 탐색은 브라우저 모듈과 네이티브 참조 솔버가 공유하는 "
 "``sibuna_pow::hashcash::Search``\\ 입니다."
 
-#: ../../wasm-engine.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:103
 msgid ""
 "pub fn new(challenge: &[u8]) -> Self {\n"
 "    let mut prefix = Sha256::new();\n"
@@ -375,7 +376,7 @@ msgstr ""
 "    None\n"
 "}"
 
-#: ../../wasm-engine.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:130
 msgid ""
 "The hasher state is a plain value of about 110 bytes, so the clone is "
 "cheap. The sequential-work prover uses the same trick with the statement "
@@ -389,7 +390,7 @@ msgstr ""
 "합니다. 명제를 한 번 흡수한 상태에서 챌린지로 지정된 잎을 각각 도출하므로, 같은 다이제스트를 얻으면서 검증에서 압축 "
 ":math:`t`\\ 번을 아낍니다."
 
-#: ../../wasm-engine.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:132
 msgid ""
 "On the server the compression function uses the x86-64 SHA extensions or "
 "the ARMv8 SHA-2 instructions, detected at run time. In the browser there "
@@ -407,7 +408,7 @@ msgstr ""
 "위해 작성되었습니다. 64라운드를 펼쳐 놓았고, 메시지 스케줄은 16워드 창에 두어 16라운드부터는 각 라운드가 더는 필요 없는 "
 "워드를 덮어쓰며, 작업 변수 여덟 개는 옮기는 대신 라운드마다 이름을 바꿉니다."
 
-#: ../../wasm-engine.rst:134
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:134
 msgid ""
 "fn compress_block(state: &mut State, block: &Block) {\n"
 "    let mut w = [0u32; 16];\n"
@@ -478,7 +479,7 @@ msgstr ""
 "    w[i % 16]\n"
 "}"
 
-#: ../../wasm-engine.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:167
 msgid ""
 "Each ``eight_rounds!`` is one full turn of the variable names: the macro "
 "passes them rotated by one position per round, so a round writes only two "
@@ -494,11 +495,11 @@ msgstr ""
 "되고, 블록 전체가 값이 WebAssembly 지역 변수에 머무는 직선 코드가 됩니다. 이 배치는 펼치지 않은 루프로 64워드 "
 "스케줄을 계산하는 방식보다 V8에서 약 20%, 네이티브에서 약 14% 빠릅니다(Rust 구현으로 측정, 2026년 10월)."
 
-#: ../../wasm-engine.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:169
 msgid "The Worker Protocol"
 msgstr "워커 프로토콜"
 
-#: ../../wasm-engine.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:174
 msgid ""
 "Read the message protocol, understand the fallback hierarchy, and see the "
 "sentinel bug that the signed-integer boundary between WebAssembly and "
@@ -507,13 +508,13 @@ msgstr ""
 "메시지 프로토콜을 읽고, 대체 경로의 순서를 이해하며, WebAssembly와 JavaScript 사이의 부호 있는 정수 경계가 "
 "일으킨 표식 값 버그를 살펴봅니다."
 
-#: ../../wasm-engine.rst:176
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:176
 msgid ""
 "The page posts one message to ``web/worker.js`` and receives progress, "
 "fallback, and result messages:"
 msgstr "페이지는 ``web/worker.js``\\ 에 메시지 하나를 보내고 진행, 대체, 결과 메시지를 받습니다."
 
-#: ../../wasm-engine.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:178
 msgid ""
 "// page -> worker\n"
 "{ challenge: spec.id, algorithm: spec.algorithm, difficulty: "
@@ -543,7 +544,7 @@ msgstr ""
 "} // posw\n"
 "{ type: 'error', message: '...' }"
 
-#: ../../wasm-engine.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:191
 msgid ""
 "The worker tries WebAssembly first and falls back to pure JavaScript when "
 "``WebAssembly`` is absent, blocked by policy, or fails to instantiate. "
@@ -560,11 +561,11 @@ msgstr ""
 "확인하며, SID 0010은 솔버가 헤드리스 브라우저에서 WebAssembly로도, JavaScript 대체 경로로도 통과하도록 "
 "요구합니다. JavaScript 증명자는 훨씬 느리지만 모든 브라우저가 통과할 수 있음을 보장합니다."
 
-#: ../../wasm-engine.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:193
 msgid "The signed sentinel"
 msgstr "부호 있는 표식 값"
 
-#: ../../wasm-engine.rst:196
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:196
 msgid ""
 "WebAssembly returns a 64-bit integer to JavaScript as a *signed* "
 "``BigInt``. The Hashcash export signals \"batch exhausted\" with all ones "
@@ -580,7 +581,7 @@ msgstr ""
 "부호 없는 값과 비교했으므로, 루프가 첫 배치 뒤에 엉터리 nonce를 가지고 끝났습니다. 수정은 "
 "``BigInt.asUintN(64, result)`` 호출 한 번이며, 워커에는 지금도 이 호출이 남아 있습니다."
 
-#: ../../wasm-engine.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:198
 msgid ""
 "// WebAssembly i64 results arrive as signed BigInts, so the u64\n"
 "// \"exhausted\" sentinel (all ones) reads back as -1n.\n"
@@ -594,7 +595,7 @@ msgstr ""
 "    ex.sibuna_solve_step(ptr, encoded.length, bits, nonce, maxSteps));\n"
 "if (found !== 18446744073709551615n) return found.toString();"
 
-#: ../../wasm-engine.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:206
 msgid ""
 "The lesson generalises: every u64 crossing the boundary must be "
 "normalised. Rust cannot enforce this on the JavaScript side; the export's "
@@ -603,17 +604,17 @@ msgstr ""
 "이 교훈은 일반적으로 적용됩니다. 경계를 넘는 모든 u64는 정규화해야 합니다. Rust는 JavaScript 쪽에서 이를 강제할 "
 "수 없습니다. 내보내기 함수의 타입은 ``u64``\\ 이고, 변환은 엔진 안에서 일어납니다."
 
-#: ../../wasm-engine.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:208
 msgid "Calibration"
 msgstr "보정"
 
-#: ../../wasm-engine.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:213
 msgid ""
 "Relate difficulty settings to wall-clock time in a browser engine and on "
 "native silicon."
 msgstr "난이도 설정을 브라우저 엔진과 네이티브 실리콘에서의 실제 경과 시간과 연결합니다."
 
-#: ../../wasm-engine.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:215
 msgid ""
 "Do not choose a difficulty from one laptop's average solve. Hashcash has "
 "a geometric tail; browser clocks include scheduling, thermal state, "
@@ -626,11 +627,11 @@ msgstr ""
 "스케줄링, 발열 상태, 시작과 컴파일 시간이 포함됩니다. 배포를 보정할 때는 브라우저 버전, 기기, 알고리즘, 매개변수, 그리고 "
 "반복 풀이의 분포를 기록해야 합니다. 모듈을 가져오고 컴파일하는 시간은 정상 상태의 해싱과 분리하세요."
 
-#: ../../wasm-engine.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:217
 msgid "Worked calibration plan"
 msgstr "풀이 예제: 보정 계획"
 
-#: ../../wasm-engine.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:219
 msgid ""
 "Hold :math:`b` fixed, warm the module, and solve at least 100 "
 "independently issued puzzles on each target device class. Record median "
@@ -644,7 +645,7 @@ msgstr ""
 "되지만 개별 표본은 그렇지 않을 수 있습니다. 느린 기기의 예산에 맞춰 설정을 고른 다음, 가져오기, 풀이, 검증의 전체 흐름을 "
 "시험합니다."
 
-#: ../../wasm-engine.rst:221
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:221
 msgid ""
 "The repository's native primitive measurements are not evidence for a "
 "promised phone or browser solve time. A WASM module can run the same "
@@ -658,11 +659,11 @@ msgstr ""
 "실행하면서도 시작, 실행, 메모리 비용이 다를 수 있습니다. 네이티브 서버는 SHA-NI로 해시하지만, 브라우저는 위의 이식 가능한 "
 "압축 함수를 실행합니다. 워커의 메시지는 서버의 요청 처리기에 타이머를 추가하지 않고도 이 비용을 측정할 수 있는 경계입니다."
 
-#: ../../wasm-engine.rst:223
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:223
 msgid "The Interstitial"
 msgstr "중간 페이지"
 
-#: ../../wasm-engine.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:226
 msgid ""
 "The page (``web/challenge.html``, embedded in the daemon) is a single "
 "HTML file with a card, an indeterminate progress bar, and a status line. "
@@ -684,11 +685,11 @@ msgstr ""
 "링크(``/__sibuna/honeypot``)는 사람에게도, 스크립트를 실행하는 브라우저에게도 보이지 않습니다. 모든 "
 "``href``\\ 를 따라가는 맹목적인 크롤러는 스스로 차단됩니다."
 
-#: ../../wasm-engine.rst:228
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:228
 msgid "Exercise 7.1"
 msgstr "연습 문제 7.1"
 
-#: ../../wasm-engine.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:230
 msgid ""
 "Suppose the WebAssembly prover solves a challenge at the default "
 "difficulty in 20 ms on a laptop, and the JavaScript sequential prover is "
@@ -701,11 +702,11 @@ msgstr ""
 "느리다고 합시다. 그 노트북과 네 배 느린 휴대폰에서 대체 경로의 풀이 시간을 추정하고, 대체 경로를 보고하는 클라이언트를 위한 "
 "정책을 제안하세요(힌트: 워커는 페이지가 전달할 수 있는 ``fallback`` 메시지를 보냅니다)."
 
-#: ../../wasm-engine.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:232
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../wasm-engine.rst:234
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:234
 msgid ""
 "Explain why compiling the browser module from the server's verifier "
 "sources is a stronger guarantee than testing two implementations against "

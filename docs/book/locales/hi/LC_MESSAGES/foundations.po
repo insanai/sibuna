@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../foundations.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:1
 msgid "Part I: The Cost of a Request"
 msgstr "भाग I: एक अनुरोध की लागत"
 
-#: ../../foundations.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:4
 msgid ""
 "Before choosing an algorithm, identify the resource it is meant to "
 "protect. This chapter builds the small models that every later design "
@@ -34,11 +34,11 @@ msgstr ""
 "(amortisation), और वह मेमोरी जिसे कोई अविश्वसनीय क्लाइंट सर्वर से रखवा "
 "सकता है।"
 
-#: ../../foundations.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:6
 msgid "Objectives"
 msgstr "उद्देश्य"
 
-#: ../../foundations.rst:8
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:8
 msgid ""
 "By the end of this chapter, we should be able to write the inequality "
 "that decides whether a gate pays for itself, state what a proof of work "
@@ -52,11 +52,11 @@ msgstr ""
 "निकालना; समझाना कि सत्र कार्य की लागत को कैसे बाँटते हैं; और उन पाँच "
 "अपरिवर्तनीय नियमों की सूची देना जिन्हें शेष पुस्तक बनाए रखती है।"
 
-#: ../../foundations.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:10
 msgid "Admission Is an Economic Decision"
 msgstr "प्रवेश एक आर्थिक निर्णय है"
 
-#: ../../foundations.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:13
 msgid ""
 "Suppose an origin performs a database lookup and renders a page for each "
 "admitted request. Let :math:`c_o` be that work, :math:`c_g` the gate's "
@@ -75,13 +75,13 @@ msgstr ""
 ":math:`r c_g` खर्च करता है। गेट केवल तभी उपयोगी है जब ऑरिजिन के बचाए गए "
 "कार्य की मात्रा उसकी अपनी लागत और वैध आगंतुकों पर डाली गई लागत से अधिक हो।"
 
-#: ../../foundations.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:15
 msgid ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 msgstr ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 
-#: ../../foundations.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:19
 msgid ""
 "This is a capacity model, not a measurement. It omits bandwidth, "
 "connection state, storage, and client delay. Its value is that every "
@@ -95,11 +95,11 @@ msgstr ""
 "क्वेरी उसे बड़ा कर सकती है। अनुरोधकर्ता और सर्वर की लागत का कोई "
 "सार्वभौमिक अनुपात नहीं है।"
 
-#: ../../foundations.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:21
 msgid "Worked example: when a gate pays for itself"
 msgstr "हल किया गया उदाहरण: गेट कब अपनी लागत वसूल करता है"
 
-#: ../../foundations.rst:23
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:23
 msgid ""
 "Choose :math:`c_o = 100` work units and :math:`c_g = 1`. If half the "
 "requests are rejected, the gated system spends :math:`1 + 0.5 \\times 100 "
@@ -115,11 +115,11 @@ msgstr ""
 "बचाता है उससे अधिक खर्च करता है। ये चुनी हुई संख्याएँ समय-माप नहीं हैं। "
 "वे दिखाती हैं कि हर प्रदर्शन दावे में वर्कलोड का उल्लेख क्यों होना चाहिए।"
 
-#: ../../foundations.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:25
 msgid "What a Proof of Work Establishes"
 msgstr "Proof of work क्या स्थापित करता है"
 
-#: ../../foundations.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:28
 msgid ""
 "A client puzzle establishes that somebody found an input satisfying a "
 "public verification rule. It does not establish humanity, identity, or "
@@ -135,7 +135,7 @@ msgstr ""
 "या कार्य को कई मशीनों में बाँट सकता है। पहेली प्रवेश की लागत बदलती है; "
 "स्वीकृत अनुरोध क्या कर सकते हैं, यह अब भी नीति और निरीक्षण तय करते हैं।"
 
-#: ../../foundations.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:30
 msgid ""
 "Address-based limits are complementary. They constrain one address, but "
 "shared addresses can represent many people and one requester can use many "
@@ -148,11 +148,11 @@ msgstr ""
 "उपयोग कर सकता है। न पहेली और न ही पता पहचान बताने वाला ओरेकल है। इसलिए "
 "Sibuna प्रवेश, निरीक्षण और प्रतिष्ठा को अलग-अलग निर्णय रखता है।"
 
-#: ../../foundations.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:32
 msgid "Hash Search as a Random Variable"
 msgstr "यादृच्छिक चर के रूप में हैश खोज"
 
-#: ../../foundations.rst:35
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:35
 msgid ""
 "For an ideal 256-bit digest, requiring :math:`b` leading zero bits gives "
 "success probability :math:`p = 2^{-b}` for each independent trial. Let "
@@ -162,23 +162,23 @@ msgstr ""
 "स्वतंत्र प्रयास की सफलता की प्रायिकता :math:`p = 2^{-b}` होती है। मान लें "
 ":math:`K` पहली सफलता तक के प्रयासों की संख्या है। तब"
 
-#: ../../foundations.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:37
 msgid ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 msgstr ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 
-#: ../../foundations.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:41
 msgid "The expectation follows from the tail sum:"
 msgstr "अपेक्षा टेल के योग से निकलती है:"
 
-#: ../../foundations.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:43
 msgid ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 msgstr ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 
-#: ../../foundations.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:47
 msgid ""
 "A difficulty step doubles expected trials. It does not promise that every "
 "puzzle takes twice as long. Some succeed on the first trial; some take "
@@ -190,7 +190,7 @@ msgstr ""
 "में औसत से कहीं अधिक समय लगता है। जो क्लाइंट केवल एक हल को मापता है, उसने "
 "मुख्यतः इसी यादृच्छिकता को मापा है।"
 
-#: ../../foundations.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:50
 msgid ""
 "A curve falling from 1 at x = 0 towards 0 at x = 4. At x = 1 a marked "
 "point shows that a search is still running with probability e to the "
@@ -202,7 +202,7 @@ msgstr ""
 "जारी रहती है; x लगभग 3.0 पर दूसरा बिंदु दिखाता है कि 95 प्रतिशत खोजें "
 "समाप्त हो चुकी हैं।"
 
-#: ../../foundations.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:50
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/survival.typ\": draw\n"
@@ -214,7 +214,7 @@ msgstr ""
 "#show: chart.with(lang: \"hi\")\n"
 "#draw()\n"
 
-#: ../../foundations.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:50
 msgid ""
 "Survival probability of hash search: the probability that a search is "
 "still running after :math:`x` times the expected number of trials, in the "
@@ -224,11 +224,11 @@ msgstr ""
 "संख्या के :math:`x` गुना प्रयासों के बाद भी खोज जारी रहने की प्रायिकता, "
 "बड़े कार्य वाले सन्निकटन :math:`P(K > x/p) \\approx e^{-x}` में।"
 
-#: ../../foundations.rst:53
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:53
 msgid "Worked example: expectation is not a deadline"
 msgstr "हल किया गया उदाहरण: अपेक्षा कोई समय-सीमा नहीं है"
 
-#: ../../foundations.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:55
 msgid ""
 "At :math:`b = 16`, the expected work is 65,536 hashes. The probability of "
 "still searching after that many trials is approximately :math:`e^{-1} = "
@@ -244,11 +244,11 @@ msgstr ""
 "को अपेक्षित पूर्णता समय पर विफलता घोषित करने के बजाय इस फैलाव को सहना "
 "चाहिए।"
 
-#: ../../foundations.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:57
 msgid "Sessions Amortise Work"
 msgstr "सत्र कार्य की लागत बाँटते हैं"
 
-#: ../../foundations.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:60
 msgid ""
 "Suppose a session permits :math:`m` requests before expiry, a puzzle "
 "costs :math:`c_p`, verification costs :math:`c_v`, and a session check "
@@ -266,11 +266,11 @@ msgstr ""
 "दोनों की समान रूप से मदद करता है। इसे चुनना नीति का निर्णय है, "
 "क्रिप्टोग्राफ़िक अनुकूलन नहीं।"
 
-#: ../../foundations.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:62
 msgid "Exercise 1.1"
 msgstr "अभ्यास 1.1"
 
-#: ../../foundations.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:64
 msgid ""
 "A client gets 100 requests per session and performs a puzzle costing one "
 "million trials. What is the amortized work per request? What changes if "
@@ -280,16 +280,16 @@ msgstr ""
 "पहेली हल करता है। प्रति अनुरोध औसत कार्य कितना है? यदि वह सत्र को किसी "
 "दूसरी प्रोसेस के साथ साझा करे तो क्या बदलता है?"
 
-#: ../../foundations.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:66
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
 msgstr "संकेत: लेखांकन मॉडल और टोकन की वास्तविक बाइंडिंग में अंतर करें।"
 
-#: ../../foundations.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:68
 msgid "Bounded State Is a Second Budget"
 msgstr "सीमित अवस्था एक दूसरा बजट है"
 
-#: ../../foundations.rst:71
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:71
 msgid ""
 "Moving work off the request path does not make it disappear. Let "
 "incidents arrive at rate :math:`\\lambda`, let the storage thread persist "
@@ -301,11 +301,11 @@ msgstr ""
 "से सहेजता है, और कतार :math:`Q` रिकॉर्ड रख सकती है। जब :math:`\\lambda > "
 "\\mu` हो, तो एक तरल (fluid) सन्निकटन देता है"
 
-#: ../../foundations.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:73
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
-#: ../../foundations.rst:77
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:77
 msgid ""
 "A larger queue buys time; it does not create throughput. Batching "
 "amortizes transaction cost, but retained records still need memory and "
@@ -320,11 +320,11 @@ msgstr ""
 "वह मेमोरी में रखी अवस्था से अनुरोधों के निर्णय लेता रहता है। ऑपरेटर को "
 "HTTP सफलता दर के साथ-साथ खोए हुए साक्ष्य की भी निगरानी करनी चाहिए।"
 
-#: ../../foundations.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:79
 msgid "Exercise 1.2"
 msgstr "अभ्यास 1.2"
 
-#: ../../foundations.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:81
 msgid ""
 "A queue holds 512 records. Arrival rate is 1,000/s and drain rate is "
 "600/s. How long can an initially empty queue absorb the excess? Why is "
@@ -334,35 +334,35 @@ msgstr ""
 "शुरू में खाली कतार अतिरिक्त भार को कितनी देर तक सोख सकती है? उत्तर केवल "
 "एक सन्निकटन क्यों है?"
 
-#: ../../foundations.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:83
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
 msgstr ""
 "संकेत: दरों का अंतर उपयोग करें, फिर बर्स्ट और बैच कमिट पर विचार करें।"
 
-#: ../../foundations.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:85
 msgid "The Invariants We Will Carry Forward"
 msgstr "वे अपरिवर्तनीय नियम जिन्हें हम आगे ले जाएँगे"
 
-#: ../../foundations.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:88
 msgid "Untrusted requests cannot create unbounded server state."
 msgstr "अविश्वसनीय अनुरोध सर्वर पर असीमित अवस्था नहीं बना सकते।"
 
-#: ../../foundations.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:89
 msgid "A valid admission token does not bypass an application denial."
 msgstr "वैध प्रवेश टोकन एप्लिकेशन की अस्वीकृति को बायपास नहीं करता।"
 
-#: ../../foundations.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:90
 msgid "A buffer remains alive for every slice borrowed from it."
 msgstr "किसी बफ़र से उधार ली गई हर स्लाइस के रहते वह बफ़र जीवित रहता है।"
 
-#: ../../foundations.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:91
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
 msgstr ""
 "टिकाऊ रीट्राई किसी घटना या उसके प्रतिष्ठा प्रभाव को कई गुना नहीं कर सकता।"
 
-#: ../../foundations.rst:92
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:92
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
@@ -370,7 +370,7 @@ msgstr ""
 "प्रकाशित नीति स्नैपशॉट तब तक अपरिवर्तनीय रहता है जब तक उसका अंतिम पाठक "
 "उसे छोड़ नहीं देता।"
 
-#: ../../foundations.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:94
 msgid ""
 "The rest of the book derives the mechanisms that make these statements "
 "true, and the tests that would reveal a violation. A fast path is useful "
@@ -380,11 +380,11 @@ msgstr ""
 "परीक्षण भी जो किसी उल्लंघन को उजागर करेंगे। कोई तेज़ पाथ केवल तभी तक "
 "उपयोगी है जब तक ये कथन सत्य रहते हैं।"
 
-#: ../../foundations.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:96
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाएँ"
 
-#: ../../foundations.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:98
 msgid ""
 "State the gate inequality :math:`c_g < (1-a) c_o` in words, then explain "
 "why a measured verification latency alone cannot tell an operator whether "

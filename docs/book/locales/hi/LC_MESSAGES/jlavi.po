@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../jlavi.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:1
 msgid "Configuring Sibuna with Jlavi"
 msgstr "Jlavi से Sibuna का कॉन्फ़िगरेशन"
 
-#: ../../jlavi.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:4
 msgid ""
 "Jlavi is Sibuna's configuration language. We use it to describe the "
 "topology that Sibuna should serve. At startup or reload, Sibuna evaluates "
@@ -34,7 +34,7 @@ msgstr ""
 "कॉन्फ़िगरेशन वाले स्कीमा से जाँचता है। वर्कर आगे के ट्रैफ़िक के लिए "
 "इन्हीं रूटों का उपयोग करते हैं।"
 
-#: ../../jlavi.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:6
 msgid ""
 "We try each complete example in its own working directory. We stop the "
 "running example before starting another that uses the same port."
@@ -43,11 +43,11 @@ msgstr ""
 "का उपयोग करने वाला दूसरा उदाहरण शुरू करने से पहले हम चल रहा उदाहरण रोकते "
 "हैं।"
 
-#: ../../jlavi.rst:8
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:8
 msgid "Read the language"
 msgstr "भाषा की संरचना"
 
-#: ../../jlavi.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:11
 msgid ""
 "Source files use UTF-8. An identifier starts with an ASCII letter or "
 "underscore and can then contain digits. A newline ends a statement. Lists "
@@ -62,7 +62,7 @@ msgstr ""
 "टिप्पणी ``/*`` से ``*/`` तक होती है और उसके भीतर दूसरी ब्लॉक टिप्पणी नहीं "
 "रख सकते।"
 
-#: ../../jlavi.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:13
 msgid ""
 "We start with a function. Its parameters have types. The type after "
 "``->`` describes its result. We can put this helper above the entry point "
@@ -72,7 +72,7 @@ msgstr ""
 "``->`` के बाद का प्रकार उसके परिणाम का प्रकार है। इसी फ़ाइल में प्रवेश "
 "फ़ंक्शन से पहले हम यह सहायक फ़ंक्शन लिख सकते हैं।"
 
-#: ../../jlavi.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:15
 msgid ""
 "fn address(host: Text, port: Int) -> Text {\n"
 "    return \"${host}:${port}\"\n"
@@ -82,7 +82,7 @@ msgstr ""
 "    return \"${host}:${port}\"\n"
 "}"
 
-#: ../../jlavi.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:21
 msgid ""
 "The call ``address(\"127.0.0.1\", 9000)`` returns ``\"127.0.0.1:9000\"``. "
 "Inside a string, ``${...}`` inserts the value of the enclosed expression. "
@@ -94,7 +94,7 @@ msgstr ""
 "आता है। सहायक फ़ंक्शन डेटा बनाता है। Sibuna तैयार कॉन्फ़िगरेशन से सेवा "
 "शुरू करते समय ही लिसनर खोलता है।"
 
-#: ../../jlavi.rst:23
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:23
 msgid ""
 "Sibuna calls ``edge()`` with no arguments. Its result type is "
 "``Map<Value>``. The keys are text. The values can have different types, "
@@ -108,7 +108,7 @@ msgstr ""
 "स्विच रख सकते हैं। सूची का क्रम बना रहता है। HTTP रूटों में यह महत्वपूर्ण "
 "है क्योंकि Sibuna पहला मेल खाने वाला रूट चुनता है।"
 
-#: ../../jlavi.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:25
 msgid ""
 "A colon separates a field name from its value. Commas separate fields and "
 "list elements. A trailing comma is allowed. Write a port as part of the "
@@ -120,11 +120,11 @@ msgstr ""
 "उद्धरण चिह्नों वाले लिसन पते के भीतर लिखते हैं, कनेक्शन की सीमा को दशमलव "
 "पूर्णांक के रूप में और http3 जैसे विकल्प को true या false के रूप में।"
 
-#: ../../jlavi.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:27
 msgid "Build a web pool"
 msgstr "वेब पूल बनाएँ"
 
-#: ../../jlavi.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:30
 msgid ""
 "We can now describe the two timetable servers from :doc:`introduction` in "
 "a file. We save this module as ``edge.jlv``. A frontend listens on port "
@@ -138,7 +138,7 @@ msgstr ""
 "shield HTTP अनुरोधों को जाँचता है और पूल स्वीकृत अनुरोधों को दो "
 "प्रतिकृतियों में बाँटता है।"
 
-#: ../../jlavi.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:32
 msgid ""
 "fn edge() -> Map<Value> {\n"
 "    let hosts = [\"127.0.0.1\", \"127.0.0.2\"]\n"
@@ -162,7 +162,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../jlavi.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:43
 msgid ""
 "The binding ``let hosts`` gives the list a name for the rest of the "
 "function. Its value stays fixed. The expression ``[for host in hosts: "
@@ -175,7 +175,7 @@ msgstr ""
 "है। ऊपर का सहायक फ़ंक्शन शामिल करें तो हम यहाँ ``address(host, 9000)`` भी "
 "लिख सकते हैं।"
 
-#: ../../jlavi.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:45
 msgid ""
 "We check the module before opening the listener. To generate a module "
 "from a working ``sibuna lb`` command we add ``--print-config`` to that "
@@ -184,7 +184,7 @@ msgstr ""
 "लिसनर खोलने से पहले हम मॉड्यूल जाँचते हैं। किसी चालू ``sibuna lb`` कमांड "
 "से मॉड्यूल बनाने के लिए हम उसी कमांड में ``--print-config`` जोड़ते हैं।"
 
-#: ../../jlavi.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:47
 msgid ""
 "sibuna check -f edge.jlv\n"
 "sibuna --config-file edge.jlv"
@@ -192,11 +192,11 @@ msgstr ""
 "sibuna check -f edge.jlv\n"
 "sibuna --config-file edge.jlv"
 
-#: ../../jlavi.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:52
 msgid "Name replicas with a helper"
 msgstr "सहायक फ़ंक्शन से प्रतिरूपों को नाम देना"
 
-#: ../../jlavi.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:55
 msgid ""
 "When replicas have names and weights, we can build each server record "
 "with the same function. We add the import at the top of the module and "
@@ -208,7 +208,7 @@ msgstr ""
 "``edge()`` के पहले सहायक फ़ंक्शन रखते हैं। शर्त का मान बूलियन होता है। "
 "आयातित टेक्स्ट लाइब्रेरी नाम के अक्षरों को लोअरकेस में बदलती है।"
 
-#: ../../jlavi.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:57
 msgid ""
 "import { text } from jlv.std.foundation\n"
 "\n"
@@ -230,7 +230,7 @@ msgstr ""
 "    return { name: name, addr: address, weight: 1 }\n"
 "}"
 
-#: ../../jlavi.rst:69
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:69
 msgid ""
 "In the first timetable pool we can replace the entire ``servers`` list "
 "with the expression below. Evaluating it produces two records that Sibuna "
@@ -240,7 +240,7 @@ msgstr ""
 "सकते हैं। इसके मूल्यांकन से दो रिकॉर्ड बनते हैं, जिनकी जाँच Sibuna किसी "
 "भी सर्वर से संपर्क करने से पहले कर सकता है।"
 
-#: ../../jlavi.rst:71
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:71
 msgid ""
 "[replica(\"East\", \"127.0.0.1:9000\", true), replica(\"West\", "
 "\"127.0.0.2:9000\", false)]"
@@ -248,11 +248,11 @@ msgstr ""
 "[replica(\"East\", \"127.0.0.1:9000\", true), replica(\"West\", "
 "\"127.0.0.2:9000\", false)]"
 
-#: ../../jlavi.rst:75
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:75
 msgid "Serve and observe a protected application"
 msgstr "सुरक्षित ऐप्लिकेशन चलाना और उसकी निगरानी"
 
-#: ../../jlavi.rst:78
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:78
 msgid ""
 "We save the following module as ``station.jlv``. We give the timetable a "
 "health check and twice as much weight on the first replica. A request "
@@ -266,7 +266,7 @@ msgstr ""
 "स्टेशन का हेडर है। केवल कर्मचारी फ़्रंटएंड पर एक अलग कनेक्शन हुक नए "
 "कनेक्शन के बारे में स्थानीय एजेंट से पूछता है।"
 
-#: ../../jlavi.rst:80
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:80
 msgid ""
 "fn edge() -> Map<Value> {\n"
 "    return {\n"
@@ -366,7 +366,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../jlavi.rst:121
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:121
 msgid ""
 "We set the node's flow limit in ``global`` and the HTTP request allowance "
 "in ``http``. The ``plugins`` map names the checks. Each frontend chooses "
@@ -380,7 +380,7 @@ msgstr ""
 "बुलाते हैं और 64 कनेक्शन प्रतीक्षा कर सकते हैं। कंसोल अपने खाते और ऑडिट "
 "रिकॉर्ड अपनी SQLite डायरेक्टरी में रखता है।"
 
-#: ../../jlavi.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:123
 msgid ""
 "The value of ``http.policy_file`` names a JSON file. We save this policy "
 "as ``policy.json`` beside the module. It challenges requests by default "
@@ -392,7 +392,7 @@ msgstr ""
 "और पुरानी, हटा दी गई समय-सारणी के अनुरोध अस्वीकार करती है। सापेक्ष पथ सही "
 "मिलें इसलिए हम उसी डायरेक्टरी से कमांड चलाते हैं।"
 
-#: ../../jlavi.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:125
 msgid ""
 "{\n"
 "  \"default_action\": \"CHALLENGE\",\n"
@@ -406,7 +406,7 @@ msgstr ""
 "\"action\": \"DENY\" }]\n"
 "}"
 
-#: ../../jlavi.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:132
 msgid ""
 "(umask 077 && openssl rand 32 > http.key)\n"
 "mkdir -p console-data\n"
@@ -420,7 +420,7 @@ msgstr ""
 "sibuna check -f station.jlv\n"
 "sibuna --config-file station.jlv"
 
-#: ../../jlavi.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:140
 msgid ""
 "We create the seed and administrator once. Each replica must answer ``GET "
 "/healthz`` and the staff agent must listen on ``staff.sock`` before it "
@@ -433,7 +433,7 @@ msgstr ""
 "जाँच सकते हैं, पूल देख सकते हैं और ``http://127.0.0.1:9443/console/`` पर "
 "साइन इन कर सकते हैं।"
 
-#: ../../jlavi.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:142
 msgid ""
 "curl http://127.0.0.1:9100/ready\n"
 "sibuna ctl edge.sock show servers\n"
@@ -443,11 +443,11 @@ msgstr ""
 "sibuna ctl edge.sock show servers\n"
 "sibuna ctl edge.sock show hooks"
 
-#: ../../jlavi.rst:148
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:148
 msgid "Route a browser and an RPC client"
 msgstr "ब्राउज़र और RPC क्लाइंट के रूट"
 
-#: ../../jlavi.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:151
 msgid ""
 "This module uses a typed helper to name an origin. The public portal uses "
 "the shield. Calls under ``/orders.Orders/`` use an HTTP/2 pool and skip "
@@ -458,7 +458,7 @@ msgstr ""
 "कॉल HTTP/2 पूल का उपयोग करती हैं और ब्राउज़र फ़ायरवॉल को पार कर जाती हैं। "
 "RPC सेवा को अपने कॉलर की पहचान सत्यापित करनी होगी।"
 
-#: ../../jlavi.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:153
 msgid ""
 "fn service(name: Text, address: Text) -> Map<Value> {\n"
 "    return { name: name, addr: address }\n"
@@ -516,7 +516,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../jlavi.rst:179
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:179
 msgid ""
 "We replace the example names and addresses before deployment. For a "
 "public name the ACME authority must be able to validate our domain. For "
@@ -528,7 +528,7 @@ msgstr ""
 "प्रमाणपत्र Sibuna स्थानीय रूप से जारी और नवीनीकृत करता है। हम हर क्लाइंट "
 "के ट्रस्ट स्टोर में स्थानीय रूट प्रमाणपत्र स्थापित करते हैं।"
 
-#: ../../jlavi.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:181
 msgid ""
 "Browsers can negotiate HTTP/2 over TCP or HTTP/3 over UDP on port 443. "
 "The portal pool uses the default HTTP/1.1 upstream. The orders pool "
@@ -546,11 +546,11 @@ msgstr ""
 "``auto`` की जगह ``crt: \"portal.pem\"`` रखते हैं और सेवा वाले नामों के "
 "प्रमाणपत्र और निजी कुंजियाँ देते हैं।"
 
-#: ../../jlavi.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:183
 msgid "Relay a TCP service"
 msgstr "TCP सेवा को रिले करना"
 
-#: ../../jlavi.rst:186
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:186
 msgid ""
 "Some clients speak a protocol of their own. We give the frontend and its "
 "pool the same protocol. This complete module relays a connection to one "
@@ -562,7 +562,7 @@ msgstr ""
 "में से एक को भेजता है। फ़्रंटएंड हर स्रोत के नए कनेक्शन सीमित करता है और "
 "पूल जाँचता है कि हर स्रोत TCP कनेक्शन स्वीकार कर रहा है।"
 
-#: ../../jlavi.rst:188
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:188
 msgid ""
 "fn edge() -> Map<Value> {\n"
 "    return {\n"
@@ -592,11 +592,11 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../jlavi.rst:203
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:203
 msgid "Share a UDP topology"
 msgstr "UDP टोपोलॉजी साझा करना"
 
-#: ../../jlavi.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:206
 msgid ""
 "Both nodes can use this module. In an empty directory we create mesh.key "
 "with 32 random bytes and copy it securely to the other node. Each node "
@@ -610,7 +610,7 @@ msgstr ""
 "जाँच उसी निर्देशिका में चलाते हैं। साझा कुंजी पीयर का प्रमाणीकरण करती है "
 "और accept_config से नोड क्लस्टर रीलोड स्वीकार करते हैं।"
 
-#: ../../jlavi.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:208
 msgid ""
 "fn edge() -> Map<Value> {\n"
 "    let peers = [\"10.20.0.11\", \"10.20.0.12\"]\n"
@@ -670,7 +670,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../jlavi.rst:235
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:235
 msgid ""
 "We run the first command on one node only. On the second node we use the "
 "same key and put 10.20.0.12:7946 in mesh.self. Each DNS listener serves "
@@ -680,7 +680,7 @@ msgstr ""
 "हैं और mesh.self में 10.20.0.12:7946 लिखते हैं। हर DNS लिसनर अपने नोड के "
 "लूपबैक इंटरफ़ेस पर क्लाइंट के अनुरोध लेता है।"
 
-#: ../../jlavi.rst:237
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:237
 msgid ""
 "(umask 077 && openssl rand 32 > mesh.key)\n"
 "printf '%s\\n' '10.20.0.11:7946' > mesh.self"
@@ -688,7 +688,7 @@ msgstr ""
 "(umask 077 && openssl rand 32 > mesh.key)\n"
 "printf '%s\\n' '10.20.0.11:7946' > mesh.self"
 
-#: ../../jlavi.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:242
 msgid ""
 "The pool remembers a client's resolver. Each node keeps its own spill "
 "file for recovering choices after a restart. The mesh shares choices and "
@@ -703,11 +703,11 @@ msgstr ""
 "``sibuna ctl edge.sock show cluster`` से उनके संशोधनों की तुलना कर सकते "
 "हैं।"
 
-#: ../../jlavi.rst:244
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:244
 msgid "Publish routes from a database"
 msgstr "डेटाबेस से रूट प्रकाशित करना"
 
-#: ../../jlavi.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:247
 msgid ""
 "For a versioned topology we keep two modules. We use the first timetable "
 "example as ``edge.jlv``. Its ``frontends``, ``backends`` and ``http`` are "
@@ -721,7 +721,7 @@ msgstr ""
 "सहेजते हैं। स्थानीय बाइंड पता देने से यह नोड प्रकाशित वेब फ़्रंटएंड को "
 "पोर्ट 8180 पर चला सकता है।"
 
-#: ../../jlavi.rst:249
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:249
 msgid ""
 "fn edge() -> Map<Value> {\n"
 "    return {\n"
@@ -745,7 +745,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../jlavi.rst:261
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:261
 msgid ""
 "sibuna authority apply -c node.jlv -f edge.jlv --expect 0 --note \"first "
 "timetable\"\n"
@@ -757,7 +757,7 @@ msgstr ""
 "sibuna authority history -c node.jlv\n"
 "sibuna --config-file node.jlv"
 
-#: ../../jlavi.rst:267
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:267
 msgid ""
 "This example uses a build with SQLite support. We use revision zero only "
 "for a new database. Before the next change we run ``sibuna authority diff "
@@ -775,11 +775,11 @@ msgstr ""
 "URL वाली सुरक्षित फ़ाइल का पथ बताते हैं। हर होस्ट अपना नोड नाम और स्थानीय "
 "बाइंड पते देता है।"
 
-#: ../../jlavi.rst:269
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:269
 msgid "Evaluation and diagnostics"
 msgstr "मूल्यांकन और निदान"
 
-#: ../../jlavi.rst:272
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:272
 msgid ""
 "Sibuna exposes the pure ``jlv.std.foundation`` library. Helpers live in "
 "the same module. Deployment resources, filesystem operations and imports "
@@ -792,7 +792,7 @@ msgstr ""
 "फ़ाइलों से इम्पोर्ट इस इंटरफ़ेस के बाहर हैं। स्रोत और परिणामी JSON की "
 "अलग-अलग सीमा 256 KiB है। मूल्यांकन का बजट दस लाख चरण है।"
 
-#: ../../jlavi.rst:274
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:274
 msgid ""
 "If the compiler reports an unknown name, we check its spelling and type "
 "at the reported line and column. If validation reports an unknown "
@@ -804,11 +804,11 @@ msgstr ""
 "गए मैप में मौजूद पूल का नाम ले रहा है। रीलोड अस्वीकार होने पर पहले का "
 "रूटिंग कॉन्फ़िगरेशन चलता रहता है।"
 
-#: ../../jlavi.rst:276
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:276
 msgid "Where to configure each part"
 msgstr "हर भाग की सेटिंग कहाँ लिखें"
 
-#: ../../jlavi.rst:279
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:279
 msgid ""
 "The following sections give the supported options, defaults and restart "
 "rules. A map in an operations example belongs at the same position in the "
@@ -820,19 +820,19 @@ msgstr ""
 "रखते हैं। JSON में उद्धरणों वाला फ़ील्ड ``\"max_flows\": 4096`` हम Jlavi "
 "में ``max_flows: 4096`` लिख सकते हैं।"
 
-#: ../../jlavi.rst:285
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:285
 msgid "Jlavi field"
 msgstr "Jlavi फ़ील्ड"
 
-#: ../../jlavi.rst:286
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:286
 msgid "Operations reference"
 msgstr "संचालन संदर्भ"
 
-#: ../../jlavi.rst:287
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:287
 msgid "``global``"
 msgstr "``global``"
 
-#: ../../jlavi.rst:288
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:288
 msgid ""
 ":ref:`edge-global-limits`, :ref:`edge-reload-drain-and-shutdown`, "
 ":ref:`edge-replacing-the-binary-without-losing-a-connection`"
@@ -840,11 +840,11 @@ msgstr ""
 ":ref:`edge-global-limits`, :ref:`edge-reload-drain-and-shutdown`, "
 ":ref:`edge-replacing-the-binary-without-losing-a-connection`"
 
-#: ../../jlavi.rst:289
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:289
 msgid "``frontends``"
 msgstr "``frontends``"
 
-#: ../../jlavi.rst:290
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:290
 msgid ""
 ":ref:`edge-http-routing-by-name-and-path`, "
 ":ref:`edge-redirects-headers-and-body-limits`, :ref:`edge-websockets`, "
@@ -856,19 +856,19 @@ msgstr ""
 ":ref:`edge-admission-at-the-socket-edge`, "
 ":ref:`edge-tcp-inspection-and-proxy-v2`"
 
-#: ../../jlavi.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:291
 msgid "``frontends.*.tls``"
 msgstr "``frontends.*.tls``"
 
-#: ../../jlavi.rst:292
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:292
 msgid ":ref:`edge-tls-certificates`, :ref:`edge-automatic-https`"
 msgstr ":ref:`edge-tls-certificates`, :ref:`edge-automatic-https`"
 
-#: ../../jlavi.rst:293
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:293
 msgid "``backends``"
 msgstr "``backends``"
 
-#: ../../jlavi.rst:294
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:294
 msgid ""
 ":ref:`edge-scheduling-and-health-checks`, "
 ":ref:`edge-timeouts-and-failover`, "
@@ -878,11 +878,11 @@ msgstr ""
 ":ref:`edge-timeouts-and-failover`, "
 ":ref:`edge-servers-that-speak-tls-http-2-or-http-3`, :ref:`edge-grpc`"
 
-#: ../../jlavi.rst:295
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:295
 msgid "``http``"
 msgstr "``http``"
 
-#: ../../jlavi.rst:296
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:296
 msgid ""
 ":ref:`edge-turning-the-firewall-on-and-off`, :ref:`edge-rate-limiting`, "
 ":ref:`edge-the-http-object`, :ref:`edge-declarative-policy`"
@@ -890,11 +890,11 @@ msgstr ""
 ":ref:`edge-turning-the-firewall-on-and-off`, :ref:`edge-rate-limiting`, "
 ":ref:`edge-the-http-object`, :ref:`edge-declarative-policy`"
 
-#: ../../jlavi.rst:297
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:297
 msgid "``mesh``"
 msgstr "``mesh``"
 
-#: ../../jlavi.rst:298
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:298
 msgid ""
 ":ref:`edge-bans-across-a-cluster`, :ref:`edge-one-file-for-the-cluster`, "
 ":ref:`edge-one-node-for-each-client`"
@@ -902,11 +902,11 @@ msgstr ""
 ":ref:`edge-bans-across-a-cluster`, :ref:`edge-one-file-for-the-cluster`, "
 ":ref:`edge-one-node-for-each-client`"
 
-#: ../../jlavi.rst:299
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:299
 msgid "``spill``"
 msgstr "``spill``"
 
-#: ../../jlavi.rst:300
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:300
 msgid ""
 ":ref:`edge-sticky-sessions`, "
 ":ref:`edge-keeping-the-sticky-table-over-a-restart`, "
@@ -916,39 +916,39 @@ msgstr ""
 ":ref:`edge-keeping-the-sticky-table-over-a-restart`, "
 ":ref:`edge-a-sticky-table-and-a-limit-for-the-whole-cluster`"
 
-#: ../../jlavi.rst:301
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:301
 msgid "``observability``"
 msgstr "``observability``"
 
-#: ../../jlavi.rst:302
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:302
 msgid ":ref:`edge-observing-the-edge`"
 msgstr ":ref:`edge-observing-the-edge`"
 
-#: ../../jlavi.rst:303
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:303
 msgid "``console``"
 msgstr "``console``"
 
-#: ../../jlavi.rst:304
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:304
 msgid ":ref:`edge-the-operator-console-of-the-edge`"
 msgstr ":ref:`edge-the-operator-console-of-the-edge`"
 
-#: ../../jlavi.rst:305
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:305
 msgid "``plugins``, ``hook_judges``"
 msgstr "``plugins``, ``hook_judges``"
 
-#: ../../jlavi.rst:306
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:306
 msgid ":ref:`edge-hooks-a-decision-of-our-own-on-the-path`"
 msgstr ":ref:`edge-hooks-a-decision-of-our-own-on-the-path`"
 
-#: ../../jlavi.rst:307
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:307
 msgid "``authority``"
 msgstr "``authority``"
 
-#: ../../jlavi.rst:308
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:308
 msgid ":ref:`edge-a-database-for-the-topology`"
 msgstr ":ref:`edge-a-database-for-the-topology`"
 
-#: ../../jlavi.rst:310
+#: ../../../../../../home/insan/projects/sibuna/docs/book/jlavi.rst:310
 msgid ""
 "Standalone firewall deployments select reverse proxy or forward "
 "authentication with ``--mode``. Their incident and reputation storage is "

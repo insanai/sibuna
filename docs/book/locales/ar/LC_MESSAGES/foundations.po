@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
 "n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
-#: ../../foundations.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:1
 msgid "Part I: The Cost of a Request"
 msgstr "الجزء الأول: تكلفة الطلب"
 
-#: ../../foundations.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:4
 msgid ""
 "Before choosing an algorithm, identify the resource it is meant to "
 "protect. This chapter builds the small models that every later design "
@@ -34,11 +34,11 @@ msgstr ""
 "وعمل اللغز، وتوزيع تكلفة العمل على الجلسة، والذاكرة التي يستطيع عميل غير "
 "موثوق أن يجبر الخادم على الاحتفاظ بها."
 
-#: ../../foundations.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:6
 msgid "Objectives"
 msgstr "الأهداف"
 
-#: ../../foundations.rst:8
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:8
 msgid ""
 "By the end of this chapter, we should be able to write the inequality "
 "that decides whether a gate pays for itself, state what a proof of work "
@@ -51,11 +51,11 @@ msgstr ""
 "المتوقعة للبحث عن التجزئة وذيله، وشرح كيف توزع الجلسات تكلفة العمل، وسرد "
 "اللامتغيرات الخمسة التي يحافظ عليها بقية الكتاب."
 
-#: ../../foundations.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:10
 msgid "Admission Is an Economic Decision"
 msgstr "القبول قرار اقتصادي"
 
-#: ../../foundations.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:13
 msgid ""
 "Suppose an origin performs a database lookup and renders a page for each "
 "admitted request. Let :math:`c_o` be that work, :math:`c_g` the gate's "
@@ -74,13 +74,13 @@ msgstr ""
 ":math:`r c_g`. ولا تكون البوابة مفيدة إلا عندما يزيد عمل الخادم الأصلي "
 "الذي توفره على تكلفتها هي وعلى التكلفة التي تفرضها على الزوار الشرعيين."
 
-#: ../../foundations.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:15
 msgid ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 msgstr ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 
-#: ../../foundations.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:19
 msgid ""
 "This is a capacity model, not a measurement. It omits bandwidth, "
 "connection state, storage, and client delay. Its value is that every "
@@ -93,11 +93,11 @@ msgstr ""
 "التخزين المؤقت :math:`c_o` صغيرة، وقد يجعلها استعلام مكلف كبيرة. ولا توجد "
 "نسبة عامة بين تكلفة صاحب الطلب وتكلفة الخادم."
 
-#: ../../foundations.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:21
 msgid "Worked example: when a gate pays for itself"
 msgstr "مثال محلول: متى تسترد البوابة تكلفتها"
 
-#: ../../foundations.rst:23
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:23
 msgid ""
 "Choose :math:`c_o = 100` work units and :math:`c_g = 1`. If half the "
 "requests are rejected, the gated system spends :math:`1 + 0.5 \\times 100 "
@@ -113,11 +113,11 @@ msgstr ""
 "المختارة ليست أزمنة مقيسة. إنها تبين لماذا يجب ذكر عبء العمل في كل ادعاء "
 "عن الأداء."
 
-#: ../../foundations.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:25
 msgid "What a Proof of Work Establishes"
 msgstr "ما يثبته إثبات العمل"
 
-#: ../../foundations.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:28
 msgid ""
 "A client puzzle establishes that somebody found an input satisfying a "
 "public verification rule. It does not establish humanity, identity, or "
@@ -132,7 +132,7 @@ msgstr ""
 "عدة أجهزة. يغير اللغز تكلفة القبول؛ أما ما يجوز للطلبات المقبولة أن تفعله "
 "فتقرره السياسة والفحص."
 
-#: ../../foundations.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:30
 msgid ""
 "Address-based limits are complementary. They constrain one address, but "
 "shared addresses can represent many people and one requester can use many "
@@ -145,11 +145,11 @@ msgstr ""
 "كثيرة. لا اللغز ولا العنوان مصدر موثوق للهوية. لذلك يبقي Sibuna القبول "
 "والفحص والسمعة قرارات منفصلة."
 
-#: ../../foundations.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:32
 msgid "Hash Search as a Random Variable"
 msgstr "البحث عن التجزئة متغيرًا عشوائيًا"
 
-#: ../../foundations.rst:35
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:35
 msgid ""
 "For an ideal 256-bit digest, requiring :math:`b` leading zero bits gives "
 "success probability :math:`p = 2^{-b}` for each independent trial. Let "
@@ -159,23 +159,23 @@ msgstr ""
 "احتمال نجاح :math:`p = 2^{-b}` لكل محاولة مستقلة. ليكن :math:`K` عدد "
 "المحاولات حتى أول نجاح، بما فيها تلك المحاولة. عندئذ"
 
-#: ../../foundations.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:37
 msgid ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 msgstr ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 
-#: ../../foundations.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:41
 msgid "The expectation follows from the tail sum:"
 msgstr "تنتج القيمة المتوقعة من مجموع الذيل:"
 
-#: ../../foundations.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:43
 msgid ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 msgstr ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 
-#: ../../foundations.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:47
 msgid ""
 "A difficulty step doubles expected trials. It does not promise that every "
 "puzzle takes twice as long. Some succeed on the first trial; some take "
@@ -187,7 +187,7 @@ msgstr ""
 "أطول من المتوسط بكثير. والعميل الذي يقيس حلًا واحدًا فقط قد قاس في الغالب "
 "هذه العشوائية."
 
-#: ../../foundations.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:50
 msgid ""
 "A curve falling from 1 at x = 0 towards 0 at x = 4. At x = 1 a marked "
 "point shows that a search is still running with probability e to the "
@@ -198,7 +198,7 @@ msgstr ""
 "أن البحث يبقى جاريًا باحتمال e أس سالب 1، أي نحو 0.368؛ وعند x يساوي نحو "
 "3.0 تُظهر نقطة ثانية أن 95 بالمئة من عمليات البحث قد انتهت."
 
-#: ../../foundations.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:50
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/survival.typ\": draw\n"
@@ -210,7 +210,7 @@ msgstr ""
 "#show: chart.with(lang: \"ar\")\n"
 "#draw()\n"
 
-#: ../../foundations.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:50
 msgid ""
 "Survival probability of hash search: the probability that a search is "
 "still running after :math:`x` times the expected number of trials, in the "
@@ -220,11 +220,11 @@ msgstr ""
 "المحاولات يبلغ :math:`x` ضعف العدد المتوقع، وفق تقريب العمل الكبير "
 ":math:`P(K > x/p) \\approx e^{-x}`."
 
-#: ../../foundations.rst:53
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:53
 msgid "Worked example: expectation is not a deadline"
 msgstr "مثال محلول: القيمة المتوقعة ليست موعدًا نهائيًا"
 
-#: ../../foundations.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:55
 msgid ""
 "At :math:`b = 16`, the expected work is 65,536 hashes. The probability of "
 "still searching after that many trials is approximately :math:`e^{-1} = "
@@ -239,11 +239,11 @@ msgstr ""
 "\\rceil \\approx 196327`، أي نحو ثلاثة أضعاف المتوسط. ينبغي لواجهة "
 "المستخدم أن تتحمل هذا التفاوت بدل أن تعلن الفشل عند وقت الإكمال المتوقع."
 
-#: ../../foundations.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:57
 msgid "Sessions Amortise Work"
 msgstr "الجلسات توزع تكلفة العمل"
 
-#: ../../foundations.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:60
 msgid ""
 "Suppose a session permits :math:`m` requests before expiry, a puzzle "
 "costs :math:`c_p`, verification costs :math:`c_v`, and a session check "
@@ -260,11 +260,11 @@ msgstr ""
 "عمر الجلسة تفيد الناس والعملاء الآليين على حد سواء. واختيار هذا العمر "
 "قرار سياسة، لا تحسين تشفيري."
 
-#: ../../foundations.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:62
 msgid "Exercise 1.1"
 msgstr "تمرين 1.1"
 
-#: ../../foundations.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:64
 msgid ""
 "A client gets 100 requests per session and performs a puzzle costing one "
 "million trials. What is the amortized work per request? What changes if "
@@ -273,16 +273,16 @@ msgstr ""
 "يحصل عميل على 100 طلب لكل جلسة، ويحل لغزًا يكلف مليون محاولة. ما العمل "
 "الموزع لكل طلب؟ وما الذي يتغير إذا شارك الجلسة مع عملية ثانية؟"
 
-#: ../../foundations.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:66
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
 msgstr "تلميح: ميّز بين نموذج المحاسبة وما يرتبط به الرمز فعلًا."
 
-#: ../../foundations.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:68
 msgid "Bounded State Is a Second Budget"
 msgstr "الحالة المحدودة ميزانية ثانية"
 
-#: ../../foundations.rst:71
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:71
 msgid ""
 "Moving work off the request path does not make it disappear. Let "
 "incidents arrive at rate :math:`\\lambda`, let the storage thread persist "
@@ -294,11 +294,11 @@ msgstr ""
 "الطابور يتسع لـ :math:`Q` سجلًا. عندما يكون :math:`\\lambda > \\mu`، يعطي "
 "تقريب السوائل"
 
-#: ../../foundations.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:73
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
-#: ../../foundations.rst:77
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:77
 msgid ""
 "A larger queue buys time; it does not create throughput. Batching "
 "amortizes transaction cost, but retained records still need memory and "
@@ -313,11 +313,11 @@ msgstr ""
 "ويستمر في اتخاذ قرارات الطلبات من الحالة التي في الذاكرة. ويجب أن يراقب "
 "المشغل الأدلة المفقودة إلى جانب معدل نجاح HTTP."
 
-#: ../../foundations.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:79
 msgid "Exercise 1.2"
 msgstr "تمرين 1.2"
 
-#: ../../foundations.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:81
 msgid ""
 "A queue holds 512 records. Arrival rate is 1,000/s and drain rate is "
 "600/s. How long can an initially empty queue absorb the excess? Why is "
@@ -327,43 +327,43 @@ msgstr ""
 "الوقت يستطيع طابور فارغ في البداية أن يمتص الفائض؟ ولماذا ليست الإجابة "
 "إلا تقريبًا؟"
 
-#: ../../foundations.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:83
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
 msgstr ""
 "تلميح: استخدم الفرق بين المعدلين، ثم انظر في الدفعات المفاجئة وفي تثبيت "
 "المعاملات على دفعات."
 
-#: ../../foundations.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:85
 msgid "The Invariants We Will Carry Forward"
 msgstr "اللامتغيرات التي نحافظ عليها فيما يلي"
 
-#: ../../foundations.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:88
 msgid "Untrusted requests cannot create unbounded server state."
 msgstr "لا تستطيع الطلبات غير الموثوقة إنشاء حالة غير محدودة على الخادم."
 
-#: ../../foundations.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:89
 msgid "A valid admission token does not bypass an application denial."
 msgstr "رمز القبول الصالح لا يتخطى رفضًا صادرًا عن فحص التطبيق."
 
-#: ../../foundations.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:90
 msgid "A buffer remains alive for every slice borrowed from it."
 msgstr "يبقى المخزن المؤقت حيًّا ما دامت أي مقطع (slice) مستعار منه باقية."
 
-#: ../../foundations.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:91
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
 msgstr ""
 "لا تستطيع إعادة محاولة الحفظ الدائم أن تكرر حادثًا أو أثره في السمعة."
 
-#: ../../foundations.rst:92
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:92
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
 msgstr ""
 "لقطة السياسة المنشورة غير قابلة للتغيير حتى يتخلى عنها آخر قارئ لها."
 
-#: ../../foundations.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:94
 msgid ""
 "The rest of the book derives the mechanisms that make these statements "
 "true, and the tests that would reveal a violation. A fast path is useful "
@@ -373,11 +373,11 @@ msgstr ""
 "تكشف أي خرق لها. ولا يكون المسار السريع مفيدًا إلا ما دامت هذه العبارات "
 "صحيحة."
 
-#: ../../foundations.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:96
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../foundations.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:98
 msgid ""
 "State the gate inequality :math:`c_g < (1-a) c_o` in words, then explain "
 "why a measured verification latency alone cannot tell an operator whether "

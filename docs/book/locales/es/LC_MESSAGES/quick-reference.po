@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:19+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../quick-reference.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:1
 msgid "Part XIII: Quick Reference Card"
 msgstr "Parte XIII: Tarjeta de referencia rápida"
 
-#: ../../quick-reference.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:4
 msgid ""
 "Keep beside a terminal: build, run, configure, route, observe, and "
 "diagnose. Part XII holds the full tables; this card holds what an "
@@ -31,11 +31,11 @@ msgstr ""
 "observar y diagnosticar. La parte XII contiene las tablas completas; esta "
 "tarjeta contiene lo que teclea un operador."
 
-#: ../../quick-reference.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:6
 msgid "Build"
 msgstr "Compilar"
 
-#: ../../quick-reference.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:9
 msgid ""
 "cargo build --release -p sibuna                          # daemon + "
 "SQLite + console + JLV + ACME\n"
@@ -71,11 +71,11 @@ msgstr ""
 "benchmarks/results/\n"
 "guidedog build        # este libro (guidedog dsc: los registros SID)"
 
-#: ../../quick-reference.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:22
 msgid "Run"
 msgstr "Ejecutar"
 
-#: ../../quick-reference.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:25
 msgid ""
 "# Shield (default): PoW + WAF, proxy to :3000\n"
 "sibuna -p 8080 -u 3000 -s /etc/sibuna/secret\n"
@@ -112,11 +112,11 @@ msgstr ""
 "/etc/sibuna/secret\n"
 "head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret"
 
-#: ../../quick-reference.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:41
 msgid "Edge load balancer"
 msgstr "Balanceador de carga del edge"
 
-#: ../../quick-reference.rst:44
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:44
 msgid ""
 "sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80   # no "
 "file needed\n"
@@ -195,7 +195,7 @@ msgid ""
 "HAProxy-style bundle"
 msgstr ""
 
-#: ../../quick-reference.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:87
 msgid ""
 "{\n"
 "  \"http\": {\"surface\": \"shield\", \"rate_limit\": 100, "
@@ -231,7 +231,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../quick-reference.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:111
 msgid ""
 "``\"http\": {\"surface\": \"off\"}`` gives a load balancer with no "
 "firewall. TCP and UDP frontends never use the firewall."
@@ -239,7 +239,7 @@ msgstr ""
 "``\"http\": {\"surface\": \"off\"}`` da un balanceador de carga sin "
 "cortafuegos. Los frontends TCP y UDP nunca usan el cortafuegos."
 
-#: ../../quick-reference.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:113
 msgid ""
 "The operator console of the edge (SID 0031) needs a ``console`` section "
 "in the file:"
@@ -247,7 +247,7 @@ msgstr ""
 "La consola del operador del edge (SID 0031) necesita una sección "
 "``console`` en el archivo:"
 
-#: ../../quick-reference.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:115
 msgid ""
 "# console: { listen: \"127.0.0.1:9443\", data_dir: \"/var/lib/sibuna\", "
 "node: 1 }\n"
@@ -265,7 +265,7 @@ msgid ""
 "http://127.0.0.1:9443/console/api/edge/command"
 msgstr ""
 
-#: ../../quick-reference.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:125
 msgid ""
 "The command route takes ``set server ... state|weight``, ``add server``, "
 "``del server``, ``del ban``, ``reload cluster`` and ``show "
@@ -277,7 +277,7 @@ msgstr ""
 "servers|cluster|certs|ca``, cada uno con las comprobaciones de ``sibuna "
 "ctl``. Necesita el rol de operador."
 
-#: ../../quick-reference.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:127
 msgid ""
 "Admission options of a frontend (SID 0032): ``\"defer_accept\": \"5s\"`` "
 "and ``\"backlog\": 4096`` on ``tcp`` and ``http``; ``\"inspect_bytes\"`` "
@@ -291,11 +291,30 @@ msgstr ""
 "\"deny\"}}`` junto a ``tcp_inspect``; ``\"udp_inspect\": \"quic\"`` en "
 "``udp``. Todas están desactivadas por defecto."
 
-#: ../../quick-reference.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:129
+msgid ""
+"Admission under attack (SID 0034): ``\"max_flows_per_ip\": 20`` and "
+"``\"max_flows\": 5000`` on any frontend; ``\"refuse\": \"reset\"`` (the "
+"default), ``\"close\"`` or ``\"tarpit\"`` and ``\"auto_ban\": "
+"{\"strikes\": 50, \"window\": \"10s\", \"ban\": \"10m\"}`` on ``tcp`` and "
+"``http``; ``\"total_pps\"`` in ``udp_defense``; ``\"pressure\": {\"on\": "
+"90, \"off\": 75, \"new_per_second\": 1000}`` (on by default, ``\"off\"`` "
+"switches it off) and ``\"accept_threads\": \"auto\"`` in ``global``."
+msgstr ""
+"Admisión bajo ataque (SID 0034): ``\"max_flows_per_ip\": 20`` y "
+"``\"max_flows\": 5000`` en cualquier frontend; ``\"refuse\": \"reset\"`` "
+"(el valor por defecto), ``\"close\"`` o ``\"tarpit\"`` y ``\"auto_ban\": "
+"{\"strikes\": 50, \"window\": \"10s\", \"ban\": \"10m\"}`` en ``tcp`` y "
+"``http``; ``\"total_pps\"`` en ``udp_defense``; ``\"pressure\": {\"on\": "
+"90, \"off\": 75, \"new_per_second\": 1000}`` (activo por defecto, "
+"``\"off\"`` lo desactiva) y ``\"accept_threads\": \"auto\"`` en "
+"``global``."
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:131
 msgid "Console (opt-in preview)"
 msgstr "Consola (versión preliminar opcional)"
 
-#: ../../quick-reference.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:134
 msgid ""
 "# Initialize while the daemon is stopped, then start the console\n"
 "sibuna init-admin admin --data-dir ./data\n"
@@ -305,7 +324,7 @@ msgstr ""
 "sibuna init-admin admin --data-dir ./data\n"
 "sibuna --data-dir ./data --console 127.0.0.1:19446"
 
-#: ../../quick-reference.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:140
 msgid ""
 "Open ``http://127.0.0.1:19446/console/`` and replace the temporary "
 "password. Add ``--console-location 1.3521,103.8198`` to place the node on "
@@ -323,251 +342,254 @@ msgstr ""
 "5); su criterio formal de aislamiento del rendimiento sigue abierto "
 "(parte X)."
 
-#: ../../quick-reference.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:142
 msgid "Flags That Matter First"
 msgstr "Las opciones más importantes"
 
-#: ../../quick-reference.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:149
 msgid "Flag"
 msgstr "Opción"
 
-#: ../../quick-reference.rst:148
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:150
 msgid "Default"
 msgstr "Por defecto"
 
-#: ../../quick-reference.rst:149 ../../quick-reference.rst:318
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:320
 msgid "Meaning"
 msgstr "Significado"
 
-#: ../../quick-reference.rst:150
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:152
 msgid "``-d, --difficulty``"
 msgstr "``-d, --difficulty``"
 
-#: ../../quick-reference.rst:151 ../../quick-reference.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:159
 msgid "16"
 msgstr "16"
 
-#: ../../quick-reference.rst:152
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:154
 msgid "work bits (PoSW depth = bits - 3)"
 msgstr "bits de trabajo (profundidad PoSW = bits - 3)"
 
-#: ../../quick-reference.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:155
 msgid "``-a, --algorithm``"
 msgstr "``-a, --algorithm``"
 
-#: ../../quick-reference.rst:154
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:156
 msgid "posw"
 msgstr "posw"
 
-#: ../../quick-reference.rst:155
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:157
 msgid "``posw`` or ``hashcash``"
 msgstr "``posw`` o ``hashcash``"
 
-#: ../../quick-reference.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:158
 msgid "``--posw-challenges``"
 msgstr "``--posw-challenges``"
 
-#: ../../quick-reference.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:160
 msgid "openings per proof"
 msgstr "aperturas por prueba"
 
-#: ../../quick-reference.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:161
 msgid "``--token-ttl``"
 msgstr "``--token-ttl``"
 
-#: ../../quick-reference.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:162
 msgid "86400"
 msgstr "86400"
 
-#: ../../quick-reference.rst:161
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:163
 msgid "session seconds"
 msgstr "segundos de sesión"
 
-#: ../../quick-reference.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:164
 msgid "``--challenge-ttl``"
 msgstr "``--challenge-ttl``"
 
-#: ../../quick-reference.rst:163
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:165
 msgid "300"
 msgstr "300"
 
-#: ../../quick-reference.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:166
 msgid "challenge seconds"
 msgstr "segundos de desafío"
 
-#: ../../quick-reference.rst:165
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:167
 msgid "``--token-scheme``"
 msgstr "``--token-scheme``"
 
-#: ../../quick-reference.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:168
 msgid "mac"
 msgstr "mac"
 
-#: ../../quick-reference.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:169
 msgid "``mac`` or ``ed25519``"
 msgstr "``mac`` o ``ed25519``"
 
-#: ../../quick-reference.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:170
 msgid "``--rate-limit / --rate-window``"
 msgstr "``--rate-limit / --rate-window``"
 
-#: ../../quick-reference.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:171
 msgid "100 / 10"
 msgstr "100 / 10"
 
-#: ../../quick-reference.rst:170
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:172
 msgid "GCRA burst per window"
 msgstr "ráfaga GCRA por ventana"
 
-#: ../../quick-reference.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:173
 msgid "``--ban-seconds``"
 msgstr "``--ban-seconds``"
 
-#: ../../quick-reference.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:174
 msgid "3600"
 msgstr "3600"
 
-#: ../../quick-reference.rst:173
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:175
 msgid "honeypot ban"
 msgstr "bloqueo del honeypot"
 
-#: ../../quick-reference.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:176
 msgid "``-w, --workers``"
 msgstr "``-w, --workers``"
 
-#: ../../quick-reference.rst:175
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:177
 msgid "CPUs"
 msgstr "núm. de CPU"
 
-#: ../../quick-reference.rst:176
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:178
 msgid "accept threads"
 msgstr "hilos de aceptación"
 
-#: ../../quick-reference.rst:177
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:179
 msgid "``--max-connections``"
 msgstr "``--max-connections``"
 
-#: ../../quick-reference.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:180
 msgid "1024"
 msgstr "1024"
 
-#: ../../quick-reference.rst:179
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:181
 msgid "then ``503``"
 msgstr "después ``503``"
 
-#: ../../quick-reference.rst:180
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:182
 msgid "``--max-connections-per-ip``"
 msgstr "``--max-connections-per-ip``"
 
-#: ../../quick-reference.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:183
 msgid "64"
 msgstr "64"
 
-#: ../../quick-reference.rst:182
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:184
 msgid "per peer address (IPv6: per ``--ipv6-prefix``), then ``503``"
 msgstr "por dirección remota (IPv6: por ``--ipv6-prefix``), después ``503``"
 
-#: ../../quick-reference.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:185
 msgid "``--trusted-hops``"
 msgstr "``--trusted-hops``"
 
-#: ../../quick-reference.rst:184
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:186
 msgid "1"
 msgstr "1"
 
-#: ../../quick-reference.rst:185
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:187
 msgid "client = n-th ``X-Forwarded-For`` entry from the right"
 msgstr ""
 "cliente = n-ésima entrada de ``X-Forwarded-For`` empezando por la derecha"
 
-#: ../../quick-reference.rst:186
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:188
 msgid "``--ja4-header``"
 msgstr "``--ja4-header``"
 
-#: ../../quick-reference.rst:187 ../../quick-reference.rst:196
-#: ../../quick-reference.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:201
 msgid "off"
 msgstr "desactivado"
 
-#: ../../quick-reference.rst:188
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:190
 msgid "header with the ingress's JA4 fingerprint; read only when trusted"
 msgstr ""
 "cabecera con la huella JA4 del proxy de entrada; solo se lee si es de "
 "confianza"
 
-#: ../../quick-reference.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:191
 msgid "``--idle-timeout``"
 msgstr "``--idle-timeout``"
 
-#: ../../quick-reference.rst:190
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:192
 msgid "15"
 msgstr "15"
 
-#: ../../quick-reference.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:193
 msgid "reaper seconds"
 msgstr "segundos del recolector"
 
-#: ../../quick-reference.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:194
 msgid "``-P, --policy-file``"
 msgstr "``-P, --policy-file``"
 
-#: ../../quick-reference.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:195
 msgid "none"
 msgstr "ninguno"
 
-#: ../../quick-reference.rst:194
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:196
 msgid "JSON policy"
 msgstr "política JSON"
 
-#: ../../quick-reference.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:197
 msgid "``--trust-forwarded``"
 msgstr "``--trust-forwarded``"
 
-#: ../../quick-reference.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:199
 msgid "on in forward auth"
 msgstr "activado en forward-auth"
 
-#: ../../quick-reference.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:200
 msgid "``--secure-cookie``"
 msgstr "``--secure-cookie``"
 
-#: ../../quick-reference.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:202
 msgid "add ``Secure``"
 msgstr "añade ``Secure``"
 
-#: ../../quick-reference.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:204
 msgid "Endpoints Under ``/__sibuna/``"
 msgstr "Endpoints bajo ``/__sibuna/``"
 
-#: ../../quick-reference.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:211
 msgid "Route"
 msgstr "Ruta"
 
-#: ../../quick-reference.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:212
 msgid "Answer"
 msgstr "Respuesta"
 
-#: ../../quick-reference.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:213
 msgid "``challenge``"
 msgstr "``challenge``"
 
-#: ../../quick-reference.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:214
 msgid "interstitial HTML"
 msgstr "HTML de la página intermedia"
 
-#: ../../quick-reference.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:215
 msgid "``challenge.json?need=&path=``"
 msgstr "``challenge.json?need=&path=``"
 
-#: ../../quick-reference.rst:214
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:216
 msgid "``{id, algorithm, difficulty, challenges, expires_at}``"
 msgstr "``{id, algorithm, difficulty, challenges, expires_at}``"
 
-#: ../../quick-reference.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:217
 msgid "``verify`` (POST)"
 msgstr "``verify`` (POST)"
 
-#: ../../quick-reference.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:218
 msgid ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, else "
 "``400``"
@@ -575,175 +597,175 @@ msgstr ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``; si no, "
 "``400``"
 
-#: ../../quick-reference.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:219
 msgid "``wasm/sibuna-pow.wasm``"
 msgstr "``wasm/sibuna-pow.wasm``"
 
-#: ../../quick-reference.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:220
 msgid "14,744-byte solver"
 msgstr "solucionador de 14.744 bytes"
 
-#: ../../quick-reference.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:221
 msgid "``worker.js``"
 msgstr "``worker.js``"
 
-#: ../../quick-reference.rst:220
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:222
 msgid "worker with WASM and JS provers"
 msgstr "worker con probadores WASM y JS"
 
-#: ../../quick-reference.rst:221
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:223
 msgid "``honeypot``"
 msgstr "``honeypot``"
 
-#: ../../quick-reference.rst:222
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:224
 msgid "bans caller, ``403``; ``404`` for a subresource or cross-site fetch"
 msgstr ""
 "bloquea a quien llama, ``403``; ``404`` para un subrecurso o una petición "
 "entre sitios"
 
-#: ../../quick-reference.rst:223
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:225
 msgid "``health``"
 msgstr "``health``"
 
-#: ../../quick-reference.rst:224
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:226
 msgid "``{\"status\":\"ok\",...}``"
 msgstr "``{\"status\":\"ok\",...}``"
 
-#: ../../quick-reference.rst:225
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:227
 msgid "``metrics``"
 msgstr "``metrics``"
 
-#: ../../quick-reference.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:228
 msgid "Prometheus text"
 msgstr "texto de Prometheus"
 
-#: ../../quick-reference.rst:228
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:230
 msgid "Route all of them to the daemon, never to the origin."
 msgstr "Enruta todos ellos al daemon, nunca al origen."
 
-#: ../../quick-reference.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:232
 msgid "Status Codes"
 msgstr "Códigos de estado"
 
-#: ../../quick-reference.rst:237
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:239
 msgid "Code"
 msgstr "Código"
 
-#: ../../quick-reference.rst:238
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:240
 msgid "When"
 msgstr "Cuándo"
 
-#: ../../quick-reference.rst:239
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:241
 msgid "200"
 msgstr "200"
 
-#: ../../quick-reference.rst:240
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:242
 msgid "admitted (forward auth), interstitial, internal routes"
 msgstr "admitida (forward-auth), página intermedia, rutas internas"
 
-#: ../../quick-reference.rst:241
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:243
 msgid "400"
 msgstr "400"
 
-#: ../../quick-reference.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:244
 msgid "malformed request or target, rejected solution (diagnostic body)"
 msgstr ""
 "petición o destino mal formados, solución rechazada (cuerpo con "
 "diagnóstico)"
 
-#: ../../quick-reference.rst:243
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:245
 msgid "401"
 msgstr "401"
 
-#: ../../quick-reference.rst:244
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:246
 msgid "challenge required: non-HTML client or forward auth"
 msgstr "se requiere un desafío: cliente sin HTML o forward-auth"
 
-#: ../../quick-reference.rst:245
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:247
 msgid "403"
 msgstr "403"
 
-#: ../../quick-reference.rst:246
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:248
 msgid "policy or WAF denial, ban, honeypot"
 msgstr "denegación por política o por el WAF, bloqueo, honeypot"
 
-#: ../../quick-reference.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:249
 msgid "404"
 msgstr "404"
 
-#: ../../quick-reference.rst:248
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:250
 msgid "unknown ``/__sibuna/`` route, refused honeypot hit"
 msgstr "ruta ``/__sibuna/`` desconocida, acceso al honeypot rechazado"
 
-#: ../../quick-reference.rst:249
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:251
 msgid "413"
 msgstr "413"
 
-#: ../../quick-reference.rst:250
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:252
 msgid "solution body over the 64 KB buffer"
 msgstr "cuerpo de la solución mayor que el búfer de 64 KB"
 
-#: ../../quick-reference.rst:251
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:253
 msgid "414"
 msgstr "414"
 
-#: ../../quick-reference.rst:252
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:254
 msgid "reported challenge URL over 8 KiB"
 msgstr "URL indicada para el desafío de más de 8 KiB"
 
-#: ../../quick-reference.rst:253
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:255
 msgid "417"
 msgstr "417"
 
-#: ../../quick-reference.rst:254
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:256
 msgid "unsupported request expectation"
 msgstr "expectativa de la petición no admitida"
 
-#: ../../quick-reference.rst:255
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:257
 msgid "429"
 msgstr "429"
 
-#: ../../quick-reference.rst:256
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:258
 msgid "GCRA limit, ``Retry-After`` seconds"
 msgstr "límite GCRA, segundos en ``Retry-After``"
 
-#: ../../quick-reference.rst:257
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:259
 msgid "431"
 msgstr "431"
 
-#: ../../quick-reference.rst:258
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:260
 msgid "head over 16 KB"
 msgstr "encabezado de más de 16 KB"
 
-#: ../../quick-reference.rst:259
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:261
 msgid "501"
 msgstr "501"
 
-#: ../../quick-reference.rst:260
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:262
 msgid "transfer coding other than chunked"
 msgstr "codificación de transferencia distinta de chunked"
 
-#: ../../quick-reference.rst:261
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:263
 msgid "502"
 msgstr "502"
 
-#: ../../quick-reference.rst:262
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:264
 msgid "origin unreachable or malformed"
 msgstr "origen inalcanzable o con respuesta mal formada"
 
-#: ../../quick-reference.rst:263
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:265
 msgid "503"
 msgstr "503"
 
-#: ../../quick-reference.rst:264
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:266
 msgid "connection limits reached, or node draining"
 msgstr "límites de conexiones alcanzados, o el nodo se está drenando"
 
-#: ../../quick-reference.rst:266
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:268
 msgid "Headers"
 msgstr "Cabeceras"
 
-#: ../../quick-reference.rst:269
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:271
 msgid ""
 "*Upstream (proxy)*: ``X-Forwarded-For`` (socket peer, after the received "
 "chain when trusted), ``X-Forwarded-Proto``, ``X-Real-IP`` (the judged "
@@ -757,7 +779,7 @@ msgstr ""
 "campos hop-by-hop y los campos de reenvío alternativos, también sus "
 "variantes con guion bajo."
 
-#: ../../quick-reference.rst:270
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:272
 msgid ""
 "*Forward-auth reply*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``."
@@ -765,11 +787,11 @@ msgstr ""
 "*Respuesta de forward-auth*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``."
 
-#: ../../quick-reference.rst:271
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:273
 msgid "*Challenge reply*: ``X-Sibuna-Status: CHALLENGE``."
 msgstr "*Respuesta de desafío*: ``X-Sibuna-Status: CHALLENGE``."
 
-#: ../../quick-reference.rst:272
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:274
 msgid ""
 "*Cookie*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
@@ -777,11 +799,11 @@ msgstr ""
 "*Cookie*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
 
-#: ../../quick-reference.rst:274
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:276
 msgid "Policy File Skeleton"
 msgstr "Esqueleto del archivo de políticas"
 
-#: ../../quick-reference.rst:277
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:279
 msgid ""
 "{ \"default_action\": \"CHALLENGE\", \"waf\": true,\n"
 "  \"thresholds\": {\"challenge_at\": 10, \"deny_at\": 40, \"bits_step\": "
@@ -823,7 +845,7 @@ msgstr ""
 "    {\"name\": \"headless\", \"user_agent\": \"Headless\", \"action\": "
 "\"WEIGH\", \"weight\": 30} ] }"
 
-#: ../../quick-reference.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:293
 msgid ""
 "JA4: a whole fingerprint, or a prefix and ``*``; no fingerprint, no "
 "match. Patterns: ``*`` or ``.*`` any; ``^...$`` exact; trailing ``*`` "
@@ -838,11 +860,11 @@ msgstr ""
 "WAF -> trie deny/allow -> reglas -> puntuación -> exención -> trie "
 "challenge -> bots -> por defecto."
 
-#: ../../quick-reference.rst:293
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:295
 msgid "Storage (Edge) in SQL"
 msgstr "Almacenamiento (Edge) en SQL"
 
-#: ../../quick-reference.rst:296
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:298
 msgid ""
 "INSERT INTO policies (id, name, priority, path_pattern, action, "
 "difficulty, algorithm,\n"
@@ -874,7 +896,7 @@ msgstr ""
 "  FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
 "  WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
 
-#: ../../quick-reference.rst:308
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:310
 msgid ""
 "SQLite (``sqlite3 <dir>/sibuna.db``); actions are lowercase. Score "
 ":math:`\\le -50` -> deny prefix; :math:`\\ge 50` -> allow. Cluster: same "
@@ -890,106 +912,106 @@ msgstr ""
 "N`` con un N único de 1 a 8.388.607; sin lista de miembros, líder ni TLS "
 "de clúster (SID 0011)."
 
-#: ../../quick-reference.rst:310
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:312
 msgid "Diagnostics"
 msgstr "Diagnósticos"
 
-#: ../../quick-reference.rst:317
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:319
 msgid "Title"
 msgstr "Título"
 
-#: ../../quick-reference.rst:319
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:321
 msgid "``MALFORMED CHALLENGE``"
 msgstr "``MALFORMED CHALLENGE``"
 
-#: ../../quick-reference.rst:320
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:322
 msgid "id edited or truncated; fetch a new one"
 msgstr "id editado o truncado; obtén uno nuevo"
 
-#: ../../quick-reference.rst:321
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:323
 msgid "``INVALID CHALLENGE TAG``"
 msgstr "``INVALID CHALLENGE TAG``"
 
-#: ../../quick-reference.rst:322
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:324
 msgid "not minted by this seed or node"
 msgstr "no emitido con esta semilla ni por este nodo"
 
-#: ../../quick-reference.rst:323
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:325
 msgid "``CHALLENGE EXPIRED``"
 msgstr "``CHALLENGE EXPIRED``"
 
-#: ../../quick-reference.rst:324
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:326
 msgid "older than TTL or clock skew > 60 s"
 msgstr "supera el TTL o desfase de reloj > 60 s"
 
-#: ../../quick-reference.rst:325
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:327
 msgid "``CLIENT FINGERPRINT MISMATCH``"
 msgstr "``CLIENT FINGERPRINT MISMATCH``"
 
-#: ../../quick-reference.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:328
 msgid "address or User-Agent changed"
 msgstr "cambió la dirección o el User-Agent"
 
-#: ../../quick-reference.rst:327
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:329
 msgid "``DIFFICULTY NOT MET``"
 msgstr "``DIFFICULTY NOT MET``"
 
-#: ../../quick-reference.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:330
 msgid "nonce lacks zero bits"
 msgstr "al nonce le faltan bits a cero"
 
-#: ../../quick-reference.rst:329
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:331
 msgid "``INVALID PROOF OF SEQUENTIAL WORK``"
 msgstr "``INVALID PROOF OF SEQUENTIAL WORK``"
 
-#: ../../quick-reference.rst:330
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:332
 msgid "openings do not reach the root"
 msgstr "las aperturas no llegan a la raíz"
 
-#: ../../quick-reference.rst:331
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:333
 msgid "``WRONG SOLUTION TYPE``"
 msgstr "``WRONG SOLUTION TYPE``"
 
-#: ../../quick-reference.rst:332
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:334
 msgid "nonce for PoSW or proof for Hashcash"
 msgstr "nonce para PoSW o prueba para Hashcash"
 
-#: ../../quick-reference.rst:333
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:335
 msgid "``DOUBLE SPEND PREVENTED``"
 msgstr "``DOUBLE SPEND PREVENTED``"
 
-#: ../../quick-reference.rst:334
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:336
 msgid "challenge already used"
 msgstr "desafío ya usado"
 
-#: ../../quick-reference.rst:335
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:337
 msgid "``STORE FULL``"
 msgstr "``STORE FULL``"
 
-#: ../../quick-reference.rst:336
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:338
 msgid "spent set saturated; lower TTL or raise ``--spent-tags``"
 msgstr ""
 "conjunto de desafíos gastados saturado; reduce el TTL o aumenta "
 "``--spent-tags``"
 
-#: ../../quick-reference.rst:337
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:339
 msgid "``NETWORK BINDING MISMATCH``"
 msgstr "``NETWORK BINDING MISMATCH``"
 
-#: ../../quick-reference.rst:338
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:340
 msgid "cookie copied to another client"
 msgstr "cookie copiada a otro cliente"
 
-#: ../../quick-reference.rst:339
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:341
 msgid "``INVALID COMMAND LINE``"
 msgstr "``INVALID COMMAND LINE``"
 
-#: ../../quick-reference.rst:340
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:342
 msgid "unknown option, bad value, or a removed Zaxonlite option"
 msgstr ""
 "opción desconocida, valor incorrecto u opción de Zaxonlite eliminada"
 
-#: ../../quick-reference.rst:342
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:344
 msgid ""
 "The edge prints diagnostics with codes of the families ``EDGE`` (start "
 "and reload), ``ADM`` (admin socket), ``ACME`` (automatic HTTPS), ``DBA`` "
@@ -1008,7 +1030,7 @@ msgstr ""
 "``sibuna_edge_hook_calls_total`` con ``result`` ``timeout``, ``trap`` o "
 "``unavailable``, y ``sibuna_edge_hook_breakers_open``."
 
-#: ../../quick-reference.rst:344
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:346
 msgid ""
 "Metrics to alert on: ``denied``, ``rate_limited``, ``overloaded``, "
 "``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
@@ -1028,11 +1050,11 @@ msgstr ""
 "``sibuna_edge_acme_nearest_expiry_seconds`` y "
 "``sibuna_edge_forward_local_total``."
 
-#: ../../quick-reference.rst:346
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:348
 msgid "Numbers to Remember"
 msgstr "Cifras que recordar"
 
-#: ../../quick-reference.rst:349
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:351
 msgid ""
 "Challenge id 70 chars (36-byte payload + 16-byte tag); token 75 chars (40 "
 "+ 16), 139 with Ed25519; proof bytes :math:`32(1 + t(n+1))`; PoSW depth = "
@@ -1057,11 +1079,11 @@ msgstr ""
 "conexión; pool de 256 sockets hacia el origen; cola de tareas de "
 "almacenamiento de 32."
 
-#: ../../quick-reference.rst:351
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:353
 msgid "Ingress Routing"
 msgstr "Enrutamiento en el proxy de entrada"
 
-#: ../../quick-reference.rst:354
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:356
 msgid ""
 "Use the Nginx or Caddy recipe in Part XI, Forward Auth Behind an Ingress. "
 "Route ``/__sibuna/*`` directly; authorize application requests with the "
@@ -1077,7 +1099,7 @@ msgstr ""
 "tratamiento explícito del desafío, del 429 y de la autorización no "
 "disponible."
 
-#: ../../quick-reference.rst:356
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:358
 msgid ""
 "``reverse_proxy`` carries admitted HTTP/1.1 bodies and WebSockets; "
 "``forward_auth`` grants admission and the ingress carries them. Omitted "

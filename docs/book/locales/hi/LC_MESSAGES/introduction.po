@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:16+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../introduction.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:1
 msgid "What is Sibuna?"
 msgstr "Sibuna क्या है?"
 
-#: ../../introduction.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:4
 msgid ""
 "A passenger opens a railway timetable and asks for the next departure. We "
 "run two copies of the timetable application so that one can answer while "
@@ -39,11 +39,11 @@ msgstr ""
 "से अनुरोध एप्लिकेशन तक पहुँचें। इस भूमिका में वह वेब एप्लिकेशन फ़ायरवॉल "
 "है।"
 
-#: ../../introduction.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:6
 msgid "One request through the edge"
 msgstr "एज से गुज़रता एक अनुरोध"
 
-#: ../../introduction.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:9
 msgid ""
 "The browser opens an encrypted connection to the timetable's public name. "
 "Sibuna presents a certificate for that name. If the browser trusts the "
@@ -59,7 +59,7 @@ msgstr ""
 "है। आंतरिक सेवा के लिए वह स्थानीय प्रमाणन प्राधिकरण से प्रमाणपत्र जारी कर "
 "सकता है, जिसका मूल प्रमाणपत्र हम क्लाइंट पर स्थापित करते हैं।"
 
-#: ../../introduction.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:11
 msgid ""
 "The address where Sibuna accepts traffic is a frontend. Once Sibuna has "
 "received the HTTP request, it can read the host and path. A route sends "
@@ -74,7 +74,7 @@ msgstr ""
 "सर्वर हैं। स्वीकृत अनुरोध के लिए Sibuna पूल से स्वस्थ मूल सर्वर चुनता है, "
 "उसे अनुरोध भेजता है और उसका जवाब यात्री को लौटाता है।"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid ""
 "Sibuna terminates HTTPS and forwards each admitted request to one healthy "
 "HTTP/1.1 origin."
@@ -82,7 +82,7 @@ msgstr ""
 "Sibuna HTTPS समाप्त करता है और हर स्वीकृत अनुरोध एक स्वस्थ HTTP/1.1 "
 "ऑरिजिन को भेजता है।"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid ""
 "// introduction.rst: one public address in front of two timetable "
 "servers.\n"
@@ -116,11 +116,11 @@ msgstr ""
 "  edge(<sibuna>, <b>, \"-|>\", say(\"HTTP/1.1\"), label-side: right),\n"
 ")\n"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid "One public address, two timetable servers."
 msgstr "दो समय-सारणी सर्वरों के लिए एक सार्वजनिक पता।"
 
-#: ../../introduction.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:17
 msgid ""
 "The two connections can use different protocols. A browser might speak "
 "HTTP/3 to Sibuna while the timetable application speaks HTTP/1.1. An "
@@ -135,11 +135,11 @@ msgstr ""
 "या UDP डेटाग्राम भी पूल को भेजे जा सकते हैं। ऐसे में वेब पेज पढ़े या HTTP "
 "पथ पर नियम लागू किए बिना ट्रैफ़िक आगे भेजा जा सकता है।"
 
-#: ../../introduction.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:19
 msgid "Who gets through?"
 msgstr "किसे प्रवेश मिलता है?"
 
-#: ../../introduction.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:22
 msgid ""
 "Suppose a script asks for the timetable faster than the application can "
 "compute it. Adding a second origin spreads the work across two machines. "
@@ -155,7 +155,7 @@ msgstr ""
 "Sibuna हस्ताक्षरित सत्र जारी करता है जिसे ब्राउज़र अगली बार प्रस्तुत कर "
 "सकता है।"
 
-#: ../../introduction.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:24
 msgid ""
 "Gate handles admission and local rate limits. Shield also inspects HTTP "
 "requests for patterns such as an attempted injection. We can apply the "
@@ -167,11 +167,11 @@ msgstr ""
 "वेबसाइट पर Shield लगाकर मशीन क्लाइंट के लिए अलग रूट दे सकते हैं। वह "
 "क्लाइंट अपनी सेवा द्वारा अपेक्षित प्रमाणीकरण इस्तेमाल करता है।"
 
-#: ../../introduction.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:26
 msgid "From one node to a cluster"
 msgstr "एक नोड से क्लस्टर तक"
 
-#: ../../introduction.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:29
 msgid ""
 "If one timetable server goes down and its health check fails, the edge "
 "can send new requests to the other server. If the edge itself goes down, "
@@ -185,7 +185,7 @@ msgstr ""
 "के अंतर्गत दूसरा Sibuna नोड रख सकते हैं और नेटवर्क को क्लाइंट उपलब्ध नोड "
 "तक पहुँचाने के लिए कॉन्फ़िगर कर सकते हैं।"
 
-#: ../../introduction.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:31
 msgid ""
 "The nodes each forward their own traffic. Through a mesh they can "
 "exchange routing configurations, bans and information about which origin "
@@ -199,7 +199,7 @@ msgstr ""
 "सकता है। इसलिए क्लस्टर वाले अध्यायों में हम देखते हैं कि नोड कौन से "
 "निर्णय अकेले ले सकता है और उसके साथियों को किन तथ्यों की ज़रूरत होती है।"
 
-#: ../../introduction.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:33
 msgid ""
 "Before we turn the page, suppose both timetable servers are healthy and a "
 "passenger receives a browser challenge. Which component made that "

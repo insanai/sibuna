@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../prior-art.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:1
 msgid "Part II: Prior Art and the Design Space"
 msgstr "제II부: 선행 연구와 설계 공간"
 
-#: ../../prior-art.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:4
 msgid ""
 "We place Sibuna among the systems it learned from: client puzzles and "
 "sequential work from the cryptography literature, signature and semantic "
@@ -36,15 +36,15 @@ msgstr ""
 "서로 견주어 볼 가능성이 가장 큰 네 도구를 기능별로 비교하고, 어떤 사실을 직접 확인했는지 기록합니다. 마지막으로 제VIII부의 "
 "엣지 로드 밸런서를 HAProxy, Envoy와 나란히 놓습니다."
 
-#: ../../prior-art.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:6
 msgid "Where Sibuna Comes From"
 msgstr "Sibuna의 뿌리"
 
-#: ../../prior-art.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:9
 msgid "Objectives"
 msgstr "학습 목표"
 
-#: ../../prior-art.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:11
 msgid ""
 "By the end of this chapter, we should be able to trace the lineage of "
 "client puzzles from 1992 to the sequential-work constructions of 2018, "
@@ -59,11 +59,11 @@ msgstr ""
 "놓고, 엣지 로드 밸런서의 스케줄링과 캐싱 뒤에 있는 논문을 꼽고, 그것을 HAProxy, Envoy와 비교하고, 어떤 비교 주장을 "
 "검증했고 어떤 주장은 문서에서 읽기만 했는지 말할 수 있어야 합니다."
 
-#: ../../prior-art.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:13
 msgid "Client Puzzles and Sequential Work"
 msgstr "클라이언트 퍼즐과 순차 작업"
 
-#: ../../prior-art.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:16
 msgid ""
 "Dwork and Naor's \"Pricing via Processing\" (CRYPTO 1992) proposed that a "
 "service require a moderately hard, easily checked computation before "
@@ -82,7 +82,7 @@ msgstr ""
 "됩니다. 세 연구 모두 Sibuna가 이어받은 형태를 공유합니다. 서버가 고른 명제, 비용을 조절할 수 있는 풀이, 그리고 풀이보다 "
 "몇 자릿수 값싼 검증입니다."
 
-#: ../../prior-art.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:18
 msgid ""
 "Hash search is embarrassingly parallel, so a requester with more cores "
 "finishes sooner. Mahmoody, Moran, and Vadhan (CRYPTO 2013) defined proofs "
@@ -101,7 +101,7 @@ msgstr ""
 "랜덤 오라클 모델에서 같은 구성이 양자 증명자에 대해서도 건전함을 증명했습니다. 제III부는 이 연구 흐름에서 Sibuna의 두 "
 "번째 계층을 유도하며, SID 0006은 그 가정을 기록합니다."
 
-#: ../../prior-art.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:21
 msgid ""
 "A lineage graph. Dwork-Naor 1992 leads to Hashcash 1997, Juels-Brainard "
 "1999, Mahmoody et al. 2013, Cohen-Pietrzak 2018 and Blocki-Lee-Zhou 2021. "
@@ -120,7 +120,7 @@ msgstr ""
 "Cohen-Pietrzak, Blocki-Lee-Zhou, Aho-Corasick, libinjection, GCRA(ATM "
 "Forum 1996), Anubis, SafeLine, Cloudflare에서 이어집니다."
 
-#: ../../prior-art.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:21
 msgid ""
 "// prior-art.rst: the lineage of the ideas Sibuna combines. Three "
 "columns, time running\n"
@@ -223,7 +223,7 @@ msgstr ""
 "  main-edge(<systems>, <sibuna>, \"-|>\"),\n"
 ")\n"
 
-#: ../../prior-art.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:21
 msgid ""
 "Lineage of the ideas Sibuna combines. The left column is the cryptography "
 "of client puzzles and sequential work, the right column the algorithms "
@@ -238,11 +238,11 @@ msgstr ""
 "색이 채워진 상자는 Sibuna가 직접 가져온 아이디어입니다. 이전 저장소 설계는 Multi-Paxos(Lamport 1998; "
 "SID 0005)를 바탕으로 했습니다. 지금 Sibuna는 상태를 SQLite나 PostgreSQL에 저장합니다(SID 0011)."
 
-#: ../../prior-art.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:24
 msgid "Application Firewalls"
 msgstr "애플리케이션 방화벽"
 
-#: ../../prior-art.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:27
 msgid ""
 "The first generation of web application firewalls matched request bytes "
 "against regular expressions. ModSecurity (2002) and the OWASP Core Rule "
@@ -266,11 +266,11 @@ msgstr ""
 "리터럴 매칭을 어디까지 밀어붙일 수 있는지 보여 주었습니다. 제VI부는 Sibuna가 검사하는 짧은 필드에 정규 표현식이나 SIMD "
 "엔진 대신 밀집 오토마톤과 작은 구조 토크나이저를 고른 이유를 설명합니다."
 
-#: ../../prior-art.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:29
 msgid "Interstitials and Edges"
 msgstr "중간 페이지와 엣지"
 
-#: ../../prior-art.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:32
 msgid ""
 "The proof-of-work interstitial in front of a website became common in "
 "2025, when scraper traffic feeding language-model training made ordinary "
@@ -287,7 +287,7 @@ msgstr ""
 "Sibuna의 Gate 구성은 상태 없는 챌린지, 대칭 토큰, 두 번째 작업 계층으로 같은 문제를 풉니다. 아래 비교는 둘이 어디서 "
 "다른지 기록합니다."
 
-#: ../../prior-art.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:34
 msgid ""
 "At the other end of the scale, hosted edges such as Cloudflare place "
 "inspection, rate limiting, and bot scoring in hundreds of points of "
@@ -303,11 +303,11 @@ msgstr ""
 "호스팅을 유지합니다. 그래서 저장소 계층은 서비스 호출이 아니라 운영자가 직접 운영하는 데이터베이스(노드 하나에서는 SQLite "
 "파일, 클러스터에서는 공유하는 PostgreSQL 데이터베이스 하나)이며, 요청 경로 밖의 저장소 스레드가 이를 읽습니다."
 
-#: ../../prior-art.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:36
 msgid "Three Ideas in One Binary"
 msgstr "하나의 바이너리에 담은 세 가지 아이디어"
 
-#: ../../prior-art.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:39
 msgid ""
 "Sibuna combines a browser work challenge for admission, bounded "
 "application-payload inspection, and a shared control plane that publishes "
@@ -318,71 +318,73 @@ msgstr ""
 "게시하는 공유 제어 평면을 결합합니다. Gate와 Shield는 두 가지 운영 구성이며, 저장소와 분산 배포는 어느 쪽에서든 선택할 "
 "수 있습니다."
 
-#: ../../prior-art.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:45
 msgid "**Property**"
 msgstr "**속성**"
 
-#: ../../prior-art.rst:46
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:46
 msgid "**Gate**"
 msgstr "**Gate**"
 
-#: ../../prior-art.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:47
 msgid "**Shield**"
 msgstr "**Shield**"
 
-#: ../../prior-art.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:48
 msgid "Admission"
 msgstr "요청 허용"
 
-#: ../../prior-art.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:49
 msgid "Native Hashcash or sequential-work verification"
 msgstr "네이티브 Hashcash 또는 순차 작업 검증"
 
-#: ../../prior-art.rst:50 ../../prior-art.rst:53 ../../prior-art.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:53
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:56
 msgid "Same"
 msgstr "같음"
 
-#: ../../prior-art.rst:51
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:51
 msgid "Session"
 msgstr "세션"
 
-#: ../../prior-art.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:52
 msgid "Keyed BLAKE3; optional Ed25519"
 msgstr "키 기반 BLAKE3, 선택적으로 Ed25519"
 
-#: ../../prior-art.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:54
 msgid "Local controls"
 msgstr "로컬 제어"
 
-#: ../../prior-art.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:55
 msgid "Rules, CIDRs, GCRA, bans"
 msgstr "규칙, CIDR, GCRA, 차단"
 
-#: ../../prior-art.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:57
 msgid "Inspection"
 msgstr "검사"
 
-#: ../../prior-art.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:58
 msgid "Disabled"
 msgstr "꺼짐"
 
-#: ../../prior-art.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:59
 msgid "Bounded signatures and structural tokenizers"
 msgstr "범위가 제한된 시그니처와 구조 토크나이저"
 
-#: ../../prior-art.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:60
 msgid "State"
 msgstr "상태"
 
-#: ../../prior-art.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:61
 msgid "Optional persistent policy and reputation, shared across a cluster"
 msgstr "선택적인 영속 정책과 평판(클러스터 전체에서 공유)"
 
-#: ../../prior-art.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:62
 msgid "Also inspection forensics"
 msgstr "검사 포렌식도 포함"
 
-#: ../../prior-art.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:64
 msgid ""
 "The browser solver compiles from the same proof sources as the native "
 "verifier. Dense literal matching avoids backtracking and keeps scan work "
@@ -397,45 +399,45 @@ msgstr ""
 "보편적인 알고리즘 최적성을 보장하지는 않습니다. 짧은 헤더, 긴 본문, 패턴의 다양성, 코어 수, 캐시 크기에 따라 절충점이 "
 "달라집니다."
 
-#: ../../prior-art.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:66
 msgid "Design constraints adopted"
 msgstr "채택한 설계 제약"
 
-#: ../../prior-art.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:68
 msgid ""
 "No heap allocation on the request path; every table has a fixed capacity "
 "and a stated saturation behaviour."
 msgstr "요청 경로에서 힙 할당을 하지 않습니다. 모든 테이블에는 고정된 용량과 명시된 포화 시 동작이 있습니다."
 
-#: ../../prior-art.rst:69
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:69
 msgid ""
 "Issuing a challenge writes nothing; only a paid-for solution occupies "
 "memory."
 msgstr "챌린지를 발급해도 아무것도 기록하지 않습니다. 대가를 치른 풀이만 메모리를 차지합니다."
 
-#: ../../prior-art.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:70
 msgid ""
 "A session admits; it never exempts a request from inspection or an "
 "explicit denial."
 msgstr "세션은 요청을 허용할 뿐, 검사나 명시적 거부에서 요청을 면제하지는 않습니다."
 
-#: ../../prior-art.rst:71
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:71
 msgid ""
 "Every claimed number is either measured by a committed harness or "
 "labelled as a model."
 msgstr "주장하는 모든 숫자는 커밋된 하니스로 측정했거나 모델이라고 표시합니다."
 
-#: ../../prior-art.rst:72
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:72
 msgid ""
 "Cryptographic choices cite a venue and a proof, and state their quantum "
 "posture."
 msgstr "암호학적 선택은 발표 학회와 증명을 인용하고, 양자 공격에 대한 안전성 입장을 밝힙니다."
 
-#: ../../prior-art.rst:74
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:74
 msgid "Feature Comparison"
 msgstr "기능 비교"
 
-#: ../../prior-art.rst:77
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:77
 msgid ""
 "The four tables below compare Sibuna with the three tools most often "
 "mentioned alongside it. Facts about the other products were read from "
@@ -460,40 +462,51 @@ msgstr ""
 "기록(1.21.0, 1.26.0), SafeLine 릴리스 노트(8.10.0, 9.2.0), Cloudflare의 \"JA3/JA4 "
 "fingerprint\" 페이지와 대조해 확인했습니다."
 
-#: ../../prior-art.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:79
 msgid "Feature comparison, part 1: deployment"
 msgstr "기능 비교 1부: 배포"
 
-#: ../../prior-art.rst:84 ../../prior-art.rst:115 ../../prior-art.rst:156
-#: ../../prior-art.rst:192 ../../prior-art.rst:260
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:84
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:260
 msgid "Feature"
 msgstr "기능"
 
-#: ../../prior-art.rst:85 ../../prior-art.rst:116 ../../prior-art.rst:157
-#: ../../prior-art.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:116
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:193
 msgid "Sibuna"
 msgstr "Sibuna"
 
-#: ../../prior-art.rst:86 ../../prior-art.rst:117 ../../prior-art.rst:158
-#: ../../prior-art.rst:194
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:86
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:117
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:194
 msgid "Anubis 1.27"
 msgstr "Anubis 1.27"
 
-#: ../../prior-art.rst:87 ../../prior-art.rst:118 ../../prior-art.rst:159
-#: ../../prior-art.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:118
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:195
 msgid "SafeLine CE 9"
 msgstr "SafeLine CE 9"
 
-#: ../../prior-art.rst:88 ../../prior-art.rst:119 ../../prior-art.rst:160
-#: ../../prior-art.rst:196
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:196
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
-#: ../../prior-art.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:89
 msgid "Runs as"
 msgstr "실행 형태"
 
-#: ../../prior-art.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:90
 msgid ""
 "One binary; reverse proxy or forward auth; optional SQLite file or shared "
 "PostgreSQL database; or an edge load balancer with the firewall per route "
@@ -502,66 +515,66 @@ msgstr ""
 "바이너리 하나; 리버스 프록시 또는 forward-auth; 선택적으로 SQLite 파일 또는 공유 PostgreSQL "
 "데이터베이스; 또는 경로마다 방화벽을 두는 엣지 로드 밸런서(제VIII부)"
 
-#: ../../prior-art.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:91
 msgid "One Go binary; reverse proxy or forward auth"
 msgstr "Go 바이너리 하나; 리버스 프록시 또는 forward-auth"
 
-#: ../../prior-art.rst:92
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:92
 msgid ""
 "Seven Docker containers (tengine, detector, mgt, luigi, fvm, chaos, "
 "PostgreSQL)"
 msgstr ""
 "Docker 컨테이너 일곱 개(tengine, detector, mgt, luigi, fvm, chaos, PostgreSQL)"
 
-#: ../../prior-art.rst:93
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:93
 msgid "Hosted network; DNS points at Cloudflare"
 msgstr "호스팅형 네트워크; DNS가 Cloudflare를 가리킴"
 
-#: ../../prior-art.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:94
 msgid "Language, runtime"
 msgstr "언어, 런타임"
 
-#: ../../prior-art.rst:95
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:95
 msgid "Rust, no garbage collector; no external crate when storage is off"
 msgstr "Rust, 가비지 컬렉터 없음; 저장소를 끄면 외부 crate 없음"
 
-#: ../../prior-art.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:96
 msgid "Go, garbage collected"
 msgstr "Go, 가비지 컬렉션 사용"
 
-#: ../../prior-art.rst:97
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:97
 msgid "C/C++ proxy and detector, Go management, PostgreSQL"
 msgstr "C/C++ 프록시와 탐지기, Go 관리 코드, PostgreSQL"
 
-#: ../../prior-art.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:98
 msgid "Proprietary edge software"
 msgstr "독점 엣지 소프트웨어"
 
-#: ../../prior-art.rst:99
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:99
 msgid "Licence"
 msgstr "라이선스"
 
-#: ../../prior-art.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:100
 msgid "LGPL-3.0-or-later"
 msgstr "LGPL-3.0-or-later"
 
-#: ../../prior-art.rst:101
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:101
 msgid "MIT"
 msgstr "MIT"
 
-#: ../../prior-art.rst:102
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:102
 msgid "GPL-3.0 management code; closed detector images"
 msgstr "GPL-3.0 관리 코드; 비공개 탐지기 이미지"
 
-#: ../../prior-art.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:103
 msgid "Proprietary service"
 msgstr "독점 서비스"
 
-#: ../../prior-art.rst:104
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:104
 msgid "Host footprint"
 msgstr "호스트 자원 사용량"
 
-#: ../../prior-art.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:105
 msgid ""
 "35.7 MiB binary (``benchmarks/results/comparison-latest.json``); 5.9 MiB "
 "idle RSS (``benchmarks/results/primitives-latest.json``); at most 16.0 "
@@ -571,27 +584,27 @@ msgstr ""
 "MiB(``benchmarks/results/primitives-latest.json``); 부하 시 최대 RSS 16.0 MiB "
 "이하(``benchmarks/results/product-latest.md``)"
 
-#: ../../prior-art.rst:106
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:106
 msgid "38.1 MiB binary; 21 MiB idle RSS; Linux fixture, console off"
 msgstr "바이너리 38.1 MiB; 유휴 RSS 21 MiB; Linux 테스트 환경, 콘솔 꺼짐"
 
-#: ../../prior-art.rst:107
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:107
 msgid "1 CPU core, 1 GB RAM, 5 GB disk minimum, Docker 20.10+"
 msgstr "최소 CPU 코어 1개, RAM 1 GB, 디스크 5 GB, Docker 20.10 이상"
 
-#: ../../prior-art.rst:108
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:108
 msgid "None on premises"
 msgstr "온프레미스에는 없음"
 
-#: ../../prior-art.rst:110
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:110
 msgid "Feature comparison, part 2: admission and sessions"
 msgstr "기능 비교 2부: 요청 허용과 세션"
 
-#: ../../prior-art.rst:120
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:120
 msgid "Proof-of-work admission"
 msgstr "작업 증명 요청 허용"
 
-#: ../../prior-art.rst:121
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:121
 msgid ""
 "Hashcash (bit-level) and Cohen-Pietrzak sequential work, chosen per rule; "
 "WebAssembly with JavaScript fallback"
@@ -599,7 +612,7 @@ msgstr ""
 "Hashcash(비트 단위)와 Cohen-Pietrzak 순차 작업, 규칙마다 선택; WebAssembly와 JavaScript "
 "대체 경로"
 
-#: ../../prior-art.rst:122
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:122
 msgid ""
 "SHA-256 Hashcash in hex nibbles (``fast``, ``slow``); non-work "
 "``metarefresh`` and ``preact`` challenges"
@@ -607,79 +620,80 @@ msgstr ""
 "16진수 니블 단위의 SHA-256 Hashcash(``fast``, ``slow``); 작업이 없는 "
 "``metarefresh``\\ 와 ``preact`` 챌린지"
 
-#: ../../prior-art.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:123
 msgid "JavaScript anti-bot challenge and CAPTCHA; not work-bound"
 msgstr "JavaScript 봇 방지 챌린지와 CAPTCHA; 작업 증명 방식 아님"
 
-#: ../../prior-art.rst:124
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:124
 msgid ""
 "Managed challenge, JS challenge, Turnstile; Bot Fight Mode issues a "
 "compute challenge"
 msgstr "관리형 챌린지, JS 챌린지, Turnstile; Bot Fight Mode는 계산 챌린지를 발급"
 
-#: ../../prior-art.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:125
 msgid "Challenge state on the server"
 msgstr "서버의 챌린지 상태"
 
-#: ../../prior-art.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:126
 msgid "None until solved; solved tags in a fixed Robin Hood table"
 msgstr "풀리기 전에는 없음; 풀린 태그는 고정 Robin Hood 테이블에 저장"
 
-#: ../../prior-art.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:127
 msgid "Store backend: memory, bbolt, Valkey, or S3"
 msgstr "저장소 백엔드: memory, bbolt, Valkey, S3 중 하나"
 
-#: ../../prior-art.rst:128
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:128
 msgid "Managed by the stack"
 msgstr "스택이 관리"
 
-#: ../../prior-art.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:129
 msgid "Managed by Cloudflare"
 msgstr "Cloudflare가 관리"
 
-#: ../../prior-art.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:130
 msgid "Session token"
 msgstr "세션 토큰"
 
-#: ../../prior-art.rst:131
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:131
 msgid ""
 "Keyed BLAKE3 tag, 75-character cookie bound to the work paid; Ed25519 "
 "optional"
 msgstr "키 기반 BLAKE3 태그, 치른 작업에 묶인 75자 쿠키; 선택적으로 Ed25519"
 
-#: ../../prior-art.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:132
 msgid "JSON Web Token signed with Ed25519; HS512 optional"
 msgstr "Ed25519로 서명한 JSON Web Token; 선택적으로 HS512"
 
-#: ../../prior-art.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:133
 msgid "Cookie issued by the stack"
 msgstr "스택이 발급하는 쿠키"
 
-#: ../../prior-art.rst:134
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:134
 msgid "``cf_clearance`` cookie"
 msgstr "``cf_clearance`` 쿠키"
 
-#: ../../prior-art.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:135
 msgid "Post-quantum posture of the default token"
 msgstr "기본 토큰의 양자 내성"
 
-#: ../../prior-art.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:136
 msgid "Symmetric: only Grover's quadratic speedup applies"
 msgstr "대칭 방식: Grover 알고리즘의 이차 가속만 적용됨"
 
-#: ../../prior-art.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:137
 msgid "Ed25519: broken by Shor's algorithm"
 msgstr "Ed25519: Shor 알고리즘으로 깨짐"
 
-#: ../../prior-art.rst:138 ../../prior-art.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:139
 msgid "Not documented"
 msgstr "문서화되지 않음"
 
-#: ../../prior-art.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:140
 msgid "Policy language"
 msgstr "정책 언어"
 
-#: ../../prior-art.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:141
 msgid ""
 "JSON rules: path, User-Agent, headers, IPv4/IPv6 CIDR, JA4 fingerprint; "
 "ALLOW, DENY, CHALLENGE, WEIGH with thresholds; dynamic rules from the "
@@ -688,26 +702,26 @@ msgstr ""
 "JSON 규칙: 경로, User-Agent, 헤더, IPv4/IPv6 CIDR, JA4 지문; 임계값이 있는 ALLOW, DENY, "
 "CHALLENGE, WEIGH; 데이터베이스의 동적 규칙"
 
-#: ../../prior-art.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:142
 msgid ""
 "YAML/JSON bots: regex on UA, path, headers; CIDR; CEL expressions; WEIGH "
 "with thresholds"
 msgstr "YAML/JSON 봇 정의: UA, 경로, 헤더에 대한 정규식; CIDR; CEL 표현식; 임계값이 있는 WEIGH"
 
-#: ../../prior-art.rst:143
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:143
 msgid "Console-defined custom rules, ACLs, IP groups"
 msgstr "콘솔에서 정의하는 사용자 지정 규칙, ACL, IP 그룹"
 
-#: ../../prior-art.rst:144
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:144
 msgid ""
 "Rules language expressions; *5 / 20 / 100 / 1000 custom rules by plan*"
 msgstr "Rules language 표현식; *요금제별 사용자 지정 규칙 5 / 20 / 100 / 1000개*"
 
-#: ../../prior-art.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:145
 msgid "TLS fingerprint (JA4)"
 msgstr "TLS 지문(JA4)"
 
-#: ../../prior-art.rst:146
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:146
 msgid ""
 "Rules match a JA4 fingerprint exactly or by prefix; a trusted ingress "
 "computes it and forwards it in a header (``--ja4-header``); Sibuna does "
@@ -716,7 +730,7 @@ msgstr ""
 "규칙이 JA4 지문을 정확히 일치 또는 접두사로 비교; 신뢰할 수 있는 인그레스가 지문을 계산해 헤더로 "
 "전달(``--ja4-header``); Sibuna는 직접 계산하지 않음"
 
-#: ../../prior-art.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:147
 msgid ""
 "Not documented; policies may reference the HTTP fingerprint JA4H, which "
 "Anubis computes and adds as the header ``X-Http-Fingerprint-JA4H``"
@@ -724,7 +738,7 @@ msgstr ""
 "문서화되지 않음; 정책에서 HTTP 지문 JA4H를 참조할 수 있으며, Anubis가 이를 계산해 "
 "``X-Http-Fingerprint-JA4H`` 헤더로 추가함"
 
-#: ../../prior-art.rst:148
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:148
 msgid ""
 "Computed at its own TLS termination; shown in attack details; custom "
 "rules match it (equals, not equals); a built-in rule denies fingerprints "
@@ -733,109 +747,110 @@ msgstr ""
 "자체 TLS 종료 지점에서 계산; 공격 상세 정보에 표시; 사용자 지정 규칙으로 비교(같음, 같지 않음); 내장 규칙이 자체 악성 "
 "JA4 위협 정보에 있는 지문을 거부"
 
-#: ../../prior-art.rst:149
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:149
 msgid ""
 "JA3 and JA4 fingerprints in WAF custom rules and analytics *(Enterprise "
 "with Bot Management)*"
 msgstr ""
 "WAF 사용자 지정 규칙과 분석에서 JA3, JA4 지문 사용 *(Enterprise, Bot Management 포함)*"
 
-#: ../../prior-art.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:151
 msgid "Feature comparison, part 3: inspection and state"
 msgstr "기능 비교 3부: 검사와 상태"
 
-#: ../../prior-art.rst:161
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:161
 msgid "SQLi, XSS, RCE, traversal inspection"
 msgstr "SQLi, XSS, RCE, 경로 탐색 검사"
 
-#: ../../prior-art.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:162
 msgid ""
 "Shield: tagged automaton plus structural tokenizers, first 8 KB of body"
 msgstr "Shield: 태그가 붙은 오토마톤과 구조 토크나이저, 본문의 처음 8 KB"
 
-#: ../../prior-art.rst:163 ../../prior-art.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:163
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:209
 msgid "\\-"
 msgstr "\\-"
 
-#: ../../prior-art.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:164
 msgid "Semantic analysis engine over OWASP categories, also SSRF, XXE, CRLF"
 msgstr "OWASP 범주에 대한 의미 분석 엔진, SSRF, XXE, CRLF도 포함"
 
-#: ../../prior-art.rst:165
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:165
 msgid ""
 "Managed rulesets *(Pro and above)*; OWASP Core Ruleset; attack score "
 "*(Business and above)*"
 msgstr "관리형 규칙 집합 *(Pro 이상)*; OWASP Core Ruleset; 공격 점수 *(Business 이상)*"
 
-#: ../../prior-art.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:166
 msgid "Rate limiting"
 msgstr "속도 제한"
 
-#: ../../prior-art.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:167
 msgid "GCRA per client, local to a node"
 msgstr "클라이언트별 GCRA, 노드 로컬"
 
-#: ../../prior-art.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:168
 msgid "\\- (system load is exposed to CEL rules)"
 msgstr "\\- (CEL 규칙에서 시스템 부하를 참조할 수 있음)"
 
-#: ../../prior-art.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:169
 msgid "Per IP, path, session"
 msgstr "IP, 경로, 세션별"
 
-#: ../../prior-art.rst:170
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:170
 msgid "*1 / 2 / 5 / 100 rules by plan*; IP-only keys below Enterprise"
 msgstr "*요금제별 규칙 1 / 2 / 5 / 100개*; Enterprise 미만은 IP 전용 키"
 
-#: ../../prior-art.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:171
 msgid "Bans and reputation"
 msgstr "차단과 평판"
 
-#: ../../prior-art.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:172
 msgid ""
 "Honeypot bans; reputation trie loaded from the reputation table shared "
 "across the cluster"
 msgstr "허니팟 차단; 클러스터 전체가 공유하는 평판 테이블에서 불러온 평판 트라이"
 
-#: ../../prior-art.rst:173
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:173
 msgid "DNSBL; ASN and GeoIP through Thoth *(paid, closed)*"
 msgstr "DNSBL; Thoth를 통한 ASN과 GeoIP *(유료, 비공개)*"
 
-#: ../../prior-art.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:174
 msgid "IP groups and blacklists; threat intelligence *(Pro)*"
 msgstr "IP 그룹과 차단 목록; 위협 인텔리전스 *(Pro)*"
 
-#: ../../prior-art.rst:175
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:175
 msgid "IP lists; managed lists and bot score *(Enterprise)*"
 msgstr "IP 목록; 관리형 목록과 봇 점수 *(Enterprise)*"
 
-#: ../../prior-art.rst:176
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:176
 msgid "Forensics"
 msgstr "포렌식"
 
-#: ../../prior-art.rst:177
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:177
 msgid ""
 "SQLite or PostgreSQL: full-text search over incidents, vector campaign "
 "clustering"
 msgstr "SQLite 또는 PostgreSQL: 인시던트 전문 검색, 벡터 기반 캠페인 군집화"
 
-#: ../../prior-art.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:178
 msgid "Prometheus metrics only"
 msgstr "Prometheus 지표만"
 
-#: ../../prior-art.rst:179
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:179
 msgid "PostgreSQL attack log with console"
 msgstr "PostgreSQL 공격 로그와 콘솔"
 
-#: ../../prior-art.rst:180
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:180
 msgid "Security Events; sampled on Free"
 msgstr "Security Events; Free 요금제에서는 표본만 표시"
 
-#: ../../prior-art.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:181
 msgid "Multi-node"
 msgstr "다중 노드"
 
-#: ../../prior-art.rst:182
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:182
 msgid ""
 "Daemon: one PostgreSQL database shared by every node for policy and "
 "reputation; shared seed; sticky challenge verification. Edge: a mesh "
@@ -844,89 +859,93 @@ msgstr ""
 "데몬: 정책과 평판을 위해 모든 노드가 공유하는 PostgreSQL 데이터베이스 하나; 공유 시드; 발급 노드 고정 챌린지 검증. "
 "엣지: 메시가 차단을 공유(SID 0022)"
 
-#: ../../prior-art.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:183
 msgid "Shared signing key; shared Valkey store"
 msgstr "공유 서명 키; 공유 Valkey 저장소"
 
-#: ../../prior-art.rst:184
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:184
 msgid "One stack per host"
 msgstr "호스트당 스택 하나"
 
-#: ../../prior-art.rst:185
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:185
 msgid "Global anycast"
 msgstr "전역 애니캐스트"
 
-#: ../../prior-art.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:187
 msgid "Feature comparison, part 4: operations"
 msgstr "기능 비교 4부: 운영"
 
-#: ../../prior-art.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:197
 msgid "Metrics"
 msgstr "지표"
 
-#: ../../prior-art.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:198
 msgid "Prometheus at ``/__sibuna/metrics``"
 msgstr "``/__sibuna/metrics``\\ 에서 Prometheus 형식"
 
-#: ../../prior-art.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:199
 msgid "Prometheus on a separate port"
 msgstr "별도 포트의 Prometheus"
 
-#: ../../prior-art.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:200
 msgid "Console dashboards"
 msgstr "콘솔 대시보드"
 
-#: ../../prior-art.rst:201
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:201
 msgid "Dashboard and analytics"
 msgstr "대시보드와 분석"
 
-#: ../../prior-art.rst:202 ../../prior-art.rst:272
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:272
 msgid "TLS termination"
 msgstr "TLS 종료"
 
-#: ../../prior-art.rst:203
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:203
 msgid ""
 "Daemon: \\- (ingress). Edge: **Yes**, with automatic HTTPS (SID 0021)"
 msgstr "데몬: \\- (인그레스). 엣지: **예**, 자동 HTTPS 포함(SID 0021)"
 
-#: ../../prior-art.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:204
 msgid "\\- (ingress)"
 msgstr "\\- (인그레스)"
 
-#: ../../prior-art.rst:205 ../../prior-art.rst:206 ../../prior-art.rst:210
-#: ../../prior-art.rst:211 ../../prior-art.rst:214
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:214
 msgid "**Yes**"
 msgstr "**예**"
 
-#: ../../prior-art.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:207
 msgid "Management console"
 msgstr "관리 콘솔"
 
-#: ../../prior-art.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:208
 msgid "Opt-in; SID 0007 Committed"
 msgstr "선택 사항; SID 0007 Committed"
 
-#: ../../prior-art.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:212
 msgid "Measured on the benchmark host"
 msgstr "벤치마크 호스트에서 측정"
 
-#: ../../prior-art.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:213
 msgid "**Yes** (Part X)"
 msgstr "**예** (제X부)"
 
-#: ../../prior-art.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:215
 msgid "\\- (Docker only)"
 msgstr "\\- (Docker 전용)"
 
-#: ../../prior-art.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:216
 msgid "\\- (hosted)"
 msgstr "\\- (호스팅형)"
 
-#: ../../prior-art.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:218
 msgid "Three differences carry most of the weight in a selection decision."
 msgstr "제품을 고를 때는 세 가지 차이가 가장 큰 비중을 차지합니다."
 
-#: ../../prior-art.rst:220
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:220
 msgid ""
 "*Where the work goes.* Anubis and Sibuna Gate make the *client* pay "
 "before the origin does anything. SafeLine and Cloudflare inspect first "
@@ -939,7 +958,7 @@ msgstr ""
 "걸러 내는 것입니다. Sibuna Shield는 이 순서로 두 가지를 모두 합니다. 이미 유효한 세션을 가진 요청이라도 검사에서 "
 "거부될 수 있습니다."
 
-#: ../../prior-art.rst:221
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:221
 msgid ""
 "*What the server remembers.* Anubis keeps challenge state in a store "
 "(memory, bbolt, Valkey, or S3) and signs a JSON Web Token with Ed25519; "
@@ -952,7 +971,7 @@ msgstr ""
 "기억합니다. SafeLine은 공격 로그를 PostgreSQL에 보관합니다. Cloudflare는 모든 것을 보관하지만, Free "
 "요금제에서는 표본만 볼 수 있습니다."
 
-#: ../../prior-art.rst:222
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:222
 msgid ""
 "*What an operator has to run.* Sibuna is one binary with an optional "
 "SQLite file, or a PostgreSQL database shared by a cluster; Anubis is one "
@@ -965,11 +984,11 @@ msgstr ""
 "1기가바이트 이상, 디스크 5기가바이트 이상인 Linux 호스트에서 Docker 데몬 위에 실행되는 컨테이너 일곱 개입니다. "
 "Cloudflare는 DNS 변경과 구독만 하면 됩니다."
 
-#: ../../prior-art.rst:224
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:224
 msgid "Current product boundary"
 msgstr "현재 제품의 경계"
 
-#: ../../prior-art.rst:227
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:227
 msgid ""
 "The firewall daemon leaves TLS termination to the deployment proxy; the "
 "edge terminates TLS itself (Part VIII). Sibuna does not score bots with a "
@@ -994,11 +1013,11 @@ msgstr ""
 "대시보드 여덟 개를 활성화하고 부하를 건 상태의 공식 성능 격리 관문은 아직 측정하지 않았습니다. 측정한 내용은 제VIII부에 "
 "기록되어 있습니다."
 
-#: ../../prior-art.rst:229
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:229
 msgid "Load Balancers"
 msgstr "로드 밸런서"
 
-#: ../../prior-art.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:232
 msgid ""
 "Since SID 0015 Sibuna is also an edge load balancer: it forwards TCP and "
 "UDP, terminates TLS, HTTP/2 and HTTP/3, and routes HTTP requests to pools "
@@ -1010,11 +1029,11 @@ msgstr ""
 "HTTP/3를 종료하며, HTTP 요청을 서버 풀로 라우팅하고, 방화벽을 요구하는 경로에는 방화벽을 둡니다. 이 절은 로드 밸런서가 "
 "무엇에 기대고 있는지 밝히고, 이를 두 개의 오픈 로드 밸런서와 비교합니다."
 
-#: ../../prior-art.rst:234
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:234
 msgid "Where the Load Balancer Comes From"
 msgstr "로드 밸런서의 뿌리"
 
-#: ../../prior-art.rst:237
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:237
 msgid ""
 "The vocabulary is HAProxy's. A *frontend* binds addresses, a *backend* is "
 "a pool of *servers*, and an operator drains a server through a local "
@@ -1036,11 +1055,11 @@ msgstr ""
 "확장하며, 컨트롤 플레인이 설정을 밀어 넣습니다. SID 0030의 훅도 세 계층으로 정해진 단계에 붙으며, 각 결정은 기한이 있는 "
 "호출 하나입니다."
 
-#: ../../prior-art.rst:239
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:239
 msgid "Four papers decide how the edge places a flow and what it remembers."
 msgstr "논문 네 편이 엣지가 플로를 어떻게 배치하고 무엇을 기억할지 정합니다."
 
-#: ../../prior-art.rst:241
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:241
 msgid ""
 "*Maglev* (Eisenbud et al., NSDI 2016) fills a table of a prime number of "
 "slots from one permutation per server, so a lookup is one hash and one "
@@ -1054,7 +1073,7 @@ msgstr ""
 "슬롯 65,537개짜리 가중 테이블을 만들며(``crates/lb/src/maglev.rs``), 지역 체제의 메시는 이것으로 "
 "클라이언트를 배치합니다(SID 0015)."
 
-#: ../../prior-art.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:242
 msgid ""
 "*Consistent hashing with bounded loads* (Mirrokni, Thorup and "
 "Zadimoghaddam, SODA 2018) caps the load of the chosen server at a factor "
@@ -1068,7 +1087,7 @@ msgstr ""
 "``load_factor_pct``\\ (기본값 125)로 이런 상한을 적용합니다. HAProxy는 "
 "``hash-balance-factor``\\ 로 일관 해싱에 같은 아이디어를 적용합니다."
 
-#: ../../prior-art.rst:243
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:243
 msgid ""
 "*Rendezvous hashing* (Thaler and Ravishankar, IEEE/ACM Transactions on "
 "Networking 1998) gives each server a score from a hash of its name and "
@@ -1082,7 +1101,7 @@ msgstr ""
 "테이블이 필요 없습니다. 소스 고정은 이 방식으로 서버의 순위를 매기고(SID 0019), 동료 전달은 이 방식으로 노드들 가운데서 "
 "클라이언트의 소유 노드를 고릅니다(SID 0026)."
 
-#: ../../prior-art.rst:244
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:244
 msgid ""
 "*TinyLFU* (Einziger, Friedman and Manes, ACM Transactions on Storage "
 "2017) admits a new entry to a full cache only when a small frequency "
@@ -1093,7 +1112,7 @@ msgstr ""
 "2017)는 작은 빈도 스케치가 새 항목이 밀어낼 항목보다 더 자주 쓰인다고 말할 때에만 가득 찬 캐시에 새 항목을 허용합니다. "
 "SID 0027의 spill 캐시는 이 규칙으로 파일에 힌트를 허용합니다."
 
-#: ../../prior-art.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:247
 msgid ""
 "HAProxy gives the vocabulary and the admin socket, nginx the event-driven "
 "workers, and Envoy shares the idea of hook stages. Maglev and bounded "
@@ -1106,7 +1125,7 @@ msgstr ""
 "Maglev와 부하 상한은 부하 상한 Maglev 풀을, 랑데부 해싱은 소스 고정과 클라이언트의 소유 노드를, TinyLFU는 "
 "spill 캐시의 허용을 줍니다. HAProxy의 hash-balance-factor와는 부하 상한이라는 아이디어를 공유합니다."
 
-#: ../../prior-art.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:247
 msgid ""
 "// prior-art.rst: what the edge load balancer takes from earlier systems "
 "and papers.\n"
@@ -1195,18 +1214,18 @@ msgstr ""
 "label-angle: auto),\n"
 ")\n"
 
-#: ../../prior-art.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:247
 msgid ""
 "What the edge load balancer takes from earlier systems and papers. Solid "
 "arrows are ideas taken directly; dashed lines are ideas shared."
 msgstr ""
 "엣지 로드 밸런서가 이전 시스템과 논문에서 가져온 것. 실선 화살표는 직접 가져온 아이디어이고, 점선은 공유하는 아이디어입니다."
 
-#: ../../prior-art.rst:250
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:250
 msgid "Load Balancing Compared"
 msgstr "로드 밸런싱 비교"
 
-#: ../../prior-art.rst:253
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:253
 msgid ""
 "The table compares the load balancing of Sibuna with HAProxy and Envoy. "
 "We read their public documentation on 25 November 2026: the HAProxy 3.4.8 "
@@ -1226,27 +1245,27 @@ msgstr ""
 "페이지로는 결론이 나지 않은 사실을 가리킵니다. Sibuna에 대해서는 코드와 SID 기록이 결정하며, 만들어지지 않은 기능은 "
 "그렇다고 밝힙니다."
 
-#: ../../prior-art.rst:255
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:255
 msgid "Load balancing: Sibuna, HAProxy and Envoy"
 msgstr "로드 밸런싱: Sibuna, HAProxy, Envoy"
 
-#: ../../prior-art.rst:261
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:261
 msgid "Sibuna edge"
 msgstr "Sibuna 엣지"
 
-#: ../../prior-art.rst:262
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:262
 msgid "HAProxy 3.4"
 msgstr ""
 
-#: ../../prior-art.rst:263
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:263
 msgid "Envoy 1.40"
 msgstr ""
 
-#: ../../prior-art.rst:264
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:264
 msgid "Protocols"
 msgstr "프로토콜"
 
-#: ../../prior-art.rst:265
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:265
 msgid ""
 "TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3 and gRPC, toward clients and toward "
 "servers; WebSocket, but not toward an HTTP/2 or HTTP/3 pool"
@@ -1254,7 +1273,7 @@ msgstr ""
 "클라이언트 쪽과 서버 쪽 모두 TCP, UDP, HTTP/1.1, HTTP/2, HTTP/3, gRPC; WebSocket(단, "
 "HTTP/2나 HTTP/3 풀로는 불가)"
 
-#: ../../prior-art.rst:266
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:266
 msgid ""
 "TCP, HTTP/1.1, HTTP/2 and HTTP/3; QUIC toward servers is experimental; "
 "UDP listeners only in ``log-forward`` sections"
@@ -1262,23 +1281,23 @@ msgstr ""
 "TCP, HTTP/1.1, HTTP/2, HTTP/3; 서버 쪽 QUIC은 실험적; UDP 리스너는 ``log-forward`` "
 "절에서만"
 
-#: ../../prior-art.rst:267
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:267
 msgid ""
 "TCP, UDP (UDP proxy filter), HTTP/1.1, HTTP/2, and HTTP/3 toward clients "
 "and toward servers"
 msgstr "클라이언트 쪽과 서버 쪽 모두 TCP, UDP(UDP 프록시 필터), HTTP/1.1, HTTP/2, HTTP/3"
 
-#: ../../prior-art.rst:268
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:268
 msgid "Scheduling"
 msgstr "스케줄링"
 
-#: ../../prior-art.rst:269
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:269
 msgid ""
 "Least connections (default), round robin, power of two choices with peak "
 "EWMA, bounded Maglev; slow start"
 msgstr "최소 연결(기본값), 라운드 로빈, peak EWMA를 쓰는 두 선택의 힘, 부하 상한 Maglev; 슬로 스타트"
 
-#: ../../prior-art.rst:270
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:270
 msgid ""
 "``roundrobin``, ``static-rr``, ``leastconn``, ``first``, ``hash``, "
 "``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, "
@@ -1288,7 +1307,7 @@ msgstr ""
 "``source``, ``uri``, ``url_param``, ``hdr``, ``random``, ``rdp-cookie``, "
 "``sticky``; ``hash-balance-factor``\\ 로 부하 상한; ``slowstart``"
 
-#: ../../prior-art.rst:271
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:271
 msgid ""
 "Weighted round robin, least request (power of two choices), ring hash, "
 "Maglev with 65,537 slots, random, client-side weighted round robin"
@@ -1296,25 +1315,25 @@ msgstr ""
 "가중 라운드 로빈, 최소 요청(두 선택의 힘), 링 해시, 슬롯 65,537개의 Maglev, 무작위, 클라이언트 측 가중 라운드 "
 "로빈"
 
-#: ../../prior-art.rst:273
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:273
 msgid ""
 "**Yes**: PEM bundles chosen by server name; HTTP/2 over TLS and HTTP/3 "
 "over QUIC"
 msgstr "**예**: 서버 이름으로 고르는 PEM 묶음; TLS 위의 HTTP/2와 QUIC 위의 HTTP/3"
 
-#: ../../prior-art.rst:274
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:274
 msgid "**Yes**: ``bind ... ssl crt``"
 msgstr "**예**: ``bind ... ssl crt``"
 
-#: ../../prior-art.rst:275
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:275
 msgid "**Yes**: certificates from files or the secret discovery service"
 msgstr "**예**: 파일 또는 비밀 디스커버리 서비스에서 받는 인증서"
 
-#: ../../prior-art.rst:276
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:276
 msgid "TLS passthrough"
 msgstr "TLS 패스스루"
 
-#: ../../prior-art.rst:277
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:277
 msgid ""
 "**Yes**: ``tcp`` frontends route or refuse by server name, ALPN or JA4 "
 "read from the ClientHello; QUIC is validated by connection ID (SID 0032); "
@@ -1323,21 +1342,21 @@ msgstr ""
 "**예**: ``tcp`` 프런트엔드가 ClientHello에서 읽은 서버 이름, ALPN, JA4로 라우팅하거나 거부; QUIC은 "
 "연결 ID로 검증(SID 0032); 엣지가 생성하는 Retry는 만들어지지 않음"
 
-#: ../../prior-art.rst:278
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:278
 msgid "**Yes**: ``mode tcp`` with content inspection of ``req.ssl_sni``"
 msgstr "**예**: ``req.ssl_sni``\\ 의 콘텐츠 검사를 쓰는 ``mode tcp``"
 
-#: ../../prior-art.rst:279
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:279
 msgid ""
 "**Yes**: the TLS Inspector reads server name and ALPN to choose a filter "
 "chain"
 msgstr "**예**: TLS Inspector가 서버 이름과 ALPN을 읽어 필터 체인을 고름"
 
-#: ../../prior-art.rst:280
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:280
 msgid "ACME"
 msgstr "ACME"
 
-#: ../../prior-art.rst:281
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:281
 msgid ""
 "**Built in**: HTTP-01, TLS-ALPN-01 and DNS-01 (hook, RFC 2136, "
 "Cloudflare), wildcards, issuance on demand, OCSP stapling, and a local "
@@ -1346,7 +1365,7 @@ msgstr ""
 "**내장**: HTTP-01, TLS-ALPN-01, DNS-01(훅, RFC 2136, Cloudflare), 와일드카드, 요청 "
 "시점 발급, OCSP 스테이플링, ACME로 다른 기계에 서비스할 수 있는 로컬 인증 기관(SID 0021)"
 
-#: ../../prior-art.rst:282
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:282
 msgid ""
 "**Experimental** ``acme`` section: HAProxy answers HTTP-01 itself; DNS-01 "
 "and dns-persist-01 need the Data Plane API or another tool"
@@ -1354,15 +1373,16 @@ msgstr ""
 "**실험적** ``acme`` 절: HAProxy가 HTTP-01에 직접 응답; DNS-01과 dns-persist-01에는 "
 "Data Plane API나 다른 도구가 필요"
 
-#: ../../prior-art.rst:283 ../../prior-art.rst:315
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:283
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:315
 msgid "Not checked"
 msgstr "확인하지 않음"
 
-#: ../../prior-art.rst:284
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:284
 msgid "Health checks"
 msgstr "헬스 체크"
 
-#: ../../prior-art.rst:285
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:285
 msgid ""
 "Active TCP connect or HTTP ``GET`` with ``rise`` and ``fall``; passive "
 "ejection by real failures (SID 0019)"
@@ -1370,7 +1390,7 @@ msgstr ""
 "``rise``\\ 와 ``fall``\\ 을 쓰는 능동 TCP connect 또는 HTTP ``GET``; 실제 실패에 따른 수동 "
 "배제(SID 0019)"
 
-#: ../../prior-art.rst:286
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:286
 msgid ""
 "Active checks (``check``, ``option httpchk``); passive observation with "
 "``observe`` and ``error-limit``"
@@ -1378,17 +1398,17 @@ msgstr ""
 "능동 체크(``check``, ``option httpchk``); ``observe``\\ 와 ``error-limit``\\ 로 "
 "수동 관찰"
 
-#: ../../prior-art.rst:287
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:287
 msgid ""
 "Active HTTP, gRPC, L3/L4, Redis and Thrift checks; passive outlier "
 "detection"
 msgstr "능동 HTTP, gRPC, L3/L4, Redis, Thrift 체크; 수동 이상치 탐지"
 
-#: ../../prior-art.rst:288
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:288
 msgid "Sticky sessions"
 msgstr "스티키 세션"
 
-#: ../../prior-art.rst:289
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:289
 msgid ""
 "Keyed cookie, source address, or a learned table by source or cookie that "
 "a mesh replicates and a file can keep over a restart (SID 0025, SID 0027)"
@@ -1396,22 +1416,22 @@ msgstr ""
 "키 기반 쿠키, 출발지 주소, 또는 출발지나 쿠키에 따른 학습 테이블(메시가 복제하고 파일로 재시작 너머까지 유지 가능)(SID "
 "0025, SID 0027)"
 
-#: ../../prior-art.rst:290
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:290
 msgid ""
 "``cookie`` (insert, rewrite, prefix); stick tables (``stick on src``)"
 msgstr "``cookie``\\ (insert, rewrite, prefix); stick 테이블(``stick on src``)"
 
-#: ../../prior-art.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:291
 msgid ""
 "A hash policy on the route with ring hash or Maglev; the stateful session "
 "filter with a cookie or a header"
 msgstr "경로의 해시 정책(링 해시 또는 Maglev); 쿠키나 헤더를 쓰는 상태 기반 세션 필터"
 
-#: ../../prior-art.rst:292
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:292
 msgid "Runtime API"
 msgstr "런타임 API"
 
-#: ../../prior-art.rst:293
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:293
 msgid ""
 "Unix admin socket and ``sibuna ctl``: drain, weight, add and remove "
 "servers, lift bans, reload, show; a subset in the operator console (SID "
@@ -1420,7 +1440,7 @@ msgstr ""
 "Unix 관리 소켓과 ``sibuna ctl``: 서버 드레인, 가중치, 추가와 제거, 차단 해제, 다시 불러오기, 조회; 그 "
 "일부는 운영자 콘솔에서(SID 0018, SID 0031)"
 
-#: ../../prior-art.rst:294
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:294
 msgid ""
 "Runtime API on the stats socket: ``set server ... state|weight``, ``add "
 "server``, ``del server``, ``show stat``, ``show table``, ``clear table``, "
@@ -1430,7 +1450,7 @@ msgstr ""
 "``del server``, ``show stat``, ``show table``, ``clear table``, ``acme "
 "renew``"
 
-#: ../../prior-art.rst:295
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:295
 msgid ""
 "Admin interface: stats, ``config_dump``, ``drain_listeners``, "
 "``healthcheck/fail``, ``runtime_modify``; endpoints and listeners change "
@@ -1439,11 +1459,11 @@ msgstr ""
 "관리 인터페이스: stats, ``config_dump``, ``drain_listeners``, "
 "``healthcheck/fail``, ``runtime_modify``; 엔드포인트와 리스너는 컨트롤 플레인의 xDS로 변경"
 
-#: ../../prior-art.rst:296
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:296
 msgid "Hot reload"
 msgstr "핫 리로드"
 
-#: ../../prior-art.rst:297
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:297
 msgid ""
 "In the same process by SIGHUP, ``reload`` or a file watcher; established "
 "flows keep their server; ``reload cluster`` for a mesh; a database "
@@ -1452,22 +1472,22 @@ msgstr ""
 "SIGHUP, ``reload``, 파일 감시로 같은 프로세스 안에서; 수립된 플로는 서버를 유지; 메시에는 ``reload "
 "cluster``; 영속 모드에서는 데이터베이스 리비전(SID 0023, SID 0028)"
 
-#: ../../prior-art.rst:298
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:298
 msgid ""
 "A reload starts a new worker that takes the listening sockets of the old "
 "one (``-x``; automatic in master-worker mode)"
 msgstr ""
 "다시 불러오기는 이전 워커의 리스닝 소켓을 넘겨받는 새 워커를 시작(``-x``; master-worker 모드에서는 자동)"
 
-#: ../../prior-art.rst:299
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:299
 msgid "Dynamic configuration through xDS without a restart"
 msgstr "재시작 없이 xDS로 동적 설정"
 
-#: ../../prior-art.rst:300
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:300
 msgid "Binary replacement"
 msgstr "바이너리 교체"
 
-#: ../../prior-art.rst:301
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:301
 msgid ""
 "``global.upgrade_socket``: the listening sockets and the live UDP "
 "mappings pass to the new process, and TCP streams drain in the old one; "
@@ -1476,22 +1496,22 @@ msgstr ""
 "``global.upgrade_socket``: 리스닝 소켓과 살아 있는 UDP 매핑이 새 프로세스로 넘어가고, TCP 스트림은 "
 "이전 프로세스에서 드레인; Linux 전용(SID 0029). 또는 ``global.reuse_port``"
 
-#: ../../prior-art.rst:302
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:302
 msgid "The same reload passes the listening sockets to the new process"
 msgstr "같은 다시 불러오기가 리스닝 소켓을 새 프로세스로 넘김"
 
-#: ../../prior-art.rst:303
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:303
 msgid ""
 "Hot restart passes the listening sockets over a Unix socket; existing "
 "connections are not transferred; HTTP/3 is not handled gracefully yet"
 msgstr ""
 "핫 리스타트가 Unix 소켓으로 리스닝 소켓을 넘김; 기존 연결은 옮기지 않음; HTTP/3는 아직 우아하게 처리하지 않음"
 
-#: ../../prior-art.rst:304
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:304
 msgid "Clustering of state"
 msgstr "상태의 클러스터 공유"
 
-#: ../../prior-art.rst:305
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:305
 msgid ""
 "A mesh of at most 64 nodes shares bans, server commands, the sticky table "
 "and fleet-wide ``max_flows``, and forwards each client to its owner node "
@@ -1500,24 +1520,24 @@ msgstr ""
 "노드 최대 64개의 메시가 차단, 서버 명령, 스티키 테이블, 플릿 전체 ``max_flows``\\ 를 공유하고, 각 클라이언트를 "
 "소유 노드로 전달(SID 0022, SID 0025, SID 0026); 요청 제한기는 노드마다 셈"
 
-#: ../../prior-art.rst:306
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:306
 msgid ""
 "``peers`` sections push stick-table entries between instances over TCP, "
 "multi-master; values overwrite without aggregation"
 msgstr ""
 "``peers`` 절이 TCP로 인스턴스 사이에 stick 테이블 항목을 밀어 넣음(멀티 마스터); 값은 집계 없이 덮어씀"
 
-#: ../../prior-art.rst:307
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:307
 msgid ""
 "Global rate limits through an external gRPC rate limit service; other "
 "shared state not checked"
 msgstr "외부 gRPC 속도 제한 서비스를 통한 전역 속도 제한; 그 밖의 공유 상태는 확인하지 않음"
 
-#: ../../prior-art.rst:308
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:308
 msgid "Extension mechanism"
 msgstr "확장 메커니즘"
 
-#: ../../prior-art.rst:309
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:309
 msgid ""
 "Native Rust hooks, WebAssembly on an in-house metered interpreter, and "
 "agents on a Unix socket, at the connection, request and telemetry stages; "
@@ -1526,23 +1546,23 @@ msgstr ""
 "연결, 요청, 텔레메트리 단계의 네이티브 Rust 훅, 자체 계량 인터프리터 위의 WebAssembly, Unix 소켓 위의 "
 "agent; 응답이나 본문에 대한 훅은 없음(SID 0030)"
 
-#: ../../prior-art.rst:310
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:310
 msgid ""
 "Lua (``lua-load``); filters, among them the Stream Processing Offload "
 "Engine (SPOE)"
 msgstr "Lua(``lua-load``); Stream Processing Offload Engine(SPOE)을 포함한 필터"
 
-#: ../../prior-art.rst:311
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:311
 msgid ""
 "Filters, among them Lua, external authorization and external processing; "
 "WebAssembly through the Proxy-Wasm ABI"
 msgstr "Lua, 외부 인가, 외부 처리를 포함한 필터; Proxy-Wasm ABI를 통한 WebAssembly"
 
-#: ../../prior-art.rst:312
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:312
 msgid "Built-in bot protection"
 msgstr "내장 봇 보호"
 
-#: ../../prior-art.rst:313
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:313
 msgid ""
 "Proof-of-work admission (Gate) and the semantic firewall (Shield), chosen "
 "per frontend and per route; off in ``sibuna lb`` unless asked"
@@ -1550,15 +1570,15 @@ msgstr ""
 "작업 증명 요청 허용(Gate)과 의미 기반 방화벽(Shield), 프런트엔드와 경로마다 선택; ``sibuna lb``\\ 에서는 "
 "요청하지 않으면 꺼짐"
 
-#: ../../prior-art.rst:314
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:314
 msgid "None in the Configuration Manual; stick-table rates and deny rules"
 msgstr "Configuration Manual에는 없음; stick 테이블 속도와 거부 규칙"
 
-#: ../../prior-art.rst:317
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:317
 msgid "Three differences matter most when we choose."
 msgstr "고를 때는 세 가지 차이가 가장 중요합니다."
 
-#: ../../prior-art.rst:319
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:319
 msgid ""
 "*What changes at run time.* HAProxy and Sibuna both change servers "
 "through a local socket. Envoy expects a control plane: its admin "
@@ -1570,7 +1590,7 @@ msgstr ""
 "기대합니다. 그 관리 인터페이스는 조회하고 드레인하며, 설정은 xDS가 바꿉니다. Sibuna의 소켓은 서버, 차단, 로컬 인증 "
 "기관의 인증서를 바꿉니다. 프런트엔드, 경로, 정책은 다시 불러오기로 바뀝니다(SID 0018)."
 
-#: ../../prior-art.rst:320
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:320
 msgid ""
 "*What a cluster shares.* HAProxy replicates stick tables between peers. "
 "Sibuna's mesh replicates more kinds of state, each with its own merge "
@@ -1582,7 +1602,7 @@ msgstr ""
 "상태를 각자의 병합 규칙으로 복제하고, 플릿 전체 상한과 동료 전달을 더하지만, 최대 64개 노드의 고정된 명단 하나 안에서만, "
 "그리고 신뢰하는 네트워크에서만 그렇습니다. 메시는 인증할 뿐 암호화하지 않기 때문입니다(SID 0026)."
 
-#: ../../prior-art.rst:321
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:321
 msgid ""
 "*What a replacement keeps.* All three keep the listening sockets. Sibuna "
 "also passes live UDP mappings, so a UDP client keeps its server; none of "
@@ -1591,11 +1611,11 @@ msgstr ""
 "*교체가 유지하는 것.* 셋 모두 리스닝 소켓을 유지합니다. Sibuna는 살아 있는 UDP 매핑도 넘기므로, UDP 클라이언트가 "
 "자기 서버를 유지합니다. 셋 중 어느 것도 수립된 TCP 연결을 새 프로세스로 옮기지 않습니다."
 
-#: ../../prior-art.rst:323
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:323
 msgid "Current boundary of the load balancer"
 msgstr "로드 밸런서의 현재 경계"
 
-#: ../../prior-art.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:326
 msgid ""
 "The edge is new. HAProxy and Envoy have served production traffic for "
 "years; Sibuna's edge has run in tests and in benchmarks on up to three "
@@ -1610,11 +1630,11 @@ msgstr ""
 "프런트엔드가 차단 테이블을 참조하지 않는다는 것, 관리 소켓이 프런트엔드나 경로를 바꿀 수 없다는 것, spill 캐시가 서로 다른 "
 "키 5천만 개에서 유지율 목표에 미치지 못했다는 것, 요청 단계의 agent 호출이 자기 스레드를 붙잡는다는 것이 있습니다."
 
-#: ../../prior-art.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:328
 msgid "Exercise 2.1"
 msgstr "연습 문제 2.1"
 
-#: ../../prior-art.rst:330
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:330
 msgid ""
 "Explain why compiling one verifier source to native code and WebAssembly "
 "reduces protocol drift. Which properties still require independent "
@@ -1623,11 +1643,11 @@ msgstr ""
 "검증자 소스 하나를 네이티브 코드와 WebAssembly로 함께 컴파일하면 프로토콜의 어긋남이 줄어드는 이유를 설명하세요. 그래도 "
 "독립적인 테스트나 암호학적 검토가 필요한 속성은 무엇일까요?"
 
-#: ../../prior-art.rst:332
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:332
 msgid "Exercise 2.2"
 msgstr "연습 문제 2.2"
 
-#: ../../prior-art.rst:334
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:334
 msgid ""
 "Using only the comparison tables, write down the smallest deployment that "
 "gives a static site (a) a proof-of-work gate, (b) SQL-injection "
@@ -1636,15 +1656,15 @@ msgstr ""
 "비교 표만 사용해서, 정적 사이트에 (a) 작업 증명 게이트, (b) SQL 인젝션 검사, (c) 클러스터 전체 차단을 제공하는 "
 "가장 작은 배포를 적어 보세요. 각 선택은 어느 행 때문에 정해졌을까요?"
 
-#: ../../prior-art.rst:336
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:336
 msgid "Hint: Start from the \"runs as\" and \"multi-node\" rows."
 msgstr "힌트: \"실행 형태\"와 \"다중 노드\" 행에서 시작하세요."
 
-#: ../../prior-art.rst:338
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:338
 msgid "Exercise 2.3"
 msgstr "연습 문제 2.3"
 
-#: ../../prior-art.rst:340
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:340
 msgid ""
 "A pool has four servers of equal weight and 1,000 clients. Using only the "
 "descriptions of Maglev and rendezvous hashing above, say how many clients "
@@ -1655,18 +1675,18 @@ msgstr ""
 "방식에서 서버 하나를 제거할 때 클라이언트가 몇 개 옮겨 가는지 말하고, 동료 전달(SID 0026)이 클라이언트의 소유 노드에 "
 "랑데부 해싱을 택한 이유를 말하세요."
 
-#: ../../prior-art.rst:342
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:342
 msgid ""
 "Hint: Ask which clients a removal must move, and which ones a rebuilt "
 "table may move as well."
 msgstr ""
 "힌트: 제거가 어느 클라이언트를 옮겨야 하는지, 그리고 다시 만든 테이블이 어느 클라이언트를 함께 옮길 수 있는지 물어보세요."
 
-#: ../../prior-art.rst:344
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:344
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../prior-art.rst:346
+#: ../../../../../../home/insan/projects/sibuna/docs/book/prior-art.rst:346
 msgid ""
 "Describe how Gate, Shield, and optional shared storage divide admission, "
 "inspection and policy distribution. Then name one row of the comparison "

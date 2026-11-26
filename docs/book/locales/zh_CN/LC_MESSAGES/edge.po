@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../edge.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:1
 msgid "Part VIII: The Edge Load Balancer"
 msgstr "第 VIII 部分：边缘负载均衡器"
 
-#: ../../edge.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:4
 msgid ""
 "The earlier Parts built a gate and a shield in front of one origin. This "
 "Part follows a connection through a node that serves many origins: it "
@@ -36,11 +36,11 @@ msgstr ""
 "HTTP，在套接字处准入或拒绝连接，选择一台服务器，并把流保持在这台服务器上直到流结束。我们研究这一设计及其理由。配置放在第 XI "
 "部分，我们引用它而不重复它。SID 0015 是父记录，每一节都注明保存其设计的记录。"
 
-#: ../../edge.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:6
 msgid "Objectives"
 msgstr "学习目标"
 
-#: ../../edge.rst:8
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:8
 msgid ""
 "By the end of this chapter, we should be able to explain why a flow "
 "belongs to one thread and why a reload fails no request, describe how a "
@@ -55,11 +55,11 @@ msgstr ""
 "rendezvous "
 "哈希，推导一台服务器离开时有多少客户端会迁移，把服务器的生命周期画成状态机，列出套接字处的准入阶段，说明钩子的结果规则，并指出仍然存在的不足。"
 
-#: ../../edge.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:10
 msgid "The Model"
 msgstr "模型"
 
-#: ../../edge.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:13
 msgid ""
 "A node is described by four kinds of object. A *frontend* is a set of "
 "bound addresses and a protocol: ``tcp``, ``udp`` or ``http``. A *route* "
@@ -79,7 +79,7 @@ msgstr ""
 "ClientHello 的 TCP 前端还可以有选择其他服务器池的规则。HTTP "
 "前端按顺序评估它的路由；第一个匹配的路由选定服务器池，其余请求交给默认服务器池。"
 
-#: ../../edge.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:15
 msgid ""
 "The unit of work is a *flow*. A TCP stream is a flow from accept to "
 "close. A UDP mapping, the association between one client address and one "
@@ -95,11 +95,11 @@ msgstr ""
 "或 UDP 流在整个生命周期内只选择一次服务器。HTTP 前端为每个请求选择服务器，因此同一个 keep-alive 连接上的多个请求，或同一个 "
 "HTTP/2 连接上的多个流，可能到达不同的服务器。"
 
-#: ../../edge.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:17
 msgid "Flows Belong to One Thread"
 msgstr "流属于一个线程"
 
-#: ../../edge.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:20
 msgid ""
 "Each flow is owned by exactly one thread at a time. The edge worker "
 "accepts the connections of every frontend, owns the UDP mappings and the "
@@ -114,7 +114,7 @@ msgstr ""
 "TCP 流交给一个中继线程。HTTP 连接被交给当前服务连接最少的 HTTP worker，并一直留在那里直到关闭（SID "
 "0016）。交接就是经过一个队列的移动，随后是一次唤醒。移动之后，原所有者不再持有这个流的任何东西。因此没有锁保护流的状态，一个连接中的故障只会关闭这个连接。"
 
-#: ../../edge.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:22
 msgid ""
 "The alternative is one table of flows that every thread reads and writes. "
 "It needs a lock for each access, or a lock-free structure in which every "
@@ -129,7 +129,7 @@ msgstr ""
 "指出了第二种选择的陷阱：能检测到撕裂读的序列计数器在 Rust "
 "中无法修复它，因为未同步的复制本身已经是数据竞争。所有权让这个问题不复存在。线程必须共享的东西很少，而且是有意共享的：流预算、每台服务器的活动流计数、健康标志和已发布的路由表。"
 
-#: ../../edge.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:24
 msgid ""
 "The price of ownership is that a flow cannot move to a less busy thread. "
 "The assignment by fewest connections keeps the connection counts of the "
@@ -140,11 +140,11 @@ msgstr ""
 "所有权的代价是，流不能迁移到较空闲的线程。按最少连接分配使各 worker 的连接数彼此相差不超过一（SID 0016 的 Lean 模型中的 "
 "``assign_keeps_balance``）。它均衡的是连接数，而不是工作量：一个繁忙的连接和一个空闲的连接计数相同。"
 
-#: ../../edge.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:26
 msgid "An Immutable Routing Snapshot"
 msgstr "不可变的路由快照"
 
-#: ../../edge.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:29
 msgid ""
 "The routing table changes rarely and is read by every request. Sibuna "
 "therefore separates the two. A writer, which is a reload, an admin "
@@ -159,11 +159,11 @@ msgstr ""
 "把两者分开。写者（即一次重新加载、一条管理命令或一次集群状态的变化）在互斥锁下修改主表，从中构建一个新的不可变快照，并递增一个代计数器。读者把一个数字与本线程上次看到的代比较。两者相等时，它使用本线程已持有的快照，不加锁，也不写共享内存。两者不同时，它获取一次互斥锁并取得新快照（SID "
 "0019）。"
 
-#: ../../edge.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:31
 msgid "Implementation: ``Shared::read``"
 msgstr "实现：``Shared::read``"
 
-#: ../../edge.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:33
 msgid ""
 "Runs a visitor on the current routing snapshot. The usual call compares "
 "the generation with a ``thread_local`` cache of at most eight entries and "
@@ -172,7 +172,7 @@ msgstr ""
 "在当前路由快照上运行一个访问者。通常的调用把代与一个最多八项的 ``thread_local`` 缓存比较，不获取锁。位于 "
 "``crates/lb/src/http.rs``\\ （crate ``sibuna-lb``）。"
 
-#: ../../edge.rst:35
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:35
 msgid ""
 "fn read<R>(&self, visit: impl Fn(&Snapshot) -> R) -> R {\n"
 "    let generation = self.generation.load(Ordering::Acquire);\n"
@@ -191,7 +191,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:52
 msgid ""
 "The firewall decides a request under policy generation :math:`n`, and the "
 "route table selects its server a moment later. A reload may fall between "
@@ -208,7 +208,7 @@ msgstr ""
 "个这样的回答。现在快照还把上一次重新加载所淘汰的修订版本保留十秒，在修订版本 :math:`n` 下判定的请求由修订版本 :math:`n` "
 "路由（SID 0018）。之后同一项测试在三次运行中每次约 50,000 个请求都通过了。落后两个修订版本的请求仍会被拒绝。"
 
-#: ../../edge.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:54
 msgid ""
 "A flow keeps its server across a reload for a simpler reason: its "
 "reservation does not live in the snapshot. A reservation is a ``Ticket`` "
@@ -222,11 +222,11 @@ msgstr ""
 "``Ticket``，它持有服务器的地址和指向服务器负载记录的共享引用。负载记录保存在一个以协议和地址为键的映射中，重新加载会查阅这个映射，因此新文件仍然列出的服务器会保留其计数。流结束时，ticket "
 "的 ``Drop`` 把它的名额归还给那条记录，无论此时由哪个修订版本提供服务。"
 
-#: ../../edge.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:56
 msgid "Implementation: ``Pool::reserve_with``"
 msgstr "实现：``Pool::reserve_with``"
 
-#: ../../edge.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:58
 msgid ""
 "Picks a server, counts itself on it with one atomic addition, and then "
 "checks the count. When another thread took the last place meanwhile, it "
@@ -236,12 +236,16 @@ msgstr ""
 "选出一台服务器，用一次原子加法把自己计入这台服务器，然后检查计数。如果在此期间另一个线程拿走了最后一个名额，它就归还名额并重新选择，最多八次。因此一台服务器服务的流从不超过它的 "
 "``max_flows``。位于 ``crates/lb/src/pool.rs``。"
 
-#: ../../edge.rst:60 ../../edge.rst:112 ../../edge.rst:232
-#: ../../edge.rst:278 ../../edge.rst:324 ../../edge.rst:399
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:112
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:278
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:403
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
-#: ../../edge.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:62
 msgid ""
 "Two threads reserve on a server with ``max_flows`` 10 that holds 9 flows. "
 "Show that at most one of them keeps the place, whatever the interleaving "
@@ -252,11 +256,11 @@ msgstr ""
 "两个线程在一台 ``max_flows`` 为 10、已持有 9 个流的服务器上预留。证明无论两次 ``fetch_add`` "
 "调用如何交错，至多只有其中一个保住名额。然后解释为什么一次从文件中删除这台服务器的重新加载不会结束它的 9 个流，以及它们的名额何时归还。"
 
-#: ../../edge.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:64
 msgid "Workers That Wait Without Threads"
 msgstr "无需线程即可等待的 worker"
 
-#: ../../edge.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:67
 msgid ""
 "The firewall of the earlier Parts serves each connection on a thread. "
 "Beside HAProxy 3.0, that design reached 59% of HAProxy's plaintext HTTP "
@@ -268,11 +272,11 @@ msgstr ""
 "HTTP 吞吐量的 59%。它每个请求产生 2.9 次上下文切换，每个连接占用约 145 KiB 的常驻内存（SID 0015）。SID 0016 "
 "用事件驱动的 worker 取代了边缘的线程。"
 
-#: ../../edge.rst:69
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:69
 msgid "The Path of a Connection"
 msgstr "连接的路径"
 
-#: ../../edge.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:73
 msgid ""
 "A client reaches the kernel listener, then the edge worker, which applies "
 "the connection rate, the flow budget and the connection hooks. A TCP flow "
@@ -288,7 +292,7 @@ msgstr ""
 "的 TLS 客户端交给协议运行时。两者都执行封禁和限制、流量策略、Gate 或 "
 "Shield、请求钩子，以及从路由快照中选择服务器，然后与服务器交换数据。"
 
-#: ../../edge.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:73
 msgid ""
 "digraph edge_path {\n"
 "  // edge.rst: the path of a connection through a node. Each box is owned "
@@ -451,14 +455,14 @@ msgstr ""
 "  choose -> shared [constraint=false];\n"
 "}"
 
-#: ../../edge.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:73
 msgid ""
 "The path of a connection through a node. Each box is owned by one thread "
 "or one group of threads; the dashed edges are the shared, read-mostly "
 "state."
 msgstr "连接穿过一个节点的路径。每个方框归一个线程或一组线程所有；虚线边表示共享的、以读为主的状态。"
 
-#: ../../edge.rst:76
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:76
 msgid ""
 "A QUIC client of an HTTP/3 frontend does not pass the edge worker: the "
 "protocol runtime accepts it, applies the per-client bound through an "
@@ -468,11 +472,11 @@ msgstr ""
 "HTTP/3 前端的 QUIC 客户端不经过边缘 worker：协议运行时接受它，通过一个准入函数应用按客户端的上限，并在读到 "
 "ClientHello 时询问连接钩子（SID 0017，SID 0030）。"
 
-#: ../../edge.rst:78
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:78
 msgid "Readiness and the Cost of Waiting"
 msgstr "就绪与等待的成本"
 
-#: ../../edge.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:81
 msgid ""
 "The edge starts one HTTP worker for each processor the process may use, "
 "up to 64. A worker is one thread with one poller (``epoll`` on Linux). "
@@ -486,7 +490,7 @@ msgstr ""
 "``epoll``）的线程。它拥有的每个套接字都是非阻塞的，线程唯一的等待是其循环中对 ``epoll_wait`` 的那一次调用。worker "
 "会被告知哪些套接字\\ *就绪*\\ ：此刻可读或可写。然后它完成这些字节所允许的工作，再回到循环。没有任何线程会等待慢速客户端。"
 
-#: ../../edge.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:83
 msgid ""
 "A connection is a record in the worker and a socket in the kernel. While "
 "it is idle it holds no buffer. When its socket becomes readable the "
@@ -505,7 +509,7 @@ msgstr ""
 "占用 27 MiB。SID 0015 估计一个空闲 HTTP 连接在进程中约占 0.4 KiB，而线程路径上约为 145 "
 "KiB。此时，内核套接字内存（在分配任何缓冲区之前约 3.4 KiB）才是更大的成本。"
 
-#: ../../edge.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:85
 msgid ""
 "The firewall decision did not become asynchronous. It needs no I/O, so it "
 "stays the synchronous function of the earlier Parts. The worker calls it "
@@ -523,17 +527,17 @@ msgstr ""
 "状态机完成这次交换：一个请求编码器、一个上传中继和一个响应中继。每个状态机消费字节、产生字节，从不接触套接字。每个状态机都与它所取代的阻塞式中继进行了对照测试：对于 "
 "150,000 个变异响应，无论整块输入、按随机分片输入还是逐字节输入，产生的字节和结果都相同。"
 
-#: ../../edge.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:87
 msgid "Every resource has a bound, and every state has a deadline:"
 msgstr "每种资源都有上限，每种状态都有期限："
 
-#: ../../edge.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:89
 msgid ""
 "The worker reads from a socket only while the buffer toward the other "
 "side is below 64 KiB. A slow reader thereby stops the reads of its peer."
 msgstr "只有当发往另一侧的缓冲区低于 64 KiB 时，worker 才从套接字读取。因此，慢速读者会让它的对端停止被读取。"
 
-#: ../../edge.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:90
 msgid ""
 "One readiness event reads each socket of a connection at most once, at "
 "most 64 KiB, and causes at most eight rounds of work. A bulk transfer "
@@ -541,20 +545,20 @@ msgid ""
 msgstr ""
 "一次就绪事件对一个连接的每个套接字至多读取一次、至多 64 KiB，并至多引发八轮工作。批量传输无法饿死同一个 worker 上的小请求。"
 
-#: ../../edge.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:91
 msgid ""
 "A timer wheel with one-second slots holds one deadline per connection: "
 "the idle timeout, a slow head, a slow body, a connect of five seconds, "
 "server silence, a write that makes no progress."
 msgstr "一个以一秒为槽的时间轮为每个连接保存一个期限：空闲超时、慢速请求头部、慢速请求体、五秒的连接建立、服务器静默、毫无进展的写入。"
 
-#: ../../edge.rst:92
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:92
 msgid ""
 "A connection serves at most 4,096 requests. A worker keeps at most 64 "
 "idle server sockets per address and 1,024 in all."
 msgstr "一个连接至多服务 4,096 个请求。一个 worker 对每个地址至多保留 64 个空闲服务器套接字，总共至多 1,024 个。"
 
-#: ../../edge.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:94
 msgid ""
 "With these workers, plaintext HTTP at 256 connections reached 229,139 "
 "requests per second against HAProxy's 243,864, which is 94%, with a 99th "
@@ -563,11 +567,11 @@ msgstr ""
 "使用这些 worker 后，256 个连接下的明文 HTTP 达到每秒 229,139 个请求，而 HAProxy 为 243,864，即 "
 "94%，第 99 百分位为 2.60 ms（SID 0016）。"
 
-#: ../../edge.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:96
 msgid "Implementation: ``Workers::submit``"
 msgstr "实现：``Workers::submit``"
 
-#: ../../edge.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:98
 msgid ""
 "Gives an accepted connection to the worker that serves the fewest "
 "connections, raises that worker's count and wakes its poller. The "
@@ -577,11 +581,11 @@ msgstr ""
 "把一个已接受的连接交给当前服务连接最少的 worker，增加该 worker 的计数并唤醒它的轮询器。此后这个连接一直留在该 worker "
 "上。位于 ``cmd/sibuna/src/edge/workers.rs``\\ （crate ``sibuna``）。"
 
-#: ../../edge.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:100
 msgid "One Hop Fewer for HTTP/2 and HTTP/3"
 msgstr "HTTP/2 和 HTTP/3 少一跳"
 
-#: ../../edge.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:103
 msgid ""
 "HTTP/2 and HTTP/3 are terminated by a protocol runtime that uses "
 "maintained libraries (rustls, hyper, quinn with h3). At first the runtime "
@@ -596,7 +600,7 @@ msgstr ""
 "0017 测得一个 HTTP/2 请求耗费 76 us 的 CPU 时间：在 worker 看到请求之前，运行时中耗费 46 us，worker "
 "从套接字读取同一个请求并作出判定又耗费 30 us。"
 
-#: ../../edge.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:105
 msgid ""
 "The repair is to call the decision as a function on the thread that "
 "decoded the stream. The ingress crate defines plain data, ``Offer`` (the "
@@ -620,11 +624,11 @@ msgstr ""
 "实现可以去掉更多开销；SID 0017 拒绝了这一做法，因为那样一来，防御快速重置、CONTINUATION 洪泛和 HPACK "
 "膨胀就都成了我们自己的工作。"
 
-#: ../../edge.rst:107
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:107
 msgid "TLS on the Workers"
 msgstr "worker 上的 TLS"
 
-#: ../../edge.rst:110
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:110
 msgid ""
 "HTTPS kept one crossing: the runtime ended TLS and copied the clear bytes "
 "to a worker through a socket pair. SID 0024 lets the worker end the TLS "
@@ -648,7 +652,7 @@ msgstr ""
 "秒为上限。在基准测试主机上，256 个连接下的 HTTPS 从每秒 149,168 个请求提高到 174,901 个，而写入相同响应头的 "
 "HAProxy 承载 153,080 个。"
 
-#: ../../edge.rst:114
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:114
 msgid ""
 "\"A worker never waits for a peer.\" Explain how this sentence, together "
 "with the 64 KiB high-water mark, guarantees that a client which stops "
@@ -659,11 +663,11 @@ msgstr ""
 "“worker 从不等待对端。”解释这句话与 64 KiB 的高水位线一起，如何保证一个停止读取响应的客户端无法让 worker "
 "占用无界的内存。然后指出仍会让 worker 占用一个往返时间的那一种调用（见关于钩子的一节）。"
 
-#: ../../edge.rst:116
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:116
 msgid "Choosing a Server"
 msgstr "选择服务器"
 
-#: ../../edge.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:119
 msgid ""
 "A new flow first filters the servers of its pool. A server is *eligible* "
 "when it is not the frontend's own address, not drained, healthy by its "
@@ -677,7 +681,7 @@ msgstr ""
 "一个新流首先过滤其服务器池中的服务器。一台服务器是\\ *合格的*\\ ，当且仅当：它不是前端自己的地址，未被排空，按最近一次探测是健康的，低于 "
 "``max_flows``，在集群范围限制中它的份额之内，过去两秒内没有因连接失败而被标记，并且未被这个请求尝试过。被被动健康检查剔除的服务器，只有在存在其他合格服务器时才被排除。在网格的广域模式下，只要有本地服务器合格，就优先选择本地服务器。只有在没有合格的主服务器时，才会选择备用服务器。"
 
-#: ../../edge.rst:121
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:121
 msgid ""
 "Among the eligible servers the choice is made in a fixed order: a server "
 "named by a sticky cookie or by the learned table, then the server that "
@@ -692,11 +696,11 @@ msgstr ""
 "首选服务器，否则使用服务器池的调度器：轮询、二选一（power of two choices）或加权最少连接。每个调度器都使用以 1/256 "
 "为单位的整数权重，以便慢启动可以细粒度地降低权重。"
 
-#: ../../edge.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:123
 msgid "Weighted Round Robin"
 msgstr "加权轮询"
 
-#: ../../edge.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:126
 msgid ""
 "Round robin is the smooth weighted round robin of nginx (SID 0019). Each "
 "eligible server holds a credit. At each choice every server gains its "
@@ -709,11 +713,11 @@ msgstr ""
 "0019）。每台合格服务器持有一个积分。每次选择时，每台服务器的积分增加其权重，积分最多的服务器被选中，并支付所有权重之和 "
 ":math:`W`。经过 :math:`W` 次选择后，积分回到初始值，服务器 :math:`i` 恰好被选中 :math:`w_i` 次。"
 
-#: ../../edge.rst:128
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:128
 msgid "Worked example: three servers of weights 5, 1 and 1"
 msgstr "实例分析：权重为 5、1 和 1 的三台服务器"
 
-#: ../../edge.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:130
 msgid ""
 ":math:`W = 7`. All credits start at 0. The table shows the credits after "
 "the gain, the choice, and the chosen server's credit after it pays 7. "
@@ -721,116 +725,119 @@ msgid ""
 msgstr ""
 ":math:`W = 7`。所有积分从 0 开始。下表给出增加积分后的值、选择结果，以及被选中的服务器支付 7 之后的积分。平局时选择第一台服务器。"
 
-#: ../../edge.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:133
 msgid "Step"
 msgstr "步骤"
 
-#: ../../edge.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:133
 msgid "a, b, c"
 msgstr ""
 
-#: ../../edge.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:133
 msgid "Chosen"
 msgstr "选中"
 
-#: ../../edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
 msgid "1"
 msgstr ""
 
-#: ../../edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
 msgid "5, 1, 1"
 msgstr ""
 
-#: ../../edge.rst:135 ../../edge.rst:136 ../../edge.rst:138
-#: ../../edge.rst:140 ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "a"
 msgstr ""
 
-#: ../../edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
 msgid "-2, 1, 1"
 msgstr ""
 
-#: ../../edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
 msgid "2"
 msgstr ""
 
-#: ../../edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
 msgid "3, 2, 2"
 msgstr ""
 
-#: ../../edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
 msgid "-4, 2, 2"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "3"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "1, 3, 3"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "b"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "1, -4, 3"
 msgstr ""
 
-#: ../../edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
 msgid "4"
 msgstr ""
 
-#: ../../edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
 msgid "6, -3, 4"
 msgstr ""
 
-#: ../../edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
 msgid "-1, -3, 4"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "5"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "4, -2, 5"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "c"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "4, -2, -2"
 msgstr ""
 
-#: ../../edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
 msgid "6"
 msgstr ""
 
-#: ../../edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
 msgid "9, -1, -1"
 msgstr ""
 
-#: ../../edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
 msgid "2, -1, -1"
 msgstr ""
 
-#: ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "7"
 msgstr ""
 
-#: ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "7, 0, 0"
 msgstr ""
 
-#: ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "0, 0, 0"
 msgstr ""
 
-#: ../../edge.rst:144
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:144
 msgid ""
 "The sequence is ``a a b a c a a``: five turns for ``a``, one each for "
 "``b`` and ``c``, and the light servers are spread between the heavy "
@@ -840,11 +847,11 @@ msgstr ""
 "选择序列是 ``a a b a c a a``：``a`` 轮到五次，``b`` 和 ``c`` "
 "各一次，轻量服务器分散在重量服务器的轮次之间，而不是挤在末尾。第 7 步之后的积分与开始时相同，因此这一模式会重复。"
 
-#: ../../edge.rst:146
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:146
 msgid "Least Connections and Two Choices"
 msgstr "最少连接与二选一"
 
-#: ../../edge.rst:149
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:149
 msgid ""
 "Weighted least connections, the default of a standalone pool, chooses the "
 "server with the fewest active flows per unit of weight. The comparison "
@@ -857,7 +864,7 @@ msgstr ""
 "时，服务器 :math:`i` 优先于服务器 :math:`j`，其中 :math:`a` "
 "是活动流数。平局时按服务器池加载以来已准入的请求数（同样按每单位权重）决定，备用服务器总是排在主服务器之后。"
 
-#: ../../edge.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:151
 msgid ""
 "The power of two choices with a peak-weighted moving latency "
 "(``p2c_pewma``) hashes the flow to two distinct eligible servers and "
@@ -873,11 +880,11 @@ msgstr ""
 "对慢样本立即作出反应，并缓慢地忘记它：新样本 :math:`s` 令 :math:`\\ell \\leftarrow \\max(s, "
 "(7\\ell + s)/8)`，而空闲服务器的估计值每过一秒没有样本，就向其静息值 1 ms 回退一半。"
 
-#: ../../edge.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:153
 msgid "Consistent Hashing: the Problem"
 msgstr "一致性哈希：问题"
 
-#: ../../edge.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:156
 msgid ""
 "Several nodes of a cluster should send the same flow to the same server "
 "without talking to each other, and a change of the server set should move "
@@ -887,11 +894,11 @@ msgstr ""
 "集群中的多个节点应当在互不通信的情况下把同一个流发往同一台服务器，并且服务器集合发生变化时，应当迁移尽可能少的流。显而易见的方法是对流哈希 "
 ":math:`h` 选择服务器 :math:`h \\bmod N`，它严重违背了第二个要求。"
 
-#: ../../edge.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:158
 msgid "Worked example: one of five servers leaves"
 msgstr "实例分析：五台服务器中的一台离开"
 
-#: ../../edge.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:160
 msgid ""
 "Under modulo hashing, a flow with hash :math:`h` goes to position "
 ":math:`h \\bmod 5`, and after the departure to position :math:`h \\bmod "
@@ -912,7 +919,7 @@ msgstr ""
 ":math:`4/20 = 20\\%` 的流留下，而 **80% 会迁移**，尽管只有离开的服务器所持有的 20% 才必须迁移。一般地，从 "
 ":math:`N` 台服务器变为 :math:`N - 1` 台时，保留 :math:`(N-1)/(N(N-1)) = 1/N` 的流。"
 
-#: ../../edge.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:162
 msgid ""
 "A consistent method moves only the departed server's flows: :math:`1/5 = "
 "20\\%`. Rendezvous hashing, below, achieves exactly that. Sibuna's Maglev "
@@ -934,11 +941,11 @@ msgstr ""
 "个槽（0.10%）在原有服务器之间迁移。有十台服务器时，离开的那台持有 9.999% 到 10.000% 的槽，另有 120 到 181 "
 "个槽（0.18% 到 0.28%）更换了所有者。"
 
-#: ../../edge.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:164
 msgid "Maglev as Sibuna Builds It"
 msgstr "Sibuna 构建的 Maglev"
 
-#: ../../edge.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:167
 msgid ""
 "Maglev (Eisenbud et al., 2016) fills a lookup table of :math:`M` slots. "
 "Each server derives two numbers from its name, an offset and a stride, "
@@ -960,11 +967,11 @@ msgstr ""
 ":math:`w_i` 的服务器占据 :math:`w_i/W` "
 "的槽，误差在一个槽以内。查找一个流时，对前端地址以及客户端地址和端口进行哈希：一次哈希和一次读取。"
 
-#: ../../edge.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:169
 msgid "Implementation: ``Table::build`` and ``Table::primary``"
 msgstr "实现：``Table::build`` 和 ``Table::primary``"
 
-#: ../../edge.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:171
 msgid ""
 "``build`` fills the 65,537 slots from servers in stable name order, "
 "skipping backups, with smooth weighted turns. ``primary`` hashes the "
@@ -974,7 +981,7 @@ msgstr ""
 "``build`` 按稳定的名称顺序，跳过备用服务器，以平滑加权轮次从服务器填充 65,537 个槽。``primary`` "
 "把前端和客户端端点（IPv4 映射到 IPv6）哈希到一个槽。位于 ``crates/lb/src/maglev.rs``。"
 
-#: ../../edge.rst:173
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:173
 msgid ""
 "for _ in 0..SIZE {\n"
 "    let mut best = 0;\n"
@@ -994,7 +1001,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:192
 msgid ""
 "Every node builds the same table from the same file, so every node sends "
 "a flow with the same addresses to the same server. This is why the "
@@ -1008,11 +1015,11 @@ msgstr ""
 "服务器池的成员和权重只能通过重新加载来改变。在一个节点上修改权重的管理命令会使该节点与其对等节点不一致，因此管理套接字拒绝这种命令（SID "
 "0018）。排空是允许的，因为每个节点本来就会根据自己的健康检查排除服务器。"
 
-#: ../../edge.rst:194
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:194
 msgid "Bounded Loads"
 msgstr "有界负载"
 
-#: ../../edge.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:197
 msgid ""
 "A hash spreads flows evenly only on average. A popular client range can "
 "still crowd one server. Consistent hashing with bounded loads (Mirrokni, "
@@ -1027,11 +1034,11 @@ msgstr ""
 "把这一上限应用于 Maglev 首选服务器。令 :math:`L` 为服务器池的活动流数，:math:`a_p` 为首选服务器 :math:`p` "
 "的活动流数。当首选服务器合格并且"
 
-#: ../../edge.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:199
 msgid "a_p < \\left\\lceil \\frac{c\\,(L + 1)\\, w_p}{W} \\right\\rceil,"
 msgstr ""
 
-#: ../../edge.rst:203
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:203
 msgid ""
 "with :math:`c` given in percent as ``load_factor_pct`` (125 by default, "
 "at least 100). Otherwise the flow goes to the pool's fallback: weighted "
@@ -1041,11 +1048,11 @@ msgstr ""
 "时，新流去往首选服务器，其中 :math:`c` 以百分比形式由 ``load_factor_pct`` 给出（默认 125，至少 "
 "100）。否则流去往服务器池的后备调度器：加权最少连接，或者当 ``fallback`` 为 ``pewma`` 时使用二选一。"
 
-#: ../../edge.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:205
 msgid "Worked example: the bound with c = 1.25"
 msgstr "实例分析：c = 1.25 时的上界"
 
-#: ../../edge.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:207
 msgid ""
 "Four servers of equal weight hold :math:`L = 99` flows, and a hundredth "
 "arrives. The bound is :math:`\\lceil 1.25 \\times 100 / 4 \\rceil = "
@@ -1064,7 +1071,7 @@ msgstr ""
 "\\times 3/4 \\rceil = \\lceil 37.5 \\rceil = 38` 和 :math:`\\lceil 1.25 "
 "\\times 40 / 4 \\rceil = \\lceil 12.5 \\rceil = 13`。"
 
-#: ../../edge.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:209
 msgid ""
 "The overflow always finds a server below its bound. Suppose every server "
 ":math:`i` held at least :math:`c(L+1)w_i/W` flows. Summing over the "
@@ -1075,7 +1082,7 @@ msgstr ""
 "个流。对所有服务器求和得到 :math:`L \\ge c(L+1) > L`，矛盾。当 :math:`c = 1.25` "
 "且有四台等权重服务器时，至多三台可以同时处于上界。"
 
-#: ../../edge.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:211
 msgid ""
 "With the least-connections fallback, and all servers eligible, one "
 "admission keeps every server within its cap: the hash path admits only "
@@ -1096,11 +1103,11 @@ msgstr ""
 "``admitBounded_respects_cap``。同时准入的两个线程可能都读到旧的计数。使用 ``pewma`` "
 "后备调度器时，哈希路径仍然遵守上界，但后备调度器按延迟选择，此时上限就不再是保证。溢出处理还在一个方面偏离了论文：它不会沿着一致的顺序走到下一台服务器，因此两个节点可能把一个溢出的流放到不同的服务器上。"
 
-#: ../../edge.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:213
 msgid "Rendezvous Hashing for Source Stickiness"
 msgstr "用于源地址粘性的 rendezvous 哈希"
 
-#: ../../edge.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:216
 msgid ""
 "A pool with ``sticky: \"source\"`` sends each client address to the same "
 "server. It uses weighted rendezvous hashing (SID 0019). For client "
@@ -1111,11 +1118,11 @@ msgstr ""
 "0019）。对于客户端 :math:`x` 和服务器 :math:`i`，哈希给出一个数 :math:`u_i \\in (0, 1]`，而\\ "
 "*距离*\\ 为"
 
-#: ../../edge.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:218
 msgid "d_i = \\frac{-\\log_2 u_i}{w_i}."
 msgstr ""
 
-#: ../../edge.rst:222
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:222
 msgid ""
 "The client goes to the nearest eligible server. The choice follows the "
 "weights exactly. Since :math:`-\\ln u_i` is exponentially distributed "
@@ -1130,7 +1137,7 @@ msgstr ""
 "的独立指数随机变量的最小值以概率 :math:`w_i / \\sum_j w_j` 在服务器 :math:`i` "
 "处取得。对数的底只会让所有距离乘上同一个因子，不改变排序。"
 
-#: ../../edge.rst:224
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:224
 msgid ""
 "The disruption is exactly the minimum. When server :math:`k` leaves, a "
 "client whose nearest server was not :math:`k` keeps it, because removing "
@@ -1145,7 +1152,7 @@ msgstr ""
 ":math:`k` 回来时返回。Sibuna 用带 16 位小数的定点数计算对数，并把 :math:`d_i < d_j` 作为 "
 ":math:`c_i w_j < c_j w_i` 比较，不做除法。"
 
-#: ../../edge.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:226
 msgid ""
 "Ranking every server for every request costs one hash and one logarithm "
 "per server. So the pool precomputes a table of 1,021 slots. A client "
@@ -1164,11 +1171,11 @@ msgstr ""
 "0019）。代价是粒度：同一个槽中的两个地址共用一台服务器，在总权重为 1,000 的服务器池中，权重为 1 "
 "的服务器服务的是一个槽，而不是千分之一的客户端。"
 
-#: ../../edge.rst:228
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:228
 msgid "Implementation: ``Pool::home`` and ``sticky::distance``"
 msgstr "实现：``Pool::home`` 和 ``sticky::distance``"
 
-#: ../../edge.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:230
 msgid ""
 "``home`` hashes the client to a slot and returns the first eligible "
 "server of the slot's four, falling back to ranking the pool. ``distance`` "
@@ -1180,7 +1187,7 @@ msgstr ""
 "计算带权重的定点成本 :math:`64 - \\log_2(\\mathrm{draw})`。位于 "
 "``crates/lb/src/pool/extra.rs`` 和 ``crates/lb/src/sticky.rs``。"
 
-#: ../../edge.rst:234
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:234
 msgid ""
 "Rendezvous hashing moves exactly the departed server's clients; the "
 "Maglev table moves them and about 0.1% more. Explain where the excess "
@@ -1192,11 +1199,11 @@ msgstr ""
 "的额外部分。解释上面的填充循环中这部分超额从何而来，以及为什么 Sibuna "
 "对按地址和端口哈希的流接受这一超额，却对明天还必须找到同一台服务器的客户端使用 rendezvous 哈希。"
 
-#: ../../edge.rst:236
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:236
 msgid "Health, Slow Start, Draining and Failover"
 msgstr "健康、慢启动、排空与故障转移"
 
-#: ../../edge.rst:239
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:239
 msgid ""
 "A server can be out of rotation for five reasons, and each has its own "
 "way back. Active probes and passive health judge the server; a failed "
@@ -1205,7 +1212,7 @@ msgid ""
 msgstr ""
 "一台服务器可能因五种原因退出轮换，每种原因都有自己的返回方式。主动探测和被动健康检查评判服务器；连接失败评判的是一次尝试；排空是运维人员的决定；慢启动管理返回过程。"
 
-#: ../../edge.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:242
 msgid ""
 "In service leads to Down after fall failed probes, to Ejected after "
 "consecutive request failures, to Marked after a failed connect, and to "
@@ -1218,7 +1225,7 @@ msgstr ""
 "次探测失败后变为“宕机”，在连续请求失败后变为“已剔除”，在连接失败后变为“已标记”，由运维人员操作变为“已排空”。“宕机”在 rise "
 "次探测通过后返回，“已剔除”在剔除时间之后返回，“已标记”在两秒后返回，“已排空”在重新准入时返回。每次返回都进入“爬升中”，爬升结束后进入“服务中”。"
 
-#: ../../edge.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:242
 msgid ""
 "digraph server_states {\n"
 "  // edge.rst: the life of a server in a pool. Only \"In service\" and "
@@ -1320,13 +1327,13 @@ msgstr ""
 "Helvetica\">慢启动结束</FONT>>, color=\"#176a4b\", penwidth=1.1];\n"
 "}"
 
-#: ../../edge.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:242
 msgid ""
 "The life of a server in a pool. Only \"In service\" and \"Ramping\" take "
 "new flows; slow start applies when it is configured."
 msgstr "服务器池中一台服务器的生命周期。只有“服务中”和“爬升中”接受新流；慢启动在配置时才生效。"
 
-#: ../../edge.rst:245
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:245
 msgid ""
 "*Active probes* connect, or send ``GET``, at an interval. A server starts "
 "in service, leaves after ``fall`` failures in a row and returns after "
@@ -1350,7 +1357,7 @@ msgstr ""
 "503。这就是 Envoy 的 panic 规则，阈值为一台服务器。\\ *连接失败*\\ 使服务器退出两秒，且不受 panic 规则约束。\\ "
 "*排空*\\ 使服务器不再接受新流，同时让已建立的流结束。只要文件仍以相同地址列出这台服务器，排空在重新加载后依然有效（SID 0018）。"
 
-#: ../../edge.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:247
 msgid ""
 "*Slow start* gives a returning server a ramp :math:`R`. A server of "
 "configured weight :math:`W` that entered service :math:`t` ago has the "
@@ -1359,14 +1366,14 @@ msgstr ""
 "*慢启动*\\ 给返回的服务器一个爬升期 :math:`R`。配置权重为 :math:`W`、在 :math:`t` "
 "之前进入服务的服务器，其有效权重（以 1/256 为单位）为"
 
-#: ../../edge.rst:249
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:249
 msgid ""
 "w(t) = \\max\\left(1, \\left\\lfloor \\frac{256\\, W\\, t}{R} "
 "\\right\\rfloor\\right) \\text{ for } t < R, \\qquad w(t) = 256\\, W "
 "\\text{ otherwise.}"
 msgstr ""
 
-#: ../../edge.rst:253
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:253
 msgid ""
 "The weight is never zero, never above the configured weight, and never "
 "decreases while the server stays in service. Servers first seen together, "
@@ -1382,11 +1389,11 @@ msgstr ""
 "\\times 4 \\times 7.5/30 \\rfloor = 256`，即其权重的四分之一。与一个处于满权重（1,024 "
 "个单位）的权重为 4 的对等服务器并列时，轮询给它 :math:`256/1280 = 20\\%` 的轮次，而不是 50%。"
 
-#: ../../edge.rst:255
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:255
 msgid "Failover"
 msgstr "故障转移"
 
-#: ../../edge.rst:258
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:258
 msgid ""
 "A request moves to another server only when sending it twice does no "
 "harm. A failed connect may always move: the server received nothing. "
@@ -1397,11 +1404,11 @@ msgstr ""
 "只有当发送两次不会造成伤害时，请求才会转移到另一台服务器。连接失败时总可以转移：服务器什么也没有收到。发送了一个字节之后，由一个函数为每条路径作出决定：worker、线程路径以及运行时的 "
 "HTTP/1.1、HTTP/2 和 HTTP/3 客户端都询问它，因此它们不会彼此偏离（SID 0019）。"
 
-#: ../../edge.rst:260
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:260
 msgid "Implementation: ``recover``"
 msgstr "实现：``recover``"
 
-#: ../../edge.rst:262
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:262
 msgid ""
 "Decides what follows the loss of a server after the connection was made: "
 "reconnect to the same server, move to another, or fail. In "
@@ -1410,7 +1417,7 @@ msgstr ""
 "决定连接建立之后失去服务器时的后续动作：重新连接同一台服务器、转移到另一台，或者失败。位于 "
 "``crates/net/src/route.rs``\\ （crate ``sibuna-net``）。"
 
-#: ../../edge.rst:264
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:264
 msgid ""
 "pub fn recover(lost: Lost) -> Recovery {\n"
 "    if !(lost.unanswered && lost.kept && (lost.idempotent || "
@@ -1424,7 +1431,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:276
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:276
 msgid ""
 "A request is sent again only while no response byte arrived, only when "
 "the node still holds all of it (a body of at most 64 KiB that ended "
@@ -1444,7 +1451,7 @@ msgstr ""
 "在路由该请求的修订版本中，预留同一服务器池中的另一台服务器，排除该请求尝试过的每台服务器。因此一个请求不会两次尝试同一台服务器，至多尝试 "
 "``retries + 1`` 台服务器。"
 
-#: ../../edge.rst:280
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:280
 msgid ""
 "A ``POST`` with a 2 KiB body loses its server after the request was "
 "written and before any response byte. Trace ``recover`` and explain why "
@@ -1456,11 +1463,11 @@ msgstr ""
 "``recover``，解释为什么客户端收到 502，而不是一次悄无声息的第二次尝试。然后改变一个事实，即服务器以 HTTP/2 "
 "``REFUSED_STREAM`` 应答，再追踪一次。"
 
-#: ../../edge.rst:282
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:282
 msgid "Admission at the Socket"
 msgstr "套接字处的准入"
 
-#: ../../edge.rst:285
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:285
 msgid ""
 "An application filter can shed work only after the traffic reaches the "
 "host. The cheapest refusal is therefore the earliest one, and SID 0015 "
@@ -1470,7 +1477,7 @@ msgstr ""
 "应用层过滤器只有在流量到达主机之后才能削减工作。因此最便宜的拒绝是最早的拒绝，SID 0015 "
 "对各阶段排序，使每个阶段的成本低于下一个阶段。SID 0032 为 TCP 和 UDP 前端补全了这些阶段。"
 
-#: ../../edge.rst:287
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:287
 msgid ""
 "*Kernel listener admission.* ``defer_accept`` sets ``TCP_DEFER_ACCEPT`` "
 "on Linux: the kernel gives the node a connection only when its first "
@@ -1483,7 +1490,17 @@ msgstr ""
 "``TCP_DEFER_ACCEPT``：只有当连接的第一批字节到达时，内核才把连接交给节点，因此静默的客户端不占用描述符、流槽位，也不引发唤醒。``backlog`` "
 "设置接受队列的长度。两者都不需要特权；平台拒绝其中一项时，节点记录 ``EDGE013`` 并在没有它的情况下提供服务。"
 
-#: ../../edge.rst:288
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:288
+msgid ""
+"*Bans.* The ban table that the HTTP firewall shares with the packet "
+"worker refuses a banned address at accept on a TCP frontend and before a "
+"UDP mapping opens (SID 0034). ``auto_ban`` bans an address that keeps "
+"breaking its limits, on every node."
+msgstr ""
+"*封禁。*\\ HTTP 防火墙与数据包 worker 共享的封禁表，在 TCP 前端上于接受连接时、在 UDP "
+"映射打开之前，就拒绝被封禁的地址（SID 0034）。``auto_ban`` 会在每个节点上封禁不断突破其限制的地址。"
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:289
 msgid ""
 "*Connection rate.* ``rate_limit.conn_per_10s`` per source IPv4 address or "
 "IPv6 /64, and ``udp_defense.threshold_pps`` for datagrams."
@@ -1491,54 +1508,81 @@ msgstr ""
 "*连接速率。*\\ 按每个源 IPv4 地址或 IPv6 /64 应用 ``rate_limit.conn_per_10s``，对数据报应用 "
 "``udp_defense.threshold_pps``。"
 
-#: ../../edge.rst:289
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:290
 msgid ""
 "*The flow budget.* One slot per client connection or UDP mapping, "
 "node-wide, up to ``global.max_flows`` (8,192 by default, at most "
-"1,000,000). UDP mappings take at most ``global.max_udp_flows`` of it, "
-"because their sources are not validated. HTTP adds "
-"``http.max_connections`` and ``http.max_connections_per_ip``."
+"1,000,000). A frontend may cap its own flows with ``max_flows`` and the "
+"flows of one address with ``max_flows_per_ip``. UDP mappings take at most "
+"``global.max_udp_flows`` of it, because their sources are not validated, "
+"and ``udp_defense.total_pps`` keeps half the packet budget of a UDP "
+"frontend for confirmed mappings. HTTP adds ``http.max_connections`` and "
+"``http.max_connections_per_ip``."
 msgstr ""
 "*流预算。*\\ 在整个节点范围内，每个客户端连接或 UDP 映射占用一个槽位，上限为 ``global.max_flows``\\ （默认 "
-"8,192，至多 1,000,000）。UDP 映射至多占用其中的 "
-"``global.max_udp_flows``，因为它们的源地址未经验证。HTTP 另外增加 ``http.max_connections`` "
-"和 ``http.max_connections_per_ip``。"
+"8,192，至多 1,000,000）。前端可以用 ``max_flows`` 限制自己的流，用 ``max_flows_per_ip`` "
+"限制单个地址的流。UDP 映射至多占用其中的 "
+"``global.max_udp_flows``，因为它们的源地址未经验证；``udp_defense.total_pps`` 则把 UDP "
+"前端一半的数据包预算留给已确认的映射。HTTP 另外增加 ``http.max_connections`` 和 "
+"``http.max_connections_per_ip``。"
 
-#: ../../edge.rst:290
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:291
+msgid ""
+"*Pressure.* Above ``global.pressure.on`` percent of the table, a new "
+"address passes only within ``new_per_second``, and an address that proved "
+"a working flow passes first."
+msgstr ""
+"*压力。*\\ 表的占用超过 ``global.pressure.on`` 百分比后，新地址只能在 ``new_per_second`` "
+"的额度内通过，已证明有过正常流的地址优先通过。"
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:292
 msgid ""
 "*Bounded inspection*, of a TLS ClientHello on TCP, and of the QUIC header "
 "on UDP."
 msgstr "*有界检查*\\ ：TCP 上的 TLS ClientHello，以及 UDP 上的 QUIC 头部。"
 
-#: ../../edge.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:293
 msgid ""
 "*The connection hooks*, then the pool: a server's ``max_flows`` and, in a "
 "cluster, its share of a fleet-wide limit (Part IX)."
 msgstr "*连接钩子*\\ ，然后是服务器池：服务器的 ``max_flows``，以及在集群中它在集群范围限制中的份额（第 IX 部分）。"
 
-#: ../../edge.rst:292
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:294
 msgid "*The HTTP firewall*, for HTTP frontends only."
 msgstr "*HTTP 防火墙*\\ ，仅用于 HTTP 前端。"
 
-#: ../../edge.rst:294
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:296
+msgid ""
+"Accept threads run the bans, the rate, the caps and pressure on several "
+"cores, and end a refused connection with a reset (SID 0034). The packet "
+"worker runs the stages after them."
+msgstr ""
+"接受线程在多个核心上执行封禁、速率、上限和压力检查，并以一次重置结束被拒绝的连接（SID 0034）。数据包 worker 执行其后的各阶段。"
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:298
 msgid "Implementation: ``FlowBudget::reserve``"
 msgstr "实现：``FlowBudget::reserve``"
 
-#: ../../edge.rst:296
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:300
 msgid ""
 "Takes one slot of the node-wide flow budget and returns a ``FlowPermit``, "
 "or nothing when the budget is full. The permit's ``Drop`` returns the "
 "slot on cancellation, close or expiry, so no path can leak one. A drain "
-"sets the limit to zero. In ``crates/lb/src/budget.rs``."
+"sets the limit to zero. ``FlowBudget::take`` does the same under the caps "
+"of a frontend and of an address and under pressure, all under one lock, "
+"so the caps hold whatever the order of the threads: ``caps_hold`` in the "
+"Lean model of SID 0034. In ``crates/lb/src/budget.rs``."
 msgstr ""
 "从节点范围的流预算中取出一个槽位并返回一个 ``FlowPermit``，预算已满时什么也不返回。permit 的 ``Drop`` "
-"在取消、关闭或过期时归还槽位，因此任何路径都不会泄漏槽位。排空会把上限设为零。位于 ``crates/lb/src/budget.rs``。"
+"在取消、关闭或过期时归还槽位，因此任何路径都不会泄漏槽位。排空会把上限设为零。``FlowBudget::take`` "
+"在前端上限、地址上限和压力之下做同样的事，全部在同一把锁下完成，因此无论线程以何种顺序执行，上限都成立：即 SID 0034 的 Lean "
+"模型中的 ``caps_hold``。位于 ``crates/lb/src/budget.rs``。"
 
-#: ../../edge.rst:298
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:302
 msgid "ClientHello Inspection and Fallback Classes"
 msgstr "ClientHello 检查与后备类别"
 
-#: ../../edge.rst:301
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:305
 msgid ""
 "A TCP frontend with ``tcp_inspect: \"tls_client_hello\"`` reads the start "
 "of each connection before it selects a pool, within ``inspect_bytes`` "
@@ -1553,7 +1597,7 @@ msgstr ""
 "秒）的范围内读取每个连接的开头。规则可以匹配服务器名称、提供的 ALPN 协议或 JA4 指纹。然后节点把连接透传给其服务器，不触动 "
 "TLS，并在客户端的任何后续字节之前，把已读取的字节恰好重放一次。连接失败的服务器不会收到这些字节。"
 
-#: ../../edge.rst:303
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:307
 msgid ""
 "The inspection ends in one of five classes, and every class has exactly "
 "one outcome, deny or one named pool (SID 0032). *Visible* is a whole "
@@ -1575,11 +1619,11 @@ msgstr ""
 "``incomplete`` 和 ``invalid`` 不允许使用 "
 "``rules``，因为没有可评估的内容。默认值重现了引入这些类别之前的行为：缺失和加密使用 ``rules``，另外两类使用 ``deny``。"
 
-#: ../../edge.rst:305
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:309
 msgid "Implementation: ``Plan::decide``"
 msgstr "实现：``Plan::decide``"
 
-#: ../../edge.rst:307
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:311
 msgid ""
 "Maps a class and the parsed ClientHello, if any, to a pool or to a "
 "refusal. The match is total, so no class is left without an outcome. In "
@@ -1588,7 +1632,7 @@ msgstr ""
 "把一个类别和解析出的 ClientHello（如果有）映射到一个服务器池或一次拒绝。匹配是完全的，因此没有任何类别缺少结果。位于 "
 "``crates/lb/src/inspect.rs``。"
 
-#: ../../edge.rst:309
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:313
 msgid ""
 "Two cautions belong beside the feature. A JA4 fingerprint describes a "
 "handshake; any client can send the handshake of another, so it separates "
@@ -1602,11 +1646,11 @@ msgstr ""
 "Encrypted ClientHello 扩展做 GREASE 处理，真实名称放在外层字段中；边缘无法区分 GREASE 与真正的 ECH，因此 "
 "``encrypted: deny`` 会拒绝大多数浏览器。"
 
-#: ../../edge.rst:311
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:315
 msgid "QUIC Address Validation"
 msgstr "QUIC 地址验证"
 
-#: ../../edge.rst:314
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:318
 msgid ""
 "A UDP frontend bounds the replies of each mapping to three times the "
 "bytes the client sent. Without the bound, a spoofed source would turn the "
@@ -1627,7 +1671,7 @@ msgstr ""
 "要求客户端填充到这一长度。然后它读取源站的回复。从第一个版本不为零、源连接 ID 至少 8 字节的长头部回复中，它记住这个 ID，除非该 ID "
 "等于客户端发送过的某个 ID。当客户端之后的某个数据报把这个 ID 作为目的连接 ID 携带时，地址即通过验证，回复上限随之解除。"
 
-#: ../../edge.rst:316
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:320
 msgid ""
 "The argument is that of RFC 9000, section 8.1. The ID was chosen by the "
 "origin and sent only to the claimed address. A sender that spoofs the "
@@ -1644,12 +1688,12 @@ msgstr ""
 "ID，而回显其输入的源站否则会让所有人都通过验证。在回环接口上，以调试构建，经边缘下载 8 MiB 在有验证时耗时 83 到 86 "
 "ms；没有验证时，3 秒内只到达了 17,060 字节。这些数字说明了效果的大小，并不是基准测试。"
 
-#: ../../edge.rst:318
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:322
 msgid ""
 "Implementation: ``Validation::see_reply`` and ``Validation::see_request``"
 msgstr "实现：``Validation::see_reply`` 和 ``Validation::see_request``"
 
-#: ../../edge.rst:320
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:324
 msgid ""
 "``see_reply`` learns the origin's connection ID from a reply, refusing "
 "version zero, short IDs and echoes. ``see_request`` marks the mapping "
@@ -1659,7 +1703,7 @@ msgstr ""
 "``see_reply`` 从回复中学习源站的连接 ID，拒绝版本为零、过短的 ID 和回显。当客户端在长头部或短头部中重复这个 ID "
 "时，``see_request`` 把映射标记为已验证。位于 ``crates/lb/src/quic_edge.rs``。"
 
-#: ../../edge.rst:322
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:326
 msgid ""
 "The edge does not send QUIC Retry itself. SID 0032 specifies the contract "
 "that edge and origin would have to share, a token format and key, an "
@@ -1671,7 +1715,7 @@ msgstr ""
 "边缘自己不发送 QUIC Retry。SID 0032 规定了边缘与源站必须共享的约定：令牌格式和密钥、地址绑定，以及传输参数中的连接 "
 "ID；并记录了未实现它的原因：工作区所用的 QUIC 库不公开其令牌格式，并把令牌绑定到数据报的源地址，而在边缘之后，这个源地址就是边缘本身。"
 
-#: ../../edge.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:330
 msgid ""
 "\"Validation never happens on a value that an off-path sender can know.\" "
 "For each of the three conditions on the learned connection ID (version "
@@ -1681,11 +1725,11 @@ msgstr ""
 "“验证从不建立在路径外发送方可能知道的值上。”针对所学习连接 ID 的三个条件（版本不为零、至少 8 字节、不等于打开映射的数据报中的 "
 "ID），分别描述它所防止的攻击。"
 
-#: ../../edge.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:332
 msgid "Traffic Policy, the Gate and the Shield"
 msgstr "流量策略、Gate 与 Shield"
 
-#: ../../edge.rst:331
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:335
 msgid ""
 "An HTTP request passes the cheap checks before the expensive ones, and a "
 "hook only after both. The ban table and the request limiter come first. "
@@ -1711,11 +1755,11 @@ msgstr ""
 "false``；这样的请求仍保留协议校验、连接限制、封禁和请求限制器。请求钩子评判防火墙准入的内容，之后才选择服务器。SID 0019 "
 "的其余部分塑造这次交换：连接和响应超时、重试、被动健康检查、粘性会话、请求头编辑和 HSTS。TCP 或 UDP 前端从不调用防火墙。"
 
-#: ../../edge.rst:333
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:337
 msgid "Hooks"
 msgstr "钩子"
 
-#: ../../edge.rst:336
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:340
 msgid ""
 "An operator sometimes needs a decision of his own on the path: a tenant "
 "check, an authorization service, a score. SID 0030 fixes where such a "
@@ -1736,7 +1780,7 @@ msgstr ""
 "（每个请求一次，在应答之后）。它可以准入、拒绝、要求挑战，并至多添加 8 "
 "个请求字段。它不能读取请求体，不能修改方法、路径或主机，不能选择服务器，也不能添加分帧字段或 Sibuna 作为自身声明而写入的字段。"
 
-#: ../../edge.rst:338
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:342
 msgid ""
 "A hook runs in one of three *tiers*. A *native* hook is Rust compiled "
 "into the daemon: trusted, unbudgeted, 42 ns per call with the chain and "
@@ -1750,11 +1794,11 @@ msgstr ""
 "部分的浏览器引擎），没有 JIT，也没有 ``unsafe``。\\ *代理*\\ （agent）是位于 Unix "
 "套接字之后的另一个进程，带有期限和熔断器。"
 
-#: ../../edge.rst:340
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:344
 msgid "The Outcome Rule"
 msgstr "结果规则"
 
-#: ../../edge.rst:343
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:347
 msgid ""
 "An invocation ends with a verdict or with one of four failures: "
 "``timeout``, ``overload``, ``trap`` or ``unavailable``. Each plugin has "
@@ -1765,7 +1809,7 @@ msgstr ""
 "``unavailable``。每个插件都有 ``on_failure``，除非运维人员写成 ``admit``，否则它为 "
 "``deny``。对于阶段 :math:`s`、书面选择 :math:`f` 和结果 :math:`r`，"
 
-#: ../../edge.rst:345
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:349
 msgid ""
 "\\mathit{outcome}(s, f, r) = \\begin{cases} \\mathrm{admit} & s = "
 "\\mathrm{telemetry} \\\\ v & r = \\mathrm{verdict}(v) \\\\ \\mathrm{deny} "
@@ -1773,7 +1817,7 @@ msgid ""
 "\\mathrm{failed},\\ f = \\mathrm{admit}. \\end{cases}"
 msgstr ""
 
-#: ../../edge.rst:349
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:353
 msgid ""
 "A chain admits only when every hook in it has the outcome admit; the "
 "first other verdict ends it. Hence a chain with a failing authorization "
@@ -1782,11 +1826,11 @@ msgid ""
 msgstr ""
 "只有当调用链中的每个钩子的结果都是准入时，调用链才准入；第一个其他裁决会终止调用链。因此，带有一个失败的授权钩子的调用链永远不会准入，无论其他钩子如何回答；除了文件中写明的选择，任何失败都不会准入流量。"
 
-#: ../../edge.rst:351
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:355
 msgid "Implementation: ``outcome`` and ``chain``"
 msgstr "实现：``outcome`` 和 ``chain``"
 
-#: ../../edge.rst:353
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:357
 msgid ""
 "The rule above and its fold over a chain, as two small functions modelled "
 "in ``docs/sid/assets/plugin-tiers.lean``. In "
@@ -1795,7 +1839,7 @@ msgstr ""
 "上述规则及其在调用链上的折叠，实现为两个小函数，并在 ``docs/sid/assets/plugin-tiers.lean`` 中建模。位于 "
 "``crates/plugin/src/verdict.rs``\\ （crate ``sibuna-plugin``）。"
 
-#: ../../edge.rst:355
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:359
 msgid ""
 "pub fn outcome(stage: Stage, on_failure: OnFailure, result: "
 "Result<Verdict, Failure>) -> Verdict {\n"
@@ -1808,11 +1852,11 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:366
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:370
 msgid "Fuel, Breakers and Parked Connections"
 msgstr "燃料、熔断器与暂存的连接"
 
-#: ../../edge.rst:369
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:373
 msgid ""
 "A Wasm module is untrusted input, so every bound is set before it runs: "
 "at most 4 MiB of module, ``memory_pages`` pages of 64 KiB, 256 call "
@@ -1841,7 +1885,7 @@ msgstr ""
 "1.4 us 的差距，换来一个 2,324 行、没有 ``unsafe``、不引入新 crate 的解释器，而对方约有 96,000 行和八个 "
 "crate。"
 
-#: ../../edge.rst:371
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:375
 msgid ""
 "An agent call waits at most ``deadline`` (5 ms by default). Each thread "
 "keeps a breaker for each agent: ``failures`` failures in a row open it, "
@@ -1853,11 +1897,11 @@ msgstr ""
 "次失败使其断开，断开的熔断器立即以 ``unavailable`` 拒绝且不进行系统调用，经过 ``open`` "
 "之后发出一次探测，探测结果使其闭合或再次断开。``overload`` 不是代理的过错，不计入失败。"
 
-#: ../../edge.rst:373
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:377
 msgid "Worked example: what a dead agent costs"
 msgstr "实例分析：一个失效的代理有多大代价"
 
-#: ../../edge.rst:375
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:379
 msgid ""
 "Eight workers call an agent with ``deadline`` 5 ms and the default "
 "breaker, five failures and ``1s`` open. In the worst case each worker "
@@ -1872,7 +1916,7 @@ msgstr ""
 "的线程时间，每个 worker 25 ms。此后每个 worker 每秒发送一次探测，每次至多 5 ms，至多占一个 worker 的 "
 "0.5%。在此期间，受保护前端的每个请求都采用代理的 ``on_failure`` 结果：在默认设置下，请求被拒绝。"
 
-#: ../../edge.rst:377
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:381
 msgid ""
 "At the request stage an agent call holds the thread that serves the "
 "request, and on a worker the other connections of that worker wait for "
@@ -1891,73 +1935,73 @@ msgstr ""
 "worker。当评判线程的队列已满时，调用链在调用者上运行，所有代理都以 ``overload`` 失败，由失败规则决定。暂存的代价约为 11 "
 "us，即两次线程交接：22.8 us，而在调用线程上进行同一调用为 12 us。"
 
-#: ../../edge.rst:379
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:383
 msgid ""
 "Measured cost of one hook (SID 0030, one busy machine, optimized builds, "
 "loopback)"
 msgstr "一个钩子的实测成本（SID 0030，一台繁忙的机器，优化构建，回环接口）"
 
-#: ../../edge.rst:383
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:387
 msgid "Case"
 msgstr "场景"
 
-#: ../../edge.rst:384
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:388
 msgid "In process"
 msgstr "进程内"
 
-#: ../../edge.rst:385
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:389
 msgid "End to end per request"
 msgstr "每个请求的端到端开销"
 
-#: ../../edge.rst:386
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:390
 msgid "No hook"
 msgstr "无钩子"
 
-#: ../../edge.rst:387
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:391
 msgid "1.1 ns (one load)"
 msgstr "1.1 ns（一次读取）"
 
-#: ../../edge.rst:388
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:392
 msgid "41.8 to 42.2 us"
 msgstr "41.8 到 42.2 us"
 
-#: ../../edge.rst:389
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:393
 msgid "Native ``require_header``"
 msgstr "原生 ``require_header``"
 
-#: ../../edge.rst:390
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:394
 msgid "42 ns"
 msgstr ""
 
-#: ../../edge.rst:391
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:395
 msgid "within the noise of about 2 us"
 msgstr "在约 2 us 的噪声范围内"
 
-#: ../../edge.rst:392
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:396
 msgid "Wasm, the example module"
 msgstr "Wasm，示例模块"
 
-#: ../../edge.rst:393
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:397
 msgid "2.2 to 2.4 us"
 msgstr "2.2 到 2.4 us"
 
-#: ../../edge.rst:394
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:398
 msgid "+5.2 to +6.1 us"
 msgstr "+5.2 到 +6.1 us"
 
-#: ../../edge.rst:395
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:399
 msgid "Agent on a Unix socket"
 msgstr "Unix 套接字上的代理"
 
-#: ../../edge.rst:396
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:400
 msgid "12 to 18 us"
 msgstr "12 到 18 us"
 
-#: ../../edge.rst:397
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:401
 msgid "+18.4 to +21.5 us"
 msgstr "+18.4 到 +21.5 us"
 
-#: ../../edge.rst:401
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:405
 msgid ""
 "\"A failure of an authorization hook denies.\" An attacker can make a "
 "Wasm hook fail with ``overload`` by sending a head larger than its input "
@@ -1969,11 +2013,11 @@ msgstr ""
 "失败。解释为什么视图从不被截断以适应缓冲区，``on_failure`` 保持默认值时会发生什么，以及运维人员写成 ``on_failure: "
 "\"admit\"`` 会放弃什么。"
 
-#: ../../edge.rst:403
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:407
 msgid "Automatic HTTPS"
 msgstr "自动 HTTPS"
 
-#: ../../edge.rst:406
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:410
 msgid ""
 "A frontend that names its hosts, ``tls: { auto: [\"example.org\"] }``, "
 "obtains its certificates itself (SID 0021). The node registers an ACME "
@@ -2004,11 +2048,11 @@ msgstr ""
 "时，任何能把名称指向该节点的人都可能耗尽证书颁发机构的限额。有防护时，握手只执行读取内存的检查，由一个线程询问 ``ask`` "
 "URL，并在下单之前从每小时 ``rate`` 个订单的令牌桶中取出一个令牌。"
 
-#: ../../edge.rst:408
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:412
 msgid "Observation"
 msgstr "观测"
 
-#: ../../edge.rst:411
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:415
 msgid ""
 "The node counts what it does so that an operator can tell a refusal for "
 "lack of capacity from a refusal by policy (SID 0020). Each HTTP request "
@@ -2032,11 +2076,11 @@ msgstr ""
 "等。原因正是计数有用的地方：``no_server`` 上升说明需要服务器，``rate_limit`` "
 "上升说明需要查看客户端。节点排空期间，就绪路由变为 503。"
 
-#: ../../edge.rst:413
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:417
 msgid "The Measured Result"
 msgstr "测量结果"
 
-#: ../../edge.rst:416
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:420
 msgid ""
 "Part X compares the edge with HAProxy 3.0.11 on one host and on three. "
 "After SID 0024, with both proxies writing the same headers, Sibuna "
@@ -2057,15 +2101,15 @@ msgstr ""
 "交换都在协议运行时中进行，这是一个通用异步运行时加上一个通用 HTTP/2 库；这条路径受 CPU 限制，每个请求 74 us，而 HAProxy "
 "为这一目的专门编写的多路复用器为 52 us。只有更廉价的 HTTP/2 路径才能改变这一点，SID 0017 记录了我们为什么没有编写这样的路径。"
 
-#: ../../edge.rst:418
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:422
 msgid "Exercises"
 msgstr "练习"
 
-#: ../../edge.rst:421
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:425
 msgid "Exercise 8.1"
 msgstr "练习 8.1"
 
-#: ../../edge.rst:423
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:427
 msgid ""
 "A pool has ten servers of equal weight, and one leaves. What fraction of "
 "flows moves under modulo hashing, under rendezvous hashing, and, from the "
@@ -2076,17 +2120,17 @@ msgstr ""
 "哈希下呢？根据上文报告的十台服务器的运行结果，在 Sibuna 的 Maglev "
 "表下大约有多少？然后对一台加入四台服务器的服务器池的服务器回答同样的问题。"
 
-#: ../../edge.rst:425
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:429
 msgid ""
 "Hint: Use the Chinese remainder theorem for modulo hashing, and the "
 "minimum of the other distances for rendezvous hashing."
 msgstr "提示：对取模哈希使用中国剩余定理，对 rendezvous 哈希使用其他距离的最小值。"
 
-#: ../../edge.rst:427
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:431
 msgid "Exercise 8.2"
 msgstr "练习 8.2"
 
-#: ../../edge.rst:429
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:433
 msgid ""
 "A bounded-Maglev pool has servers ``a``, ``b`` and ``c`` with weights 2, "
 "1 and 1, ``load_factor_pct`` 125, and 19 active flows. Compute the bound "
@@ -2099,18 +2143,18 @@ msgstr ""
 "1，``load_factor_pct`` 为 125，有 19 个活动流。计算第二十个流到来时每台服务器的上界。哈希指向持有 7 个流的 "
 "``b``。如果 ``a`` 持有 9 个流、``c`` 持有 3 个流，使用最少连接后备调度器时，这个流去往哪里？证明总有某台服务器低于其上界。"
 
-#: ../../edge.rst:431
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:435
 msgid ""
 "Hint: The bound is :math:`\\lceil c (L+1) w_p / W \\rceil`, and the "
 "contradiction argument of the worked example applies with weights."
 msgstr ""
 "提示：上界为 :math:`\\lceil c (L+1) w_p / W \\rceil`，实例分析中的反证法论证在带权重时同样适用。"
 
-#: ../../edge.rst:433
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:437
 msgid "Exercise 8.3"
 msgstr "练习 8.3"
 
-#: ../../edge.rst:435
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:439
 msgid ""
 "An HTTP frontend has the request chain ``[tenant, score, authz]``: a "
 "native ``require_header`` hook, a Wasm hook with ``on_failure: "
@@ -2125,17 +2169,17 @@ msgstr ""
 "的代理。代理进程已经终止，所有熔断器都已断开。携带租户字段的请求的裁决是什么？缺少该字段的请求呢？每个请求为代理花费 worker 多少成本？如果 "
 "``authz`` 写成 ``on_failure: \"admit\"``，会有什么变化？"
 
-#: ../../edge.rst:437
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:441
 msgid ""
 "Hint: Apply the outcome rule to each hook, then the chain rule. An open "
 "breaker costs no system call."
 msgstr "提示：对每个钩子应用结果规则，再应用调用链规则。断开的熔断器不产生系统调用。"
 
-#: ../../edge.rst:439
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:443
 msgid "Exercise 8.4"
 msgstr "练习 8.4"
 
-#: ../../edge.rst:441
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:445
 msgid ""
 "A QUIC client sends one Initial of 1,200 bytes through a frontend with "
 "``udp_inspect: \"quic\"``, and the origin answers with eight datagrams of "
@@ -2148,29 +2192,29 @@ msgstr ""
 "1,200 "
 "字节的数据报应答。验证之前有多少个数据报到达客户端？客户端的哪个数据报使映射通过验证？为什么伪造客户端地址的发送方无法产生它？为什么从版本协商包中学习会破坏这一论证？"
 
-#: ../../edge.rst:443
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:447
 msgid ""
 "Hint: The bound is three times the bytes received. Compare what the "
 "origin chose with what the client chose."
 msgstr "提示：上限是所收到字节数的三倍。比较源站所选的内容与客户端所选的内容。"
 
-#: ../../edge.rst:445
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:449
 msgid "Limits"
 msgstr "局限"
 
-#: ../../edge.rst:448
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:452
 msgid ""
 "The known gaps of these records, and one consequence of the design, "
 "stated where an operator meets them:"
 msgstr "下面列出这些记录中已知的不足，以及设计带来的一个后果，写在运维人员会遇到它们的地方："
 
-#: ../../edge.rst:450
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:454
 msgid ""
 "*Ownership balances counts, not work.* A connection stays on the worker "
 "it was given; the assignment equalizes connection counts only."
 msgstr "*所有权均衡的是连接数，而不是工作量。*\\ 连接一直留在分配给它的 worker 上；这种分配只让连接数相等。"
 
-#: ../../edge.rst:451
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:455
 msgid ""
 "*A reload that changes binds, the mesh roster or the spill section needs "
 "a restart.* Two reloads within the decision time of one request still "
@@ -2183,7 +2227,7 @@ msgstr ""
 "在一个请求的决策时间内发生两次重新加载，仍会拒绝该请求；在重新加载后十秒内下达的排空命令不会作用于已淘汰的修订版本（SID "
 "0018）。运行时的修改在重启后不会保留，Maglev 服务器池在运行时只接受 ``drain``。"
 
-#: ../../edge.rst:452
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:456
 msgid ""
 "*HTTP/2 runs on the runtime, not on the workers.* It carries 0.67 to 0.74 "
 "of HAProxy's rate on one host. HTTP/1.1 over TLS from a client that "
@@ -2198,7 +2242,7 @@ msgstr ""
 "0017，SID 0024）。``http_version`` 为 2 或 3 的服务器池无法接收 WebSocket（SID 0016）。无论 "
 "``http.workers`` 如何设置，运行时至多使用八个线程，其空闲连接池是一把锁。不接受来自明文 HTTP/2 客户端的 gRPC。"
 
-#: ../../edge.rst:453
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:457
 msgid ""
 "*The choice of a server still writes shared memory:* reference counts and "
 "the chosen server's counters, about a microsecond per call under eight "
@@ -2208,7 +2252,7 @@ msgstr ""
 "*选择服务器仍然会写共享内存：*\\ "
 "引用计数和所选服务器的计数器，在八个线程下每次调用约一微秒。同时进行选择的两个请求可能选中同一台负载最轻的服务器；限制仍然成立（SID 0019）。"
 
-#: ../../edge.rst:454
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:458
 msgid ""
 "*Bounded loads with the pewma fallback are not a guarantee,* and the "
 "overflow is not placed consistently across nodes. The slot table of "
@@ -2216,7 +2260,7 @@ msgid ""
 msgstr ""
 "*使用 pewma 后备调度器时，有界负载不是保证，*\\ 并且溢出的流在各节点之间的放置不一致。源地址粘性的槽表粒度为 1,021 个槽。"
 
-#: ../../edge.rst:455
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:459
 msgid ""
 "*Failover cannot move everything.* A body longer than 64 KiB is streamed "
 "and cannot be sent again. A non-idempotent request to an HTTP/3 server "
@@ -2226,7 +2270,7 @@ msgstr ""
 "*故障转移无法转移一切。*\\ 超过 64 KiB 的请求体以流式发送，无法再次发送。发往 HTTP/3 "
 "服务器的非幂等请求在发送之后从不转移，因为客户端库不报告我们能够读取的拒绝（SID 0019）。"
 
-#: ../../edge.rst:456
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:460
 msgid ""
 "*Admission at the socket is incomplete for TCP and UDP.* TCP and UDP "
 "frontends do not consult the ban table. Per-prefix byte budgets for UDP "
@@ -2242,7 +2286,7 @@ msgstr ""
 "处理的 Encrypted ClientHello 与真正的 Encrypted ClientHello 属于同一类别。内核准入只为 Linux "
 "实现，``backlog`` 在队列已满时的效果尚未测量（SID 0032）。"
 
-#: ../../edge.rst:457
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:461
 msgid ""
 "*An agent call at the request stage holds its thread.* A QUIC "
 "connection's verdict does not stop its handshake. Parked flows cost two "
@@ -2256,7 +2300,7 @@ msgstr ""
 "数据报，并且没有任何指标统计它们。每个线程持有自己的 Wasm 实例，重新加载会重建每个实例。该解释器比 wasmi "
 "慢两到三倍，也未经过外部审查。钩子测量是在一台繁忙的机器上进行的（SID 0030）。"
 
-#: ../../edge.rst:458
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:462
 msgid ""
 "*Observation has holes.* Chunk framing is not counted in ``bytes_in``; "
 "``tls_cipher`` is ``-`` for HTTP/3; a long-lived TCP connection writes "
@@ -2265,7 +2309,7 @@ msgstr ""
 "*观测存在漏洞。*\\ 分块编码的分帧不计入 ``bytes_in``；HTTP/3 的 ``tls_cipher`` 为 ``-``；长连接的 "
 "TCP 连接只在结束时才写日志行（SID 0020）。"
 
-#: ../../edge.rst:459
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:463
 msgid ""
 "*Automatic HTTPS* has no bound per client for issuance on demand beyond "
 "its guards and its bucket; the local authority's ACME server has no limit "
@@ -2276,7 +2320,7 @@ msgstr ""
 "服务器没有按地址的限制，并且只在一个节点的内存中保存订单；Cloudflare DNS 提供程序从未在 Cloudflare 上实际运行过（SID "
 "0021）。"
 
-#: ../../edge.rst:460
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:464
 msgid ""
 "*Scale is not yet qualified.* The flow table is configurable to one "
 "million entries; the ten-million-flow experiment and cooperative platform "

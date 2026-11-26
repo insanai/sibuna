@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:14+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../algorithms.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:1
 msgid "Part VI: Automata, Tries, and the Semantic Firewall"
 msgstr "Parte VI: Autómatas, tries y el cortafuegos semántico"
 
-#: ../../algorithms.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:4
 msgid ""
 "We examine the algorithms behind sub-microsecond classification: the "
 "tagged Aho-Corasick automaton, the IPv4/IPv6 radix trie, the byte-class "
@@ -33,16 +33,18 @@ msgstr ""
 "IPv4/IPv6, los analizadores por clases de bytes del WAF semántico y el "
 "motor declarativo de políticas con puntuación WEIGH."
 
-#: ../../algorithms.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:6
 msgid "Single-Pass Multi-Pattern Matching"
 msgstr "Búsqueda de múltiples patrones en una pasada"
 
-#: ../../algorithms.rst:9 ../../algorithms.rst:59 ../../algorithms.rst:82
-#: ../../algorithms.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:82
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:141
 msgid "Objectives"
 msgstr "Objetivos"
 
-#: ../../algorithms.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:11
 msgid ""
 "By the end of this chapter, we should be able to derive the Aho-Corasick "
 "automaton's linear-time guarantee, explain the dense-table layout and "
@@ -54,11 +56,11 @@ msgstr ""
 "y la conversión de mayúsculas mediante clases de bytes, y argumentar por "
 "qué no se adoptó un motor de literales SIMD."
 
-#: ../../algorithms.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:13
 msgid "Aho-Corasick as a Dense DFA"
 msgstr "Aho-Corasick como DFA denso"
 
-#: ../../algorithms.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:16
 msgid ""
 "Sibuna has two literal-pattern sets: about forty bot signatures and about "
 "a hundred attack signatures. Scanning a field against :math:`N` patterns "
@@ -77,7 +79,7 @@ msgstr ""
 "tabla por byte de entrada, sin bifurcaciones sobre el conjunto de "
 "patrones. El autómata está en el crate ``sibuna-patterns``:"
 
-#: ../../algorithms.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:18
 msgid ""
 "/// Advances from `state` (a row offset) over `byte`.\n"
 "fn step(&self, state: usize, byte: u8) -> usize {\n"
@@ -117,7 +119,7 @@ msgstr ""
 "    None\n"
 "}"
 
-#: ../../algorithms.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:37
 msgid ""
 "A state is stored as its row offset in one flat table, so a step is one "
 "add and one load. States are numbered so that every match state comes "
@@ -130,7 +132,7 @@ msgstr ""
 "demás; detectar una coincidencia es entonces una sola comparación con "
 "``first_match``, sin una segunda tabla que cargar en el bucle interno."
 
-#: ../../algorithms.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:40
 msgid ""
 "A trie from the root through G and GP to the GPTBot match state, and "
 "through C and Cl to the ClaudeBot match state; dashed failure edges lead "
@@ -140,7 +142,7 @@ msgstr ""
 "GPTBot, y por C y Cl hasta el estado de coincidencia ClaudeBot; las "
 "aristas de fallo discontinuas llevan de GP y de Cl de vuelta a la raíz."
 
-#: ../../algorithms.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:40
 msgid ""
 "digraph aho_corasick {\n"
 "  // algorithms.rst: trie states and failure edges for two signatures. A "
@@ -224,11 +226,11 @@ msgstr ""
 "  root -> cl [label=\"fallo\"];\n"
 "}"
 
-#: ../../algorithms.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:40
 msgid "Trie states and failure edges for two signatures"
 msgstr "Estados del trie y aristas de fallo para dos firmas"
 
-#: ../../algorithms.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:43
 msgid ""
 "The automaton's state budget is a run-time option. The policy engine "
 "reserves at most one root plus the sum of all signature lengths, a safe "
@@ -258,15 +260,15 @@ msgstr ""
 "comparación con la búsqueda secuencial de subcadenas. Esta última usa los "
 "mismos patrones y la misma semántica de cualquier coincidencia."
 
-#: ../../algorithms.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:45
 msgid "Regular Expressions, SIMD Engines, and the Choice"
 msgstr "Expresiones regulares, motores SIMD y la elección"
 
-#: ../../algorithms.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:48
 msgid "Three families were weighed for the signature stage:"
 msgstr "Para la etapa de firmas se sopesaron tres familias:"
 
-#: ../../algorithms.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:50
 msgid ""
 "*Backtracking regular expressions* (a backtracking rule-set style) run "
 "hundreds of patterns per request and allocate per match; they are the "
@@ -277,7 +279,7 @@ msgstr ""
 "memoria en cada coincidencia; son la opción más lenta y la más propensa a "
 "falsos positivos."
 
-#: ../../algorithms.rst:51
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:51
 msgid ""
 "*SIMD literal engines* (Hyperscan, Vectorscan) prefilter blocks of 16 to "
 "32 bytes with shuffle-based nibble masks (the \"Teddy\" algorithm) and "
@@ -296,7 +298,7 @@ msgstr ""
 "ninguna ventaja: el campo entero se recorre en menos tiempo que un fallo "
 "de caché."
 
-#: ../../algorithms.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:52
 msgid ""
 "*Dense Aho-Corasick plus small structural tokenizers*, the libinjection "
 "lineage, gives exact linear-time behaviour in a fixed table and needs "
@@ -306,7 +308,7 @@ msgstr ""
 "de libinjection, ofrece un comportamiento lineal exacto en una tabla fija "
 "y no necesita nada fuera del ejecutable."
 
-#: ../../algorithms.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:54
 msgid ""
 "Sibuna's fields are short, so the third family wins on both memory and "
 "speed; Part X records about 1.56 ns per byte on an 8 KiB body (the "
@@ -322,11 +324,11 @@ msgstr ""
 "trabajo en la que un prefiltro SIMD compensaría, y el SID 0006 la "
 "mantiene como cuestión abierta."
 
-#: ../../algorithms.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:56
 msgid "The Radix Trie for IPv4 and IPv6"
 msgstr "El trie radix para IPv4 e IPv6"
 
-#: ../../algorithms.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:61
 msgid ""
 "Trace a longest-prefix lookup through the 128-bit trie, explain the IPv4 "
 "root shortcut, and see how the trie doubles as the reputation store fed "
@@ -336,7 +338,7 @@ msgstr ""
 "el atajo de raíz IPv4 y observa cómo el trie sirve también de almacén de "
 "reputación alimentado por el clúster."
 
-#: ../../algorithms.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:63
 msgid ""
 "One binary trie over 128-bit keys serves both families: IPv6 prefixes are "
 "inserted as-is, IPv4 prefixes are mapped into ``::ffff:0:0/96`` so a "
@@ -353,7 +355,7 @@ msgstr ""
 "que una búsqueda hace como máximo 128 cargas dependientes, sin perseguir "
 "punteros. El trie es el ``PrefixTrie`` del crate ``sibuna-cidr``."
 
-#: ../../algorithms.rst:65
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:65
 msgid ""
 "Walking the 96 mapped-prefix levels for every IPv4 lookup would cost 96 "
 "dependent loads before it reached the first bit of the IPv4 address. So "
@@ -365,7 +367,7 @@ msgstr ""
 "dirección IPv4. Por eso el trie guarda el nodo de profundidad 96 al "
 "inicializarse y empieza allí las búsquedas IPv4:"
 
-#: ../../algorithms.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:67
 msgid ""
 "let (mut node, mut depth, mut best) = if is_ipv4_mapped(key) {\n"
 "    let start = self.ipv4_root;\n"
@@ -383,7 +385,7 @@ msgstr ""
 "    (0, 0, self.nodes[0].value.as_ref())\n"
 "};"
 
-#: ../../algorithms.rst:77
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:77
 msgid ""
 "Classifying an IPv4 address costs 32.0 ns and an IPv6 address 79.3 ns "
 "(``ipv4_cidr_classification`` and ``ipv6_cidr_classification`` in "
@@ -399,11 +401,11 @@ msgstr ""
 "de reglas, de modo que un bloqueo en todo el clúster prevalece sobre "
 "cualquier regla, y los veredictos ``challenge`` después de ella."
 
-#: ../../algorithms.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:79
 msgid "The Semantic Firewall"
 msgstr "El cortafuegos semántico"
 
-#: ../../algorithms.rst:84
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:84
 msgid ""
 "Understand the byte-class pre-scan, the tagged signature automaton, the "
 "SQL tokenizer with tautology detection, the HTML and shell structure "
@@ -416,11 +418,11 @@ msgstr ""
 "disciplina de falsos positivos: una petición real de navegador debe pasar "
 "intacta."
 
-#: ../../algorithms.rst:86
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:86
 msgid "A Lesson in False Positives"
 msgstr "Una lección sobre falsos positivos"
 
-#: ../../algorithms.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:89
 msgid ""
 "The first version of the WAF matched a flat substring list against every "
 "header. The list contained ``/*``, and every browser sends ``Accept: "
@@ -439,11 +441,11 @@ msgstr ""
 "Chrome, incluido un cuerpo de comentario que contiene ``select``, ``--`` "
 "y un apóstrofo, y comprueba que sale limpia."
 
-#: ../../algorithms.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:91
 msgid "Byte Classes in One Pass"
 msgstr "Clases de bytes en una pasada"
 
-#: ../../algorithms.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:94
 msgid ""
 "Each inspected field is scanned once to collect which byte classes occur: "
 "quotes, ``=``, ``<``, shell separators, ``%``, NUL, canonicalisation "
@@ -464,7 +466,7 @@ msgstr ""
 "OR, y los dos pares de bytes (``/*`` y dos espacios contiguos) solo se "
 "buscan cuando ningún byte aislado ha exigido ya la canonicalización:"
 
-#: ../../algorithms.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:96
 msgid ""
 "pub(crate) fn scan(text: &[u8]) -> Classes {\n"
 "    let (chunks, remainder) = text.as_chunks::<8>();\n"
@@ -528,11 +530,11 @@ msgstr ""
 "    Classes { bits }\n"
 "}"
 
-#: ../../algorithms.rst:122
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:122
 msgid "Detectors"
 msgstr "Detectores"
 
-#: ../../algorithms.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:125
 msgid ""
 "*Signatures.* All strong signatures of every category live in one tagged "
 "automaton; a hit is a terminal ``deny`` named ``waf:sqli``, ``waf:xss``, "
@@ -542,7 +544,7 @@ msgstr ""
 "único autómata con etiquetas; una coincidencia es un ``deny`` terminal "
 "llamado ``waf:sqli``, ``waf:xss``, ``waf:path-traversal`` o ``waf:rce``."
 
-#: ../../algorithms.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:126
 msgid ""
 "*SQL injection.* A single-pass word scanner looks up each alphanumeric "
 "word (at most seven bytes) in the keyword table and, on ``or`` / ``and``, "
@@ -561,7 +563,7 @@ msgstr ""
 "y un ``=`` (1). ``admin'--`` es terminal por sí solo. \"it's a group "
 "order from the shop\" suma 3 y pasa."
 
-#: ../../algorithms.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:127
 msgid ""
 "*Cross-site scripting.* Requires ``<``; fires when a tag that can host "
 "script co-occurs with an ``on<event>=`` attribute in attribute position. "
@@ -571,7 +573,7 @@ msgstr ""
 "puede alojar un script aparece junto con un atributo ``on<event>=`` en "
 "posición de atributo. ``onboarding=1`` no cuenta."
 
-#: ../../algorithms.rst:128
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:128
 msgid ""
 "*Command injection.* Requires a separator; fires when ``;``, ``|``, "
 "``&&``, ``$(``, a backtick, or a newline is followed by a known command "
@@ -581,7 +583,7 @@ msgstr ""
 "``|``, ``&&``, ``$(``, un acento grave o un salto de línea van seguidos "
 "de un nombre de comando conocido. ``status ok; done | next`` pasa."
 
-#: ../../algorithms.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:129
 msgid ""
 "*Path traversal.* Signatures (``../``, ``..%2f``, ``/etc/passwd``, "
 "``id_rsa``, ...) plus NUL and ``%00``."
@@ -589,7 +591,7 @@ msgstr ""
 "*Recorrido de rutas.* Firmas (``../``, ``..%2f``, ``/etc/passwd``, "
 "``id_rsa``, ...) además de NUL y ``%00``."
 
-#: ../../algorithms.rst:131
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:131
 msgid ""
 "Structural headers whose grammar legitimately contains quotes and stars "
 "(``Accept*``, ``Content-Type``, ``Sec-*``, ``If-*``, ...) are skipped; "
@@ -608,11 +610,11 @@ msgstr ""
 "inspeccionan de nuevo, de modo que ``1%27/**/UnIoN/**/SeLeCt`` y "
 "``%252e%252e/`` se reducen a las firmas sin codificar."
 
-#: ../../algorithms.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:133
 msgid "Cost"
 msgstr "Coste"
 
-#: ../../algorithms.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:136
 msgid ""
 "The inspection cost depends on the fields and bytes presented to the "
 "engine, not just the number of requests. The benchmark chapter reports "
@@ -629,11 +631,11 @@ msgstr ""
 "forward-auth debe pasar la información relevante de la petición; este "
 "proceso no puede inspeccionar los bytes omitidos."
 
-#: ../../algorithms.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:138
 msgid "The Declarative Policy Engine"
 msgstr "El motor declarativo de políticas"
 
-#: ../../algorithms.rst:143
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:143
 msgid ""
 "Read the rule model, the evaluation order, WEIGH scoring with thresholds, "
 "and the JSON policy grammar."
@@ -641,7 +643,7 @@ msgstr ""
 "Lee el modelo de reglas, el orden de evaluación, la puntuación WEIGH con "
 "umbrales y la gramática JSON de políticas."
 
-#: ../../algorithms.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:145
 msgid ""
 "A rule is a conjunction of optional criteria (path pattern, User-Agent "
 "pattern, up to four headers, up to eight IPv4/IPv6 CIDR blocks, one JA4 "
@@ -656,17 +658,17 @@ msgstr ""
 "bits de trabajo y un algoritmo, y un ``weight`` con signo. Orden de "
 "evaluación:"
 
-#: ../../algorithms.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:147
 msgid "Semantic WAF (Shield only): violation is a terminal ``deny``."
 msgstr ""
 "WAF semántico (solo Shield): una infracción es un ``deny`` terminal."
 
-#: ../../algorithms.rst:148
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:148
 msgid "Reputation trie: ``deny`` or ``allow`` prefixes are terminal."
 msgstr ""
 "Trie de reputación: los prefijos ``deny`` o ``allow`` son terminales."
 
-#: ../../algorithms.rst:149
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:149
 msgid ""
 "Rules in order: the first terminal match returns; ``WEIGH`` matches "
 "accumulate."
@@ -674,7 +676,7 @@ msgstr ""
 "Reglas en orden: la primera coincidencia terminal decide; las "
 "coincidencias ``WEIGH`` se acumulan."
 
-#: ../../algorithms.rst:150
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:150
 msgid ""
 "Score: negative totals ``allow``; totals :math:`\\geq 40` ``deny``; "
 "totals :math:`\\geq 10` ``challenge`` with one extra work bit per 5 "
@@ -685,7 +687,7 @@ msgstr ""
 "bit de trabajo extra por cada 5 puntos por encima del umbral, hasta un "
 "máximo de seis."
 
-#: ../../algorithms.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:151
 msgid ""
 "Static bypass paths, then trie ``challenge`` verdicts, then the bot "
 "automaton."
@@ -693,13 +695,13 @@ msgstr ""
 "Rutas estáticas exentas, después los veredictos ``challenge`` del trie y "
 "después el autómata de bots."
 
-#: ../../algorithms.rst:152
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:152
 msgid "Default action, ``challenge`` unless the policy file says otherwise."
 msgstr ""
 "Acción por defecto: ``challenge``, salvo que el archivo de políticas diga "
 "otra cosa."
 
-#: ../../algorithms.rst:154
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:154
 msgid ""
 "Built-in rules allow ``/.well-known/*``, ``/favicon.ico``, "
 "``/robots.txt``, and ``/__sibuna/*``, deny ``CF-Worker`` clients and "
@@ -712,7 +714,7 @@ msgstr ""
 "cadena de navegador no cuesta nada, así que admitirla convertiría el "
 "control de admisión en un adorno."
 
-#: ../../algorithms.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:156
 msgid ""
 "{\n"
 "  \"default_action\": \"CHALLENGE\",\n"
@@ -758,11 +760,11 @@ msgstr ""
 "  ]\n"
 "}"
 
-#: ../../algorithms.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:174
 msgid "Worked Trace: an Encoded Attack with a Valid Session"
 msgstr "Traza resuelta: un ataque codificado con una sesión válida"
 
-#: ../../algorithms.rst:177
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:177
 msgid ""
 "Consider ``GET /search?q=%2527%2520OR%25201%253D1`` from a client holding "
 "a valid session. First the HTTP parser separates the path and query "
@@ -777,7 +779,7 @@ msgstr ""
 "para canonicalizarlo. Una pasada de decodificación deja al descubierto "
 "``%27%20OR%201%3D1``; una segunda, ``' OR 1=1``."
 
-#: ../../algorithms.rst:179
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:179
 msgid ""
 "The tokenizer now sees a quote, the keyword ``OR``, and equal literal "
 "operands. A denial is a terminal policy result. The valid session does "
@@ -794,11 +796,11 @@ msgstr ""
 "más tarde. El camino de la respuesta no necesita retener la instantánea "
 "del motor mientras una conexión con el origen está inactiva."
 
-#: ../../algorithms.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:181
 msgid "Exercise 6.1"
 msgstr "Ejercicio 6.1"
 
-#: ../../algorithms.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:183
 msgid ""
 "Replace the payload with ``O'Reilly`` and then with ``order=1``. Why "
 "should neither alone establish SQL injection? Give an example of a false "
@@ -809,11 +811,11 @@ msgstr ""
 "inyección SQL? Da un ejemplo de falso positivo que podría producir un "
 "detector basado solo en subcadenas."
 
-#: ../../algorithms.rst:185
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:185
 msgid "Exercise 6.2"
 msgstr "Ejercicio 6.2"
 
-#: ../../algorithms.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:187
 msgid ""
 "Write the byte-class table entries needed to add a detector for LDAP "
 "injection (patterns such as ``)(|(``), and explain which existing class "
@@ -823,11 +825,11 @@ msgstr ""
 "añadir un detector de inyección LDAP (patrones como ``)(|(``) y explica "
 "qué bits de clase existentes puede reutilizar."
 
-#: ../../algorithms.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:189
 msgid "Explain the invariant"
 msgstr "Explica el invariante"
 
-#: ../../algorithms.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:191
 msgid ""
 "Explain to a reviewer why ``Accept: */*`` was a false positive, what "
 "structural property the new SQL detector requires, and how the automaton "

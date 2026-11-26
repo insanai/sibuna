@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../cluster.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:1
 msgid "Part IX: A Cluster of Edges"
 msgstr "Teil IX: Ein Cluster von Edges"
 
-#: ../../cluster.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:4
 msgid ""
 "Part VIII built one node. One node is one point of failure, and its "
 "ceiling is one machine. We therefore put several nodes behind one name, "
@@ -44,11 +44,11 @@ msgstr ""
 "Häufigkeitsschätzung und einem Compare-and-Set. Die Konfiguration jeder "
 "Funktion steht in Teil XI; hier untersuchen wir die Gründe."
 
-#: ../../cluster.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:6
 msgid "Objectives"
 msgstr "Lernziele"
 
-#: ../../cluster.rst:8
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:8
 msgid ""
 "By the end of this chapter, we should be able to say which state of a "
 "node a cluster replicates and why the merge of each is a maximum; prove "
@@ -70,11 +70,11 @@ msgstr ""
 "die er ersetzt; die Übergabe lauschender Sockets an eine neue Binärdatei "
 "nachverfolgen können und aufzählen können, was der Cluster nicht tut."
 
-#: ../../cluster.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:10
 msgid "What a Cluster Must Share"
 msgstr "Was ein Cluster teilen muss"
 
-#: ../../cluster.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:13
 msgid ""
 "A client does not know that there are several nodes. Two of its "
 "connections may reach two nodes: the router hashed them apart, a node "
@@ -93,147 +93,150 @@ msgstr ""
 "und wie viele Flüsse jeder Server hält. Wir ordnen diesen Zustand danach, "
 "wie er sich ändert."
 
-#: ../../cluster.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:15
 msgid "The state of a node and what the cluster does with it."
 msgstr "Der Zustand eines Knotens und was der Cluster damit tut."
 
-#: ../../cluster.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:19
 msgid "State"
 msgstr "Zustand"
 
-#: ../../cluster.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:20
 msgid "How it changes"
 msgstr "Wie er sich ändert"
 
-#: ../../cluster.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:21
 msgid "What the cluster does"
 msgstr "Was der Cluster tut"
 
-#: ../../cluster.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:22
 msgid "SID"
 msgstr "SID"
 
-#: ../../cluster.rst:23
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:23
 msgid "A ban"
 msgstr "Eine Sperre"
 
-#: ../../cluster.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:24
 msgid "Its end only moves later"
 msgstr "Ihr Ende verschiebt sich nur nach hinten"
 
-#: ../../cluster.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:25
 msgid "Replicated; the merge keeps the later end"
 msgstr "Repliziert; die Zusammenführung behält das spätere Ende"
 
-#: ../../cluster.rst:26 ../../cluster.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:30
 msgid "0022"
 msgstr ""
 
-#: ../../cluster.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:27
 msgid "A run-time command (drain, weight, add, remove)"
 msgstr "Ein Laufzeitbefehl (drain, weight, add, remove)"
 
-#: ../../cluster.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:28
 msgid "Each command replaces the last"
 msgstr "Jeder Befehl ersetzt den letzten"
 
-#: ../../cluster.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:29
 msgid "Replicated; the merge keeps the later stamp"
 msgstr "Repliziert; die Zusammenführung behält den späteren Stempel"
 
-#: ../../cluster.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:31
 msgid "The topology"
 msgstr "Die Topologie"
 
-#: ../../cluster.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:32
 msgid "Rarely, by an operator"
 msgstr "Selten, durch einen Betreiber"
 
-#: ../../cluster.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:33
 msgid "Sent whole and checked by every node, or read from a database"
 msgstr ""
 "Als Ganzes gesendet und von jedem Knoten geprüft oder aus einer Datenbank "
 "gelesen"
 
-#: ../../cluster.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:34
 msgid "0023, 0028"
 msgstr ""
 
-#: ../../cluster.rst:35
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:35
 msgid "A sticky cookie, a rank by source address"
 msgstr "Ein Sticky-Cookie, ein Rang nach Quelladresse"
 
-#: ../../cluster.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:36
 msgid "Computed from the shared secret and the file"
 msgstr "Berechnet aus dem gemeinsamen Geheimnis und der Datei"
 
-#: ../../cluster.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:37
 msgid "Nothing to replicate"
 msgstr "Nichts zu replizieren"
 
-#: ../../cluster.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:38
 msgid "0019, 0025"
 msgstr ""
 
-#: ../../cluster.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:39
 msgid "A learned sticky choice"
 msgstr "Eine gelernte Sticky-Wahl"
 
-#: ../../cluster.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:40
 msgid "At the first flow and at each refresh"
 msgstr "Beim ersten Fluss und bei jeder Auffrischung"
 
-#: ../../cluster.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:41
 msgid "Replicated; the merge follows a total order"
 msgstr "Repliziert; die Zusammenführung folgt einer Totalordnung"
 
-#: ../../cluster.rst:42 ../../cluster.rst:46
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:42
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:46
 msgid "0025"
 msgstr ""
 
-#: ../../cluster.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:43
 msgid "The flows on a capped server"
 msgstr "Die Flüsse auf einem begrenzten Server"
 
-#: ../../cluster.rst:44 ../../cluster.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:44
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:52
 msgid "With every flow"
 msgstr "Mit jedem Fluss"
 
-#: ../../cluster.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:45
 msgid "Divided into shares that sum to at most the limit"
 msgstr "Aufgeteilt in Anteile, deren Summe höchstens das Limit ist"
 
-#: ../../cluster.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:47
 msgid "Rate counters"
 msgstr "Ratenzähler"
 
-#: ../../cluster.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:48
 msgid "With every request"
 msgstr "Mit jeder Anfrage"
 
-#: ../../cluster.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:49
 msgid "Stay on the node; forwarding makes one node count each client"
 msgstr ""
 "Bleiben auf dem Knoten; Weiterleitung lässt einen Knoten jeden Client "
 "zählen"
 
-#: ../../cluster.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:50
 msgid "0022, 0026"
 msgstr ""
 
-#: ../../cluster.rst:51
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:51
 msgid "A UDP mapping, a TCP socket"
 msgstr "Eine UDP-Zuordnung, ein TCP-Socket"
 
-#: ../../cluster.rst:53
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:53
 msgid "Cannot be replicated; forwarding keeps the client on one node"
 msgstr "Nicht replizierbar; Weiterleitung hält den Client auf einem Knoten"
 
-#: ../../cluster.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:54
 msgid "0026"
 msgstr ""
 
-#: ../../cluster.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:56
 msgid ""
 "Three rules come out of the table. What can be computed from shared "
 "inputs is computed, because a computation cannot be lost in the network. "
@@ -249,15 +252,15 @@ msgstr ""
 "sich mit jeder Anfrage ändert, bleibt auf seinem Knoten, und wir bringen "
 "den Client zum Zustand statt den Zustand zum Client."
 
-#: ../../cluster.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:58
 msgid "The Mesh"
 msgstr "Das Mesh"
 
-#: ../../cluster.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:61
 msgid "A fixed roster and authenticated datagrams"
 msgstr "Eine feste Mitgliederliste und authentifizierte Datagramme"
 
-#: ../../cluster.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:64
 msgid ""
 "The nodes of a cluster form a mesh (SID 0015). The roster is fixed for "
 "the life of a process and holds at most 64 nodes. Every node knows every "
@@ -283,7 +286,7 @@ msgstr ""
 "in eines einer anderen verwandelt werden kann. Ein Datagramm hält "
 "höchstens 1.200 Bytes, sodass es auf jedem Pfad in ein Paket passt."
 
-#: ../../cluster.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:67
 msgid ""
 "Clients reach a DNS or ECMP router, which sends flows to nodes A, B and "
 "C. The three nodes are joined pairwise by dashed mesh edges. All three "
@@ -296,7 +299,7 @@ msgstr ""
 "Eine PostgreSQL-Datenbank mit Revisionen ist mit der Gruppe der drei "
 "Knoten durch eine gepunktete Kante verbunden."
 
-#: ../../cluster.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:67
 msgid ""
 "// cluster.rst: a cluster of three nodes. The router spreads the clients; "
 "the dashed edges\n"
@@ -365,7 +368,7 @@ msgstr ""
 "  edge(<db>, <nodes>, \"-|>\", dash: \"dotted\"),\n"
 ")\n"
 
-#: ../../cluster.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:67
 msgid ""
 "A cluster of three nodes. The router spreads the clients; the dashed "
 "edges are the mesh; the dotted edge is the database of SID 0028, which a "
@@ -376,7 +379,7 @@ msgstr ""
 "Datenbank von SID 0028, die ein Cluster statt des Versands von Dateien "
 "verwenden kann."
 
-#: ../../cluster.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:70
 msgid ""
 "Every pair of nodes exchanges the same things. The next figure shows one "
 "pair."
@@ -384,7 +387,7 @@ msgstr ""
 "Jedes Knotenpaar tauscht dieselben Dinge aus. Die nächste Abbildung zeigt "
 "ein Paar."
 
-#: ../../cluster.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:73
 msgid ""
 "Node A and node B joined by three edges. The first, UDP on the mesh port "
 "7946, carries probes, bans (kind 3), commands (kind 4), lifts (kind 5), "
@@ -399,7 +402,7 @@ msgstr ""
 "und ihren Digest. Die dritte, TCP und UDP auf dem Mesh-Port plus eins, "
 "trägt weitergeleitete Flüsse."
 
-#: ../../cluster.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:73
 msgid ""
 "// cluster.rst: what flows between two nodes, by port. The kind of each "
 "datagram is in\n"
@@ -457,7 +460,7 @@ msgstr ""
 "    \"weitergeleitete Verbindungen und Datagramme\", \"accent\"),\n"
 ")\n"
 
-#: ../../cluster.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:73
 msgid ""
 "What flows between two nodes, by port. The kind of each datagram is in "
 "parentheses."
@@ -465,7 +468,7 @@ msgstr ""
 "Was zwischen zwei Knoten fließt, nach Port. Die Art jedes Datagramms "
 "steht in Klammern."
 
-#: ../../cluster.rst:76
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:76
 msgid ""
 "Every node sends to every other directly. A node never forwards a "
 "datagram it received. With a full roster every node hears every writer, "
@@ -480,11 +483,11 @@ msgstr ""
 "in großen Gruppen mit wechselnden Mitgliedern; eine Mitgliederliste von "
 "höchstens 64 festen Knoten hat keine Verwendung dafür."
 
-#: ../../cluster.rst:78
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:78
 msgid "Bans merged by a maximum"
 msgstr "Sperren, zusammengeführt durch ein Maximum"
 
-#: ../../cluster.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:81
 msgid ""
 "A ban is a pair: a client key and the Unix second at which the ban ends. "
 "The state of a node is a map from keys to ends. Two states merge by "
@@ -499,13 +502,13 @@ msgstr ""
 "Zusammenführung. Für jeden Schlüssel ist sie das Maximum zweier Zahlen, "
 "also hat sie die drei Gesetze des Maximums."
 
-#: ../../cluster.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:83
 msgid ""
 "a \\sqcup b = b \\sqcup a, \\qquad (a \\sqcup b) \\sqcup c = a \\sqcup (b "
 "\\sqcup c), \\qquad a \\sqcup a = a."
 msgstr ""
 
-#: ../../cluster.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:87
 msgid ""
 "These three laws are the whole proof of convergence. The first says that "
 "the order of arrival does not matter. The second says that a node may "
@@ -527,7 +530,7 @@ msgstr ""
 "(Join-Semilattice), der zustandsbasierte replizierte Datentyp von Shapiro "
 "und Kollegen (2011)."
 
-#: ../../cluster.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:89
 msgid ""
 "A datagram carries the end, not the remaining time. A remaining time "
 "would not depend on the clocks of the nodes, but a replayed datagram "
@@ -546,7 +549,7 @@ msgstr ""
 "Empfänger kappt ein Ende auf 30 Tage vor seiner eigenen Uhr und ignoriert "
 "ein bereits vergangenes Ende."
 
-#: ../../cluster.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:91
 msgid ""
 "A node sends each ban it issues three times: at once, one second later, "
 "and four seconds after that. Three sends survive the loss of two packets. "
@@ -572,11 +575,11 @@ msgstr ""
 "der Replikation fallen und zählt sie, und die Sperre gilt weiterhin auf "
 "dem Knoten, der sie ausgesprochen hat."
 
-#: ../../cluster.rst:93
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:93
 msgid "Implementation: ``Log::merge``"
 msgstr "Implementierung: ``Log::merge``"
 
-#: ../../cluster.rst:95
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:95
 msgid ""
 "Merges one ban into the map of the mesh thread and returns its end when "
 "the merge added or extended it. In ``crates/lb/src/mesh/bans.rs`` (crate "
@@ -587,7 +590,7 @@ msgstr ""
 "hat. In ``crates/lb/src/mesh/bans.rs`` (Crate ``sibuna-lb``). "
 "``keep_larger`` hält das Maximum."
 
-#: ../../cluster.rst:97
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:97
 msgid ""
 "pub fn merge(&mut self, key: &[u8], until: u64, now: u64) -> "
 "Result<Option<u64>, ()> {\n"
@@ -601,7 +604,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:109
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:109
 msgid ""
 "A lift cannot be a smaller end: the next datagram of a peer would bring "
 "the ban back. So a lift is an entry of a third map, from the client key "
@@ -623,7 +626,7 @@ msgstr ""
 "Ein abgeschnittener Peer kann die Sperre nicht zurückbringen, weil die "
 "Aufhebung ihr Ende abdeckt."
 
-#: ../../cluster.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:111
 msgid ""
 "Run-time commands travel the same way. Their map goes from a key, such as "
 "``s`` and ``POOL/NAME`` for the state of a server, to a number that "
@@ -648,11 +651,11 @@ msgstr ""
 "keine Mitglieder an, weil jeder Knoten im selben Moment dieselbe Tabelle "
 "bauen muss. Seine Server ändern sich über die Datei."
 
-#: ../../cluster.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:113
 msgid "Why a rate counter stays local"
 msgstr "Warum ein Ratenzähler lokal bleibt"
 
-#: ../../cluster.rst:116
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:116
 msgid ""
 "A rate limiter counts the requests of a client in a window. Let each of "
 ":math:`n` nodes admit :math:`r` requests of a client in a window. A "
@@ -680,7 +683,7 @@ msgstr ""
 "0022 belässt die Begrenzer deshalb auf ihren Knoten und sagt das auch: "
 "Jeder Knoten begrenzt, was er bedient."
 
-#: ../../cluster.rst:118
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:118
 msgid ""
 "A limit for the cluster comes from the other direction. Peer forwarding "
 "(SID 0026, below) gives every client one owner, and the key of the owner "
@@ -697,11 +700,11 @@ msgstr ""
 "Weiterleitung läuft, und bis zu 1,5 s nach einer Änderung der "
 "Erreichbarkeit können zwei Knoten je einen Teil eines Clients zählen."
 
-#: ../../cluster.rst:120
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:120
 msgid "One file for the cluster"
 msgstr "Eine Datei für den Cluster"
 
-#: ../../cluster.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:123
 msgid ""
 "SID 0023 makes the configuration file the same on every node, byte for "
 "byte. Its ``mesh`` section lists every node under ``nodes``. A node finds "
@@ -717,7 +720,7 @@ msgstr ""
 "belegte Adresse zählt als lokal, weil der laufende Daemon sie hält. Die "
 "anderen Adressen sind die Peers."
 
-#: ../../cluster.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:125
 msgid ""
 "``reload cluster`` checks the file of the node it is given on, reloads "
 "that node, and then sends the file to every peer at once over TCP, on the "
@@ -756,7 +759,7 @@ msgstr ""
 "abweichen. Auf drei Hosts kehrte der Befehl, als alle drei dieselbe Datei "
 "hielten, in 30 ms zurück (Teil X)."
 
-#: ../../cluster.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:127
 msgid ""
 "The file has no history and no rollback, a node that was down keeps its "
 "old file, and files that the topology names by path are not sent. SID "
@@ -767,11 +770,11 @@ msgstr ""
 "über einen Pfad nennt, werden nicht gesendet. SID 0028, später in diesem "
 "Kapitel, beantwortet die ersten beiden Punkte."
 
-#: ../../cluster.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:129
 msgid "Exercise 9.1"
 msgstr "Übung 9.1"
 
-#: ../../cluster.rst:131
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:131
 msgid ""
 "Node A bans a client until second 1,300. At second 900 an operator lifts "
 "the ban on node C, which knows that end. Node D was cut off and now sends "
@@ -786,7 +789,7 @@ msgstr ""
 "Welche Aufhebung sendet C, und welche der drei Sperren gilt auf welchem "
 "Knoten?"
 
-#: ../../cluster.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:133
 msgid ""
 "Hint: Compute the lift as the operator's node does, then compare each end "
 "with it. Then read the first known gap of SID 0022."
@@ -795,13 +798,17 @@ msgstr ""
 "tut, und dann jedes Ende damit vergleichen. Dann die erste bekannte Lücke "
 "von SID 0022 lesen."
 
-#: ../../cluster.rst:135 ../../cluster.rst:189 ../../cluster.rst:295
-#: ../../cluster.rst:404 ../../cluster.rst:481 ../../cluster.rst:511
-#: ../../cluster.rst:543
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:295
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:404
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:481
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:511
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:543
 msgid "Explain the invariant"
 msgstr "Die Invariante erklären"
 
-#: ../../cluster.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:137
 msgid ""
 "Explain why a ban datagram that arrives twice, late, or before an older "
 "one cannot change what a node bans. Then explain why the same argument "
@@ -814,15 +821,15 @@ msgstr ""
 "als kleineres Ende gesendet würde, und was die Abbildung der Aufhebungen "
 "stattdessen tut."
 
-#: ../../cluster.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:139
 msgid "Shared Affinity"
 msgstr "Gemeinsame Affinität"
 
-#: ../../cluster.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:142
 msgid "Three kinds of stickiness"
 msgstr "Drei Arten von Stickiness"
 
-#: ../../cluster.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:145
 msgid ""
 "A pool keeps a client on its server in one of three ways (SID 0019, SID "
 "0025). With ``sticky: \"cookie\"`` the client presents a token, a keyed "
@@ -850,11 +857,11 @@ msgstr ""
 "der Edge keinen Server berechnen kann. Nur die dritte Art braucht "
 "Replikation."
 
-#: ../../cluster.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:147
 msgid "The entry and its order"
 msgstr "Der Eintrag und seine Ordnung"
 
-#: ../../cluster.rst:150
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:150
 msgid ""
 "An entry maps a key of 16 bytes to a server and an end. The key is a "
 "keyed hash of the client address, or of the value of the cookie, under a "
@@ -872,13 +879,13 @@ msgstr ""
 "größere Paar aus Ende und Server behalten wird, in dieser Reihenfolge "
 "verglichen:"
 
-#: ../../cluster.rst:152
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:152
 msgid ""
 "(e_1, s_1) \\sqcup (e_2, s_2) = \\max_{\\mathrm{lex}}\\big((e_1, s_1), "
 "(e_2, s_2)\\big)."
 msgstr ""
 
-#: ../../cluster.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:156
 msgid ""
 "The lexicographic order on pairs of numbers is total: of two different "
 "pairs, one is larger. The maximum over a total order is commutative, "
@@ -895,7 +902,7 @@ msgstr ""
 "Millisekunde mit demselben ``ttl`` zwei Server für einen Client gelernt "
 "haben, jeder für immer seinen eigenen Eintrag behalten."
 
-#: ../../cluster.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:158
 msgid ""
 "The end is also the version of the entry. A node *learns* when a flow is "
 "placed on a server that the table did not name; the new end is the later "
@@ -918,11 +925,11 @@ msgstr ""
 "begrenzt den Schaden einer falschen Uhr: Ein empfangenes Ende, das mehr "
 "als 24 Stunden und 60 Sekunden voraus liegt, wird ignoriert."
 
-#: ../../cluster.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:160
 msgid "Implementation: ``Affinity::wins_over``"
 msgstr "Implementierung: ``Affinity::wins_over``"
 
-#: ../../cluster.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:162
 msgid ""
 "Decides the merge of two entries of one key. In "
 "``crates/lb/src/affinity.rs`` (crate ``sibuna-lb``). "
@@ -934,7 +941,7 @@ msgstr ""
 "``AffinityTable::keep`` in derselben Datei speichert einen Eintrag nur, "
 "wenn er gegen den gehaltenen gewinnt."
 
-#: ../../cluster.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:164
 msgid ""
 "/// Whether `self` wins over `other` in a merge: the later end, then the "
 "larger\n"
@@ -951,7 +958,7 @@ msgstr ""
 "    (self.ends, self.server) > (other.ends, other.server)\n"
 "}"
 
-#: ../../cluster.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:172
 msgid ""
 "The table is an array of slots in buckets of four. A slot is five atomic "
 "words: a sequence number, two words of key, the server and the end. A "
@@ -979,7 +986,7 @@ msgstr ""
 "sollte. Ein Nachschlagen dauerte in einem optimierten Build 172 ns, auf "
 "einer Tabelle mit 65.536 Slots und 49.152 Clients."
 
-#: ../../cluster.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:174
 msgid ""
 "The table only advises the choice of a server for a new flow. An "
 "established flow holds a reservation on its server and never reads the "
@@ -995,11 +1002,11 @@ msgstr ""
 "sonst nichts, und ein genannter Server bedient nur, solange er wählbar "
 "ist: im Pool, gesund, nicht im Draining, mit Platz."
 
-#: ../../cluster.rst:176
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:176
 msgid "Replication, partition and the window of a race"
 msgstr "Replikation, Partition und das Fenster eines Wettlaufs"
 
-#: ../../cluster.rst:179
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:179
 msgid ""
 "A worker hands the key of each entry it wrote to the mesh thread through "
 "a bounded queue of 4,096 keys, without waiting. The mesh thread sends the "
@@ -1028,7 +1035,7 @@ msgstr ""
 "einer Seite ändert sich für den nächsten neuen Fluss dieses Clients. "
 "Laufende Flüsse bleiben."
 
-#: ../../cluster.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:181
 msgid ""
 "Replication is asynchronous, so there is a window. A choice reaches a "
 "peer after the hand-over to the mesh thread, one send and one network "
@@ -1060,11 +1067,11 @@ msgstr ""
 "ohne den ersten Fluss auf die Peers warten zu lassen, was der Entwurf "
 "ablehnt."
 
-#: ../../cluster.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:183
 msgid "Exercise 9.2"
 msgstr "Übung 9.2"
 
-#: ../../cluster.rst:185
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:185
 msgid ""
 "Nodes A and B learn a server for the same new client in the same "
 "millisecond, with the same ``ttl``. A chose the server whose hash is "
@@ -1078,7 +1085,7 @@ msgstr ""
 "Fluss platziert. Welchen Eintrag hält jeder Knoten, nachdem sich die "
 "Datagramme gekreuzt haben? Welche Flüsse ziehen um?"
 
-#: ../../cluster.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:187
 msgid ""
 "Hint: Compare the pairs of end and server. Then recall what an "
 "established flow reads."
@@ -1086,7 +1093,7 @@ msgstr ""
 "Hinweis: Die Paare aus Ende und Server vergleichen. Dann daran denken, "
 "was ein bestehender Fluss liest."
 
-#: ../../cluster.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:191
 msgid ""
 "Explain why the merge of sticky entries needs a total order and not just "
 "the later end. Then explain why no loss of a datagram, and no eviction "
@@ -1097,15 +1104,15 @@ msgstr ""
 "weder der Verlust eines Datagramms noch die Verdrängung aus einem vollen "
 "Bucket einen bereits bestehenden Fluss verschieben kann."
 
-#: ../../cluster.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:193
 msgid "A Cap for the Whole Fleet"
 msgstr "Eine Obergrenze für die ganze Flotte"
 
-#: ../../cluster.rst:196
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:196
 msgid "The invariant"
 msgstr "Die Invariante"
 
-#: ../../cluster.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:199
 msgid ""
 "A server with ``max_flows: 100`` behind :math:`n` nodes receives up to "
 ":math:`100n` flows when each node enforces the limit alone. With "
@@ -1121,7 +1128,7 @@ msgstr ""
 ":math:`i` und :math:`u_i` seine Flüsse auf dem Server. Das Protokoll hält "
 "zwei Ungleichungen ein:"
 
-#: ../../cluster.rst:201
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:201
 msgid ""
 "u_i \\le s_i \\ \\text{for every node}, \\qquad \\sum_i s_i \\le L, "
 "\\qquad \\text{so} \\qquad \\sum_i u_i \\le L."
@@ -1129,7 +1136,7 @@ msgstr ""
 "u_i \\le s_i \\ \\text{für jeden Knoten}, \\qquad \\sum_i s_i \\le L, "
 "\\qquad \\text{also} \\qquad \\sum_i u_i \\le L."
 
-#: ../../cluster.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:205
 msgid ""
 "The first is local: a node admits a flow only while its flows are fewer "
 "than its share. The second must hold for every loss, repetition, delay "
@@ -1142,11 +1149,11 @@ msgstr ""
 "jeder Partition und für jede Menge von Knoten, die anhalten oder neu "
 "starten."
 
-#: ../../cluster.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:207
 msgid "Counters that only grow"
 msgstr "Zähler, die nur wachsen"
 
-#: ../../cluster.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:210
 msgid ""
 "The first design moved shares with messages: \"take 5\". Such a message "
 "must arrive exactly once. Lost, it loses five places for good; repeated, "
@@ -1166,7 +1173,7 @@ msgstr ""
 "Zähler von Balegas und Kollegen (2015), aufgebaut auf der Zusammenführung "
 "von SID 0022."
 
-#: ../../cluster.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:212
 msgid ""
 "The nodes of the roster are ordered by address, and node :math:`i` of "
 ":math:`n` has the base share"
@@ -1174,13 +1181,13 @@ msgstr ""
 "Die Knoten der Mitgliederliste sind nach Adresse geordnet, und Knoten "
 ":math:`i` von :math:`n` hat den Basisanteil"
 
-#: ../../cluster.rst:214
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:214
 msgid ""
 "b_i = \\lfloor L/n \\rfloor + [\\, i < L \\bmod n \\,], \\qquad \\sum_i "
 "b_i = L."
 msgstr ""
 
-#: ../../cluster.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:218
 msgid ""
 "Every node computes the bases from the file. For each peer :math:`j`, "
 "node :math:`i` keeps two numbers that only grow: :math:`g_{ij}`, all it "
@@ -1193,11 +1200,11 @@ msgstr ""
 ":math:`h_{ij}`, das größte :math:`g_{ji}`, das er von :math:`j` gehört "
 "hat. Sein Anteil ist"
 
-#: ../../cluster.rst:220
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:220
 msgid "s_i = b_i - \\sum_j g_{ij} + \\sum_j h_{ij}."
 msgstr ""
 
-#: ../../cluster.rst:224
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:224
 msgid ""
 "A receiver holds only numbers that the giver sent, and the giver lowered "
 "its share before it sent them, so :math:`h_{ji} \\le g_{ij}` at every "
@@ -1208,13 +1215,13 @@ msgstr ""
 ":math:`h_{ji} \\le g_{ij}`. Summiert man über die Knoten und benennt die "
 "Indizes der letzten Summe um, ergibt sich"
 
-#: ../../cluster.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:226
 msgid ""
 "\\sum_i s_i = L - \\sum_{i,j} g_{ij} + \\sum_{i,j} h_{ji} = L - "
 "\\sum_{i,j} \\big(g_{ij} - h_{ji}\\big) \\le L."
 msgstr ""
 
-#: ../../cluster.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:230
 msgid ""
 "A lost datagram leaves :math:`h_{ji} < g_{ij}` for a while. The "
 "difference is counted on neither node: it is stranded for one period of "
@@ -1224,11 +1231,11 @@ msgstr ""
 "Die Differenz wird auf keinem Knoten gezählt: Sie ist für eine Periode "
 "von 500 ms gestrandet, nie verdoppelt."
 
-#: ../../cluster.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:232
 msgid "Moving shares to the demand"
 msgstr "Anteile zur Nachfrage verschieben"
 
-#: ../../cluster.rst:235
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:235
 msgid ""
 "Each node computes, for each capped server, its free share :math:`f = s - "
 "u` and a headroom :math:`r = \\max(1, \\lceil u/4 \\rceil)`. It *wants* "
@@ -1256,7 +1263,7 @@ msgstr ""
 "Überschuss bis zur Höhe dieses Geschenks zurück, sodass die Anteile eines "
 "untätigen Clusters zu den Basisanteilen zurückkehren."
 
-#: ../../cluster.rst:237
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:237
 msgid ""
 "Three rules bound a gift. It comes from the free share, so the giver's "
 "flows stay within its share. A node lends only its base: with "
@@ -1280,11 +1287,11 @@ msgstr ""
 "verleihen, der dann das ganze Limit hält. Sie begrenzt den Weg, und der "
 "Neustart unten braucht sie."
 
-#: ../../cluster.rst:239
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:239
 msgid "Implementation: ``Cell::enter`` and ``Cell::lower``"
 msgstr "Implementierung: ``Cell::enter`` und ``Cell::lower``"
 
-#: ../../cluster.rst:241
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:241
 msgid ""
 "The admission of a flow on a worker, and the lowering of the share by the "
 "mesh thread before a gift. In ``crates/lb/src/quota.rs`` (crate "
@@ -1299,7 +1306,7 @@ msgstr ""
 "``crates/lb/src/mesh/shares.rs`` bedient die Wünsche einmal in jeder "
 "Periode."
 
-#: ../../cluster.rst:243
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:243
 msgid ""
 "pub fn enter(&self) -> bool {\n"
 "    if self.used.fetch_add(1, Ordering::SeqCst) < "
@@ -1312,7 +1319,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:254
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:254
 msgid ""
 "The worker adds itself to the count first and reads the share second. "
 "``lower`` stores the lowered share first and reads the count second; when "
@@ -1335,11 +1342,11 @@ msgstr ""
 "Anteil. Kein Fluss tritt auf einem weggegebenen Anteil ein, und keine "
 "Sperre wird genommen."
 
-#: ../../cluster.rst:256
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:256
 msgid "Restarts and epochs"
 msgstr "Neustarts und Epochen"
 
-#: ../../cluster.rst:259
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:259
 msgid ""
 "A node that restarts has no flows and has lost its ledger. Its peers "
 "still hold theirs, and they may serve flows on shares it gave them. It "
@@ -1358,7 +1365,7 @@ msgstr ""
 "gehört hat, sein *Echo*. Ein Empfänger ignoriert ein Datagramm, dessen "
 "Absender-Epoche unter der größten liegt, die er für diesen Peer kennt."
 
-#: ../../cluster.rst:261
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:261
 msgid ""
 "A node that starts is unsynchronised with every peer. By the rule that it "
 "lends only its base, it gave at most its base to all peers together, so "
@@ -1370,14 +1377,14 @@ msgstr ""
 "höchstens seinen Basisanteil gegeben, also zählt er nichts von seinem "
 "Basisanteil und nur, was synchronisierte Peers ihm netto gegeben haben:"
 
-#: ../../cluster.rst:263
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:263
 msgid ""
 "s_i = \\sum_{j\\ \\text{synced}} \\max\\big(0,\\ h_{ij} - g_{ij}\\big)."
 msgstr ""
 "s_i = \\sum_{j\\ \\text{synchronisiert}} \\max\\big(0,\\ h_{ij} - "
 "g_{ij}\\big)."
 
-#: ../../cluster.rst:267
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:267
 msgid ""
 "It becomes synchronised with peer :math:`j` when a datagram of :math:`j` "
 "echoes its new epoch. It then takes over the ledger that :math:`j` kept: "
@@ -1392,7 +1399,7 @@ msgstr ""
 "Das Echo beweist, dass :math:`j` die neue Epoche gehört hatte, bevor es "
 "sendete, sodass die beiden Hauptbücher von da an übereinstimmen."
 
-#: ../../cluster.rst:269
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:269
 msgid ""
 "No timer returns the share of a silent node. Silence does not tell a "
 "stopped node from one that is cut off and still serves the flows it "
@@ -1423,11 +1430,11 @@ msgstr ""
 "fehlenden Knoten startet, bedient keinen Fluss auf einem begrenzten "
 "Server, bis dieser Knoten antwortet."
 
-#: ../../cluster.rst:271
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:271
 msgid "Worked example: three nodes and a limit of 30"
 msgstr "Durchgerechnetes Beispiel: drei Knoten und ein Limit von 30"
 
-#: ../../cluster.rst:273
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:273
 msgid ""
 "Nodes A, B and C share a server with :math:`L = 30`. The bases are "
 ":math:`\\lfloor 30/3 \\rfloor = 10` each. A holds 10 flows and refused "
@@ -1437,7 +1444,7 @@ msgstr ""
 "Basisanteile sind je :math:`\\lfloor 30/3 \\rfloor = 10`. A hält 10 "
 "Flüsse und hat einen abgelehnt. B hält 2 und C keinen."
 
-#: ../../cluster.rst:275
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:275
 msgid ""
 "*Period 1.* A has :math:`f = 0` and :math:`r = \\lceil 10/4 \\rceil = 3`, "
 "so it wants 3, with the flag. B has :math:`f = 8`, :math:`r = 1`, surplus "
@@ -1460,7 +1467,7 @@ msgstr ""
 "keiner ist verdoppelt. Wenn A sie hört, gilt :math:`h_{AB} = h_{AC} = 3` "
 "und :math:`s_A = 10 + 3 + 3 = 16`. Die Summe ist 30."
 
-#: ../../cluster.rst:277
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:277
 msgid ""
 "*Period 2.* A fills its 16 places and refuses again: :math:`r = \\lceil "
 "16/4 \\rceil = 4`, want 4. B has share 7, :math:`f = 5`, surplus 4, and "
@@ -1475,7 +1482,7 @@ msgstr ""
 "g_{CA} = 7`, und die Anteile sind :math:`s_A = 10 + 7 + 7 = 24`, "
 ":math:`s_B = s_C = 3`. Die Summe ist 30."
 
-#: ../../cluster.rst:279
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:279
 msgid ""
 "*C stops.* A keeps :math:`h_{AC} = 7` and its share of 24. C's share of 3 "
 "is stranded: the cluster can hold at most 27 flows on the server until C "
@@ -1485,7 +1492,7 @@ msgstr ""
 "Anteil von 3 ist gestrandet: Der Cluster kann höchstens 27 Flüsse auf dem "
 "Server halten, bis C zurückkehrt, und kein Timer ändert das."
 
-#: ../../cluster.rst:281
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:281
 msgid ""
 "*C restarts* with a new epoch. It is unsynchronised with both peers and "
 "counts :math:`s_C = 0`. A's next status echoes the new epoch and carries "
@@ -1501,7 +1508,7 @@ msgstr ""
 ":math:`g_{CA} = 7`. Bs Status liefert Nullen. Mit beiden synchronisiert, "
 "zählt C :math:`s_C = 10 - 7 = 3`, und die Summe ist wieder 30."
 
-#: ../../cluster.rst:283
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:283
 msgid ""
 "Two counterfactuals show why the design is as it is. Had B sent the "
 "message \"take 3\" and the network repeated it, A would have counted 33 "
@@ -1514,7 +1521,7 @@ msgstr ""
 "gestartet, hätte es 10 neben As 24 und Bs 3 gezählt: 37 Plätze bei einem "
 "Limit von 30."
 
-#: ../../cluster.rst:285
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:285
 msgid ""
 "The same rules predict the measured steps. On two hosts with :math:`L = "
 "20`, both bases are 10. A node with 10 flows that refuses wants "
@@ -1535,7 +1542,7 @@ msgstr ""
 "etwa drei Perioden, länger als eine; die SID hält die Schritte fest, "
 "nicht die Ursache."
 
-#: ../../cluster.rst:287
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:287
 msgid ""
 "The model ``docs/sid/assets/shared-affinity.lean`` is checked by Lean 4 "
 "without libraries. For the cap it proves that when every node holds at "
@@ -1581,11 +1588,11 @@ msgstr ""
 "``no_flow_enters_on_a_share_that_is_given_away_while_workers_race`` "
 "testet das Zweite."
 
-#: ../../cluster.rst:289
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:289
 msgid "Exercise 9.3"
 msgstr "Übung 9.3"
 
-#: ../../cluster.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:291
 msgid ""
 "Four nodes share a server with :math:`L = 10`. Compute the bases. Node D, "
 "the last, holds 2 flows and refuses one; the others hold none. What does "
@@ -1600,7 +1607,7 @@ msgstr ""
 "viele Flüsse kann der Cluster auf dem Server halten, und was muss der "
 "Betreiber tun, um den Rest zurückzugewinnen?"
 
-#: ../../cluster.rst:293
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:293
 msgid ""
 "Hint: The remainder of :math:`10/4` goes to the first nodes. Every peer "
 "serves the want it heard, independently."
@@ -1608,7 +1615,7 @@ msgstr ""
 "Hinweis: Der Rest von :math:`10/4` geht an die ersten Knoten. Jeder Peer "
 "bedient den gehörten Wunsch unabhängig."
 
-#: ../../cluster.rst:297
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:297
 msgid ""
 "Prove :math:`\\sum_i s_i \\le L` from :math:`h_{ji} \\le g_{ij}`. Then "
 "explain why a restarted node may not count its base, and why a timer that "
@@ -1619,11 +1626,11 @@ msgstr ""
 "zählen darf und warum ein Timer, der den Anteil eines schweigenden "
 "Knotens zurückgäbe, die Obergrenze bräche."
 
-#: ../../cluster.rst:299
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:299
 msgid "One Owner for Each Client"
 msgstr "Ein Besitzer für jeden Client"
 
-#: ../../cluster.rst:302
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:302
 msgid ""
 "When a node joins or leaves, or when the router rehashes, a client lands "
 "on another node. That node has none of the client's state: its UDP "
@@ -1642,11 +1649,11 @@ msgstr ""
 "Mesh-Netz an den Besitzer, und der Besitzer bedient ihn unter der wahren "
 "Clientadresse."
 
-#: ../../cluster.rst:304
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:304
 msgid "Rendezvous hashing"
 msgstr "Rendezvous-Hashing"
 
-#: ../../cluster.rst:307
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:307
 msgid ""
 "The key of a client is its IPv4 address, or the first 64 bits of its IPv6 "
 "address; these are the keys of the rate limiters. Each node :math:`n` of "
@@ -1675,7 +1682,7 @@ msgstr ""
 "sodass ein Client nicht berechnen kann, welche Adressen einen Besitzer "
 "teilen."
 
-#: ../../cluster.rst:309
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:309
 msgid ""
 "Why does a join move so little? Model the scores of one client as "
 "independent and uniform; with 64-bit scores, ties are negligible. When a "
@@ -1692,11 +1699,11 @@ msgstr ""
 "Aus Symmetriegründen ist jeder der :math:`n` Knoten mit derselben "
 "Wahrscheinlichkeit der größte, also gilt"
 
-#: ../../cluster.rst:311
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:311
 msgid "P(\\text{the client moves}) = \\frac{1}{n}."
 msgstr "P(\\text{der Client zieht um}) = \\frac{1}{n}."
 
-#: ../../cluster.rst:315
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:315
 msgid ""
 "When the new node is not the largest, the largest of the old scores is "
 "still the largest, and the owner stays. So the clients that move all move "
@@ -1720,11 +1727,11 @@ msgstr ""
 "Knoten verschieben, und sie muss bei jeder Änderung der Erreichbarkeit "
 "neu gebaut und veröffentlicht werden."
 
-#: ../../cluster.rst:317
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:317
 msgid "Worked example: a fourth node joins"
 msgstr "Durchgerechnetes Beispiel: ein vierter Knoten tritt bei"
 
-#: ../../cluster.rst:319
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:319
 msgid ""
 "Four clients p, q, r and s, and three nodes A, B and C. We use made-up "
 "scores from 0 to 99 in place of wyhash outputs."
@@ -1732,116 +1739,123 @@ msgstr ""
 "Vier Clients p, q, r und s und drei Knoten A, B und C. Wir verwenden "
 "erfundene Bewertungen von 0 bis 99 anstelle von wyhash-Ausgaben."
 
-#: ../../cluster.rst:325
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:325
 msgid "Client"
 msgstr "Client"
 
-#: ../../cluster.rst:326 ../../cluster.rst:336
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:336
 msgid "A"
 msgstr ""
 
-#: ../../cluster.rst:327 ../../cluster.rst:343 ../../cluster.rst:345
-#: ../../cluster.rst:357 ../../cluster.rst:359
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:327
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:343
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:345
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:357
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:359
 msgid "B"
 msgstr ""
 
-#: ../../cluster.rst:328 ../../cluster.rst:350 ../../cluster.rst:352
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:350
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:352
 msgid "C"
 msgstr ""
 
-#: ../../cluster.rst:329
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:329
 msgid "Owner of three"
 msgstr "Besitzer unter drei"
 
-#: ../../cluster.rst:330 ../../cluster.rst:338
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:330
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:338
 msgid "D"
 msgstr ""
 
-#: ../../cluster.rst:331
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:331
 msgid "Owner of four"
 msgstr "Besitzer unter vier"
 
-#: ../../cluster.rst:332
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:332
 msgid "p"
 msgstr ""
 
-#: ../../cluster.rst:333
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:333
 msgid "71"
 msgstr ""
 
-#: ../../cluster.rst:334
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:334
 msgid "15"
 msgstr ""
 
-#: ../../cluster.rst:335
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:335
 msgid "42"
 msgstr ""
 
-#: ../../cluster.rst:337
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:337
 msgid "88"
 msgstr ""
 
-#: ../../cluster.rst:339
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:339
 msgid "q"
 msgstr ""
 
-#: ../../cluster.rst:340
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:340
 msgid "23"
 msgstr ""
 
-#: ../../cluster.rst:341
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:341
 msgid "90"
 msgstr ""
 
-#: ../../cluster.rst:342
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:342
 msgid "57"
 msgstr ""
 
-#: ../../cluster.rst:344
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:344
 msgid "12"
 msgstr ""
 
-#: ../../cluster.rst:346
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:346
 msgid "r"
 msgstr ""
 
-#: ../../cluster.rst:347
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:347
 msgid "64"
 msgstr ""
 
-#: ../../cluster.rst:348
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:348
 msgid "38"
 msgstr ""
 
-#: ../../cluster.rst:349
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:349
 msgid "81"
 msgstr ""
 
-#: ../../cluster.rst:351
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:351
 msgid "30"
 msgstr ""
 
-#: ../../cluster.rst:353
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:353
 msgid "s"
 msgstr ""
 
-#: ../../cluster.rst:354
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:354
 msgid "9"
 msgstr ""
 
-#: ../../cluster.rst:355
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:355
 msgid "47"
 msgstr ""
 
-#: ../../cluster.rst:356
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:356
 msgid "33"
 msgstr ""
 
-#: ../../cluster.rst:358
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:358
 msgid "41"
 msgstr ""
 
-#: ../../cluster.rst:361
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:361
 msgid ""
 "Node D joins. Only p, whose score at D exceeds its three old scores, "
 "moves, and it moves to D. q, r and s keep their owners, because each old "
@@ -1855,7 +1869,7 @@ msgstr ""
 "vier Clients ist umgezogen, das erwartete :math:`1/4`. Wäre stattdessen C "
 "ausgeschieden, zöge nur r um, zu A, seiner zweitgrößten Bewertung."
 
-#: ../../cluster.rst:363
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:363
 msgid ""
 "Compare the obvious rule, the owner :math:`h \\bmod n` for a hash "
 ":math:`h`. Going from three nodes to four, a client stays only when "
@@ -1871,11 +1885,11 @@ msgstr ""
 "12 \\in \\{0, 1, 2\\}` überein: drei von zwölf Resten. Also ziehen drei "
 "Viertel der Clients um, die meisten davon zwischen alten Knoten."
 
-#: ../../cluster.rst:365
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:365
 msgid "Implementation: ``Peering::owner_among``"
 msgstr "Implementierung: ``Peering::owner_among``"
 
-#: ../../cluster.rst:367
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:367
 msgid ""
 "The scan that names the owner of a client among this node and the "
 "eligible peers, given as a bit set. In ``crates/lb/src/forward.rs`` "
@@ -1886,7 +1900,7 @@ msgstr ""
 "``crates/lb/src/forward.rs`` (Crate ``sibuna-lb``). Es gibt ``None`` "
 "zurück, wenn dieser Knoten den Client besitzt."
 
-#: ../../cluster.rst:369
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:369
 msgid ""
 "let key = client_key(client);\n"
 "let mut best = (wyhash::hash(self.seed, &key), self.rank);\n"
@@ -1921,11 +1935,11 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../cluster.rst:387
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:387
 msgid "One hop, and what it does not repair"
 msgstr "Ein Hop, und was er nicht repariert"
 
-#: ../../cluster.rst:390
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:390
 msgid ""
 "A peer is eligible when it can take a flow now. The mesh probes do not "
 "show that, because another thread answers them on another port, so the "
@@ -1941,7 +1955,7 @@ msgstr ""
 "Fluss abgelehnt hat oder bei dem ein Verbindungsaufbau fehlgeschlagen "
 "ist, wird eine Sekunde lang zurückgestellt."
 
-#: ../../cluster.rst:392
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:392
 msgid ""
 "For a TCP or HTTP connection the receiving node first applies its own "
 "checks: drain, its connection rate, a free flow slot. It then computes "
@@ -1981,7 +1995,7 @@ msgstr ""
 "sodass der Client die Antwort von der Adresse kommen sieht, an die er "
 "gesendet hat."
 
-#: ../../cluster.rst:394
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:394
 msgid ""
 "Two rules make this safe. A flow that arrived from a peer is served where "
 "it lands and is never forwarded again, whatever that node believes about "
@@ -2009,7 +2023,7 @@ msgstr ""
 "ihrer ersten Zeile 79 bis 91 us mehr und ein Austausch auf einer "
 "bestehenden Verbindung 19 bis 21 us mehr."
 
-#: ../../cluster.rst:396
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:396
 msgid ""
 "Forwarding keeps the *node* of a client, not a TCP connection. When the "
 "router moves the packets of an established TCP connection to another "
@@ -2035,11 +2049,11 @@ msgstr ""
 "gemessenen Roundtrip-Zeit zu seinen Peers 3 ms übersteigt, und aus dem "
 "Weitverkehrsregime erst wieder betritt, wenn sie unter 1,5 ms fällt."
 
-#: ../../cluster.rst:398
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:398
 msgid "Exercise 9.4"
 msgstr "Übung 9.4"
 
-#: ../../cluster.rst:400
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:400
 msgid ""
 "A cluster of four nodes owns 1,000 clients evenly. (a) A fifth node "
 "joins: how many clients move in expectation, and where to? (b) Instead, "
@@ -2052,7 +2066,7 @@ msgstr ""
 "Welche Clients ziehen um, und wohin? (c) Wie viele würden beim Übergang "
 "von vier auf fünf Knoten unter :math:`h \\bmod n` umziehen?"
 
-#: ../../cluster.rst:402
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:402
 msgid ""
 "Hint: For (c), count the residues of :math:`h \\bmod 20` at which "
 ":math:`h \\bmod 4 = h \\bmod 5`."
@@ -2060,7 +2074,7 @@ msgstr ""
 "Hinweis: Für (c) die Reste von :math:`h \\bmod 20` zählen, bei denen "
 ":math:`h \\bmod 4 = h \\bmod 5` gilt."
 
-#: ../../cluster.rst:406
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:406
 msgid ""
 "Explain why a join under rendezvous hashing moves only the clients that "
 "the new node now owns, why a forwarded flow is never forwarded again, and "
@@ -2073,11 +2087,11 @@ msgstr ""
 "eine bestehende TCP-Verbindung retten kann, deren Pakete der Router an "
 "einen anderen Knoten sendet."
 
-#: ../../cluster.rst:408
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:408
 msgid "A Disk Under the Sticky Table"
 msgstr "Eine Platte unter der Sticky-Tabelle"
 
-#: ../../cluster.rst:411
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:411
 msgid ""
 "The sticky table forgets twice: when more clients come than it has slots, "
 "and when the daemon restarts. SID 0027 puts a second tier under it, a "
@@ -2097,11 +2111,11 @@ msgstr ""
 "jetzt bedienen darf. Keine Sperre, kein Zähler und kein laufender Fluss "
 "hängt von der Datei ab."
 
-#: ../../cluster.rst:413
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:413
 msgid "The file and its slots"
 msgstr "Die Datei und ihre Slots"
 
-#: ../../cluster.rst:416
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:416
 msgid ""
 "The file starts with two pages of 4,096 bytes, the header and one write "
 "counter for each of 64 shards, and continues with :math:`64 \\times B "
@@ -2136,11 +2150,11 @@ msgstr ""
 "wartet nie auf sie, und eine volle Warteschlange lässt die Arbeit fallen "
 "und zählt sie."
 
-#: ../../cluster.rst:418
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:418
 msgid "Admission by frequency"
 msgstr "Zulassung nach Häufigkeit"
 
-#: ../../cluster.rst:421
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:421
 msgid ""
 "A bucket of four slots is often full. A new key then competes with a "
 "victim, the live slot whose key was seen least often, and wins only when "
@@ -2174,7 +2188,7 @@ msgstr ""
 "Zählungen für jeden Slot des Shards wird jeder Zähler halbiert, sodass "
 "ein Schlüssel immer wieder kommen muss, um seine Schätzung zu behalten."
 
-#: ../../cluster.rst:423
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:423
 msgid ""
 "The classical bound of Cormode and Muthukrishnan explains why the "
 "estimate is good. Let :math:`N` keys be counted. Fix a key :math:`x` and "
@@ -2191,11 +2205,11 @@ msgstr ""
 "diesen Zähler mit Wahrscheinlichkeit höchstens :math:`4/m`. Der erwartete "
 "Überschuss des Zählers ist daher"
 
-#: ../../cluster.rst:425
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:425
 msgid "\\lambda \\le \\frac{4N}{m}."
 msgstr ""
 
-#: ../../cluster.rst:429
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:429
 msgid ""
 "By Markov's inequality the excess reaches :math:`t` with probability at "
 "most :math:`\\lambda/t`. The estimate is the smallest of four counters, "
@@ -2215,11 +2229,11 @@ msgstr ""
 ":math:`\\lambda`, was eine schärfere Schätzung als die Markow-Schranke "
 "liefert."
 
-#: ../../cluster.rst:431
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:431
 msgid "Worked example: the error of the sketch"
 msgstr "Durchgerechnetes Beispiel: der Fehler des Sketches"
 
-#: ../../cluster.rst:433
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:433
 msgid ""
 "A file of ``64m`` holds 1,048,064 slots (Part XI), so a shard holds "
 ":math:`S = 16{,}376`. Eight counters for each slot would be 131,008. The "
@@ -2234,7 +2248,7 @@ msgstr ""
 "Bytes für jeden Slot. Der Sketch halbiert nach :math:`4S = 65{,}504` "
 "Zählungen."
 
-#: ../../cluster.rst:435
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:435
 msgid ""
 "We take the first window after a start, when the sketch begins at zero, "
 "and look at its middle, :math:`N = 2S = 32{,}752` counts. Then "
@@ -2252,14 +2266,14 @@ msgstr ""
 ":math:`t = 4` auf allen vier Zählern. Die Markow-Schranke ergibt "
 "höchstens :math:`(2/4)^4 = 1/16`. Die Poisson-Schätzung ist schärfer:"
 
-#: ../../cluster.rst:437
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:437
 msgid ""
 "P(X \\ge 4) = 1 - e^{-2}\\Big(1 + 2 + 2 + \\tfrac{4}{3}\\Big) = 1 - "
 "0.1353 \\times 6.333 \\approx 0.143, \\qquad 0.143^4 \\approx 4.2 \\times "
 "10^{-4}."
 msgstr ""
 
-#: ../../cluster.rst:441
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:441
 msgid ""
 "So about four keys seen once in ten thousand look like keys seen five "
 "times, at the middle of the first window. Later windows begin from halved "
@@ -2280,11 +2294,11 @@ msgstr ""
 "behielt eine Datei von 256 MiB bis auf 10 bis 15 alle der etwa 1.044.000 "
 "Schlüssel einer Arbeitsmenge, die sie vor der Flut hielt."
 
-#: ../../cluster.rst:443
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:443
 msgid "Implementation: ``Sketch::touch``"
 msgstr "Implementierung: ``Sketch::touch``"
 
-#: ../../cluster.rst:445
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:445
 msgid ""
 "Counts one key with the conservative update and ages the sketch when its "
 "sample is full. In ``crates/spill/src/sketch.rs`` (crate "
@@ -2296,7 +2310,7 @@ msgstr ""
 "``sibuna-spill``). ``Sketch::estimate`` gibt den kleinsten der vier "
 "Zähler zurück."
 
-#: ../../cluster.rst:447
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:447
 msgid ""
 "pub fn touch(&mut self, hash: u64) {\n"
 "    let least = u64::from(self.estimate(hash));\n"
@@ -2316,7 +2330,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:466
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:466
 msgid ""
 "The two tiers meet in ``SpillStore`` (``crates/lb/src/hints.rs``), which "
 "implements the trait ``AffinityStore`` of SID 0025 with the table in "
@@ -2346,11 +2360,11 @@ msgstr ""
 "300 Clients für 191 von ihnen einen anderen Server, und der zweite Fluss "
 "fand für alle 300 den gemerkten Server."
 
-#: ../../cluster.rst:468
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:468
 msgid "Crash safety, memory and the file system"
 msgstr "Absturzsicherheit, Speicher und das Dateisystem"
 
-#: ../../cluster.rst:471
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:471
 msgid ""
 "A new file is never created in place. The function ``create`` in "
 "``crates/spill/src/open.rs`` removes whatever lies at the path with "
@@ -2382,7 +2396,7 @@ msgstr ""
 "kostet seinen Hinweis, und ein alter Slot ist ein gültiger älterer "
 "Hinweis, den der Pool vor der Verwendung prüft."
 
-#: ../../cluster.rst:473
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:473
 msgid ""
 "Two properties of the host matter. The pages of the file count as memory "
 "of the process. Under a memory limit below the size of the file, a 256 "
@@ -2413,11 +2427,11 @@ msgstr ""
 "beendet. Teil XI nennt die Einstellungen für systemd, Docker und "
 "Kubernetes."
 
-#: ../../cluster.rst:475
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:475
 msgid "Exercise 9.5"
 msgstr "Übung 9.5"
 
-#: ../../cluster.rst:477
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:477
 msgid ""
 "A shard whose slot count lies just under a power of two keeps the full "
 "eight counters for each slot. Compute :math:`\\lambda` at the middle and "
@@ -2430,7 +2444,7 @@ msgstr ""
 "ein einmal gesehener Schlüssel an jedem der beiden Punkte eine Schätzung "
 "von 5 erreicht."
 
-#: ../../cluster.rst:479
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:479
 msgid ""
 "Hint: Only the ratio :math:`N/m` matters. At :math:`\\lambda = 1`, "
 ":math:`e^{-1} \\approx 0.3679`."
@@ -2438,7 +2452,7 @@ msgstr ""
 "Hinweis: Nur das Verhältnis :math:`N/m` zählt. Bei :math:`\\lambda = 1` "
 "ist :math:`e^{-1} \\approx 0.3679`."
 
-#: ../../cluster.rst:483
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:483
 msgid ""
 "Explain why a torn, copied or foreign slot can cost a hint and never "
 "choose a server that may not serve, why the path never names a half-made "
@@ -2450,11 +2464,11 @@ msgstr ""
 "darf, warum der Pfad nie eine halb fertige Datei nennt und warum der "
 "Sketch eine Häufigkeit überschätzen, aber nie unterschätzen kann."
 
-#: ../../cluster.rst:485
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:485
 msgid "A Database as the Authority"
 msgstr "Eine Datenbank als Authority"
 
-#: ../../cluster.rst:488
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:488
 msgid ""
 "SID 0023 sends one file to the peers. Two operators who send two files at "
 "the same time each win on some nodes, a node that was down keeps its old "
@@ -2477,7 +2491,7 @@ msgstr ""
 "sodass ein Knoten eine Revision mit einer Anweisung vollständig liest und "
 "eine ablehnt, deren Digest nicht stimmt."
 
-#: ../../cluster.rst:490
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:490
 msgid ""
 "The revisions are numbered 1, 2, 3 without a gap, and a committed "
 "revision never changes. ``sibuna authority apply`` evaluates a source, "
@@ -2491,14 +2505,14 @@ msgstr ""
 "einer Bedingung: Der Kopf ist noch die Revision, die es gelesen hat. Der "
 "Commit ist eine Transaktion aus zwei Anweisungen."
 
-#: ../../cluster.rst:492
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:492
 msgid ""
 "UPDATE edge_head SET revision = :expected + 1 WHERE id = 1 AND revision = "
 ":expected\n"
 "INSERT INTO edge_revisions (revision, ...) VALUES (:expected + 1, ...)"
 msgstr ""
 
-#: ../../cluster.rst:497
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:497
 msgid ""
 "When the first statement changes no row, the head moved, and the command "
 "fails with ``DBA002 REVISION CONFLICT`` and commits nothing. This is a "
@@ -2523,11 +2537,11 @@ msgstr ""
 "Dokument, weil das Zurücksetzen des Kopfs „5 angewandt“ zwischen vor und "
 "nach 7 mehrdeutig machen würde."
 
-#: ../../cluster.rst:499
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:499
 msgid "Implementation: ``Store::commit``"
 msgstr "Implementierung: ``Store::commit``"
 
-#: ../../cluster.rst:501
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:501
 msgid ""
 "The trait ``Store`` has seven operations: ``head``, ``revision``, "
 "``commit``, ``history``, ``report``, ``nodes`` and ``wait``. ``commit`` "
@@ -2550,7 +2564,7 @@ msgstr ""
 "fehlschlug, indem es fragt, ob der Kopf die neue Revision mit dem neuen "
 "Digest ist."
 
-#: ../../cluster.rst:503
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:503
 msgid ""
 "Every node follows on a thread of its own, ``edge-authority``. It looks "
 "at the head when PostgreSQL sends ``NOTIFY``, when its poll passes, at "
@@ -2594,11 +2608,11 @@ msgstr ""
 "einem Debug-Build wandten zwei Knoten mit PostgreSQL eine Revision 128 "
 "bis 155 ms nach Beginn von ``apply`` an."
 
-#: ../../cluster.rst:505
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:505
 msgid "Exercise 9.6"
 msgstr "Übung 9.6"
 
-#: ../../cluster.rst:507
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:507
 msgid ""
 "Two operators run ``diff`` against head 7 and then ``apply`` at the same "
 "moment, one adding a server and one removing a frontend. What does each "
@@ -2612,12 +2626,12 @@ msgstr ""
 "der zweite Betreiber tun? Warum wäre ein ``apply``, das als Bedingung den "
 "Kopf zum Zeitpunkt des Commits setzt, falsch?"
 
-#: ../../cluster.rst:509
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:509
 msgid "Hint: Follow the ``UPDATE`` of each transaction under the row lock."
 msgstr ""
 "Hinweis: Dem ``UPDATE`` jeder Transaktion unter der Zeilensperre folgen."
 
-#: ../../cluster.rst:513
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:513
 msgid ""
 "Explain why the revisions have no gap and never change, why the last word "
 "on whether a node serves a revision belongs to the node and not to the "
@@ -2628,11 +2642,11 @@ msgstr ""
 "Knoten gehört und nicht dem Befehl, und warum ein Rollback anhängt, statt "
 "den Kopf zu verschieben."
 
-#: ../../cluster.rst:515
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:515
 msgid "Replacing the Binary"
 msgstr "Die Binärdatei ersetzen"
 
-#: ../../cluster.rst:518
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:518
 msgid ""
 "With ``global.reuse_port`` each process has its own TCP accept queue. The "
 "old process closes its TCP listeners when the drain begins. Established "
@@ -2647,7 +2661,7 @@ msgstr ""
 "Warteschlange kann zurückgesetzt werden. Der neue Prozess beginnt mit "
 "einer leeren UDP-Zuordnungstabelle."
 
-#: ../../cluster.rst:520
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:520
 msgid ""
 "SID 0029 passes the sockets instead. The old process listens on a Unix "
 "socket, ``global.upgrade_socket``. The replacement checks its file, "
@@ -2662,7 +2676,7 @@ msgstr ""
 "Enden prüfen die Anmeldedaten des Gegenübers mit ``SO_PEERCRED`` und "
 "lehnen einen anderen Benutzer ab."
 
-#: ../../cluster.rst:523
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:523
 msgid ""
 "The old process pauses UDP at READY and passes the mappings. The "
 "replacement adopts them and accepts TCP before DONE. It then reads UDP "
@@ -2672,7 +2686,7 @@ msgstr ""
 "neue übernimmt sie und akzeptiert vor DONE TCP. Danach liest er UDP, "
 "während der alte Prozess seine Verbindungen beendet."
 
-#: ../../cluster.rst:523
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:523
 msgid ""
 "// cluster.rst and operations.rst: the listener handoff of SID 0029.\n"
 "#import \"style.typ\": *\n"
@@ -2722,11 +2736,11 @@ msgstr ""
 "  spacing: 60,\n"
 ")\n"
 
-#: ../../cluster.rst:523
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:523
 msgid "Listener handoff on Linux."
 msgstr "Listener-Übergabe unter Linux."
 
-#: ../../cluster.rst:526
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:526
 msgid ""
 "Two invariants govern the cutover. At every instant some live process "
 "accepts on each TCP listener: two acceptors on one socket lose nothing, "
@@ -2756,11 +2770,11 @@ msgstr ""
 "der alte Prozess nach 10 s ohne DONE den Ersatz und wartet auf das "
 "Schließen."
 
-#: ../../cluster.rst:528
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:528
 msgid "Implementation: ``Giving::end_peer``"
 msgstr "Implementierung: ``Giving::end_peer``"
 
-#: ../../cluster.rst:530
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:530
 msgid ""
 "Ends a silent replacement and waits for its connection to close, which "
 "proves that it reads no socket. In ``crates/upgrade/src/give.rs`` (crate "
@@ -2779,7 +2793,7 @@ msgstr ""
 "Dokuments. Auf der Edge-Seite stoppt ``Edge::freeze_datagrams`` in "
 "``crates/lb/src/handoff.rs`` das Lesen von UDP."
 
-#: ../../cluster.rst:532
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:532
 msgid ""
 "pub fn end_peer(&mut self, patience: Duration) -> bool {\n"
 "    // The signal can fail when the process is gone already. The closed "
@@ -2797,7 +2811,7 @@ msgstr ""
 "    self.channel.wait_closed(patience)\n"
 "}"
 
-#: ../../cluster.rst:541
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:541
 msgid ""
 "What is handed over: the TCP and UDP listeners, and every UDP mapping of "
 "a ``udp`` frontend with its connected server socket, so the server sees "
@@ -2839,7 +2853,7 @@ msgstr ""
 "``single_reader``, ``always_an_acceptor`` und ``failure_returns_service`` "
 "für den Zustandsautomaten; es ist nicht aus dem Code abgeleitet."
 
-#: ../../cluster.rst:545
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:545
 msgid ""
 "Explain why the TCP listeners may have two acceptors for an instant while "
 "the UDP sockets must have none, and why the old process trusts a closed "
@@ -2850,11 +2864,11 @@ msgstr ""
 "alte Prozess einer geschlossenen Verbindung vertraut und nicht einer Uhr, "
 "bevor er wieder liest."
 
-#: ../../cluster.rst:547
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:547
 msgid "The Fleet in the Console"
 msgstr "Die Flotte in der Konsole"
 
-#: ../../cluster.rst:550
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:550
 msgid ""
 "SID 0031 starts the console of SID 0007 beside the edge. Its ``console`` "
 "section lists every member under ``nodes``, at most 64, so the section is "
@@ -2893,11 +2907,11 @@ msgstr ""
 "Messung die Kosten gemeinsam genutzter Prozessoren sah und nicht die der "
 "Kopplung."
 
-#: ../../cluster.rst:552
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:552
 msgid "What Three Hosts Measured"
 msgstr "Was drei Hosts gemessen haben"
 
-#: ../../cluster.rst:555
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:555
 msgid ""
 "Part X records the cluster on three hosts with 16, 16 and 32 CPUs, in "
 "containers on one network, each host running a node, an origin and a load "
@@ -2929,11 +2943,11 @@ msgstr ""
 "Wirkung beobachtete und alle 5 ms gesendet wurde. Das sind Einzelläufe "
 "auf gemeinsam genutzten Hosts; Teil X nennt die Tabellen und die Methode."
 
-#: ../../cluster.rst:557
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:557
 msgid "Limits"
 msgstr "Grenzen"
 
-#: ../../cluster.rst:560
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:560
 msgid ""
 "We list the known gaps of each record. They are taken from the records "
 "and are not repaired at the time of writing."
@@ -2941,7 +2955,7 @@ msgstr ""
 "Wir listen die bekannten Lücken jedes Dokuments auf. Sie stammen aus den "
 "Dokumenten und sind zum Zeitpunkt des Schreibens nicht behoben."
 
-#: ../../cluster.rst:562
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:562
 msgid ""
 "**SID 0022, bans and commands.** A ban issued after a lift holds on every "
 "node only when it ends after the lifted ban would have; a shorter ban "
@@ -2980,7 +2994,7 @@ msgstr ""
 "Teil X ist die einzige Messung über Hosts hinweg. Die Replikation läuft "
 "nur im Edge-Modus."
 
-#: ../../cluster.rst:564
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:564
 msgid ""
 "**SID 0023, one file.** Files that the topology names by path, and files "
 "that a JLV file imports, are not sent. A node that was down keeps its old "
@@ -2997,7 +3011,7 @@ msgstr ""
 "annimmt. Ein Knoten wird an der Quelladresse der Verbindung erkannt. Die "
 "Übertragung ist authentifiziert und nicht verschlüsselt."
 
-#: ../../cluster.rst:566
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:566
 msgid ""
 "**SID 0025, affinity and caps.** The share of a stopped node does not "
 "return after any bound; a cluster that starts with one node missing "
@@ -3026,7 +3040,7 @@ msgstr ""
 "des Replikationsfensters verwendet, auf zwei Hosts unter 50 ms, kann auf "
 "zwei Server treffen."
 
-#: ../../cluster.rst:568
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:568
 msgid ""
 "**SID 0026, forwarding.** An established TCP connection breaks when the "
 "router moves its packets to another node. HTTP/3 and frontends with "
@@ -3052,7 +3066,7 @@ msgstr ""
 "Relays nach zehn Sekunden haben keinen Prozesstest. Ein weitergeleitetes "
 "Datagramm kann innerhalb einer Epoche wiedereingespielt werden."
 
-#: ../../cluster.rst:570
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:570
 msgid ""
 "**SID 0027, the spill cache.** A memory limit below the size of the file "
 "kills the daemon or stalls the disk tier. A truncation of the file or a "
@@ -3085,7 +3099,7 @@ msgstr ""
 "``spill``-Abschnitt ohne einen Pool, der die Tabelle verwendet, kostet "
 "die Datei und tut nichts, ohne Warnung."
 
-#: ../../cluster.rst:572
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:572
 msgid ""
 "**SID 0028, the database.** The history is never pruned. Two nodes with "
 "the same name overwrite each other's report. ``global``, ``mesh`` and "
@@ -3104,7 +3118,7 @@ msgstr ""
 "Mesh und Datenbank zugleich sowie TLS zu PostgreSQL sind nicht über die "
 "Binärdatei getestet. Nur Linux ist getestet."
 
-#: ../../cluster.rst:574
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:574
 msgid ""
 "**SID 0029, the upgrade.** Adopted UDP mappings are outside the count of "
 "a fleet-wide cap. A mapping that a peer forwarded is answered directly "
@@ -3133,7 +3147,7 @@ msgstr ""
 "einen schweigenden Ersatz verwendet eine Prozess-ID, die der Kernel "
 "wiederverwenden kann."
 
-#: ../../cluster.rst:576
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:576
 msgid ""
 "**SID 0031, the console.** The overhead criterion is not established. A "
 "member that joins is used after a restart only. The console does not "

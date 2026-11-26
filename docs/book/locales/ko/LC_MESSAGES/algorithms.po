@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../algorithms.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:1
 msgid "Part VI: Automata, Tries, and the Semantic Firewall"
 msgstr "제VI부: 오토마톤, 트라이, 의미 기반 방화벽"
 
-#: ../../algorithms.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:4
 msgid ""
 "We examine the algorithms behind sub-microsecond classification: the "
 "tagged Aho-Corasick automaton, the IPv4/IPv6 radix trie, the byte-class "
@@ -31,16 +31,18 @@ msgstr ""
 "마이크로초 미만의 분류를 가능하게 하는 알고리즘을 살펴봅니다. 태그가 붙은 Aho-Corasick 오토마톤, IPv4/IPv6 기수 "
 "트라이, 의미 기반 WAF의 바이트 클래스 토크나이저, 그리고 WEIGH 점수를 쓰는 선언형 정책 엔진입니다."
 
-#: ../../algorithms.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:6
 msgid "Single-Pass Multi-Pattern Matching"
 msgstr "한 번의 순회로 여러 패턴 매칭하기"
 
-#: ../../algorithms.rst:9 ../../algorithms.rst:59 ../../algorithms.rst:82
-#: ../../algorithms.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:82
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:141
 msgid "Objectives"
 msgstr "학습 목표"
 
-#: ../../algorithms.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:11
 msgid ""
 "By the end of this chapter, we should be able to derive the Aho-Corasick "
 "automaton's linear-time guarantee, explain the dense-table layout and "
@@ -50,11 +52,11 @@ msgstr ""
 "이 장을 마치면 Aho-Corasick 오토마톤의 선형 시간 보장을 유도하고, 밀집 테이블 배치와 바이트 클래스를 통한 대소문자 "
 "접기를 설명하며, SIMD 리터럴 엔진을 채택하지 않은 이유를 논증할 수 있어야 합니다."
 
-#: ../../algorithms.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:13
 msgid "Aho-Corasick as a Dense DFA"
 msgstr "밀집 DFA로 구현한 Aho-Corasick"
 
-#: ../../algorithms.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:16
 msgid ""
 "Sibuna has two literal-pattern sets: about forty bot signatures and about "
 "a hundred attack signatures. Scanning a field against :math:`N` patterns "
@@ -70,7 +72,7 @@ msgstr ""
 "전이 테이블에 접어 넣으므로, 스캔은 입력 바이트마다 테이블 읽기 한 번이며 패턴 집합에 따른 분기가 없습니다. 오토마톤은 "
 "``sibuna-patterns`` crate에 있습니다."
 
-#: ../../algorithms.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:18
 msgid ""
 "/// Advances from `state` (a row offset) over `byte`.\n"
 "fn step(&self, state: usize, byte: u8) -> usize {\n"
@@ -110,7 +112,7 @@ msgstr ""
 "    None\n"
 "}"
 
-#: ../../algorithms.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:37
 msgid ""
 "A state is stored as its row offset in one flat table, so a step is one "
 "add and one load. States are numbered so that every match state comes "
@@ -121,7 +123,7 @@ msgstr ""
 "상태가 다른 모든 상태보다 뒤에 오도록 매깁니다. 그러면 매치 탐지는 ``first_match``\\ 와의 비교 한 번으로 끝나며, "
 "안쪽 루프에서 두 번째 테이블을 읽을 필요가 없습니다."
 
-#: ../../algorithms.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:40
 msgid ""
 "A trie from the root through G and GP to the GPTBot match state, and "
 "through C and Cl to the ClaudeBot match state; dashed failure edges lead "
@@ -130,7 +132,7 @@ msgstr ""
 "루트에서 G와 GP를 거쳐 GPTBot 매치 상태로, C와 Cl을 거쳐 ClaudeBot 매치 상태로 이어지는 트라이입니다. "
 "점선으로 그린 실패 간선이 GP와 Cl에서 루트로 돌아갑니다."
 
-#: ../../algorithms.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:40
 msgid ""
 "digraph aho_corasick {\n"
 "  // algorithms.rst: trie states and failure edges for two signatures. A "
@@ -219,11 +221,11 @@ msgstr ""
 "Helvetica\">실패</FONT>>];\n"
 "}"
 
-#: ../../algorithms.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:40
 msgid "Trie states and failure edges for two signatures"
 msgstr "두 시그니처의 트라이 상태와 실패 간선"
 
-#: ../../algorithms.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:43
 msgid ""
 "The automaton's state budget is a run-time option. The policy engine "
 "reserves at most one root plus the sum of all signature lengths, a safe "
@@ -245,15 +247,15 @@ msgstr ""
 "바이트 수에 1을 더한 값입니다. 엔진의 정확한 크기와 순차 부분 문자열 탐색과의 비교는 제X부에 기록되어 있습니다. 순차 탐색은 "
 "같은 패턴과 같은 any-match 의미론을 사용합니다."
 
-#: ../../algorithms.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:45
 msgid "Regular Expressions, SIMD Engines, and the Choice"
 msgstr "정규 표현식, SIMD 엔진, 그리고 선택"
 
-#: ../../algorithms.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:48
 msgid "Three families were weighed for the signature stage:"
 msgstr "시그니처 단계에 쓸 세 가지 계열을 비교했습니다."
 
-#: ../../algorithms.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:50
 msgid ""
 "*Backtracking regular expressions* (a backtracking rule-set style) run "
 "hundreds of patterns per request and allocate per match; they are the "
@@ -262,7 +264,7 @@ msgstr ""
 "*백트래킹 정규 표현식*\\ (백트래킹 규칙 집합 방식)은 요청마다 수백 개의 패턴을 실행하고 매치마다 할당합니다. 가장 느린 "
 "선택지이며 오탐도 가장 많이 냅니다."
 
-#: ../../algorithms.rst:51
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:51
 msgid ""
 "*SIMD literal engines* (Hyperscan, Vectorscan) prefilter blocks of 16 to "
 "32 bytes with shuffle-based nibble masks (the \"Teddy\" algorithm) and "
@@ -277,7 +279,7 @@ msgstr ""
 "대가는 수 메가바이트짜리 C++ 의존성, 컴파일 시점 패턴 데이터베이스, WebAssembly 타깃 미지원이며, 100바이트 정도의 "
 "입력에서는 이점도 없습니다. 필드 전체를 스캔하는 시간이 캐시 미스 한 번보다 짧기 때문입니다."
 
-#: ../../algorithms.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:52
 msgid ""
 "*Dense Aho-Corasick plus small structural tokenizers*, the libinjection "
 "lineage, gives exact linear-time behaviour in a fixed table and needs "
@@ -286,7 +288,7 @@ msgstr ""
 "*밀집 Aho-Corasick과 작은 구조 토크나이저*, 즉 libinjection 계보는 고정 테이블에서 정확한 선형 시간 동작을 "
 "제공하며, 바이너리 밖의 것은 아무것도 필요하지 않습니다."
 
-#: ../../algorithms.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:54
 msgid ""
 "Sibuna's fields are short, so the third family wins on both memory and "
 "speed; Part X records about 1.56 ns per byte on an 8 KiB body (the "
@@ -300,11 +302,11 @@ msgstr ""
 "``8kb_body_semantic_scan``\\ 입니다). SIMD 사전 필터가 효과를 낼 만한 워크로드는 이것 하나뿐이며, "
 "SID 0006은 이를 미결 항목으로 남겨 둡니다."
 
-#: ../../algorithms.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:56
 msgid "The Radix Trie for IPv4 and IPv6"
 msgstr "IPv4와 IPv6를 위한 기수 트라이"
 
-#: ../../algorithms.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:61
 msgid ""
 "Trace a longest-prefix lookup through the 128-bit trie, explain the IPv4 "
 "root shortcut, and see how the trie doubles as the reputation store fed "
@@ -313,7 +315,7 @@ msgstr ""
 "128비트 트라이에서 최장 접두사 조회를 추적하고, IPv4 루트 지름길을 설명하며, 이 트라이가 클러스터가 채우는 평판 저장소를 "
 "어떻게 겸하는지 살펴봅니다."
 
-#: ../../algorithms.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:63
 msgid ""
 "One binary trie over 128-bit keys serves both families: IPv6 prefixes are "
 "inserted as-is, IPv4 prefixes are mapped into ``::ffff:0:0/96`` so a "
@@ -327,7 +329,7 @@ msgstr ""
 "인덱싱하는 평평한 ``Vec`` 하나에 저장되며, 인덱스 0은 루트이자 \"자식 없음\"을 뜻합니다. 그래서 조회는 포인터 추적 "
 "없이 최대 128번의 의존 읽기입니다. 이 트라이는 ``sibuna-cidr`` crate의 ``PrefixTrie``\\ 입니다."
 
-#: ../../algorithms.rst:65
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:65
 msgid ""
 "Walking the 96 mapped-prefix levels for every IPv4 lookup would cost 96 "
 "dependent loads before it reached the first bit of the IPv4 address. So "
@@ -337,7 +339,7 @@ msgstr ""
 "IPv4 조회마다 매핑된 접두사의 96단계를 걸어 내려가면, IPv4 주소의 첫 비트에 닿기도 전에 의존 읽기 96번이 듭니다. "
 "그래서 트라이는 초기화할 때 깊이 96의 노드를 기록해 두고 IPv4 조회를 거기서 시작합니다."
 
-#: ../../algorithms.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:67
 msgid ""
 "let (mut node, mut depth, mut best) = if is_ipv4_mapped(key) {\n"
 "    let start = self.ipv4_root;\n"
@@ -355,7 +357,7 @@ msgstr ""
 "    (0, 0, self.nodes[0].value.as_ref())\n"
 "};"
 
-#: ../../algorithms.rst:77
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:77
 msgid ""
 "Classifying an IPv4 address costs 32.0 ns and an IPv6 address 79.3 ns "
 "(``ipv4_cidr_classification`` and ``ipv6_cidr_classification`` in "
@@ -370,11 +372,11 @@ msgstr ""
 "두 번 참조합니다. 최종 판정인 ``allow``/``deny``\\ 는 규칙 테이블보다 먼저 참조하므로 클러스터 전체의 차단이 "
 "모든 규칙에 우선하고, ``challenge`` 판정은 규칙 테이블 뒤에 참조합니다."
 
-#: ../../algorithms.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:79
 msgid "The Semantic Firewall"
 msgstr "의미 기반 방화벽"
 
-#: ../../algorithms.rst:84
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:84
 msgid ""
 "Understand the byte-class pre-scan, the tagged signature automaton, the "
 "SQL tokenizer with tautology detection, the HTML and shell structure "
@@ -384,11 +386,11 @@ msgstr ""
 "바이트 클래스 사전 스캔, 태그가 붙은 시그니처 오토마톤, 항진식 탐지를 갖춘 SQL 토크나이저, HTML과 셸 구조 검사, "
 "정규화, 그리고 실제 브라우저 요청은 손대지 않고 통과시켜야 한다는 오탐 원칙을 이해합니다."
 
-#: ../../algorithms.rst:86
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:86
 msgid "A Lesson in False Positives"
 msgstr "오탐의 교훈"
 
-#: ../../algorithms.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:89
 msgid ""
 "The first version of the WAF matched a flat substring list against every "
 "header. The list contained ``/*``, and every browser sends ``Accept: "
@@ -404,11 +406,11 @@ msgstr ""
 "테스트 모음은 ``select``, ``--``, 아포스트로피가 들어 있는 댓글 본문을 포함한 완전한 Chrome 요청을 엔진에 "
 "통과시키고, 아무것도 탐지되지 않는지 확인합니다."
 
-#: ../../algorithms.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:91
 msgid "Byte Classes in One Pass"
 msgstr "한 번의 스캔으로 바이트 클래스 수집하기"
 
-#: ../../algorithms.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:94
 msgid ""
 "Each inspected field is scanned once to collect which byte classes occur: "
 "quotes, ``=``, ``<``, shell separators, ``%``, NUL, canonicalisation "
@@ -425,7 +427,7 @@ msgstr ""
 "``sibuna-policy``\\ 의 WAF 모듈에 있습니다. 누산기 네 개가 OR 연쇄를 짧게 유지하고, 두 바이트 "
 "쌍(``/*``\\ 와 인접한 공백 두 개)은 단일 바이트가 아직 정규화를 요구하지 않았을 때에만 찾습니다."
 
-#: ../../algorithms.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:96
 msgid ""
 "pub(crate) fn scan(text: &[u8]) -> Classes {\n"
 "    let (chunks, remainder) = text.as_chunks::<8>();\n"
@@ -487,11 +489,11 @@ msgstr ""
 "    Classes { bits }\n"
 "}"
 
-#: ../../algorithms.rst:122
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:122
 msgid "Detectors"
 msgstr "탐지기"
 
-#: ../../algorithms.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:125
 msgid ""
 "*Signatures.* All strong signatures of every category live in one tagged "
 "automaton; a hit is a terminal ``deny`` named ``waf:sqli``, ``waf:xss``, "
@@ -501,7 +503,7 @@ msgstr ""
 "``waf:xss``, ``waf:path-traversal``, ``waf:rce``\\ 라는 이름의 최종 ``deny``\\ 가 "
 "됩니다."
 
-#: ../../algorithms.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:126
 msgid ""
 "*SQL injection.* A single-pass word scanner looks up each alphanumeric "
 "word (at most seven bytes) in the keyword table and, on ``or`` / ``and``, "
@@ -517,7 +519,7 @@ msgstr ""
 "따옴표(1), 최대 두 개의 키워드(2), 주석 표식(1), ``=``\\ (1)입니다. ``admin'--``\\ 는 그 자체로 "
 "최종 판정입니다. \"it's a group order from the shop\"은 3점이므로 통과합니다."
 
-#: ../../algorithms.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:127
 msgid ""
 "*Cross-site scripting.* Requires ``<``; fires when a tag that can host "
 "script co-occurs with an ``on<event>=`` attribute in attribute position. "
@@ -526,7 +528,7 @@ msgstr ""
 "*크로스 사이트 스크립팅.* ``<``\\ 가 있어야 합니다. 스크립트를 담을 수 있는 태그가 속성 위치의 "
 "``on<event>=`` 속성과 함께 나타날 때 탐지합니다. ``onboarding=1``\\ 은 해당하지 않습니다."
 
-#: ../../algorithms.rst:128
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:128
 msgid ""
 "*Command injection.* Requires a separator; fires when ``;``, ``|``, "
 "``&&``, ``$(``, a backtick, or a newline is followed by a known command "
@@ -535,7 +537,7 @@ msgstr ""
 "*명령 인젝션.* 구분자가 있어야 합니다. ``;``, ``|``, ``&&``, ``$(``, 백틱, 줄 바꿈 뒤에 알려진 명령 "
 "이름이 오면 탐지합니다. ``status ok; done | next``\\ 는 통과합니다."
 
-#: ../../algorithms.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:129
 msgid ""
 "*Path traversal.* Signatures (``../``, ``..%2f``, ``/etc/passwd``, "
 "``id_rsa``, ...) plus NUL and ``%00``."
@@ -543,7 +545,7 @@ msgstr ""
 "*경로 탐색.* 시그니처(``../``, ``..%2f``, ``/etc/passwd``, ``id_rsa``, ...)와 NUL, "
 "``%00``\\ 입니다."
 
-#: ../../algorithms.rst:131
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:131
 msgid ""
 "Structural headers whose grammar legitimately contains quotes and stars "
 "(``Accept*``, ``Content-Type``, ``Sec-*``, ``If-*``, ...) are skipped; "
@@ -559,11 +561,11 @@ msgstr ""
 "검사합니다. 그래서 ``1%27/**/UnIoN/**/SeLeCt``\\ 와 ``%252e%252e/``\\ 는 원래의 시그니처로 "
 "접힙니다."
 
-#: ../../algorithms.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:133
 msgid "Cost"
 msgstr "비용"
 
-#: ../../algorithms.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:136
 msgid ""
 "The inspection cost depends on the fields and bytes presented to the "
 "engine, not just the number of requests. The benchmark chapter reports "
@@ -577,17 +579,17 @@ msgstr ""
 "forward-auth를 쓰는 인그레스는 관련 요청 정보를 전달해야 합니다. 전달되지 않은 바이트는 이 프로세스가 검사할 수 "
 "없습니다."
 
-#: ../../algorithms.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:138
 msgid "The Declarative Policy Engine"
 msgstr "선언형 정책 엔진"
 
-#: ../../algorithms.rst:143
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:143
 msgid ""
 "Read the rule model, the evaluation order, WEIGH scoring with thresholds, "
 "and the JSON policy grammar."
 msgstr "규칙 모델, 평가 순서, 임계값이 있는 WEIGH 점수, JSON 정책 문법을 읽어 봅니다."
 
-#: ../../algorithms.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:145
 msgid ""
 "A rule is a conjunction of optional criteria (path pattern, User-Agent "
 "pattern, up to four headers, up to eight IPv4/IPv6 CIDR blocks, one JA4 "
@@ -599,21 +601,21 @@ msgstr ""
 "지문 또는 접두사 하나)의 논리곱이며, 동작 ``ALLOW``, ``DENY``, ``CHALLENGE``, ``WEIGH`` 중 "
 "하나와 선택적인 규칙별 난이도(작업 비트)와 알고리즘, 부호 있는 ``weight``\\ 를 가집니다. 평가 순서는 다음과 같습니다."
 
-#: ../../algorithms.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:147
 msgid "Semantic WAF (Shield only): violation is a terminal ``deny``."
 msgstr "의미 기반 WAF(Shield 전용): 위반은 최종 ``deny``\\ 입니다."
 
-#: ../../algorithms.rst:148
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:148
 msgid "Reputation trie: ``deny`` or ``allow`` prefixes are terminal."
 msgstr "평판 트라이: ``deny`` 또는 ``allow`` 접두사는 최종 판정입니다."
 
-#: ../../algorithms.rst:149
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:149
 msgid ""
 "Rules in order: the first terminal match returns; ``WEIGH`` matches "
 "accumulate."
 msgstr "규칙(순서대로): 처음 일치한 최종 규칙의 결과를 반환하고, ``WEIGH`` 일치는 누적합니다."
 
-#: ../../algorithms.rst:150
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:150
 msgid ""
 "Score: negative totals ``allow``; totals :math:`\\geq 40` ``deny``; "
 "totals :math:`\\geq 10` ``challenge`` with one extra work bit per 5 "
@@ -622,17 +624,17 @@ msgstr ""
 "점수: 합계가 음수이면 ``allow``, :math:`\\geq 40`\\ 이면 ``deny``, :math:`\\geq "
 "10`\\ 이면 ``challenge``\\ 이며, 임계값을 넘는 5점마다 작업 비트를 하나씩 더하되 최대 여섯 비트까지 더합니다."
 
-#: ../../algorithms.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:151
 msgid ""
 "Static bypass paths, then trie ``challenge`` verdicts, then the bot "
 "automaton."
 msgstr "정적 우회 경로, 그다음 트라이의 ``challenge`` 판정, 그다음 봇 오토마톤."
 
-#: ../../algorithms.rst:152
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:152
 msgid "Default action, ``challenge`` unless the policy file says otherwise."
 msgstr "기본 동작은 정책 파일이 달리 정하지 않으면 ``challenge``\\ 입니다."
 
-#: ../../algorithms.rst:154
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:154
 msgid ""
 "Built-in rules allow ``/.well-known/*``, ``/favicon.ico``, "
 "``/robots.txt``, and ``/__sibuna/*``, deny ``CF-Worker`` clients and "
@@ -644,7 +646,7 @@ msgstr ""
 "``Mozilla`` User-Agent에 챌린지를 제시합니다. 브라우저 문자열은 비용 없이 위조할 수 있으므로, 이를 허용하면 "
 "게이트는 장식에 불과해집니다."
 
-#: ../../algorithms.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:156
 msgid ""
 "{\n"
 "  \"default_action\": \"CHALLENGE\",\n"
@@ -690,11 +692,11 @@ msgstr ""
 "  ]\n"
 "}"
 
-#: ../../algorithms.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:174
 msgid "Worked Trace: an Encoded Attack with a Valid Session"
 msgstr "따라가 보기: 유효한 세션을 지닌 인코딩된 공격"
 
-#: ../../algorithms.rst:177
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:177
 msgid ""
 "Consider ``GET /search?q=%2527%2520OR%25201%253D1`` from a client holding "
 "a valid session. First the HTTP parser separates the path and query "
@@ -707,7 +709,7 @@ msgstr ""
 "검사합니다. 퍼센트 기호 때문에 필드는 정규화 대상으로 표시됩니다. 한 번 디코딩하면 ``%27%20OR%201%3D1``\\ 이 "
 "드러나고, 두 번째 디코딩에서 ``' OR 1=1``\\ 이 드러납니다."
 
-#: ../../algorithms.rst:179
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:179
 msgid ""
 "The tokenizer now sees a quote, the keyword ``OR``, and equal literal "
 "operands. A denial is a terminal policy result. The valid session does "
@@ -720,11 +722,11 @@ msgstr ""
 "있어도 이 결과는 허용으로 바뀌지 않습니다. 세션 확인은 챌린지 결정만 해소합니다. 저장소 훅은 크기가 제한된 인시던트 레코드를 "
 "복사하고, SQL은 나중에 실행됩니다. 응답 경로는 원본 서버 연결이 유휴 상태인 동안 엔진 스냅숏을 붙잡고 있을 필요가 없습니다."
 
-#: ../../algorithms.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:181
 msgid "Exercise 6.1"
 msgstr "연습 문제 6.1"
 
-#: ../../algorithms.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:183
 msgid ""
 "Replace the payload with ``O'Reilly`` and then with ``order=1``. Why "
 "should neither alone establish SQL injection? Give an example of a false "
@@ -733,11 +735,11 @@ msgstr ""
 "페이로드를 ``O'Reilly``\\ 로, 그다음 ``order=1``\\ 로 바꿔 보세요. 어느 쪽도 단독으로 SQL 인젝션을 "
 "입증해서는 안 되는 이유는 무엇일까요? 부분 문자열만 보는 탐지기가 낼 수 있는 오탐의 예를 드세요."
 
-#: ../../algorithms.rst:185
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:185
 msgid "Exercise 6.2"
 msgstr "연습 문제 6.2"
 
-#: ../../algorithms.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:187
 msgid ""
 "Write the byte-class table entries needed to add a detector for LDAP "
 "injection (patterns such as ``)(|(``), and explain which existing class "
@@ -746,11 +748,11 @@ msgstr ""
 "LDAP 인젝션 탐지기(예: ``)(|(`` 같은 패턴)를 추가하는 데 필요한 바이트 클래스 테이블 항목을 쓰고, 기존 클래스 비트 "
 "중 무엇을 재사용할 수 있는지 설명하세요."
 
-#: ../../algorithms.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:189
 msgid "Explain the invariant"
 msgstr "불변식 설명하기"
 
-#: ../../algorithms.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/algorithms.rst:191
 msgid ""
 "Explain to a reviewer why ``Accept: */*`` was a false positive, what "
 "structural property the new SQL detector requires, and how the automaton "

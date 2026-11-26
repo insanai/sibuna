@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../learning.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:1
 msgid "How to Read This Book"
 msgstr "本書の読み方"
 
-#: ../../learning.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:4
 msgid ""
 "The timetable example gives us two questions to carry into the design "
 "chapters. Which requests does the edge admit, and which server handles an "
@@ -31,105 +31,105 @@ msgid ""
 msgstr ""
 "時刻表の例から、設計を読むための二つの問いが得られます。エッジはどのリクエストを通し、通したリクエストはどのサーバーが処理するのでしょうか。最初の数章では入場判定のコストと正しさを扱います。その後で、エッジによるサーバーの選択と、複数のエッジの協調を調べます。"
 
-#: ../../learning.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:10
 msgid "Question"
 msgstr "問い"
 
-#: ../../learning.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:11
 msgid "Where the answer develops"
 msgstr "答えを扱う箇所"
 
-#: ../../learning.rst:12
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:12
 msgid "What does a puzzle buy?"
 msgstr "パズルで何が得られるか"
 
-#: ../../learning.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:13
 msgid "Parts I to III: cost, probability, and the limits of proof."
 msgstr "第I部から第III部：コスト、確率、証明の限界。"
 
-#: ../../learning.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:14
 msgid "How does Sibuna compare?"
 msgstr "Sibunaは他とどう違うか"
 
-#: ../../learning.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:15
 msgid ""
 "Part II: lineage and the feature tables; Part X: measurements beside "
 "Anubis and HAProxy."
 msgstr "第II部：系譜と機能表。第X部：AnubisやHAProxyと並べた測定。"
 
-#: ../../learning.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:16
 msgid "What does a session mean?"
 msgstr "セッションは何を意味するか"
 
-#: ../../learning.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:17
 msgid "Part IV: bindings, verification order, expiry, and replay."
 msgstr "第IV部：結び付け、検証の順序、期限、リプレイ。"
 
-#: ../../learning.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:18
 msgid "Where does the memory go?"
 msgstr "メモリはどこに使われるか"
 
-#: ../../learning.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:19
 msgid "Parts V and VI: buffers, threads, tables, automata, and publication."
 msgstr "第V部と第VI部：バッファー、スレッド、テーブル、オートマトン、公開。"
 
-#: ../../learning.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:20
 msgid "How does the browser solve?"
 msgstr "ブラウザーはどう解くか"
 
-#: ../../learning.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:21
 msgid "Part VII: worker messages, memory, and calibration."
 msgstr "第VII部：ワーカーのメッセージ、メモリ、較正。"
 
-#: ../../learning.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:22
 msgid "How does one node balance load?"
 msgstr "一つのノードはどう負荷を分散するか"
 
-#: ../../learning.rst:23
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:23
 msgid ""
 "Part VIII: flows, workers, choosing a server, admission at the socket, "
 "hooks."
 msgstr "第VIII部：フロー、ワーカー、サーバーの選択、ソケットでの許可、フック。"
 
-#: ../../learning.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:24
 msgid "How do several nodes act as one?"
 msgstr "複数のノードはどう一つとして動くか"
 
-#: ../../learning.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:25
 msgid "Part IX: the mesh, shared affinity, fleet caps, forwarding, handoff."
 msgstr "第IX部：メッシュ、共有アフィニティ、フリート全体の上限、転送、ハンドオフ。"
 
-#: ../../learning.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:26
 msgid "How do we know it works?"
 msgstr "動作をどう確かめるか"
 
-#: ../../learning.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:27
 msgid "Part X: three harnesses and what each excludes."
 msgstr "第X部：三つのハーネスと、それぞれが対象外とするもの。"
 
-#: ../../learning.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:28
 msgid "How do we run it?"
 msgstr "どう運用するか"
 
-#: ../../learning.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:29
 msgid ""
 "Part XI: flags, the edge topology, certificates, policy, storage, "
 "clustering, packaging."
 msgstr "第XI部：フラグ、エッジの構成、証明書、ポリシー、ストレージ、クラスター、パッケージ。"
 
-#: ../../learning.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:30
 msgid "What was that error?"
 msgstr "このエラーは何か"
 
-#: ../../learning.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:31
 msgid "Part XII: endpoints, statuses, errors, schema; Part XIII: the card."
 msgstr "第XII部：エンドポイント、ステータス、エラー、スキーマ。第XIII部：早見表。"
 
-#: ../../learning.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:33
 msgid "Three Reading Paths"
 msgstr "三つの読み方"
 
-#: ../../learning.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:36
 msgid ""
 "*Learning the design.* Parts I to IV in order, then the worked trace in "
 "Part VI, then Part VII. For the load balancer, Part VIII and then Part "
@@ -140,7 +140,7 @@ msgstr ""
 "*設計を学ぶ。*\\ "
 "第I部から第IV部を順に読み、次に第VI部の実行トレースの例、そして第VII部に進みます。ロードバランサーについては第VIII部、次に第IX部を読みます。この二部に必要なのは第I部と第V部の所有権の考え方だけです。演習を解いてください。巻末の解答と比べるのはその後にします。トレースが共有テーブルや借用したスライスに達したら、第V部に戻ります。"
 
-#: ../../learning.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:37
 msgid ""
 "For a first deployment, we work through :doc:`jlavi` after meeting "
 "frontends, routes and pools in :doc:`introduction`. Part XI then explains "
@@ -150,7 +150,7 @@ msgstr ""
 "初めて配備する場合は、 :doc:`introduction` でフロントエンド、ルート、プールを学んでから :doc:`jlavi` "
 "に進みます。第XI部ではインストール、稼働状況の観察、設定の再読み込みを扱います。第XII部と第XIII部はリファレンスとコマンド早見表です。"
 
-#: ../../learning.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:38
 msgid ""
 "*Changing the code.* Parts V and VI, the source anchors in every chapter, "
 "and the SID records they cite. Part X explains which harness will catch a "
@@ -160,11 +160,11 @@ msgstr ""
 "*コードを変更する。*\\ "
 "第V部と第VI部、各章のソース参照、そこで引用しているSIDの記録を読みます。第X部では、変更した部分のリグレッションをどのハーネスが捉えるかを説明します。第II部には、変更後も守るべき制約をまとめています。"
 
-#: ../../learning.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:40
 msgid "Conventions"
 msgstr "本書の約束事"
 
-#: ../../learning.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:43
 msgid ""
 "A *worked example* shows the intermediate states, not just the answer. An "
 "*exercise* asks us to change one assumption. Hints suggest a first step; "
@@ -177,7 +177,7 @@ msgstr ""
 "*例題*\\ は答えだけでなく途中の状態も示します。\\ *演習*\\ "
 "は仮定を一つ変えるよう求めます。ヒントは最初の一歩を示し、巻末に抜粋した解答例で推論を確かめられます。図はリクエストの経路とバックグラウンドの処理を区別します。ソース参照は、本文とコードが食い違って見えるときに調べるべき実装を示します。「実装」という見出しの囲みは関数とそのファイルを示します。「不変条件を説明してください」という見出しの囲みでは、その考え方を自分の言葉で説明し直します。"
 
-#: ../../learning.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:45
 msgid ""
 "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
 "sequential-work depth, :math:`t` is the number of openings, :math:`p` is "

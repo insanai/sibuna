@@ -290,10 +290,10 @@ An application filter can shed work only after the traffic reaches the host. The
 #. *The flow budget.* One slot per client connection or UDP mapping, node-wide, up to ``global.max_flows`` (8,192 by default, at most 1,000,000). A frontend may cap its own flows with ``max_flows`` and the flows of one address with ``max_flows_per_ip``. UDP mappings take at most ``global.max_udp_flows`` of it, because their sources are not validated, and ``udp_defense.total_pps`` keeps half the packet budget of a UDP frontend for confirmed mappings. HTTP adds ``http.max_connections`` and ``http.max_connections_per_ip``.
 #. *Pressure.* Above ``global.pressure.on`` percent of the table, a new address passes only within ``new_per_second``, and an address that proved a working flow passes first.
 #. *Bounded inspection*, of a TLS ClientHello on TCP, and of the QUIC header on UDP.
-
-Accept threads run the bans, the rate, the caps and pressure on several cores, and end a refused connection with a reset (SID 0034). The packet worker runs the stages after them.
 #. *The connection hooks*, then the pool: a server's ``max_flows`` and, in a cluster, its share of a fleet-wide limit (Part IX).
 #. *The HTTP firewall*, for HTTP frontends only.
+
+Accept threads run the bans, the rate, the caps and pressure on several cores, and end a refused connection with a reset (SID 0034). The packet worker runs the stages after them.
 
 .. admonition:: Implementation: ``FlowBudget::reserve``
 

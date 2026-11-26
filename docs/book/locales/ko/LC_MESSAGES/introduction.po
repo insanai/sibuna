@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../introduction.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:1
 msgid "What is Sibuna?"
 msgstr "Sibuna란 무엇인가"
 
-#: ../../introduction.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:4
 msgid ""
 "A passenger opens a railway timetable and asks for the next departure. We "
 "run two copies of the timetable application so that one can answer while "
@@ -36,11 +36,11 @@ msgstr ""
 "이것이 로드 밸런서의 역할입니다. Sibuna는 웹 요청을 검사해 어떤 요청이 애플리케이션에 도달할지도 결정할 수 있습니다. 이것이 "
 "웹 애플리케이션 방화벽의 역할입니다."
 
-#: ../../introduction.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:6
 msgid "One request through the edge"
 msgstr "요청 하나가 에지를 통과하는 과정"
 
-#: ../../introduction.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:9
 msgid ""
 "The browser opens an encrypted connection to the timetable's public name. "
 "Sibuna presents a certificate for that name. If the browser trusts the "
@@ -53,7 +53,7 @@ msgstr ""
 "인증서를 신뢰하면 안전한 연결이 맺어집니다. Sibuna는 Let's Encrypt에서 공개 인증서를 받아 갱신할 수 있습니다. "
 "내부 서비스에는 로컬 인증 기관에서 인증서를 발급하고 그 루트 인증서를 클라이언트에 설치할 수 있습니다."
 
-#: ../../introduction.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:11
 msgid ""
 "The address where Sibuna accepts traffic is a frontend. Once Sibuna has "
 "received the HTTP request, it can read the host and path. A route sends "
@@ -66,13 +66,13 @@ msgstr ""
 "시간표 요청을 애플리케이션 서버 두 대가 속한 풀로 보냅니다. 이 서버들이 원본 서버입니다. 허용된 요청에 대해 Sibuna는 "
 "풀에서 정상 원본을 골라 요청을 전달하고 그 응답을 승객에게 돌려줍니다."
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid ""
 "Sibuna terminates HTTPS and forwards each admitted request to one healthy "
 "HTTP/1.1 origin."
 msgstr "Sibuna는 HTTPS를 종료하고 허용된 요청을 정상 HTTP/1.1 원본 한 곳에 전달한다."
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid ""
 "// introduction.rst: one public address in front of two timetable "
 "servers.\n"
@@ -106,11 +106,11 @@ msgstr ""
 "  edge(<sibuna>, <b>, \"-|>\", say(\"HTTP/1.1\"), label-side: right),\n"
 ")\n"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid "One public address, two timetable servers."
 msgstr "시간표 서버 두 대가 공용 주소 하나를 사용한다."
 
-#: ../../introduction.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:17
 msgid ""
 "The two connections can use different protocols. A browser might speak "
 "HTTP/3 to Sibuna while the timetable application speaks HTTP/1.1. An "
@@ -124,11 +124,11 @@ msgstr ""
 "TCP 스트림이나 UDP 데이터그램도 풀에 보낼 수 있습니다. 이때는 웹 페이지를 읽거나 HTTP 경로에 규칙을 적용할 필요가 "
 "없습니다."
 
-#: ../../introduction.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:19
 msgid "Who gets through?"
 msgstr "누가 통과하는가"
 
-#: ../../introduction.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:22
 msgid ""
 "Suppose a script asks for the timetable faster than the application can "
 "compute it. Adding a second origin spreads the work across two machines. "
@@ -141,7 +141,7 @@ msgstr ""
 "방화벽 규칙은 어느 원본도 작업하기 전에 요청을 거부하거나 브라우저에 퍼즐을 풀도록 요구할 수 있습니다. Sibuna는 답을 확인한 "
 "뒤 서명된 세션을 발급합니다. 브라우저는 다음 방문 때 그 세션을 제시할 수 있습니다."
 
-#: ../../introduction.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:24
 msgid ""
 "Gate handles admission and local rate limits. Shield also inspects HTTP "
 "requests for patterns such as an attempted injection. We can apply the "
@@ -152,11 +152,11 @@ msgstr ""
 "찾습니다. 승객용 웹사이트에 Shield를 적용하고 기계 클라이언트에는 별도 경로를 줄 수 있습니다. 그 클라이언트는 서비스가 "
 "요구하는 인증을 받습니다."
 
-#: ../../introduction.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:26
 msgid "From one node to a cluster"
 msgstr "단일 노드에서 클러스터로"
 
-#: ../../introduction.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:29
 msgid ""
 "If one timetable server goes down and its health check fails, the edge "
 "can send new requests to the other server. If the edge itself goes down, "
@@ -168,7 +168,7 @@ msgstr ""
 "원본도 그 에지를 통해 응답할 수 없습니다. 같은 공개 이름 아래 두 번째 Sibuna 노드를 두고 네트워크가 클라이언트를 가용 "
 "노드로 보내도록 구성할 수 있습니다."
 
-#: ../../introduction.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:31
 msgid ""
 "The nodes each forward their own traffic. Through a mesh they can "
 "exchange routing configurations, bans and information about which origin "
@@ -180,7 +180,7 @@ msgstr ""
 "교환할 수 있습니다. 승객이 다음에 연결할 때는 다른 에지에 도착할 수 있습니다. 그래서 클러스터를 다루는 장에서는 각 노드가 혼자 "
 "내릴 결정과 동료에게 알려야 할 사실을 구분합니다."
 
-#: ../../introduction.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:33
 msgid ""
 "Before we turn the page, suppose both timetable servers are healthy and a "
 "passenger receives a browser challenge. Which component made that "

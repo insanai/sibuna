@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:21+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../wasm-engine.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:1
 msgid "Part VII: The Browser Proof-of-Work Engine"
 msgstr "भाग VII: ब्राउज़र का proof-of-work इंजन"
 
-#: ../../wasm-engine.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:4
 msgid ""
 "We look at the WebAssembly module that compiles the server's own verifier "
 "crate, the Web Worker protocol, the JavaScript fallback provers, and the "
@@ -31,16 +31,17 @@ msgstr ""
 "क्रेट को कंपाइल करता है, Web Worker प्रोटोकॉल को, JavaScript फ़ॉलबैक "
 "प्रूवर को, और इंटरस्टिशियल को।"
 
-#: ../../wasm-engine.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:6
 msgid "One Source, Two Targets"
 msgstr "एक स्रोत, दो टारगेट"
 
-#: ../../wasm-engine.rst:9 ../../wasm-engine.rst:172
-#: ../../wasm-engine.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:211
 msgid "Objectives"
 msgstr "उद्देश्य"
 
-#: ../../wasm-engine.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:11
 msgid ""
 "By the end of this chapter, we should be able to explain how the browser "
 "module is built from the server's own ``sibuna-pow`` crate, name the "
@@ -52,11 +53,11 @@ msgstr ""
 "फ़ंक्शन के नाम बताना, और यह वर्णन करना कि अनुक्रमिक कार्य के प्रूवर को "
 "किसी टैब में कितनी मेमोरी चाहिए।"
 
-#: ../../wasm-engine.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:13
 msgid "Build Wiring"
 msgstr "बिल्ड की व्यवस्था"
 
-#: ../../wasm-engine.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:16
 msgid ""
 "The browser solver compiles the exact sources the server verifies with. "
 "``cmd/sibuna-pow-wasm`` is a ``no_std`` library crate of type ``cdylib``, "
@@ -69,7 +70,7 @@ msgstr ""
 "जिसकी निर्भरताएँ केवल वर्कस्पेस के क्रेट ``sibuna-pow`` और "
 "``sibuna-crypto`` हैं:"
 
-#: ../../wasm-engine.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:18
 msgid ""
 "# cmd/sibuna-pow-wasm/Cargo.toml\n"
 "[lib]\n"
@@ -99,7 +100,7 @@ msgstr ""
 "debug = false\n"
 "strip = true"
 
-#: ../../wasm-engine.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:34
 msgid ""
 "The daemon embeds the module. Its build script (``cmd/sibuna/build.rs``) "
 "runs a nested ``cargo rustc -p sibuna-pow-wasm --target "
@@ -124,7 +125,7 @@ msgstr ""
 "``SIBUNA_POW_WASM=<path>`` इसके बजाय पहले से बना मॉड्यूल एम्बेड करता है। "
 "फिर डेमन इन बाइट को अपनी बाइनरी में शामिल करता है:"
 
-#: ../../wasm-engine.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:36
 msgid ""
 "/// The browser solver, built by `build.rs` from `cmd/sibuna-pow-wasm`.\n"
 "pub const WASM_SOLVER: &[u8] =\n"
@@ -139,7 +140,7 @@ msgstr ""
 "/// सॉल्वर का Web Worker।\n"
 "pub const WORKER_JS: &str = include_str!(\"../../../web/worker.js\");"
 
-#: ../../wasm-engine.rst:44
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:44
 msgid ""
 "There is no second implementation to drift. The module is served from the "
 "daemon at ``/__sibuna/wasm/sibuna-pow.wasm`` with a one-hour cache header "
@@ -153,11 +154,11 @@ msgstr ""
 "प्रोफ़ाइल से बनने पर दोनों टियर के साथ मॉड्यूल का आकार 14,744 बाइट है "
 "(``benchmarks/results/primitives-latest.json`` में ``wasm_bytes``)।"
 
-#: ../../wasm-engine.rst:46
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:46
 msgid "Exports"
 msgstr "एक्सपोर्ट"
 
-#: ../../wasm-engine.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:49
 msgid ""
 "The module exports six functions, and the worker script calls them by "
 "name:"
@@ -165,27 +166,27 @@ msgstr ""
 "मॉड्यूल छह फ़ंक्शन एक्सपोर्ट करता है, और वर्कर स्क्रिप्ट उन्हें नाम से "
 "कॉल करती है:"
 
-#: ../../wasm-engine.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:55
 msgid "Export"
 msgstr "एक्सपोर्ट"
 
-#: ../../wasm-engine.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:56
 msgid "Purpose"
 msgstr "काम"
 
-#: ../../wasm-engine.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:57
 msgid "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
 msgstr "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
 
-#: ../../wasm-engine.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:58
 msgid "256-byte input buffer the worker writes the challenge string into"
 msgstr "256-बाइट इनपुट बफ़र, जिसमें वर्कर चैलेंज स्ट्रिंग लिखता है"
 
-#: ../../wasm-engine.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:59
 msgid "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
 msgstr "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
 
-#: ../../wasm-engine.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:60
 msgid ""
 "Hashcash: search ``max_steps`` nonces from ``start``; returns the nonce "
 "or the all-ones sentinel"
@@ -193,11 +194,11 @@ msgstr ""
 "Hashcash: ``start`` से ``max_steps`` नॉनस खोजता है; नॉनस या all-ones "
 "सेंटिनल लौटाता है"
 
-#: ../../wasm-engine.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:61
 msgid "``sibuna_solve_sha256(ptr, len, bits)``"
 msgstr "``sibuna_solve_sha256(ptr, len, bits)``"
 
-#: ../../wasm-engine.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:62
 msgid ""
 "Hashcash in one batch from nonce 0 (``sibuna_solve_step`` with "
 "``u32::MAX`` steps)"
@@ -205,11 +206,11 @@ msgstr ""
 "नॉनस 0 से एक बैच में Hashcash (``u32::MAX`` कदमों के साथ "
 "``sibuna_solve_step``)"
 
-#: ../../wasm-engine.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:63
 msgid "``sibuna_posw_solve(len, depth, challenges)``"
 msgstr "``sibuna_posw_solve(len, depth, challenges)``"
 
-#: ../../wasm-engine.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:64
 msgid ""
 "Sequential work: runs the prover over the buffer and returns the proof "
 "length, or 0 for invalid arguments"
@@ -217,15 +218,15 @@ msgstr ""
 "अनुक्रमिक कार्य: बफ़र पर प्रूवर चलाता है और प्रमाण की लंबाई लौटाता है, या "
 "अमान्य आर्ग्युमेंट के लिए 0"
 
-#: ../../wasm-engine.rst:65
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:65
 msgid "``sibuna_posw_proof_ptr()``"
 msgstr "``sibuna_posw_proof_ptr()``"
 
-#: ../../wasm-engine.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:66
 msgid "Start of the proof bytes in the prover workspace"
 msgstr "प्रूवर वर्कस्पेस में प्रमाण के बाइट की शुरुआत"
 
-#: ../../wasm-engine.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:68
 msgid ""
 "The prover's workspace, the retained top levels, the sibling stack, and "
 "the proof, is a static region of about 92 KiB; no allocator is linked, "
@@ -238,11 +239,11 @@ msgstr ""
 "स्टैटिक की लागत केवल शून्य की गई मेमोरी है, मॉड्यूल में प्रारंभ किया गया "
 "डेटा नहीं।"
 
-#: ../../wasm-engine.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:70
 msgid "Implementation: ``sibuna_solve_step``"
 msgstr "इम्प्लीमेंटेशन: ``sibuna_solve_step``"
 
-#: ../../wasm-engine.rst:72
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:72
 msgid ""
 "The Hashcash export: borrows the challenge from linear memory and runs "
 "one batch of the shared nonce search. In "
@@ -252,7 +253,7 @@ msgstr ""
 "का एक बैच चलाता है। ``cmd/sibuna-pow-wasm/src/lib.rs`` में (क्रेट "
 "``sibuna-pow-wasm``)।"
 
-#: ../../wasm-engine.rst:74
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:74
 msgid ""
 "#[unsafe(no_mangle)]\n"
 "pub unsafe extern \"C\" fn sibuna_solve_step(\n"
@@ -299,7 +300,7 @@ msgstr ""
 "        .unwrap_or(EXHAUSTED)\n"
 "}"
 
-#: ../../wasm-engine.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:96
 msgid ""
 "The exports are the crate's foreign function boundary, and the only place "
 "its ``unsafe`` code lives. The input buffer and the prover workspace are "
@@ -327,11 +328,11 @@ msgstr ""
 "मुक्त रहता है; panic तक पहुँचना बनावट से ही असंभव है, क्योंकि "
 "``sibuna-pow`` के फ़ंक्शन total हैं और कभी panic नहीं करते।"
 
-#: ../../wasm-engine.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:98
 msgid "Prefix Pre-Hashing"
 msgstr "प्रीफ़िक्स की पूर्व-हैशिंग"
 
-#: ../../wasm-engine.rst:101
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:101
 msgid ""
 "The Hashcash inner loop absorbs the challenge and the colon once and "
 "clones the SHA-256 state per nonce, so each candidate costs one "
@@ -344,7 +345,7 @@ msgstr ""
 "के बजाय एक compression है। खोज ``sibuna_pow::hashcash::Search`` है, जिसे "
 "ब्राउज़र मॉड्यूल और नेटिव संदर्भ सॉल्वर साझा करते हैं:"
 
-#: ../../wasm-engine.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:103
 msgid ""
 "pub fn new(challenge: &[u8]) -> Self {\n"
 "    let mut prefix = Sha256::new();\n"
@@ -398,7 +399,7 @@ msgstr ""
 "    None\n"
 "}"
 
-#: ../../wasm-engine.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:130
 msgid ""
 "The hasher state is a plain value of about 110 bytes, so the clone is "
 "cheap. The sequential-work prover uses the same trick with the statement "
@@ -414,7 +415,7 @@ msgstr ""
 "लीफ़ को उस अवस्था से निकालता है जिसने स्टेटमेंट को एक बार सोख लिया है, "
 "जिससे समान डाइजेस्ट के साथ सत्यापन :math:`t` compression सस्ता हो जाता है।"
 
-#: ../../wasm-engine.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:132
 msgid ""
 "On the server the compression function uses the x86-64 SHA extensions or "
 "the ARMv8 SHA-2 instructions, detected at run time. In the browser there "
@@ -435,7 +436,7 @@ msgstr ""
 "राउंड उस शब्द को अधिलेखित करता है जिसकी उसे अब ज़रूरत नहीं, और आठ "
 "कार्यकारी चरों को खिसकाने के बजाय राउंड दर राउंड नया नाम दिया जाता है:"
 
-#: ../../wasm-engine.rst:134
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:134
 msgid ""
 "fn compress_block(state: &mut State, block: &Block) {\n"
 "    let mut w = [0u32; 16];\n"
@@ -507,7 +508,7 @@ msgstr ""
 "    w[i % 16]\n"
 "}"
 
-#: ../../wasm-engine.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:167
 msgid ""
 "Each ``eight_rounds!`` is one full turn of the variable names: the macro "
 "passes them rotated by one position per round, so a round writes only two "
@@ -526,11 +527,11 @@ msgstr ""
 "वाले 64-शब्द schedule से लगभग 20% तेज़ चलता है, और नेटिव रूप से लगभग 14% "
 "तेज़ (Rust इम्प्लीमेंटेशन पर मापा गया, अक्टूबर 2026)।"
 
-#: ../../wasm-engine.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:169
 msgid "The Worker Protocol"
 msgstr "वर्कर प्रोटोकॉल"
 
-#: ../../wasm-engine.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:174
 msgid ""
 "Read the message protocol, understand the fallback hierarchy, and see the "
 "sentinel bug that the signed-integer boundary between WebAssembly and "
@@ -539,7 +540,7 @@ msgstr ""
 "संदेश प्रोटोकॉल पढ़ें, फ़ॉलबैक का क्रम समझें, और वह सेंटिनल बग देखें जो "
 "WebAssembly और JavaScript के बीच signed-integer सीमा के कारण हुआ।"
 
-#: ../../wasm-engine.rst:176
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:176
 msgid ""
 "The page posts one message to ``web/worker.js`` and receives progress, "
 "fallback, and result messages:"
@@ -547,7 +548,7 @@ msgstr ""
 "पेज ``web/worker.js`` को एक संदेश पोस्ट करता है और प्रगति, फ़ॉलबैक और "
 "परिणाम के संदेश प्राप्त करता है:"
 
-#: ../../wasm-engine.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:178
 msgid ""
 "// page -> worker\n"
 "{ challenge: spec.id, algorithm: spec.algorithm, difficulty: "
@@ -577,7 +578,7 @@ msgstr ""
 "} // posw\n"
 "{ type: 'error', message: '...' }"
 
-#: ../../wasm-engine.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:191
 msgid ""
 "The worker tries WebAssembly first and falls back to pure JavaScript when "
 "``WebAssembly`` is absent, blocked by policy, or fails to instantiate. "
@@ -597,11 +598,11 @@ msgstr ""
 "साथ, दोनों तरह पास हो। JavaScript प्रूवर बहुत धीमे हैं, लेकिन वे गारंटी "
 "देते हैं कि हर ब्राउज़र पास हो सकता है।"
 
-#: ../../wasm-engine.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:193
 msgid "The signed sentinel"
 msgstr "signed सेंटिनल"
 
-#: ../../wasm-engine.rst:196
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:196
 msgid ""
 "WebAssembly returns a 64-bit integer to JavaScript as a *signed* "
 "``BigInt``. The Hashcash export signals \"batch exhausted\" with all ones "
@@ -619,7 +620,7 @@ msgstr ""
 "साथ बाहर निकल जाता था। सुधार एक कॉल है, ``BigInt.asUintN(64, result)``, "
 "और वर्कर इसे बनाए रखता है:"
 
-#: ../../wasm-engine.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:198
 msgid ""
 "// WebAssembly i64 results arrive as signed BigInts, so the u64\n"
 "// \"exhausted\" sentinel (all ones) reads back as -1n.\n"
@@ -634,7 +635,7 @@ msgstr ""
 "    ex.sibuna_solve_step(ptr, encoded.length, bits, nonce, maxSteps));\n"
 "if (found !== 18446744073709551615n) return found.toString();"
 
-#: ../../wasm-engine.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:206
 msgid ""
 "The lesson generalises: every u64 crossing the boundary must be "
 "normalised. Rust cannot enforce this on the JavaScript side; the export's "
@@ -644,11 +645,11 @@ msgstr ""
 "Rust इसे JavaScript की ओर लागू नहीं कर सकता; एक्सपोर्ट का प्रकार ``u64`` "
 "कहता है, और रूपांतरण इंजन में होता है।"
 
-#: ../../wasm-engine.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:208
 msgid "Calibration"
 msgstr "कैलिब्रेशन"
 
-#: ../../wasm-engine.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:213
 msgid ""
 "Relate difficulty settings to wall-clock time in a browser engine and on "
 "native silicon."
@@ -656,7 +657,7 @@ msgstr ""
 "कठिनाई की सेटिंग को ब्राउज़र इंजन में और नेटिव सिलिकॉन पर वास्तविक समय "
 "(wall-clock time) से जोड़ें।"
 
-#: ../../wasm-engine.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:215
 msgid ""
 "Do not choose a difficulty from one laptop's average solve. Hashcash has "
 "a geometric tail; browser clocks include scheduling, thermal state, "
@@ -671,11 +672,11 @@ msgstr ""
 "डिवाइस, एल्गोरिदम, पैरामीटर और बार-बार किए गए हलों का वितरण दर्ज होना "
 "चाहिए। मॉड्यूल लाने और कंपाइल करने को स्थिर अवस्था की हैशिंग से अलग रखें।"
 
-#: ../../wasm-engine.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:217
 msgid "Worked calibration plan"
 msgstr "हल किया गया उदाहरण: कैलिब्रेशन योजना"
 
-#: ../../wasm-engine.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:219
 msgid ""
 "Hold :math:`b` fixed, warm the module, and solve at least 100 "
 "independently issued puzzles on each target device class. Record median "
@@ -691,7 +692,7 @@ msgstr ""
 "नमूने का दोगुना होना ज़रूरी नहीं। धीमे डिवाइस के बजट के आधार पर सेटिंग "
 "चुनें, फिर लाने, हल करने और सत्यापन के पूरे प्रवाह का परीक्षण करें।"
 
-#: ../../wasm-engine.rst:221
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:221
 msgid ""
 "The repository's native primitive measurements are not evidence for a "
 "promised phone or browser solve time. A WASM module can run the same "
@@ -708,11 +709,11 @@ msgstr ""
 "फ़ंक्शन चलाता है। वर्कर के संदेश वह सीमा बनाते हैं जहाँ इन लागतों को "
 "सर्वर के अनुरोध हैंडलर में टाइमर जोड़े बिना मापा जा सकता है।"
 
-#: ../../wasm-engine.rst:223
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:223
 msgid "The Interstitial"
 msgstr "इंटरस्टिशियल"
 
-#: ../../wasm-engine.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:226
 msgid ""
 "The page (``web/challenge.html``, embedded in the daemon) is a single "
 "HTML file with a card, an indeterminate progress bar, and a status line. "
@@ -738,11 +739,11 @@ msgstr ""
 "लोगों और स्क्रिप्ट चलाने वाले ब्राउज़र के लिए अदृश्य है; हर ``href`` का "
 "अनुसरण करने वाले अंधे क्रॉलर स्वयं पर प्रतिबंध लगवा लेते हैं।"
 
-#: ../../wasm-engine.rst:228
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:228
 msgid "Exercise 7.1"
 msgstr "अभ्यास 7.1"
 
-#: ../../wasm-engine.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:230
 msgid ""
 "Suppose the WebAssembly prover solves a challenge at the default "
 "difficulty in 20 ms on a laptop, and the JavaScript sequential prover is "
@@ -758,11 +759,11 @@ msgstr ""
 "(संकेत: वर्कर एक ``fallback`` संदेश पोस्ट करता है जिसे पेज आगे भेज सकता "
 "है)।"
 
-#: ../../wasm-engine.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:232
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाएँ"
 
-#: ../../wasm-engine.rst:234
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:234
 msgid ""
 "Explain why compiling the browser module from the server's verifier "
 "sources is a stronger guarantee than testing two implementations against "

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../foundations.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:1
 msgid "Part I: The Cost of a Request"
 msgstr "第I部：リクエストのコスト"
 
-#: ../../foundations.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:4
 msgid ""
 "Before choosing an algorithm, identify the resource it is meant to "
 "protect. This chapter builds the small models that every later design "
@@ -30,11 +30,11 @@ msgid ""
 msgstr ""
 "アルゴリズムを選ぶ前に、それが守るべき資源を特定します。この章では、後のすべての設計判断を測る基準となる小さなモデルを作ります。オリジンの作業、パズルの作業、セッションによる償却、そして信頼できないクライアントがサーバーに保持させ得るメモリです。"
 
-#: ../../foundations.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:6
 msgid "Objectives"
 msgstr "この章の学習目標"
 
-#: ../../foundations.rst:8
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:8
 msgid ""
 "By the end of this chapter, we should be able to write the inequality "
 "that decides whether a gate pays for itself, state what a proof of work "
@@ -44,11 +44,11 @@ msgid ""
 msgstr ""
 "この章を読み終えると、ゲートが元を取るかどうかを決める不等式を書き、作業証明が何を示し何を示さないかを述べ、ハッシュ探索の期待値と裾を導き、セッションが作業を償却する仕組みを説明し、本書の残りで保つ五つの不変条件を挙げられるようになります。"
 
-#: ../../foundations.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:10
 msgid "Admission Is an Economic Decision"
 msgstr "許可は経済的な判断"
 
-#: ../../foundations.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:13
 msgid ""
 "Suppose an origin performs a database lookup and renders a page for each "
 "admitted request. Let :math:`c_o` be that work, :math:`c_g` the gate's "
@@ -65,13 +65,13 @@ msgstr ""
 ":math:`a`\\ だけを許可するゲートは、この需要を\\ :math:`r a c_o`\\ に変え、自身は\\ :math:`r "
 "c_g`\\ を費やします。ゲートが役に立つのは、節約したオリジンの作業が、ゲート自身のコストと正当な訪問者に課すコストを上回るときだけです。"
 
-#: ../../foundations.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:15
 msgid ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 msgstr ""
 "r c_g + r a c_o < r c_o \\quad \\Leftrightarrow \\quad c_g < (1-a) c_o."
 
-#: ../../foundations.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:19
 msgid ""
 "This is a capacity model, not a measurement. It omits bandwidth, "
 "connection state, storage, and client delay. Its value is that every "
@@ -82,11 +82,11 @@ msgstr ""
 "これは処理能力のモデルであり、測定ではありません。帯域幅、接続の状態、ストレージ、クライアントの待ち時間を省いています。このモデルの価値は、欠けている項がすべて目に見えることです。キャッシュにヒットすれば\\ "
 ":math:`c_o`\\ は小さくなり、高価なクエリなら大きくなります。要求側とサーバー側のコスト比に普遍的な値はありません。"
 
-#: ../../foundations.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:21
 msgid "Worked example: when a gate pays for itself"
 msgstr "例題：ゲートが元を取るとき"
 
-#: ../../foundations.rst:23
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:23
 msgid ""
 "Choose :math:`c_o = 100` work units and :math:`c_g = 1`. If half the "
 "requests are rejected, the gated system spends :math:`1 + 0.5 \\times 100 "
@@ -100,11 +100,11 @@ msgstr ""
 "100 = 51`\\ 単位を費やします。千件に一件しか拒否しなければ\\ :math:`100.9`\\ "
 "単位を費やします。このモデルでは、ゲートは節約する以上のコストがかかります。ここで選んだ数値は時間の測定値ではありません。性能に関するどの主張にもワークロードを添えるべき理由を示しています。"
 
-#: ../../foundations.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:25
 msgid "What a Proof of Work Establishes"
 msgstr "作業証明が示すもの"
 
-#: ../../foundations.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:28
 msgid ""
 "A client puzzle establishes that somebody found an input satisfying a "
 "public verification rule. It does not establish humanity, identity, or "
@@ -115,7 +115,7 @@ msgid ""
 msgstr ""
 "クライアントパズルが示すのは、誰かが公開された検証規則を満たす入力を見つけたということです。人間であること、身元、善意は示しません。要求側は計算資源を借りることも、有効期間内の有効なセッションを再利用することも、作業を複数のマシンに分散することもできます。パズルは許可のコストを変えます。許可されたリクエストに何を許すかは、引き続きポリシーと検査が決めます。"
 
-#: ../../foundations.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:30
 msgid ""
 "Address-based limits are complementary. They constrain one address, but "
 "shared addresses can represent many people and one requester can use many "
@@ -125,11 +125,11 @@ msgid ""
 msgstr ""
 "アドレスに基づく制限はこれを補います。制限は一つのアドレスを縛りますが、共有アドレスの背後には多くの人がいることがあり、一人の要求者が多くのアドレスを使うこともあります。パズルもアドレスも、身元を判定するオラクルにはなりません。そのためSibunaは、許可、検査、レピュテーションを別々の判断として扱います。"
 
-#: ../../foundations.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:32
 msgid "Hash Search as a Random Variable"
 msgstr "確率変数としてのハッシュ探索"
 
-#: ../../foundations.rst:35
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:35
 msgid ""
 "For an ideal 256-bit digest, requiring :math:`b` leading zero bits gives "
 "success probability :math:`p = 2^{-b}` for each independent trial. Let "
@@ -138,23 +138,23 @@ msgstr ""
 "理想的な256ビットのダイジェストでは、先頭に\\ :math:`b`\\ 個のゼロビットを要求すると、独立な試行ごとの成功確率は\\ "
 ":math:`p = 2^{-b}`\\ になります。最初の成功までの試行回数を\\ :math:`K`\\ とします。このとき"
 
-#: ../../foundations.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:37
 msgid ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 msgstr ""
 "P(K=k) = (1-p)^{k-1} p, \\quad P(K>k) = (1-p)^k, \\quad E[K] = 1/p = 2^b."
 
-#: ../../foundations.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:41
 msgid "The expectation follows from the tail sum:"
 msgstr "期待値は裾の和から導かれます。"
 
-#: ../../foundations.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:43
 msgid ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 msgstr ""
 "E[K] = \\sum_{k=0}^{\\infty} P(K>k) = \\sum_{k=0}^{\\infty} (1-p)^k = 1/p."
 
-#: ../../foundations.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:47
 msgid ""
 "A difficulty step doubles expected trials. It does not promise that every "
 "puzzle takes twice as long. Some succeed on the first trial; some take "
@@ -163,7 +163,7 @@ msgid ""
 msgstr ""
 "難易度を1段上げると、期待試行回数は2倍になります。どのパズルも2倍の時間がかかると約束するものではありません。最初の試行で成功するものもあれば、平均よりはるかに長くかかるものもあります。解答を一度だけ測ったクライアントが測ったのは、主にこのランダム性です。"
 
-#: ../../foundations.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:50
 msgid ""
 "A curve falling from 1 at x = 0 towards 0 at x = 4. At x = 1 a marked "
 "point shows that a search is still running with probability e to the "
@@ -173,7 +173,7 @@ msgstr ""
 "x = 0で1から始まり、x = 4に向かって0へ下がる曲線です。x = "
 "1の印の点は、探索がまだ続いている確率がeのマイナス1乗、約0.368であることを示します。xが約3.0の二つ目の点は、95パーセントの探索が終わっていることを示します。"
 
-#: ../../foundations.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:50
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/survival.typ\": draw\n"
@@ -185,7 +185,7 @@ msgstr ""
 "#show: chart.with(lang: \"ja\")\n"
 "#draw()\n"
 
-#: ../../foundations.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:50
 msgid ""
 "Survival probability of hash search: the probability that a search is "
 "still running after :math:`x` times the expected number of trials, in the "
@@ -194,11 +194,11 @@ msgstr ""
 "ハッシュ探索の生存確率。期待試行回数の\\ :math:`x`\\ 倍だけ試行した後も探索がまだ続いている確率で、作業量が大きいときの近似\\ "
 ":math:`P(K > x/p) \\approx e^{-x}`\\ を使います。"
 
-#: ../../foundations.rst:53
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:53
 msgid "Worked example: expectation is not a deadline"
 msgstr "例題：期待値は締め切りではない"
 
-#: ../../foundations.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:55
 msgid ""
 "At :math:`b = 16`, the expected work is 65,536 hashes. The probability of "
 "still searching after that many trials is approximately :math:`e^{-1} = "
@@ -212,11 +212,11 @@ msgstr ""
 "\\ln(1 - 2^{-16}) \\rceil \\approx 196327`\\ "
 "で、平均のほぼ3倍です。ユーザーインターフェースは、期待完了時刻に失敗を告げるのではなく、このばらつきを許容すべきです。"
 
-#: ../../foundations.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:57
 msgid "Sessions Amortise Work"
 msgstr "セッションによる作業の償却"
 
-#: ../../foundations.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:60
 msgid ""
 "Suppose a session permits :math:`m` requests before expiry, a puzzle "
 "costs :math:`c_p`, verification costs :math:`c_v`, and a session check "
@@ -232,11 +232,11 @@ msgstr ""
 "、クライアントのパズルのコストは\\ :math:`c_p/m`\\ "
 "です。セッションの有効期間を延ばすと、人にも自動化されたクライアントにも同じように有利になります。有効期間の選択はポリシーの判断であり、暗号上の最適化ではありません。"
 
-#: ../../foundations.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:62
 msgid "Exercise 1.1"
 msgstr "演習1.1"
 
-#: ../../foundations.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:64
 msgid ""
 "A client gets 100 requests per session and performs a puzzle costing one "
 "million trials. What is the amortized work per request? What changes if "
@@ -244,16 +244,16 @@ msgid ""
 msgstr ""
 "クライアントはセッションごとに100件のリクエストを送り、100万回の試行を要するパズルを解きます。リクエストあたりの償却した作業量はいくつでしょうか。そのセッションを二つ目のプロセスと共有すると、何が変わるでしょうか。"
 
-#: ../../foundations.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:66
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
 msgstr "ヒント：会計上のモデルと、トークンが実際に結び付けるものとを区別してください。"
 
-#: ../../foundations.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:68
 msgid "Bounded State Is a Second Budget"
 msgstr "有界な状態という第二の予算"
 
-#: ../../foundations.rst:71
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:71
 msgid ""
 "Moving work off the request path does not make it disappear. Let "
 "incidents arrive at rate :math:`\\lambda`, let the storage thread persist "
@@ -264,11 +264,11 @@ msgstr ""
 "で届き、ストレージスレッドが平均速度\\ :math:`\\mu`\\ で永続化し、キューが\\ :math:`Q`\\ "
 "件のレコードを保持するとします。\\ :math:`\\lambda > \\mu`\\ のとき、流体近似から次が得られます。"
 
-#: ../../foundations.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:73
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
-#: ../../foundations.rst:77
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:77
 msgid ""
 "A larger queue buys time; it does not create throughput. Batching "
 "amortizes transaction cost, but retained records still need memory and "
@@ -279,11 +279,11 @@ msgid ""
 msgstr ""
 "大きなキューは時間を稼ぎますが、スループットを生み出しはしません。バッチ処理はトランザクションのコストを償却しますが、保持したレコードには依然としてメモリと、いずれ行う処理が必要です。過負荷のとき、Sibunaは新しいインシデントのレコードを破棄し、その件数を数えます。リクエストの判断はメモリ上の状態から引き続き行います。運用者は、HTTPの成功率だけでなく、失われた証跡も監視しなければなりません。"
 
-#: ../../foundations.rst:79
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:79
 msgid "Exercise 1.2"
 msgstr "演習1.2"
 
-#: ../../foundations.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:81
 msgid ""
 "A queue holds 512 records. Arrival rate is 1,000/s and drain rate is "
 "600/s. How long can an initially empty queue absorb the excess? Why is "
@@ -291,39 +291,39 @@ msgid ""
 msgstr ""
 "キューは512件のレコードを保持します。到着率は1,000/s、排出率は600/sです。最初に空のキューは、超過分をどれだけの時間吸収できるでしょうか。この答えが近似にすぎないのはなぜでしょうか。"
 
-#: ../../foundations.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:83
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
 msgstr "ヒント：速度の差を使い、次にバーストとバッチコミットを考えてください。"
 
-#: ../../foundations.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:85
 msgid "The Invariants We Will Carry Forward"
 msgstr "本書で保ち続ける不変条件"
 
-#: ../../foundations.rst:88
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:88
 msgid "Untrusted requests cannot create unbounded server state."
 msgstr "信頼できないリクエストは、上限のないサーバー状態を作れません。"
 
-#: ../../foundations.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:89
 msgid "A valid admission token does not bypass an application denial."
 msgstr "有効な許可トークンがあっても、アプリケーションによる拒否は回避されません。"
 
-#: ../../foundations.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:90
 msgid "A buffer remains alive for every slice borrowed from it."
 msgstr "バッファーは、そこから借用したどのスライスよりも長く生存します。"
 
-#: ../../foundations.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:91
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
 msgstr "永続的な再試行によって、インシデントやそのレピュテーションへの効果が重複することはありません。"
 
-#: ../../foundations.rst:92
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:92
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
 msgstr "公開したポリシーのスナップショットは、最後の読み手が手放すまで変更されません。"
 
-#: ../../foundations.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:94
 msgid ""
 "The rest of the book derives the mechanisms that make these statements "
 "true, and the tests that would reveal a violation. A fast path is useful "
@@ -331,11 +331,11 @@ msgid ""
 msgstr ""
 "本書の残りでは、これらの主張を真にする仕組みと、違反を明らかにするテストを導きます。高速パスが役に立つのは、これらの主張が真であり続ける間だけです。"
 
-#: ../../foundations.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:96
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
-#: ../../foundations.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/foundations.rst:98
 msgid ""
 "State the gate inequality :math:`c_g < (1-a) c_o` in words, then explain "
 "why a measured verification latency alone cannot tell an operator whether "

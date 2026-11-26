@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../wasm-engine.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:1
 msgid "Part VII: The Browser Proof-of-Work Engine"
 msgstr "第VII部：ブラウザーの作業証明エンジン"
 
-#: ../../wasm-engine.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:4
 msgid ""
 "We look at the WebAssembly module that compiles the server's own verifier "
 "crate, the Web Worker protocol, the JavaScript fallback provers, and the "
@@ -30,16 +30,17 @@ msgstr ""
 "サーバー自身の検証器のクレートをコンパイルしたWebAssemblyモジュール、Web "
 "Workerのプロトコル、JavaScriptによる代替の証明器、中間ページを見ていきます。"
 
-#: ../../wasm-engine.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:6
 msgid "One Source, Two Targets"
 msgstr "一つのソース、二つのターゲット"
 
-#: ../../wasm-engine.rst:9 ../../wasm-engine.rst:172
-#: ../../wasm-engine.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:211
 msgid "Objectives"
 msgstr "この章の学習目標"
 
-#: ../../wasm-engine.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:11
 msgid ""
 "By the end of this chapter, we should be able to explain how the browser "
 "module is built from the server's own ``sibuna-pow`` crate, name the "
@@ -49,11 +50,11 @@ msgstr ""
 "この章を読み終えると、ブラウザー用モジュールがサーバー自身の\\ ``sibuna-pow``\\ "
 "クレートからどのようにビルドされるかを説明し、エクスポートされる関数を挙げ、逐次作業の証明器がタブの中で必要とするメモリを説明できるようになります。"
 
-#: ../../wasm-engine.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:13
 msgid "Build Wiring"
 msgstr "ビルドへの組み込み"
 
-#: ../../wasm-engine.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:16
 msgid ""
 "The browser solver compiles the exact sources the server verifies with. "
 "``cmd/sibuna-pow-wasm`` is a ``no_std`` library crate of type ``cdylib``, "
@@ -65,7 +66,7 @@ msgstr ""
 "``wasm32-unknown-unknown``\\ 向けにビルドされ、依存するのはワークスペースのクレート\\ "
 "``sibuna-pow``\\ と\\ ``sibuna-crypto``\\ だけです。"
 
-#: ../../wasm-engine.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:18
 msgid ""
 "# cmd/sibuna-pow-wasm/Cargo.toml\n"
 "[lib]\n"
@@ -95,7 +96,7 @@ msgstr ""
 "debug = false\n"
 "strip = true"
 
-#: ../../wasm-engine.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:34
 msgid ""
 "The daemon embeds the module. Its build script (``cmd/sibuna/build.rs``) "
 "runs a nested ``cargo rustc -p sibuna-pow-wasm --target "
@@ -118,7 +119,7 @@ msgstr ""
 "``SIBUNA_POW_WASM=<path>``\\ "
 "でビルド済みのモジュールを代わりに埋め込みます。そしてデーモンはそのバイト列をバイナリに含めます。"
 
-#: ../../wasm-engine.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:36
 msgid ""
 "/// The browser solver, built by `build.rs` from `cmd/sibuna-pow-wasm`.\n"
 "pub const WASM_SOLVER: &[u8] =\n"
@@ -132,7 +133,7 @@ msgstr ""
 "/// ソルバーのWeb Worker。\n"
 "pub const WORKER_JS: &str = include_str!(\"../../../web/worker.js\");"
 
-#: ../../wasm-engine.rst:44
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:44
 msgid ""
 "There is no second implementation to drift. The module is served from the "
 "daemon at ``/__sibuna/wasm/sibuna-pow.wasm`` with a one-hour cache header "
@@ -145,37 +146,37 @@ msgstr ""
 "）付きで配信されます。上のプロファイルでビルドすると、両方の層を含むモジュールは14,744バイトです（\\ "
 "``benchmarks/results/primitives-latest.json``\\ の\\ ``wasm_bytes``\\ ）。"
 
-#: ../../wasm-engine.rst:46
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:46
 msgid "Exports"
 msgstr "エクスポート"
 
-#: ../../wasm-engine.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:49
 msgid ""
 "The module exports six functions, and the worker script calls them by "
 "name:"
 msgstr "モジュールは六つの関数をエクスポートし、ワーカースクリプトはそれらを名前で呼び出します。"
 
-#: ../../wasm-engine.rst:55
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:55
 msgid "Export"
 msgstr "エクスポート"
 
-#: ../../wasm-engine.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:56
 msgid "Purpose"
 msgstr "目的"
 
-#: ../../wasm-engine.rst:57
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:57
 msgid "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
 msgstr "``sibuna_get_buffer_ptr()`` / ``sibuna_get_buffer_len()``"
 
-#: ../../wasm-engine.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:58
 msgid "256-byte input buffer the worker writes the challenge string into"
 msgstr "ワーカーがチャレンジ文字列を書き込む256バイトの入力バッファー"
 
-#: ../../wasm-engine.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:59
 msgid "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
 msgstr "``sibuna_solve_step(ptr, len, bits, start, max_steps)``"
 
-#: ../../wasm-engine.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:60
 msgid ""
 "Hashcash: search ``max_steps`` nonces from ``start``; returns the nonce "
 "or the all-ones sentinel"
@@ -183,11 +184,11 @@ msgstr ""
 "Hashcash：\\ ``start``\\ から\\ ``max_steps``\\ "
 "個のnonceを探索します。nonce、またはすべてのビットが1の番兵値を返します"
 
-#: ../../wasm-engine.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:61
 msgid "``sibuna_solve_sha256(ptr, len, bits)``"
 msgstr "``sibuna_solve_sha256(ptr, len, bits)``"
 
-#: ../../wasm-engine.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:62
 msgid ""
 "Hashcash in one batch from nonce 0 (``sibuna_solve_step`` with "
 "``u32::MAX`` steps)"
@@ -195,25 +196,25 @@ msgstr ""
 "nonce 0から一回のバッチで行うHashcash（\\ ``u32::MAX``\\ ステップの\\ "
 "``sibuna_solve_step``\\ ）"
 
-#: ../../wasm-engine.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:63
 msgid "``sibuna_posw_solve(len, depth, challenges)``"
 msgstr "``sibuna_posw_solve(len, depth, challenges)``"
 
-#: ../../wasm-engine.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:64
 msgid ""
 "Sequential work: runs the prover over the buffer and returns the proof "
 "length, or 0 for invalid arguments"
 msgstr "逐次作業：バッファーに対して証明器を実行し、証明の長さを返します。引数が不正なら0を返します"
 
-#: ../../wasm-engine.rst:65
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:65
 msgid "``sibuna_posw_proof_ptr()``"
 msgstr "``sibuna_posw_proof_ptr()``"
 
-#: ../../wasm-engine.rst:66
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:66
 msgid "Start of the proof bytes in the prover workspace"
 msgstr "証明器の作業領域における証明のバイト列の開始位置"
 
-#: ../../wasm-engine.rst:68
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:68
 msgid ""
 "The prover's workspace, the retained top levels, the sibling stack, and "
 "the proof, is a static region of about 92 KiB; no allocator is linked, "
@@ -224,11 +225,11 @@ msgstr ""
 "KiBの静的な領域です。アロケーターはリンクされず、モジュールにはインポートがありません。\\ ``Workspace::new``\\ は\\ "
 "``const fn``\\ なので、この静的領域はゼロ初期化されたメモリだけを消費し、モジュール内の初期化済みデータにはなりません。"
 
-#: ../../wasm-engine.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:70
 msgid "Implementation: ``sibuna_solve_step``"
 msgstr "実装：\\ ``sibuna_solve_step``"
 
-#: ../../wasm-engine.rst:72
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:72
 msgid ""
 "The Hashcash export: borrows the challenge from linear memory and runs "
 "one batch of the shared nonce search. In "
@@ -237,7 +238,7 @@ msgstr ""
 "Hashcashのエクスポートです。線形メモリからチャレンジを借用し、共有のnonce探索を一バッチ実行します。\\ "
 "``cmd/sibuna-pow-wasm/src/lib.rs``\\ （クレート\\ ``sibuna-pow-wasm``\\ ）にあります。"
 
-#: ../../wasm-engine.rst:74
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:74
 msgid ""
 "#[unsafe(no_mangle)]\n"
 "pub unsafe extern \"C\" fn sibuna_solve_step(\n"
@@ -283,7 +284,7 @@ msgstr ""
 "        .unwrap_or(EXHAUSTED)\n"
 "}"
 
-#: ../../wasm-engine.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:96
 msgid ""
 "The exports are the crate's foreign function boundary, and the only place "
 "its ``unsafe`` code lives. The input buffer and the prover workspace are "
@@ -305,11 +306,11 @@ msgstr ""
 "``unreachable``\\ 命令）。これにより、モジュールに整形のコードやインポートが入りません。\\ ``sibuna-pow``\\ "
 "の関数は全域的で決してパニックしないので、パニックは構成上到達不能です。"
 
-#: ../../wasm-engine.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:98
 msgid "Prefix Pre-Hashing"
 msgstr "接頭辞の事前ハッシュ"
 
-#: ../../wasm-engine.rst:101
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:101
 msgid ""
 "The Hashcash inner loop absorbs the challenge and the colon once and "
 "clones the SHA-256 state per nonce, so each candidate costs one "
@@ -320,7 +321,7 @@ msgstr ""
 "Hashcashの内側のループは、チャレンジとコロンを一度だけ吸収し、nonceごとにSHA-256の状態を複製します。そのため各候補のコストは圧縮二回ではなく一回です。探索は\\ "
 "``sibuna_pow::hashcash::Search``\\ で、ブラウザー用モジュールとネイティブの参照ソルバーが共有します。"
 
-#: ../../wasm-engine.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:103
 msgid ""
 "pub fn new(challenge: &[u8]) -> Self {\n"
 "    let mut prefix = Sha256::new();\n"
@@ -373,7 +374,7 @@ msgstr ""
 "    None\n"
 "}"
 
-#: ../../wasm-engine.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:130
 msgid ""
 "The hasher state is a plain value of about 110 bytes, so the clone is "
 "cheap. The sequential-work prover uses the same trick with the statement "
@@ -387,7 +388,7 @@ msgstr ""
 "で一度だけ吸収し、ノードごとに複製します。今では検証器も同様です。ステートメントを一度吸収した状態から、チャレンジされた各葉を導きます。これにより、同じダイジェストのまま検証が圧縮\\ "
 ":math:`t`\\ 回分安くなります。"
 
-#: ../../wasm-engine.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:132
 msgid ""
 "On the server the compression function uses the x86-64 SHA extensions or "
 "the ARMv8 SHA-2 instructions, detected at run time. In the browser there "
@@ -403,7 +404,7 @@ msgstr ""
 "``crates/crypto/src/sha256/portable.rs``\\ "
 "）で費やします。この関数はWebAssembly向けに書かれています。64ラウンドは展開され、メッセージスケジュールは16語の窓に置かれ、16番目以降の各ラウンドはもう必要のない語を上書きします。8個の作業変数は、ずらすのではなく、ラウンドごとに名前を付け替えます。"
 
-#: ../../wasm-engine.rst:134
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:134
 msgid ""
 "fn compress_block(state: &mut State, block: &Block) {\n"
 "    let mut w = [0u32; 16];\n"
@@ -474,7 +475,7 @@ msgstr ""
 "    w[i % 16]\n"
 "}"
 
-#: ../../wasm-engine.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:167
 msgid ""
 "Each ``eight_rounds!`` is one full turn of the variable names: the macro "
 "passes them rotated by one position per round, so a round writes only two "
@@ -488,11 +489,11 @@ msgstr ""
 "各\\ ``eight_rounds!``\\ "
 "は変数名を一巡させます。マクロはラウンドごとに変数名を一つずつ回転させて渡すので、一つのラウンドが書き込むのは二つだけで、残りの六つを移動することはありません。ラウンドの添字がリテラルなので、スケジュールの位置はすべて定数になり、ブロック全体が分岐のないコードになって、値はWebAssemblyのローカル変数に置かれたままになります。この配置は、ループを展開しない64語のスケジュールと比べて、V8で約20%、ネイティブで約14%速く動きます（Rust実装で測定、2026年10月）。"
 
-#: ../../wasm-engine.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:169
 msgid "The Worker Protocol"
 msgstr "ワーカーのプロトコル"
 
-#: ../../wasm-engine.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:174
 msgid ""
 "Read the message protocol, understand the fallback hierarchy, and see the "
 "sentinel bug that the signed-integer boundary between WebAssembly and "
@@ -500,13 +501,13 @@ msgid ""
 msgstr ""
 "メッセージのプロトコルを読み、代替手段の階層を理解し、WebAssemblyとJavaScriptの間の符号付き整数の境界が引き起こした番兵値のバグを確かめます。"
 
-#: ../../wasm-engine.rst:176
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:176
 msgid ""
 "The page posts one message to ``web/worker.js`` and receives progress, "
 "fallback, and result messages:"
 msgstr "ページは\\ ``web/worker.js``\\ にメッセージを一つ送り、進捗、代替手段、結果のメッセージを受け取ります。"
 
-#: ../../wasm-engine.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:178
 msgid ""
 "// page -> worker\n"
 "{ challenge: spec.id, algorithm: spec.algorithm, difficulty: "
@@ -536,7 +537,7 @@ msgstr ""
 "} // posw\n"
 "{ type: 'error', message: '...' }"
 
-#: ../../wasm-engine.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:191
 msgid ""
 "The worker tries WebAssembly first and falls back to pure JavaScript when "
 "``WebAssembly`` is absent, blocked by policy, or fails to instantiate. "
@@ -553,11 +554,11 @@ msgstr ""
 "出力を生成します。テストは両方の層について固定したnonceと証明を確認し、SID "
 "0010は、ソルバーがヘッドレスブラウザーでWebAssemblyとJavaScriptによる代替手段の両方で合格することを要求します。JavaScriptの証明器はずっと遅いですが、どのブラウザーでも通過できることを保証します。"
 
-#: ../../wasm-engine.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:193
 msgid "The signed sentinel"
 msgstr "符号付きの番兵値"
 
-#: ../../wasm-engine.rst:196
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:196
 msgid ""
 "WebAssembly returns a 64-bit integer to JavaScript as a *signed* "
 "``BigInt``. The Hashcash export signals \"batch exhausted\" with all ones "
@@ -574,7 +575,7 @@ msgstr ""
 "と見ます。元のワーカーは符号なしの値と比較していたので、ループは最初のバッチの後に偽のnonceで終了しました。修正は\\ "
 "``BigInt.asUintN(64, result)``\\ という呼び出し一つで、ワーカーはこれを残しています。"
 
-#: ../../wasm-engine.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:198
 msgid ""
 "// WebAssembly i64 results arrive as signed BigInts, so the u64\n"
 "// \"exhausted\" sentinel (all ones) reads back as -1n.\n"
@@ -588,7 +589,7 @@ msgstr ""
 "    ex.sibuna_solve_step(ptr, encoded.length, bits, nonce, maxSteps));\n"
 "if (found !== 18446744073709551615n) return found.toString();"
 
-#: ../../wasm-engine.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:206
 msgid ""
 "The lesson generalises: every u64 crossing the boundary must be "
 "normalised. Rust cannot enforce this on the JavaScript side; the export's "
@@ -597,17 +598,17 @@ msgstr ""
 "この教訓は一般化できます。境界を越えるすべてのu64は正規化しなければなりません。RustはJavaScript側でこれを強制できません。エクスポートの型は\\ "
 "``u64``\\ と言っており、変換はエンジンの中で起こります。"
 
-#: ../../wasm-engine.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:208
 msgid "Calibration"
 msgstr "較正"
 
-#: ../../wasm-engine.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:213
 msgid ""
 "Relate difficulty settings to wall-clock time in a browser engine and on "
 "native silicon."
 msgstr "難易度の設定を、ブラウザーエンジンとネイティブのシリコンでの実時間に結び付けます。"
 
-#: ../../wasm-engine.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:215
 msgid ""
 "Do not choose a difficulty from one laptop's average solve. Hashcash has "
 "a geometric tail; browser clocks include scheduling, thermal state, "
@@ -618,11 +619,11 @@ msgid ""
 msgstr ""
 "一台のノートPCでの平均解答時間から難易度を選んではいけません。Hashcashには幾何分布の裾があります。ブラウザーで測った時間には、スケジューリング、温度の状態、起動、コンパイルが含まれます。デプロイの較正では、ブラウザーのバージョン、端末、アルゴリズム、パラメーター、繰り返した解答の分布を記録すべきです。モジュールの取得とコンパイルは、定常状態でのハッシュ計算と分けて扱ってください。"
 
-#: ../../wasm-engine.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:217
 msgid "Worked calibration plan"
 msgstr "較正計画の例"
 
-#: ../../wasm-engine.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:219
 msgid ""
 "Hold :math:`b` fixed, warm the module, and solve at least 100 "
 "independently issued puzzles on each target device class. Record median "
@@ -636,7 +637,7 @@ msgstr ""
 ":math:`b+1`\\ "
 "で繰り返します。期待試行回数は2倍になりますが、個々のサンプルが2倍になるとは限りません。遅い端末の予算に照らして設定を選び、その後で取得、解答、検証の流れ全体をテストします。"
 
-#: ../../wasm-engine.rst:221
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:221
 msgid ""
 "The repository's native primitive measurements are not evidence for a "
 "promised phone or browser solve time. A WASM module can run the same "
@@ -648,11 +649,11 @@ msgid ""
 msgstr ""
 "リポジトリにあるネイティブのプリミティブの測定は、スマートフォンやブラウザーでの解答時間を約束する根拠にはなりません。WASMモジュールは同じ算術を実行しても、起動、実行、メモリのコストが異なり得ます。ネイティブではサーバーはSHA-NIでハッシュを計算しますが、ブラウザーは上で述べた移植可能な圧縮関数を実行します。ワーカーのメッセージは、サーバーのリクエストハンドラーにタイマーを加えずにそれらのコストを測れる境界になります。"
 
-#: ../../wasm-engine.rst:223
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:223
 msgid "The Interstitial"
 msgstr "中間ページ"
 
-#: ../../wasm-engine.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:226
 msgid ""
 "The page (``web/challenge.html``, embedded in the daemon) is a single "
 "HTML file with a card, an indeterminate progress bar, and a status line. "
@@ -675,11 +676,11 @@ msgstr ""
 "``/__sibuna/honeypot``\\ ）は、人にもスクリプトを実行するブラウザーにも見えません。すべての\\ ``href``\\ "
 "をたどる見境のないクローラーは、自ら禁止されます。"
 
-#: ../../wasm-engine.rst:228
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:228
 msgid "Exercise 7.1"
 msgstr "演習7.1"
 
-#: ../../wasm-engine.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:230
 msgid ""
 "Suppose the WebAssembly prover solves a challenge at the default "
 "difficulty in 20 ms on a laptop, and the JavaScript sequential prover is "
@@ -692,11 +693,11 @@ msgstr ""
 "msで解き、JavaScriptの逐次作業の証明器はその50倍遅いとします。そのノートPCと、4倍遅いスマートフォンでの代替手段による解答時間を見積もり、代替手段を使ったと報告するクライアントに対するポリシーを提案してください（ヒント：ワーカーは、ページが転送できる\\ "
 "``fallback``\\ メッセージを送ります）。"
 
-#: ../../wasm-engine.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:232
 msgid "Explain the invariant"
 msgstr "不変条件を説明してください"
 
-#: ../../wasm-engine.rst:234
+#: ../../../../../../home/insan/projects/sibuna/docs/book/wasm-engine.rst:234
 msgid ""
 "Explain why compiling the browser module from the server's verifier "
 "sources is a stronger guarantee than testing two implementations against "

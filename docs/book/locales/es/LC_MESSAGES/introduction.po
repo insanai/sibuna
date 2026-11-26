@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:14+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: es\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../introduction.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:1
 msgid "What is Sibuna?"
 msgstr "¿Qué es Sibuna?"
 
-#: ../../introduction.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:4
 msgid ""
 "A passenger opens a railway timetable and asks for the next departure. We "
 "run two copies of the timetable application so that one can answer while "
@@ -39,11 +39,11 @@ msgstr ""
 "solicitudes web y decidir cuáles llegan a la aplicación. En ese papel "
 "actúa como cortafuegos de aplicaciones web."
 
-#: ../../introduction.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:6
 msgid "One request through the edge"
 msgstr "El recorrido de una solicitud"
 
-#: ../../introduction.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:9
 msgid ""
 "The browser opens an encrypted connection to the timetable's public name. "
 "Sibuna presents a certificate for that name. If the browser trusts the "
@@ -59,7 +59,7 @@ msgstr ""
 "servicio interno puede emitir un certificado de una autoridad local cuya "
 "raíz instalamos en los clientes."
 
-#: ../../introduction.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:11
 msgid ""
 "The address where Sibuna accepts traffic is a frontend. Once Sibuna has "
 "received the HTTP request, it can read the host and path. A route sends "
@@ -75,7 +75,7 @@ msgstr ""
 "solicitud admitida, Sibuna elige un origen sano del grupo, le envía la "
 "solicitud y devuelve su respuesta a la pasajera."
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid ""
 "Sibuna terminates HTTPS and forwards each admitted request to one healthy "
 "HTTP/1.1 origin."
@@ -83,7 +83,7 @@ msgstr ""
 "Sibuna termina HTTPS y envía cada petición admitida a un origen HTTP/1.1 "
 "disponible."
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid ""
 "// introduction.rst: one public address in front of two timetable "
 "servers.\n"
@@ -117,11 +117,11 @@ msgstr ""
 "  edge(<sibuna>, <b>, \"-|>\", say(\"HTTP/1.1\"), label-side: right),\n"
 ")\n"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid "One public address, two timetable servers."
 msgstr "Una dirección pública para dos servidores de horarios."
 
-#: ../../introduction.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:17
 msgid ""
 "The two connections can use different protocols. A browser might speak "
 "HTTP/3 to Sibuna while the timetable application speaks HTTP/1.1. An "
@@ -137,11 +137,11 @@ msgstr ""
 "grupo. En esos casos Sibuna reenvía el tráfico sin leer una página web ni "
 "aplicar reglas sobre una ruta HTTP."
 
-#: ../../introduction.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:19
 msgid "Who gets through?"
 msgstr "¿Quién puede pasar?"
 
-#: ../../introduction.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:22
 msgid ""
 "Suppose a script asks for the timetable faster than the application can "
 "compute it. Adding a second origin spreads the work across two machines. "
@@ -157,7 +157,7 @@ msgstr ""
 "Tras verificar la respuesta, Sibuna emite una sesión firmada que el "
 "navegador puede presentar en visitas posteriores."
 
-#: ../../introduction.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:24
 msgid ""
 "Gate handles admission and local rate limits. Shield also inspects HTTP "
 "requests for patterns such as an attempted injection. We can apply the "
@@ -170,11 +170,11 @@ msgstr ""
 "propia a un cliente automatizado. Ese cliente usa la autenticación que "
 "exige su servicio."
 
-#: ../../introduction.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:26
 msgid "From one node to a cluster"
 msgstr "De un nodo a un clúster"
 
-#: ../../introduction.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:29
 msgid ""
 "If one timetable server goes down and its health check fails, the edge "
 "can send new requests to the other server. If the edge itself goes down, "
@@ -189,7 +189,7 @@ msgstr ""
 "mismo nombre público y configurar la red para que dirija los clientes al "
 "nodo disponible."
 
-#: ../../introduction.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:31
 msgid ""
 "The nodes each forward their own traffic. Through a mesh they can "
 "exchange routing configurations, bans and information about which origin "
@@ -204,7 +204,7 @@ msgstr ""
 "estudian qué decisiones puede tomar cada nodo y qué necesitan saber sus "
 "pares."
 
-#: ../../introduction.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:33
 msgid ""
 "Before we turn the page, suppose both timetable servers are healthy and a "
 "passenger receives a browser challenge. Which component made that "

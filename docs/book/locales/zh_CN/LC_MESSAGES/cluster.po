@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../cluster.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:1
 msgid "Part IX: A Cluster of Edges"
 msgstr "第 IX 部分：边缘集群"
 
-#: ../../cluster.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:4
 msgid ""
 "Part VIII built one node. One node is one point of failure, and its "
 "ceiling is one machine. We therefore put several nodes behind one name, "
@@ -37,11 +37,11 @@ msgstr ""
 "路由器，由路由器按照自己的规则为每个流选择一个节点。本章探讨这时节点之间必须共享什么、可以改为计算什么，以及什么必须留在单个节点上。每个答案都建立在一小块数学之上：最大值、全序、份额之和、按哈希排序、频率估计和比较并设置（compare-and-set）。每项功能的配置见第 "
 "XI 部分；这里我们研究其理由。"
 
-#: ../../cluster.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:6
 msgid "Objectives"
 msgstr "学习目标"
 
-#: ../../cluster.rst:8
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:8
 msgid ""
 "By the end of this chapter, we should be able to say which state of a "
 "node a cluster replicates and why the merge of each is a maximum; prove "
@@ -56,11 +56,11 @@ msgstr ""
 "rendezvous 哈希迁移的客户端比例；给出 count-min sketch "
 "的误差上界；解释为什么向数据库的提交要指明它所替换的修订版本；追踪监听套接字向新二进制程序的交接；并列出集群不做的事情。"
 
-#: ../../cluster.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:10
 msgid "What a Cluster Must Share"
 msgstr "集群必须共享什么"
 
-#: ../../cluster.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:13
 msgid ""
 "A client does not know that there are several nodes. Two of its "
 "connections may reach two nodes: the router hashed them apart, a node "
@@ -74,143 +74,146 @@ msgstr ""
 "给出了两个地址。每个节点都持有关于该客户端的状态。它知道客户端是否被封禁、在当前窗口内发送了多少个请求、被放置在哪台服务器上、它的 UDP "
 "映射，以及每台服务器持有多少个流。我们按照这些状态的变化方式对它们分类。"
 
-#: ../../cluster.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:15
 msgid "The state of a node and what the cluster does with it."
 msgstr "节点的状态以及集群如何处理它。"
 
-#: ../../cluster.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:19
 msgid "State"
 msgstr "状态"
 
-#: ../../cluster.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:20
 msgid "How it changes"
 msgstr "变化方式"
 
-#: ../../cluster.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:21
 msgid "What the cluster does"
 msgstr "集群的处理"
 
-#: ../../cluster.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:22
 msgid "SID"
 msgstr ""
 
-#: ../../cluster.rst:23
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:23
 msgid "A ban"
 msgstr "封禁"
 
-#: ../../cluster.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:24
 msgid "Its end only moves later"
 msgstr "其结束时间只会推后"
 
-#: ../../cluster.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:25
 msgid "Replicated; the merge keeps the later end"
 msgstr "复制；合并保留较晚的结束时间"
 
-#: ../../cluster.rst:26 ../../cluster.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:30
 msgid "0022"
 msgstr ""
 
-#: ../../cluster.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:27
 msgid "A run-time command (drain, weight, add, remove)"
 msgstr "运行时命令（排空、权重、添加、删除）"
 
-#: ../../cluster.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:28
 msgid "Each command replaces the last"
 msgstr "每条命令替换上一条"
 
-#: ../../cluster.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:29
 msgid "Replicated; the merge keeps the later stamp"
 msgstr "复制；合并保留较晚的时间戳"
 
-#: ../../cluster.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:31
 msgid "The topology"
 msgstr "拓扑"
 
-#: ../../cluster.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:32
 msgid "Rarely, by an operator"
 msgstr "很少变化，由运维人员修改"
 
-#: ../../cluster.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:33
 msgid "Sent whole and checked by every node, or read from a database"
 msgstr "整体发送并由每个节点检查，或从数据库读取"
 
-#: ../../cluster.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:34
 msgid "0023, 0028"
 msgstr "0023、0028"
 
-#: ../../cluster.rst:35
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:35
 msgid "A sticky cookie, a rank by source address"
 msgstr "粘性 Cookie、按源地址的排序"
 
-#: ../../cluster.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:36
 msgid "Computed from the shared secret and the file"
 msgstr "由共享密钥和文件计算得出"
 
-#: ../../cluster.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:37
 msgid "Nothing to replicate"
 msgstr "无需复制"
 
-#: ../../cluster.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:38
 msgid "0019, 0025"
 msgstr "0019、0025"
 
-#: ../../cluster.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:39
 msgid "A learned sticky choice"
 msgstr "学习到的粘性选择"
 
-#: ../../cluster.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:40
 msgid "At the first flow and at each refresh"
 msgstr "在第一个流时以及每次刷新时"
 
-#: ../../cluster.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:41
 msgid "Replicated; the merge follows a total order"
 msgstr "复制；合并遵循一个全序"
 
-#: ../../cluster.rst:42 ../../cluster.rst:46
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:42
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:46
 msgid "0025"
 msgstr ""
 
-#: ../../cluster.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:43
 msgid "The flows on a capped server"
 msgstr "上限受限服务器上的流"
 
-#: ../../cluster.rst:44 ../../cluster.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:44
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:52
 msgid "With every flow"
 msgstr "随每个流变化"
 
-#: ../../cluster.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:45
 msgid "Divided into shares that sum to at most the limit"
 msgstr "划分为总和不超过限制的份额"
 
-#: ../../cluster.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:47
 msgid "Rate counters"
 msgstr "速率计数器"
 
-#: ../../cluster.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:48
 msgid "With every request"
 msgstr "随每个请求变化"
 
-#: ../../cluster.rst:49
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:49
 msgid "Stay on the node; forwarding makes one node count each client"
 msgstr "留在节点上；转发使每个客户端只由一个节点计数"
 
-#: ../../cluster.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:50
 msgid "0022, 0026"
 msgstr "0022、0026"
 
-#: ../../cluster.rst:51
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:51
 msgid "A UDP mapping, a TCP socket"
 msgstr "UDP 映射、TCP 套接字"
 
-#: ../../cluster.rst:53
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:53
 msgid "Cannot be replicated; forwarding keeps the client on one node"
 msgstr "无法复制；转发使客户端保持在一个节点上"
 
-#: ../../cluster.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:54
 msgid "0026"
 msgstr ""
 
-#: ../../cluster.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:56
 msgid ""
 "Three rules come out of the table. What can be computed from shared "
 "inputs is computed, because a computation cannot be lost in the network. "
@@ -221,15 +224,15 @@ msgid ""
 msgstr ""
 "从这张表中可以得出三条规则。能由共享输入计算得出的就计算，因为计算不会在网络中丢失。很少变化且只朝一个方向变化的，作为一种以取最大值为合并方式的状态进行复制。随每个请求变化的留在它的节点上，我们把客户端移到状态那里，而不是把状态移到客户端那里。"
 
-#: ../../cluster.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:58
 msgid "The Mesh"
 msgstr "网格"
 
-#: ../../cluster.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:61
 msgid "A fixed roster and authenticated datagrams"
 msgstr "固定的成员名单和经过认证的数据报"
 
-#: ../../cluster.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:64
 msgid ""
 "The nodes of a cluster form a mesh (SID 0015). The roster is fixed for "
 "the life of a process and holds at most 64 nodes. Every node knows every "
@@ -249,7 +252,7 @@ msgstr ""
 "哈希。节点只读取来自成员名单中地址且标签有效的数据报。类型位于被哈希的字节之内，因此一种类型的数据报无法被篡改成另一种。一个数据报至多 1,200 "
 "字节，因此在每条路径上都能装进一个数据包。"
 
-#: ../../cluster.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:67
 msgid ""
 "Clients reach a DNS or ECMP router, which sends flows to nodes A, B and "
 "C. The three nodes are joined pairwise by dashed mesh edges. All three "
@@ -260,7 +263,7 @@ msgstr ""
 "C。三个节点两两之间以虚线网格边相连。三个节点都把流发往服务器池中的服务器。一个保存修订版本的 PostgreSQL "
 "数据库以点线边与三个节点组成的组相连。"
 
-#: ../../cluster.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:67
 msgid ""
 "// cluster.rst: a cluster of three nodes. The router spreads the clients; "
 "the dashed edges\n"
@@ -328,20 +331,20 @@ msgstr ""
 "  edge(<db>, <nodes>, \"-|>\", dash: \"dotted\"),\n"
 ")\n"
 
-#: ../../cluster.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:67
 msgid ""
 "A cluster of three nodes. The router spreads the clients; the dashed "
 "edges are the mesh; the dotted edge is the database of SID 0028, which a "
 "cluster may use instead of sending files."
 msgstr "一个由三个节点组成的集群。路由器分散客户端；虚线边是网格；点线边是 SID 0028 的数据库，集群可以用它来代替发送文件。"
 
-#: ../../cluster.rst:70
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:70
 msgid ""
 "Every pair of nodes exchanges the same things. The next figure shows one "
 "pair."
 msgstr "每对节点交换的内容都相同。下图显示其中一对。"
 
-#: ../../cluster.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:73
 msgid ""
 "Node A and node B joined by three edges. The first, UDP on the mesh port "
 "7946, carries probes, bans (kind 3), commands (kind 4), lifts (kind 5), "
@@ -353,7 +356,7 @@ msgstr ""
 "5）、粘性条目（类型 6）以及份额状态（类型 7）。第二条是网格端口上的 TCP，承载配置文件及其摘要。第三条是网格端口加一上的 TCP 和 "
 "UDP，承载转发的流。"
 
-#: ../../cluster.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:73
 msgid ""
 "// cluster.rst: what flows between two nodes, by port. The kind of each "
 "datagram is in\n"
@@ -408,13 +411,13 @@ msgstr ""
 "    \"转发的连接和数据报\", \"accent\"),\n"
 ")\n"
 
-#: ../../cluster.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:73
 msgid ""
 "What flows between two nodes, by port. The kind of each datagram is in "
 "parentheses."
 msgstr "两个节点之间按端口传输的内容。每种数据报的类型写在括号中。"
 
-#: ../../cluster.rst:76
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:76
 msgid ""
 "Every node sends to every other directly. A node never forwards a "
 "datagram it received. With a full roster every node hears every writer, "
@@ -425,11 +428,11 @@ msgstr ""
 "每个节点都直接向其他每个节点发送。节点从不转发它收到的数据报。成员名单完整时，每个节点都能听到每个写者，而收到即转发正是导致 gossip "
 "循环的原因。流行病式转发在成员不断变化的大型群组中才值得付出代价；至多 64 个固定节点的成员名单用不着它。"
 
-#: ../../cluster.rst:78
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:78
 msgid "Bans merged by a maximum"
 msgstr "以取最大值合并的封禁"
 
-#: ../../cluster.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:81
 msgid ""
 "A ban is a pair: a client key and the Unix second at which the ban ends. "
 "The state of a node is a map from keys to ends. Two states merge by "
@@ -440,13 +443,13 @@ msgstr ""
 "封禁是一个二元组：客户端键和封禁结束时的 Unix 秒数。节点的状态是一个从键到结束时间的映射。两个状态合并时，对每个键取较晚的结束时间。令 "
 ":math:`\\sqcup` 表示这一合并。对每个键，它是两个数的最大值，因此它具有最大值的三条定律。"
 
-#: ../../cluster.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:83
 msgid ""
 "a \\sqcup b = b \\sqcup a, \\qquad (a \\sqcup b) \\sqcup c = a \\sqcup (b "
 "\\sqcup c), \\qquad a \\sqcup a = a."
 msgstr ""
 
-#: ../../cluster.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:87
 msgid ""
 "These three laws are the whole proof of convergence. The first says that "
 "the order of arrival does not matter. The second says that a node may "
@@ -460,7 +463,7 @@ msgstr ""
 "这三条定律就是收敛性的全部证明。第一条说明到达顺序无关紧要。第二条说明节点可以一次合并一个数据报。第三条说明重复的数据报不改变任何东西，因此网格不需要重放窗口，也不需要确认。两个听到了相同封禁的节点，无论顺序如何、重复多少次，持有的映射都相同。具有这种合并的状态是一个并半格（join "
 "semilattice），即 Shapiro 等人（2011）提出的基于状态的复制数据类型。"
 
-#: ../../cluster.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:89
 msgid ""
 "A datagram carries the end, not the remaining time. A remaining time "
 "would not depend on the clocks of the nodes, but a replayed datagram "
@@ -473,7 +476,7 @@ msgstr ""
 "数据报携带的是结束时间，而不是剩余时间。剩余时间不依赖于节点的时钟，但重放的数据报会让封禁重新开始。使用结束时间时，重放所陈述的正是接收方已经持有的内容。代价是对时钟的依赖：在对等节点上，封禁持续的时间会因两个时钟之差而更长或更短。接收方把结束时间截断为不超过自身时钟之后 "
 "30 天，并忽略已经过去的结束时间。"
 
-#: ../../cluster.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:91
 msgid ""
 "A node sends each ban it issues three times: at once, one second later, "
 "and four seconds after that. Three sends survive the loss of two packets. "
@@ -491,11 +494,11 @@ msgstr ""
 "的周期内至多发送八个数据报。每个结构都是有界的：映射至多保存 65,536 个封禁，从防火墙到网格线程的队列至多保存 1,024 "
 "个。请求从不等待网格：队列已满时，该封禁不再被复制，会被计数，而封禁在签发它的节点上依然有效。"
 
-#: ../../cluster.rst:93
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:93
 msgid "Implementation: ``Log::merge``"
 msgstr "实现：``Log::merge``"
 
-#: ../../cluster.rst:95
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:95
 msgid ""
 "Merges one ban into the map of the mesh thread and returns its end when "
 "the merge added or extended it. In ``crates/lb/src/mesh/bans.rs`` (crate "
@@ -504,7 +507,7 @@ msgstr ""
 "把一个封禁合并到网格线程的映射中，当合并新增或延长了该封禁时返回其结束时间。位于 ``crates/lb/src/mesh/bans.rs``\\ "
 "（crate ``sibuna-lb``）。``keep_larger`` 保持最大值。"
 
-#: ../../cluster.rst:97
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:97
 msgid ""
 "pub fn merge(&mut self, key: &[u8], until: u64, now: u64) -> "
 "Result<Option<u64>, ()> {\n"
@@ -518,7 +521,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:109
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:109
 msgid ""
 "A lift cannot be a smaller end: the next datagram of a peer would bring "
 "the ban back. So a lift is an entry of a third map, from the client key "
@@ -532,7 +535,7 @@ msgstr ""
 "解除不能是一个更早的结束时间：对等节点的下一个数据报会把封禁带回来。因此解除是第三个映射中的条目，从客户端键映射到其封禁被解除的截止时间，这个映射同样以取最大值合并。当封禁的结束时间晚于其客户端的解除时间时，封禁才生效。运维人员所在的节点把解除时间设为它所知道的封禁的结束时间，并且至少为当前时间之后 "
 "60 秒，以覆盖它尚未听到的封禁。被隔离的对等节点无法把封禁带回来，因为解除时间覆盖了它的结束时间。"
 
-#: ../../cluster.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:111
 msgid ""
 "Run-time commands travel the same way. Their map goes from a key, such as "
 "``s`` and ``POOL/NAME`` for the state of a server, to a number that "
@@ -550,11 +553,11 @@ msgstr ""
 "秒以上的数字；没有这个上限，一个时钟错误的节点就可能推翻之后的所有命令。第 VIII 部分的一条规则依然有效：按 Maglev "
 "表放置客户端的服务器池在运行时不接受权重和成员的修改，因为每个节点都必须在同一时刻构建同一张表。它的服务器通过文件改变。"
 
-#: ../../cluster.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:113
 msgid "Why a rate counter stays local"
 msgstr "为什么速率计数器留在本地"
 
-#: ../../cluster.rst:116
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:116
 msgid ""
 "A rate limiter counts the requests of a client in a window. Let each of "
 ":math:`n` nodes admit :math:`r` requests of a client in a window. A "
@@ -573,7 +576,7 @@ msgstr ""
 ":math:`nr`。把计数器变成全局的看起来是显而易见的修复办法，但并非如此。为每个请求发送一条消息会把网格放到请求路径上：请求要么等待其对等节点，要么在其他节点的计数到达之前就被判定，而网格就要承载整个集群的请求速率。以取最大值合并也无济于事。窗口移动时，窗口的计数必须下降，而以取最大值合并的状态只能增长。因此 "
 "SID 0022 把限制器留在各自的节点上，并明确说明：每个节点约束它自己所服务的内容。"
 
-#: ../../cluster.rst:118
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:118
 msgid ""
 "A limit for the cluster comes from the other direction. Peer forwarding "
 "(SID 0026, below) gives every client one owner, and the key of the owner "
@@ -586,11 +589,11 @@ msgstr ""
 "0026，见下文）给每个客户端一个所有者，所有者的键就是速率限制器的键。于是所有者统计其客户端的每个流，一个节点所统计的限制就成了集群的限制。这只在转发运行时成立，并且在存活状态变化后的至多 "
 "1.5 s 内，两个节点可能各自统计一个客户端的一部分。"
 
-#: ../../cluster.rst:120
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:120
 msgid "One file for the cluster"
 msgstr "集群共用一个文件"
 
-#: ../../cluster.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:123
 msgid ""
 "SID 0023 makes the configuration file the same on every node, byte for "
 "byte. Its ``mesh`` section lists every node under ``nodes``. A node finds "
@@ -602,7 +605,7 @@ msgstr ""
 "SID 0023 使配置文件在每个节点上逐字节相同。它的 ``mesh`` 部分在 ``nodes`` "
 "下列出每个节点。节点把列表中第一个属于本主机的地址认作自己，判断标准是它能否绑定该地址；已被占用的地址也算作本地地址，因为正在运行的守护进程持有它。其他地址是对等节点。"
 
-#: ../../cluster.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:125
 msgid ""
 "``reload cluster`` checks the file of the node it is given on, reloads "
 "that node, and then sends the file to every peer at once over TCP, on the "
@@ -631,18 +634,18 @@ msgstr ""
 "cluster`` 向每个对等节点索取其文件的摘要，并显示哪些节点不同。在三台主机上，当三者持有相同文件时，该命令在 30 ms 内返回（第 X "
 "部分）。"
 
-#: ../../cluster.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:127
 msgid ""
 "The file has no history and no rollback, a node that was down keeps its "
 "old file, and files that the topology names by path are not sent. SID "
 "0028, later in this chapter, answers the first two."
 msgstr "文件没有历史，也不能回滚；宕机的节点保留旧文件；拓扑按路径引用的文件不会被发送。本章后面的 SID 0028 解决了前两个问题。"
 
-#: ../../cluster.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:129
 msgid "Exercise 9.1"
 msgstr "练习 9.1"
 
-#: ../../cluster.rst:131
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:131
 msgid ""
 "Node A bans a client until second 1,300. At second 900 an operator lifts "
 "the ban on node C, which knows that end. Node D was cut off and now sends "
@@ -654,19 +657,23 @@ msgstr ""
 "曾被隔离，现在发送同一客户端直到 1,200 的封禁。第 1,000 秒时，节点 B 再次封禁该客户端，直到 1,250。C "
 "发送的解除时间是多少？三个封禁中哪一个在哪个节点上有效？"
 
-#: ../../cluster.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:133
 msgid ""
 "Hint: Compute the lift as the operator's node does, then compare each end "
 "with it. Then read the first known gap of SID 0022."
 msgstr "提示：按运维人员所在节点的方式计算解除时间，然后把每个结束时间与它比较。再阅读 SID 0022 的第一条已知不足。"
 
-#: ../../cluster.rst:135 ../../cluster.rst:189 ../../cluster.rst:295
-#: ../../cluster.rst:404 ../../cluster.rst:481 ../../cluster.rst:511
-#: ../../cluster.rst:543
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:295
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:404
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:481
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:511
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:543
 msgid "Explain the invariant"
 msgstr "解释这个不变量"
 
-#: ../../cluster.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:137
 msgid ""
 "Explain why a ban datagram that arrives twice, late, or before an older "
 "one cannot change what a node bans. Then explain why the same argument "
@@ -675,15 +682,15 @@ msgid ""
 msgstr ""
 "解释为什么一个封禁数据报无论到达两次、迟到，还是先于一个更旧的数据报到达，都无法改变节点所封禁的内容。然后解释如果解除以一个更早的结束时间发送，同样的论证为什么会失败，以及解除映射是怎样做的。"
 
-#: ../../cluster.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:139
 msgid "Shared Affinity"
 msgstr "共享的会话保持"
 
-#: ../../cluster.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:142
 msgid "Three kinds of stickiness"
 msgstr "三种粘性"
 
-#: ../../cluster.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:145
 msgid ""
 "A pool keeps a client on its server in one of three ways (SID 0019, SID "
 "0025). With ``sticky: \"cookie\"`` the client presents a token, a keyed "
@@ -704,11 +711,11 @@ msgstr ""
 "\"table\"`` 对客户端的第一个流进行均衡，并记住这一选择。它服务于计算无法处理的两种情况：第一次选择随负载而定，而且键可以是应用设置的 "
 "Cookie（例如会话标识符），边缘无法从中计算出服务器。只有第三种需要复制。"
 
-#: ../../cluster.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:147
 msgid "The entry and its order"
 msgstr "条目及其顺序"
 
-#: ../../cluster.rst:150
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:150
 msgid ""
 "An entry maps a key of 16 bytes to a server and an end. The key is a "
 "keyed hash of the client address, or of the value of the cookie, under a "
@@ -721,13 +728,13 @@ msgstr ""
 "值计算的带密钥哈希。服务器是其名称的哈希，在每个节点上都相同。结束时间是条目过期时的 Unix "
 "毫秒数。同一个键的两个条目合并时，保留较大的（结束时间，服务器）对，按此顺序比较："
 
-#: ../../cluster.rst:152
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:152
 msgid ""
 "(e_1, s_1) \\sqcup (e_2, s_2) = \\max_{\\mathrm{lex}}\\big((e_1, s_1), "
 "(e_2, s_2)\\big)."
 msgstr ""
 
-#: ../../cluster.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:156
 msgid ""
 "The lexicographic order on pairs of numbers is total: of two different "
 "pairs, one is larger. The maximum over a total order is commutative, "
@@ -739,7 +746,7 @@ msgstr ""
 "数对上的字典序是全序：两个不同的数对中，总有一个更大。全序上的最大值满足交换律、结合律和幂等律，因此条目收敛的理由与封禁相同。服务器用于打破平局。没有它，两个节点如果在同一毫秒内、以相同的 "
 "``ttl`` 为同一个客户端学习到两台服务器，就会各自永远保留自己的条目。"
 
-#: ../../cluster.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:158
 msgid ""
 "The end is also the version of the entry. A node *learns* when a flow is "
 "placed on a server that the table did not name; the new end is the later "
@@ -757,11 +764,11 @@ msgstr ""
 "``ttl``。一个数字同时充当版本和过期时间，而它与时钟之间距离的上限也限定了错误时钟的危害：超前 24 小时零 60 "
 "秒以上的收到的结束时间会被忽略。"
 
-#: ../../cluster.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:160
 msgid "Implementation: ``Affinity::wins_over``"
 msgstr "实现：``Affinity::wins_over``"
 
-#: ../../cluster.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:162
 msgid ""
 "Decides the merge of two entries of one key. In "
 "``crates/lb/src/affinity.rs`` (crate ``sibuna-lb``). "
@@ -771,7 +778,7 @@ msgstr ""
 "决定同一个键的两个条目如何合并。位于 ``crates/lb/src/affinity.rs``\\ （crate "
 "``sibuna-lb``）。同一文件中的 ``AffinityTable::keep`` 只在新条目胜过已持有的条目时才存储它。"
 
-#: ../../cluster.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:164
 msgid ""
 "/// Whether `self` wins over `other` in a merge: the later end, then the "
 "larger\n"
@@ -781,7 +788,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:172
 msgid ""
 "The table is an array of slots in buckets of four. A slot is five atomic "
 "words: a sequence number, two words of key, the server and the end. A "
@@ -800,7 +807,7 @@ msgstr ""
 "字节，桶满时放弃最先结束的条目。四槽的桶在表满之前就会放弃条目：在四分之三满时，它已经放弃了九分之一的客户端，因此表的槽数应为客户端数的两倍。在优化构建中，在一张有 "
 "65,536 个槽、49,152 个客户端的表上，一次查找耗时 172 ns。"
 
-#: ../../cluster.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:174
 msgid ""
 "The table only advises the choice of a server for a new flow. An "
 "established flow holds a reservation on its server and never reads the "
@@ -811,11 +818,11 @@ msgid ""
 msgstr ""
 "这张表只为新流的服务器选择提供建议。已建立的流在其服务器上持有预留，不会再读这张表。因此，条目丢失、被逐出或被修改，只会让客户端的下一个新流失去其服务器，别无其他影响；而被指定的服务器只有在合格时才提供服务：在服务器池中、健康、未被排空、仍有余量。"
 
-#: ../../cluster.rst:176
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:176
 msgid "Replication, partition and the window of a race"
 msgstr "复制、分区与竞争窗口"
 
-#: ../../cluster.rst:179
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:179
 msgid ""
 "A worker hands the key of each entry it wrote to the mesh thread through "
 "a bounded queue of 4,096 keys, without waiting. The mesh thread sends the "
@@ -834,7 +841,7 @@ msgstr ""
 "个条目。对重新出现的对等节点，用游标把整张表发送给它，每个 500 ms 的周期至多 32 个数据报；一张 65,536 个条目的表大约需要 29 "
 "秒。被隔离的节点用自己的表提供服务：在分区期间，这张表放弃一致性而保持可用性。分区结束时，双方相互逐项发送各自的表，对每个键，每个节点都保留较大的条目，即最后作出或使用的选择。一方的选择会在该客户端的下一个新流时改变。进行中的流保持不变。"
 
-#: ../../cluster.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:181
 msgid ""
 "Replication is asynchronous, so there is a window. A choice reaches a "
 "peer after the hand-over to the mesh thread, one send and one network "
@@ -856,11 +863,11 @@ msgstr ""
 "300 个无论经由哪个节点都到达同一台服务器。因此一个选择在 50 ms "
 "以内到达了对等节点。要关闭这个窗口，就必须让第一个流等待对等节点，而这是设计所拒绝的。"
 
-#: ../../cluster.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:183
 msgid "Exercise 9.2"
 msgstr "练习 9.2"
 
-#: ../../cluster.rst:185
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:185
 msgid ""
 "Nodes A and B learn a server for the same new client in the same "
 "millisecond, with the same ``ttl``. A chose the server whose hash is "
@@ -871,13 +878,13 @@ msgstr ""
 "节点 A 和 B 在同一毫秒内、以相同的 ``ttl`` 为同一个新客户端学习到一台服务器。A 选择了哈希为 ``0x3a...`` 的服务器，B "
 "选择了哈希为 ``0x91...`` 的服务器。各自放置了一个流。数据报交叉之后，每个节点持有哪个条目？哪些流会迁移？"
 
-#: ../../cluster.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:187
 msgid ""
 "Hint: Compare the pairs of end and server. Then recall what an "
 "established flow reads."
 msgstr "提示：比较（结束时间，服务器）对。然后回忆已建立的流会读取什么。"
 
-#: ../../cluster.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:191
 msgid ""
 "Explain why the merge of sticky entries needs a total order and not just "
 "the later end. Then explain why no loss of a datagram, and no eviction "
@@ -885,15 +892,15 @@ msgid ""
 msgstr ""
 "解释为什么粘性条目的合并需要一个全序，而不只是较晚的结束时间。然后解释为什么任何数据报的丢失，以及从满桶中的逐出，都无法让已经建立的流迁移。"
 
-#: ../../cluster.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:193
 msgid "A Cap for the Whole Fleet"
 msgstr "整个集群的上限"
 
-#: ../../cluster.rst:196
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:196
 msgid "The invariant"
 msgstr "不变量"
 
-#: ../../cluster.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:199
 msgid ""
 "A server with ``max_flows: 100`` behind :math:`n` nodes receives up to "
 ":math:`100n` flows when each node enforces the limit alone. With "
@@ -907,13 +914,13 @@ msgstr ""
 "约束所有节点的流之和（SID 0025）。令 :math:`s_i` 为节点 :math:`i` 的份额，:math:`u_i` "
 "为它在该服务器上的流数。协议保持两个不等式："
 
-#: ../../cluster.rst:201
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:201
 msgid ""
 "u_i \\le s_i \\ \\text{for every node}, \\qquad \\sum_i s_i \\le L, "
 "\\qquad \\text{so} \\qquad \\sum_i u_i \\le L."
 msgstr ""
 
-#: ../../cluster.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:205
 msgid ""
 "The first is local: a node admits a flow only while its flows are fewer "
 "than its share. The second must hold for every loss, repetition, delay "
@@ -922,11 +929,11 @@ msgid ""
 msgstr ""
 "第一个是本地的：节点只有在其流数少于其份额时才准入一个流。第二个必须在数据报的任何丢失、重复、延迟和乱序下，在任何分区下，以及在任何节点集合停止或重启时都成立。"
 
-#: ../../cluster.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:207
 msgid "Counters that only grow"
 msgstr "只增不减的计数器"
 
-#: ../../cluster.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:210
 msgid ""
 "The first design moved shares with messages: \"take 5\". Such a message "
 "must arrive exactly once. Lost, it loses five places for good; repeated, "
@@ -940,19 +947,19 @@ msgstr ""
 "个”。这样的消息必须恰好到达一次。丢失时，它会永久丢失五个名额；重复时，它会使名额翻倍并突破限制。因此协议发送只增不减的数字，接收方像合并封禁一样以取最大值合并它们。一个数字无论听到多少次，效果都与听到一次相同。这就是 "
 "O'Neil（1986）的托管（escrow）方法和 Balegas 等人（2015）的有界计数器，建立在 SID 0022 的合并之上。"
 
-#: ../../cluster.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:212
 msgid ""
 "The nodes of the roster are ordered by address, and node :math:`i` of "
 ":math:`n` has the base share"
 msgstr "成员名单中的节点按地址排序，:math:`n` 个节点中的节点 :math:`i` 的基础份额为"
 
-#: ../../cluster.rst:214
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:214
 msgid ""
 "b_i = \\lfloor L/n \\rfloor + [\\, i < L \\bmod n \\,], \\qquad \\sum_i "
 "b_i = L."
 msgstr ""
 
-#: ../../cluster.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:218
 msgid ""
 "Every node computes the bases from the file. For each peer :math:`j`, "
 "node :math:`i` keeps two numbers that only grow: :math:`g_{ij}`, all it "
@@ -963,11 +970,11 @@ msgstr ""
 "是它曾经给予 :math:`j` 的全部份额，:math:`h_{ij}` 是它从 :math:`j` 听到的最大的 "
 ":math:`g_{ji}`。它的份额为"
 
-#: ../../cluster.rst:220
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:220
 msgid "s_i = b_i - \\sum_j g_{ij} + \\sum_j h_{ij}."
 msgstr ""
 
-#: ../../cluster.rst:224
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:224
 msgid ""
 "A receiver holds only numbers that the giver sent, and the giver lowered "
 "its share before it sent them, so :math:`h_{ji} \\le g_{ij}` at every "
@@ -976,13 +983,13 @@ msgstr ""
 "接收方只持有给予方发送的数字，而给予方在发送之前已经降低了自己的份额，因此在任何时刻都有 :math:`h_{ji} \\le "
 "g_{ij}`。对所有节点求和，并对最后一个和式的下标重新命名，得到"
 
-#: ../../cluster.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:226
 msgid ""
 "\\sum_i s_i = L - \\sum_{i,j} g_{ij} + \\sum_{i,j} h_{ji} = L - "
 "\\sum_{i,j} \\big(g_{ij} - h_{ji}\\big) \\le L."
 msgstr ""
 
-#: ../../cluster.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:230
 msgid ""
 "A lost datagram leaves :math:`h_{ji} < g_{ij}` for a while. The "
 "difference is counted on neither node: it is stranded for one period of "
@@ -991,11 +998,11 @@ msgstr ""
 "数据报丢失会使 :math:`h_{ji} < g_{ij}` 维持一段时间。这个差额在两个节点上都不计入：它被搁置一个 500 ms "
 "的周期，但绝不会被重复计算。"
 
-#: ../../cluster.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:232
 msgid "Moving shares to the demand"
 msgstr "把份额转移到需求所在之处"
 
-#: ../../cluster.rst:235
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:235
 msgid ""
 "Each node computes, for each capped server, its free share :math:`f = s - "
 "u` and a headroom :math:`r = \\max(1, \\lceil u/4 \\rceil)`. It *wants* "
@@ -1016,7 +1023,7 @@ msgstr ""
 ":math:`\\lceil f/2 \\rceil` 中的较大者”之间的较小者。节点会主动归还借来的份额：当 :math:`f > "
 "2\\lceil u/4 \\rceil` 且它持有某个对等节点的净赠予时，它归还超出部分，至多为该赠予，因此空闲集群的份额会回到基础份额。"
 
-#: ../../cluster.rst:237
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:237
 msgid ""
 "Three rules bound a gift. It comes from the free share, so the giver's "
 "flows stay within its share. A node lends only its base: with "
@@ -1032,11 +1039,11 @@ msgstr ""
 "h_{ij}`，一个节点所有为正的 :math:`o_{ij}` 之和从不超过 "
 ":math:`b_i`，赠予可以回到它所来自的对等节点，但不能继续转给第三方。并且节点只给予它在最近三个周期内听到过、且与之同步的对等节点。第二条规则并不限制份额可以去往何处：每个节点都可以把全部基础份额借给同一个对等节点，于是该节点持有整个限制。它限制的是路线，下面的重启需要这一点。"
 
-#: ../../cluster.rst:239
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:239
 msgid "Implementation: ``Cell::enter`` and ``Cell::lower``"
 msgstr "实现：``Cell::enter`` 和 ``Cell::lower``"
 
-#: ../../cluster.rst:241
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:241
 msgid ""
 "The admission of a flow on a worker, and the lowering of the share by the "
 "mesh thread before a gift. In ``crates/lb/src/quota.rs`` (crate "
@@ -1048,7 +1055,7 @@ msgstr ""
 "``sibuna-lb``）。同一文件中的 ``Demand::of`` 和 ``Ledger::share`` "
 "计算需求和份额；``crates/lb/src/mesh/shares.rs`` 中的 ``move_shares`` 每个周期处理一次需求。"
 
-#: ../../cluster.rst:243
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:243
 msgid ""
 "pub fn enter(&self) -> bool {\n"
 "    if self.used.fetch_add(1, Ordering::SeqCst) < "
@@ -1061,7 +1068,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:254
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:254
 msgid ""
 "The worker adds itself to the count first and reads the share second. "
 "``lower`` stores the lowered share first and reads the count second; when "
@@ -1078,11 +1085,11 @@ msgstr ""
 "worker 的加法发生在网格线程的读取之前，于是网格线程能看到它；要么它发生在降低后份额的存储之后，于是 worker "
 "读到降低后的份额。没有流会在已经赠出的份额上进入，也不需要获取锁。"
 
-#: ../../cluster.rst:256
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:256
 msgid "Restarts and epochs"
 msgstr "重启与纪元"
 
-#: ../../cluster.rst:259
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:259
 msgid ""
 "A node that restarts has no flows and has lost its ledger. Its peers "
 "still hold theirs, and they may serve flows on shares it gave them. It "
@@ -1096,7 +1103,7 @@ msgstr ""
 "*纪元*\\ （epoch），即它启动时的 Unix 毫秒数。状态数据报携带发送方的纪元，以及发送方最近听到的接收方纪元，即它的\\ *回声*\\ "
 "（echo）。接收方忽略发送方纪元低于它所知道的该对等节点最大纪元的数据报。"
 
-#: ../../cluster.rst:261
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:261
 msgid ""
 "A node that starts is unsynchronised with every peer. By the rule that it "
 "lends only its base, it gave at most its base to all peers together, so "
@@ -1105,12 +1112,12 @@ msgid ""
 msgstr ""
 "刚启动的节点与每个对等节点都处于未同步状态。根据只出借基础份额的规则，它给予所有对等节点的总和至多是其基础份额，因此它不计入任何基础份额，只计入已同步的对等节点给予它的净额："
 
-#: ../../cluster.rst:263
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:263
 msgid ""
 "s_i = \\sum_{j\\ \\text{synced}} \\max\\big(0,\\ h_{ij} - g_{ij}\\big)."
 msgstr ""
 
-#: ../../cluster.rst:267
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:267
 msgid ""
 "It becomes synchronised with peer :math:`j` when a datagram of :math:`j` "
 "echoes its new epoch. It then takes over the ledger that :math:`j` kept: "
@@ -1122,7 +1129,7 @@ msgstr ""
 "所保存的账本：它的 :math:`g_{ij}` 变为该数据报中的 :math:`h_{ji}`，它的 :math:`h_{ij}` 变为 "
 ":math:`g_{ji}`。回声证明 :math:`j` 在发送之前已经听到了新纪元，因此从那时起两个账本一致。"
 
-#: ../../cluster.rst:269
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:269
 msgid ""
 "No timer returns the share of a silent node. Silence does not tell a "
 "stopped node from one that is cut off and still serves the flows it "
@@ -1143,11 +1150,11 @@ msgstr ""
 "``mesh.nodes`` "
 "中删除并重启各节点。在某个对等节点静默时重启的节点，只能依靠其他对等节点借给它的份额提供服务。缺少一个节点就启动的集群，在该节点应答之前，不会在受上限约束的服务器上服务任何流。"
 
-#: ../../cluster.rst:271
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:271
 msgid "Worked example: three nodes and a limit of 30"
 msgstr "实例分析：三个节点和上限 30"
 
-#: ../../cluster.rst:273
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:273
 msgid ""
 "Nodes A, B and C share a server with :math:`L = 30`. The bases are "
 ":math:`\\lfloor 30/3 \\rfloor = 10` each. A holds 10 flows and refused "
@@ -1156,7 +1163,7 @@ msgstr ""
 "节点 A、B 和 C 共享一台 :math:`L = 30` 的服务器。基础份额各为 :math:`\\lfloor 30/3 \\rfloor "
 "= 10`。A 持有 10 个流并拒绝了一个。B 持有 2 个，C 没有。"
 
-#: ../../cluster.rst:275
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:275
 msgid ""
 "*Period 1.* A has :math:`f = 0` and :math:`r = \\lceil 10/4 \\rceil = 3`, "
 "so it wants 3, with the flag. B has :math:`f = 8`, :math:`r = 1`, surplus "
@@ -1176,7 +1183,7 @@ msgstr ""
 "24：六个名额被搁置，没有任何名额被重复计算。当 A 听到它们后，:math:`h_{AB} = h_{AC} = 3`，:math:`s_A = "
 "10 + 3 + 3 = 16`。总和为 30。"
 
-#: ../../cluster.rst:277
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:277
 msgid ""
 "*Period 2.* A fills its 16 places and refuses again: :math:`r = \\lceil "
 "16/4 \\rceil = 4`, want 4. B has share 7, :math:`f = 5`, surplus 4, and "
@@ -1189,7 +1196,7 @@ msgstr ""
 "= 7`，盈余为 6，给出 4。现在 :math:`g_{BA} = g_{CA} = 7`，份额为 :math:`s_A = 10 + 7 + "
 "7 = 24`，:math:`s_B = s_C = 3`。总和为 30。"
 
-#: ../../cluster.rst:279
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:279
 msgid ""
 "*C stops.* A keeps :math:`h_{AC} = 7` and its share of 24. C's share of 3 "
 "is stranded: the cluster can hold at most 27 flows on the server until C "
@@ -1198,7 +1205,7 @@ msgstr ""
 "*C 停止。*\\ A 保留 :math:`h_{AC} = 7` 和它的 24 份额。C 的 3 份额被搁置：在 C "
 "回来之前，集群在该服务器上至多能持有 27 个流，没有任何定时器能改变这一点。"
 
-#: ../../cluster.rst:281
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:281
 msgid ""
 "*C restarts* with a new epoch. It is unsynchronised with both peers and "
 "counts :math:`s_C = 0`. A's next status echoes the new epoch and carries "
@@ -1212,7 +1219,7 @@ msgstr ""
 ":math:`g_{CA} = 7`。B 的状态给出的都是零。与两者都同步后，C 计为 :math:`s_C = 10 - 7 = "
 "3`，总和再次为 30。"
 
-#: ../../cluster.rst:283
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:283
 msgid ""
 "Two counterfactuals show why the design is as it is. Had B sent the "
 "message \"take 3\" and the network repeated it, A would have counted 33 "
@@ -1222,7 +1229,7 @@ msgstr ""
 "两个反事实说明了设计为什么是这样的。如果 B 发送的是消息“拿走 3 个”并且网络重复了它，A 在第 1 个周期就会计为 33。如果 C "
 "从基础份额重新开始，它会计为 10，加上 A 的 24 和 B 的 3：上限为 30 却有 37 个名额。"
 
-#: ../../cluster.rst:285
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:285
 msgid ""
 "The same rules predict the measured steps. On two hosts with :math:`L = "
 "20`, both bases are 10. A node with 10 flows that refuses wants "
@@ -1238,7 +1245,7 @@ msgstr ""
 "\\rceil = 4` 并收到 4。SID 0025 测得 10，1.5 秒后为 13，3 秒后为 17，两个份额之和始终为 20；在 80 "
 "个保持的请求中，20 个得到服务，60 个被拒绝。在那里每一步大约耗时三个周期，比一个周期长；SID 记录了这些步进，但没有记录原因。"
 
-#: ../../cluster.rst:287
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:287
 msgid ""
 "The model ``docs/sid/assets/shared-affinity.lean`` is checked by Lean 4 "
 "without libraries. For the cap it proves that when every node holds at "
@@ -1269,11 +1276,11 @@ msgstr ""
 "``the_cap_holds_under_loss_repetition_reordering_and_restarts``），``no_flow_enters_on_a_share_that_is_given_away_while_workers_race`` "
 "测试了第二项。"
 
-#: ../../cluster.rst:289
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:289
 msgid "Exercise 9.3"
 msgstr "练习 9.3"
 
-#: ../../cluster.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:291
 msgid ""
 "Four nodes share a server with :math:`L = 10`. Compute the bases. Node D, "
 "the last, holds 2 flows and refuses one; the others hold none. What does "
@@ -1285,13 +1292,13 @@ msgstr ""
 "需要多少？在下一个周期每个对等节点给出多少？然后，曾给出份额的节点 A "
 "永久停止。集群在该服务器上能持有多少个流？运维人员必须做什么才能恢复其余容量？"
 
-#: ../../cluster.rst:293
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:293
 msgid ""
 "Hint: The remainder of :math:`10/4` goes to the first nodes. Every peer "
 "serves the want it heard, independently."
 msgstr "提示：:math:`10/4` 的余数分给最前面的节点。每个对等节点各自独立地处理它听到的需求。"
 
-#: ../../cluster.rst:297
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:297
 msgid ""
 "Prove :math:`\\sum_i s_i \\le L` from :math:`h_{ji} \\le g_{ij}`. Then "
 "explain why a restarted node may not count its base, and why a timer that "
@@ -1300,11 +1307,11 @@ msgstr ""
 "从 :math:`h_{ji} \\le g_{ij}` 证明 :math:`\\sum_i s_i \\le "
 "L`。然后解释为什么重启的节点不能计入其基础份额，以及为什么归还静默节点份额的定时器会破坏上限。"
 
-#: ../../cluster.rst:299
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:299
 msgid "One Owner for Each Client"
 msgstr "每个客户端一个所有者"
 
-#: ../../cluster.rst:302
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:302
 msgid ""
 "When a node joins or leaves, or when the router rehashes, a client lands "
 "on another node. That node has none of the client's state: its UDP "
@@ -1318,11 +1325,11 @@ msgstr ""
 "映射、连接数、速率预算、粘性选择。SID 0026 "
 "在存活节点中给每个客户端指定一个所有者。收到一个不属于自己的客户端的新流的节点，通过网格网络把这个流交给所有者，由所有者以真实的客户端地址为其服务。"
 
-#: ../../cluster.rst:304
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:304
 msgid "Rendezvous hashing"
 msgstr "rendezvous 哈希"
 
-#: ../../cluster.rst:307
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:307
 msgid ""
 "The key of a client is its IPv4 address, or the first 64 bits of its IPv6 "
 "address; these are the keys of the rate limiters. Each node :math:`n` of "
@@ -1343,7 +1350,7 @@ msgstr ""
 "Ravishankar，1998）。它不需要表，也不需要发布；其工作量是对每个存活节点计算一次哈希，至多 64 "
 "次。种子依赖于网格密钥，因此客户端无法计算出哪些地址共用一个所有者。"
 
-#: ../../cluster.rst:309
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:309
 msgid ""
 "Why does a join move so little? Model the scores of one client as "
 "independent and uniform; with 64-bit scores, ties are negligible. When a "
@@ -1356,11 +1363,11 @@ msgstr ""
 ":math:`n` 个节点时，客户端恰好在新节点拥有 :math:`n` 个得分中的最大者时更换所有者。由对称性，:math:`n` "
 "个节点中的每一个成为最大者的概率相同，因此"
 
-#: ../../cluster.rst:311
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:311
 msgid "P(\\text{the client moves}) = \\frac{1}{n}."
 msgstr ""
 
-#: ../../cluster.rst:315
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:315
 msgid ""
 "When the new node is not the largest, the largest of the old scores is "
 "still the largest, and the owner stays. So the clients that move all move "
@@ -1377,126 +1384,133 @@ msgstr ""
 "的客户端迁移。当一个节点离开时，只有它自己的客户端会迁移，各自去往得分第二高的节点，从而把它们均匀地分散到其他节点上。SID 0015 "
 "为源站勾画的 Maglev 表也会迁移未发生变化的节点的一小部分客户端，并且每次存活状态变化时都必须重建和发布。"
 
-#: ../../cluster.rst:317
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:317
 msgid "Worked example: a fourth node joins"
 msgstr "实例分析：第四个节点加入"
 
-#: ../../cluster.rst:319
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:319
 msgid ""
 "Four clients p, q, r and s, and three nodes A, B and C. We use made-up "
 "scores from 0 to 99 in place of wyhash outputs."
 msgstr "四个客户端 p、q、r 和 s，以及三个节点 A、B 和 C。我们用 0 到 99 之间虚构的得分代替 wyhash 的输出。"
 
-#: ../../cluster.rst:325
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:325
 msgid "Client"
 msgstr "客户端"
 
-#: ../../cluster.rst:326 ../../cluster.rst:336
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:336
 msgid "A"
 msgstr ""
 
-#: ../../cluster.rst:327 ../../cluster.rst:343 ../../cluster.rst:345
-#: ../../cluster.rst:357 ../../cluster.rst:359
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:327
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:343
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:345
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:357
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:359
 msgid "B"
 msgstr ""
 
-#: ../../cluster.rst:328 ../../cluster.rst:350 ../../cluster.rst:352
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:350
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:352
 msgid "C"
 msgstr ""
 
-#: ../../cluster.rst:329
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:329
 msgid "Owner of three"
 msgstr "三个节点时的所有者"
 
-#: ../../cluster.rst:330 ../../cluster.rst:338
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:330
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:338
 msgid "D"
 msgstr ""
 
-#: ../../cluster.rst:331
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:331
 msgid "Owner of four"
 msgstr "四个节点时的所有者"
 
-#: ../../cluster.rst:332
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:332
 msgid "p"
 msgstr ""
 
-#: ../../cluster.rst:333
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:333
 msgid "71"
 msgstr ""
 
-#: ../../cluster.rst:334
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:334
 msgid "15"
 msgstr ""
 
-#: ../../cluster.rst:335
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:335
 msgid "42"
 msgstr ""
 
-#: ../../cluster.rst:337
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:337
 msgid "88"
 msgstr ""
 
-#: ../../cluster.rst:339
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:339
 msgid "q"
 msgstr ""
 
-#: ../../cluster.rst:340
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:340
 msgid "23"
 msgstr ""
 
-#: ../../cluster.rst:341
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:341
 msgid "90"
 msgstr ""
 
-#: ../../cluster.rst:342
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:342
 msgid "57"
 msgstr ""
 
-#: ../../cluster.rst:344
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:344
 msgid "12"
 msgstr ""
 
-#: ../../cluster.rst:346
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:346
 msgid "r"
 msgstr ""
 
-#: ../../cluster.rst:347
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:347
 msgid "64"
 msgstr ""
 
-#: ../../cluster.rst:348
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:348
 msgid "38"
 msgstr ""
 
-#: ../../cluster.rst:349
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:349
 msgid "81"
 msgstr ""
 
-#: ../../cluster.rst:351
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:351
 msgid "30"
 msgstr ""
 
-#: ../../cluster.rst:353
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:353
 msgid "s"
 msgstr ""
 
-#: ../../cluster.rst:354
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:354
 msgid "9"
 msgstr ""
 
-#: ../../cluster.rst:355
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:355
 msgid "47"
 msgstr ""
 
-#: ../../cluster.rst:356
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:356
 msgid "33"
 msgstr ""
 
-#: ../../cluster.rst:358
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:358
 msgid "41"
 msgstr ""
 
-#: ../../cluster.rst:361
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:361
 msgid ""
 "Node D joins. Only p, whose score at D exceeds its three old scores, "
 "moves, and it moves to D. q, r and s keep their owners, because each old "
@@ -1508,7 +1522,7 @@ msgstr ""
 "保持原来的所有者，因为每个旧的最大值仍然是最大值。四个客户端中有一个迁移，正好是期望的 :math:`1/4`。如果改为 C 离开，只有 r "
 "会迁移，去往 A，即它得分第二高的节点。"
 
-#: ../../cluster.rst:363
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:363
 msgid ""
 "Compare the obvious rule, the owner :math:`h \\bmod n` for a hash "
 ":math:`h`. Going from three nodes to four, a client stays only when "
@@ -1522,11 +1536,11 @@ msgstr ""
 "决定，并且只在 :math:`h \\bmod 12 \\in \\{0, 1, 2\\}` "
 "时一致：十二个余数中只有三个。因此四分之三的客户端会迁移，其中大部分是在旧节点之间迁移。"
 
-#: ../../cluster.rst:365
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:365
 msgid "Implementation: ``Peering::owner_among``"
 msgstr "实现：``Peering::owner_among``"
 
-#: ../../cluster.rst:367
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:367
 msgid ""
 "The scan that names the owner of a client among this node and the "
 "eligible peers, given as a bit set. In ``crates/lb/src/forward.rs`` "
@@ -1535,7 +1549,7 @@ msgstr ""
 "在本节点和以位集给出的合格对等节点中，找出客户端所有者的扫描。位于 ``crates/lb/src/forward.rs``\\ （crate "
 "``sibuna-lb``）。当本节点拥有该客户端时，它返回 ``None``。"
 
-#: ../../cluster.rst:369
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:369
 msgid ""
 "let key = client_key(client);\n"
 "let mut best = (wyhash::hash(self.seed, &key), self.rank);\n"
@@ -1554,11 +1568,11 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:387
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:387
 msgid "One hop, and what it does not repair"
 msgstr "一跳，以及它不能修复的问题"
 
-#: ../../cluster.rst:390
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:390
 msgid ""
 "A peer is eligible when it can take a flow now. The mesh probes do not "
 "show that, because another thread answers them on another port, so the "
@@ -1569,7 +1583,7 @@ msgstr ""
 "当对等节点此刻能够接受一个流时，它是合格的。网格探测无法表明这一点，因为应答探测的是另一个端口上的另一个线程，所以边缘 worker 每 500 "
 "ms 亲自探测一次转发端口。对等节点在 1.5 s 内应答且未处于排空状态时视为存活。拒绝过流或连接失败的对等节点会被暂缓一秒。"
 
-#: ../../cluster.rst:392
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:392
 msgid ""
 "For a TCP or HTTP connection the receiving node first applies its own "
 "checks: drain, its connection rate, a free flow slot. It then computes "
@@ -1596,7 +1610,7 @@ msgstr ""
 "ms）超时时，它自己服务这个连接。拒绝时，说明所有者的速率限制拒绝了该客户端，连接被关闭：否则其他每个节点都会为一个超出其限制的客户端提供服务。UDP "
 "数据报在同一个套接字上以头部和标签包裹传输，回复经由客户端到达的那个节点返回，因此客户端看到应答来自它所发往的地址。"
 
-#: ../../cluster.rst:394
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:394
 msgid ""
 "Two rules make this safe. A flow that arrived from a peer is served where "
 "it lands and is never forwarded again, whatever that node believes about "
@@ -1617,7 +1631,7 @@ msgstr ""
 "``owner_after_join``：加入的节点要么成为所有者，要么不改变任何东西。在回环接口上，转发的连接到达其第一行要多花 79 到 91 "
 "us，已建立连接上的一次交换要多花 19 到 21 us。"
 
-#: ../../cluster.rst:396
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:396
 msgid ""
 "Forwarding keeps the *node* of a client, not a TCP connection. When the "
 "router moves the packets of an established TCP connection to another "
@@ -1636,11 +1650,11 @@ msgstr ""
 "的前端不会被转发，并且转发只在网格的区域模式下运行：当到对等节点的实测往返时间的第 95 百分位超过 3 ms 时，节点离开区域模式，只有当它降到 "
 "1.5 ms 以下时才从广域模式重新进入。"
 
-#: ../../cluster.rst:398
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:398
 msgid "Exercise 9.4"
 msgstr "练习 9.4"
 
-#: ../../cluster.rst:400
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:400
 msgid ""
 "A cluster of four nodes owns 1,000 clients evenly. (a) A fifth node "
 "joins: how many clients move in expectation, and where to? (b) Instead, "
@@ -1650,14 +1664,14 @@ msgstr ""
 "一个由四个节点组成的集群均匀地拥有 1,000 个客户端。(a) 第五个节点加入：期望有多少客户端迁移，迁移到哪里？(b) 改为节点 B "
 "离开：哪些客户端迁移，迁移到哪里？(c) 在 :math:`h \\bmod n` 下，从四个节点变为五个节点时有多少客户端会迁移？"
 
-#: ../../cluster.rst:402
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:402
 msgid ""
 "Hint: For (c), count the residues of :math:`h \\bmod 20` at which "
 ":math:`h \\bmod 4 = h \\bmod 5`."
 msgstr ""
 "提示：对于 (c)，统计 :math:`h \\bmod 20` 的哪些余数满足 :math:`h \\bmod 4 = h \\bmod 5`。"
 
-#: ../../cluster.rst:406
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:406
 msgid ""
 "Explain why a join under rendezvous hashing moves only the clients that "
 "the new node now owns, why a forwarded flow is never forwarded again, and "
@@ -1668,11 +1682,11 @@ msgstr ""
 "哈希下，一次加入只迁移新节点现在拥有的客户端，为什么转发的流永远不会再次转发，以及为什么这两条规则都无法挽救一个数据包被路由器发往另一个节点的已建立 "
 "TCP 连接。"
 
-#: ../../cluster.rst:408
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:408
 msgid "A Disk Under the Sticky Table"
 msgstr "粘性表之下的磁盘"
 
-#: ../../cluster.rst:411
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:411
 msgid ""
 "The sticky table forgets twice: when more clients come than it has slots, "
 "and when the daemon restarts. SID 0027 puts a second tier under it, a "
@@ -1686,11 +1700,11 @@ msgstr ""
 "``sibuna-spill`` "
 "映射到内存中。表存储的每个选择都会提供给文件，在内存中找不到的查找会询问文件。来自文件的提示只是一个愿望：服务器池只对新流使用它，并且只在所指定的服务器此刻可以服务时才使用。没有任何封禁、计数器或活动流依赖于这个文件。"
 
-#: ../../cluster.rst:413
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:413
 msgid "The file and its slots"
 msgstr "文件及其槽"
 
-#: ../../cluster.rst:416
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:416
 msgid ""
 "The file starts with two pages of 4,096 bytes, the header and one write "
 "counter for each of 64 shards, and continues with :math:`64 \\times B "
@@ -1713,11 +1727,11 @@ msgstr ""
 "wyhash，以文件的随机盐和槽号为种子，因此被复制到另一个位置或另一个文件中的槽无法通过检查。读者只从有效的槽中取条目：长度在范围内，填充为零，校验和匹配，过期时间在当前时间之后且不超过当前时间加最长有效期。检查失败的槽视为空闲空间，并被计数。一个存储线程拥有这个映射，每次访问复制进或复制出一个槽，并通过一个有界队列服务 "
 "worker：worker 从不接触文件，从不等待它，队列已满时丢弃工作并计数。"
 
-#: ../../cluster.rst:418
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:418
 msgid "Admission by frequency"
 msgstr "按频率准入"
 
-#: ../../cluster.rst:421
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:421
 msgid ""
 "A bucket of four slots is often full. A new key then competes with a "
 "victim, the live slot whose key was seen least often, and wins only when "
@@ -1742,7 +1756,7 @@ msgstr ""
 "使每个计数器都不超过普通 sketch "
 "会持有的值，并且没有任何计数器低于真实计数。当计数次数达到分片槽数的四倍后，每个计数器减半，因此一个键必须不断出现才能保持其估计值。"
 
-#: ../../cluster.rst:423
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:423
 msgid ""
 "The classical bound of Cormode and Muthukrishnan explains why the "
 "estimate is good. Let :math:`N` keys be counted. Fix a key :math:`x` and "
@@ -1755,11 +1769,11 @@ msgstr ""
 ":math:`x` 及其一个计数器。其他键的每次计数至多增加四个计数器，每个计数器的位置在理想哈希下在 :math:`m` "
 "上均匀分布，因此它增加这个计数器的概率至多为 :math:`4/m`。于是该计数器的期望超额为"
 
-#: ../../cluster.rst:425
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:425
 msgid "\\lambda \\le \\frac{4N}{m}."
 msgstr ""
 
-#: ../../cluster.rst:429
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:429
 msgid ""
 "By Markov's inequality the excess reaches :math:`t` with probability at "
 "most :math:`\\lambda/t`. The estimate is the smallest of four counters, "
@@ -1775,11 +1789,11 @@ msgstr ""
 ":math:`(\\lambda/t)^4`。超额是许多罕见命中之和，因此它接近一个均值为 :math:`\\lambda` 的 Poisson "
 "变量，由此得到比 Markov 上界更精确的估计。"
 
-#: ../../cluster.rst:431
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:431
 msgid "Worked example: the error of the sketch"
 msgstr "实例分析：sketch 的误差"
 
-#: ../../cluster.rst:433
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:433
 msgid ""
 "A file of ``64m`` holds 1,048,064 slots (Part XI), so a shard holds "
 ":math:`S = 16{,}376`. Eight counters for each slot would be 131,008. The "
@@ -1792,7 +1806,7 @@ msgstr ""
 "65{,}536`，即每个槽四个计数器：每个分片 32 KiB，整个文件 2 MiB，每个槽两字节。sketch 在 :math:`4S = "
 "65{,}504` 次计数后减半。"
 
-#: ../../cluster.rst:435
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:435
 msgid ""
 "We take the first window after a start, when the sketch begins at zero, "
 "and look at its middle, :math:`N = 2S = 32{,}752` counts. Then "
@@ -1807,14 +1821,14 @@ msgstr ""
 "2`。只见过一次的键要取代见过四次的牺牲者，其估计值必须至少为 5，即四个计数器上都有 :math:`t = 4` 的超额。Markov "
 "上界给出至多 :math:`(2/4)^4 = 1/16`。Poisson 估计更精确："
 
-#: ../../cluster.rst:437
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:437
 msgid ""
 "P(X \\ge 4) = 1 - e^{-2}\\Big(1 + 2 + 2 + \\tfrac{4}{3}\\Big) = 1 - "
 "0.1353 \\times 6.333 \\approx 0.143, \\qquad 0.143^4 \\approx 4.2 \\times "
 "10^{-4}."
 msgstr ""
 
-#: ../../cluster.rst:441
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:441
 msgid ""
 "So about four keys seen once in ten thousand look like keys seen five "
 "times, at the middle of the first window. Later windows begin from halved "
@@ -1830,11 +1844,11 @@ msgstr ""
 "16,776,192 个新键的洪泛下，一个 256 MiB 的文件保住了洪泛前它所持有的约 1,044,000 个工作集键中的绝大部分，只丢失了 "
 "10 到 15 个。"
 
-#: ../../cluster.rst:443
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:443
 msgid "Implementation: ``Sketch::touch``"
 msgstr "实现：``Sketch::touch``"
 
-#: ../../cluster.rst:445
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:445
 msgid ""
 "Counts one key with the conservative update and ages the sketch when its "
 "sample is full. In ``crates/spill/src/sketch.rs`` (crate "
@@ -1844,7 +1858,7 @@ msgstr ""
 "以保守更新对一个键计数，并在样本满时让 sketch 老化。位于 ``crates/spill/src/sketch.rs``\\ （crate "
 "``sibuna-spill``）。``Sketch::estimate`` 返回四个计数器中的最小值。"
 
-#: ../../cluster.rst:447
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:447
 msgid ""
 "pub fn touch(&mut self, hash: u64) {\n"
 "    let least = u64::from(self.estimate(hash));\n"
@@ -1864,7 +1878,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:466
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:466
 msgid ""
 "The two tiers meet in ``SpillStore`` (``crates/lb/src/hints.rs``), which "
 "implements the trait ``AffinityStore`` of SID 0025 with the table in "
@@ -1886,11 +1900,11 @@ msgstr ""
 "的客户端在第二次查找时就找到了自己的选择。在一个双主机网格的两个节点都重启之后，300 个客户端的第一个流中有 191 "
 "个找到了另一台服务器，而第二个流全部 300 个都找到了记住的服务器。"
 
-#: ../../cluster.rst:468
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:468
 msgid "Crash safety, memory and the file system"
 msgstr "崩溃安全、内存与文件系统"
 
-#: ../../cluster.rst:471
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:471
 msgid ""
 "A new file is never created in place. The function ``create`` in "
 "``crates/spill/src/open.rs`` removes whatever lies at the path with "
@@ -1909,7 +1923,7 @@ msgstr ""
 "新文件从不就地创建。``crates/spill/src/open.rs`` 中的函数 ``create`` 删除路径后加 ``.tmp`` "
 "处的任何东西（不经由它写入），在那里构建一个完整的文件，写入每个块，最后写头部，然后把它重命名覆盖到该路径上。重命名一步就把一个名称替换为另一个，因此该路径要么不指向任何文件，要么指向一个外来文件或一个完整的文件，从不指向半成品。没有魔数的文件从不被覆盖：守护进程拒绝启动并指出该文件。写入经由映射进行，并在守护进程停止时刷写。进程崩溃不会丢失任何已写入的内容，因为这些页属于内核。断电可能使每个页处于旧、新或混合状态；混合的槽无法通过校验和，损失其提示；旧的槽是一个有效的较旧提示，服务器池在使用前会检查它。"
 
-#: ../../cluster.rst:473
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:473
 msgid ""
 "Two properties of the host matter. The pages of the file count as memory "
 "of the process. Under a memory limit below the size of the file, a 256 "
@@ -1931,11 +1945,11 @@ msgstr ""
 "KiB。当这样的文件系统之后被写满时，经由映射的写入会引发一个信号，使守护进程终止。第 XI 部分给出了 systemd、Docker 和 "
 "Kubernetes 的设置。"
 
-#: ../../cluster.rst:475
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:475
 msgid "Exercise 9.5"
 msgstr "练习 9.5"
 
-#: ../../cluster.rst:477
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:477
 msgid ""
 "A shard whose slot count lies just under a power of two keeps the full "
 "eight counters for each slot. Compute :math:`\\lambda` at the middle and "
@@ -1945,7 +1959,7 @@ msgstr ""
 "槽数略低于 2 的幂的分片保留每个槽完整的八个计数器。计算第一个窗口中间和末尾的 "
 ":math:`\\lambda`，以及在这两个时刻只见过一次的键的估计值达到 5 的 Poisson 估计。"
 
-#: ../../cluster.rst:479
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:479
 msgid ""
 "Hint: Only the ratio :math:`N/m` matters. At :math:`\\lambda = 1`, "
 ":math:`e^{-1} \\approx 0.3679`."
@@ -1953,7 +1967,7 @@ msgstr ""
 "提示：只有比值 :math:`N/m` 起作用。当 :math:`\\lambda = 1` 时，:math:`e^{-1} \\approx "
 "0.3679`。"
 
-#: ../../cluster.rst:483
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:483
 msgid ""
 "Explain why a torn, copied or foreign slot can cost a hint and never "
 "choose a server that may not serve, why the path never names a half-made "
@@ -1963,11 +1977,11 @@ msgstr ""
 "解释为什么撕裂、复制或外来的槽可能损失一个提示，却永远不会选中一台不能服务的服务器；为什么该路径从不指向半成品文件；以及为什么 sketch "
 "可能高估频率，却从不低估。"
 
-#: ../../cluster.rst:485
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:485
 msgid "A Database as the Authority"
 msgstr "以数据库为权威"
 
-#: ../../cluster.rst:488
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:488
 msgid ""
 "SID 0023 sends one file to the peers. Two operators who send two files at "
 "the same time each win on some nodes, a node that was down keeps its old "
@@ -1985,7 +1999,7 @@ msgstr ""
 "``frontends``、``backends`` 和 ``http``。每个修订版本是一个带 SHA-256 摘要的规范 JSON "
 "文档，因此节点用一条语句就能完整地读取一个修订版本，并拒绝摘要不匹配的修订版本。"
 
-#: ../../cluster.rst:490
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:490
 msgid ""
 "The revisions are numbered 1, 2, 3 without a gap, and a committed "
 "revision never changes. ``sibuna authority apply`` evaluates a source, "
@@ -1996,14 +2010,14 @@ msgstr ""
 "修订版本编号为 1、2、3，没有间隙，已提交的修订版本永不改变。``sibuna authority apply`` "
 "对源进行求值、检查，打印与头部修订版本的差异，并在一个条件下提交：头部仍然是它读到的那个修订版本。提交是一个包含两条语句的事务。"
 
-#: ../../cluster.rst:492
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:492
 msgid ""
 "UPDATE edge_head SET revision = :expected + 1 WHERE id = 1 AND revision = "
 ":expected\n"
 "INSERT INTO edge_revisions (revision, ...) VALUES (:expected + 1, ...)"
 msgstr ""
 
-#: ../../cluster.rst:497
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:497
 msgid ""
 "When the first statement changes no row, the head moved, and the command "
 "fails with ``DBA002 REVISION CONFLICT`` and commits nothing. This is a "
@@ -2021,11 +2035,11 @@ msgstr ""
 "让第二个等待行锁，之后它发现新的头部，不修改任何东西。以“头部，无论它是什么”为条件将什么也保护不了：命令以它打印差异时所对照的头部为条件，因此运维人员看到的正是提交所替换的内容。回滚会以一个较早的文档提交一个新的修订版本，因为把头部移回去会使“已应用 "
 "5”在 7 之前和之后含义不明。"
 
-#: ../../cluster.rst:499
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:499
 msgid "Implementation: ``Store::commit``"
 msgstr "实现：``Store::commit``"
 
-#: ../../cluster.rst:501
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:501
 msgid ""
 "The trait ``Store`` has seven operations: ``head``, ``revision``, "
 "``commit``, ``history``, ``report``, ``nodes`` and ``wait``. ``commit`` "
@@ -2045,7 +2059,7 @@ msgstr ""
 "SQLite 和 PostgreSQL 实现它，``MemoryStore`` 用于测试。``store.rs`` 中的 "
 "``commit_settled`` 通过询问头部是否为带新摘要的新修订版本，来确定一次连接失败的提交的结果。"
 
-#: ../../cluster.rst:503
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:503
 msgid ""
 "Every node follows on a thread of its own, ``edge-authority``. It looks "
 "at the head when PostgreSQL sends ``NOTIFY``, when its poll passes, at "
@@ -2075,11 +2089,11 @@ msgstr ""
 "证明了：在过期头部上的提交不改变任何东西（``commit_conflict``）；同一头部上的两个写者中第二个会失败（``second_commit_conflicts``）；节点只会提供通过了检查的文档（``step_serves_valid``）；对一个有效头部看一次就能让节点到达它，因此丢失一次通知只需付出一次轮询的代价（``poll_converges``）。在调试构建中，使用 "
 "PostgreSQL 时，两个节点在 ``apply`` 开始后 128 到 155 ms 应用了一个修订版本。"
 
-#: ../../cluster.rst:505
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:505
 msgid "Exercise 9.6"
 msgstr "练习 9.6"
 
-#: ../../cluster.rst:507
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:507
 msgid ""
 "Two operators run ``diff`` against head 7 and then ``apply`` at the same "
 "moment, one adding a server and one removing a frontend. What does each "
@@ -2091,11 +2105,11 @@ msgstr ""
 "``apply``，一个添加一台服务器，一个删除一个前端。各自看到什么？之后数据库中保存的是什么？第二个运维人员应该怎么做？为什么以提交时刻的头部为条件的 "
 "``apply`` 是错误的？"
 
-#: ../../cluster.rst:509
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:509
 msgid "Hint: Follow the ``UPDATE`` of each transaction under the row lock."
 msgstr "提示：在行锁下跟踪每个事务的 ``UPDATE``。"
 
-#: ../../cluster.rst:513
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:513
 msgid ""
 "Explain why the revisions have no gap and never change, why the last word "
 "on whether a node serves a revision belongs to the node and not to the "
@@ -2103,11 +2117,11 @@ msgid ""
 msgstr ""
 "解释为什么修订版本没有间隙且永不改变，为什么节点是否提供某个修订版本的最终决定权属于节点而不属于命令，以及为什么回滚是追加而不是移动头部。"
 
-#: ../../cluster.rst:515
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:515
 msgid "Replacing the Binary"
 msgstr "替换二进制程序"
 
-#: ../../cluster.rst:518
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:518
 msgid ""
 "With ``global.reuse_port`` each process has its own TCP accept queue. The "
 "old process closes its TCP listeners when the drain begins. Established "
@@ -2118,7 +2132,7 @@ msgstr ""
 "使用 ``global.reuse_port`` 时，每个进程都有自己的 TCP 连接接受队列。旧进程在开始排空时关闭 TCP "
 "监听套接字。新进程接受新连接时，已建立的流仍可完成传输。仍在旧队列中的连接可能被重置。新进程从空的 UDP 映射表开始。"
 
-#: ../../cluster.rst:520
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:520
 msgid ""
 "SID 0029 passes the sockets instead. The old process listens on a Unix "
 "socket, ``global.upgrade_socket``. The replacement checks its file, "
@@ -2130,7 +2144,7 @@ msgstr ""
 "上监听。替代进程检查自己的文件，建立连接，并以 ``sendmsg`` 的 ``SCM_RIGHTS`` "
 "控制消息中的描述符形式接收监听套接字。两端都用 ``SO_PEERCRED`` 检查对端的凭据，并拒绝其他用户。"
 
-#: ../../cluster.rst:523
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:523
 msgid ""
 "The old process pauses UDP at READY and passes the mappings. The "
 "replacement adopts them and accepts TCP before DONE. It then reads UDP "
@@ -2138,7 +2152,7 @@ msgid ""
 msgstr ""
 "在 READY 时旧进程暂停读取 UDP 并移交映射。新进程接管映射，在 DONE 前开始接受 TCP，随后读取 UDP，旧进程则处理完现有连接。"
 
-#: ../../cluster.rst:523
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:523
 msgid ""
 "// cluster.rst and operations.rst: the listener handoff of SID 0029.\n"
 "#import \"style.typ\": *\n"
@@ -2188,11 +2202,11 @@ msgstr ""
 "  spacing: 60,\n"
 ")\n"
 
-#: ../../cluster.rst:523
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:523
 msgid "Listener handoff on Linux."
 msgstr "Linux 上的监听套接字移交。"
 
-#: ../../cluster.rst:526
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:526
 msgid ""
 "Two invariants govern the cutover. At every instant some live process "
 "accepts on each TCP listener: two acceptors on one socket lose nothing, "
@@ -2214,11 +2228,11 @@ msgstr ""
 "之前发生的失败会把服务交还给旧进程，连同它原有的每个监听器和映射。旧进程只有在与替代进程的连接关闭后才恢复读取，因为期限证明不了任何东西：一个被暂停的替代进程可能醒来并与它同时读取。因此在 "
 "10 s 内没有收到 DONE 时，旧进程终止替代进程并等待连接关闭。"
 
-#: ../../cluster.rst:528
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:528
 msgid "Implementation: ``Giving::end_peer``"
 msgstr "实现：``Giving::end_peer``"
 
-#: ../../cluster.rst:530
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:530
 msgid ""
 "Ends a silent replacement and waits for its connection to close, which "
 "proves that it reads no socket. In ``crates/upgrade/src/give.rs`` (crate "
@@ -2235,7 +2249,7 @@ msgstr ""
 "代码。在边缘一侧，``crates/lb/src/handoff.rs`` 中的 ``Edge::freeze_datagrams`` 停止 "
 "UDP 读取。"
 
-#: ../../cluster.rst:532
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:532
 msgid ""
 "pub fn end_peer(&mut self, patience: Duration) -> bool {\n"
 "    // The signal can fail when the process is gone already. The closed "
@@ -2246,7 +2260,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../cluster.rst:541
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:541
 msgid ""
 "What is handed over: the TCP and UDP listeners, and every UDP mapping of "
 "a ``udp`` frontend with its connected server socket, so the server sees "
@@ -2279,7 +2293,7 @@ msgstr ""
 "``single_reader``、``always_an_acceptor`` 和 "
 "``failure_returns_service``；它并非从代码推导而来。"
 
-#: ../../cluster.rst:545
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:545
 msgid ""
 "Explain why the TCP listeners may have two acceptors for an instant while "
 "the UDP sockets must have none, and why the old process trusts a closed "
@@ -2288,11 +2302,11 @@ msgstr ""
 "解释为什么 TCP 监听器可以在一瞬间有两个接受者，而 UDP "
 "套接字必须一个读者都没有；以及为什么旧进程在再次读取之前信任的是关闭的连接，而不是时钟。"
 
-#: ../../cluster.rst:547
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:547
 msgid "The Fleet in the Console"
 msgstr "控制台中的集群"
 
-#: ../../cluster.rst:550
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:550
 msgid ""
 "SID 0031 starts the console of SID 0007 beside the edge. Its ``console`` "
 "section lists every member under ``nodes``, at most 64, so the section is "
@@ -2320,11 +2334,11 @@ msgstr ""
 "条。从文件中删除的成员在两秒内失去其流。控制台对数据平面的开销低于百分之一这一标准尚未确立：在负载下，无论负载落在它自己的控制台上还是另一个进程的控制台上，数据平面都损失了 "
 "8% 到 11%，因此测量看到的是共享处理器的开销，而不是耦合的开销。"
 
-#: ../../cluster.rst:552
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:552
 msgid "What Three Hosts Measured"
 msgstr "三台主机的测量结果"
 
-#: ../../cluster.rst:555
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:555
 msgid ""
 "Part X records the cluster on three hosts with 16, 16 and 32 CPUs, in "
 "containers on one network, each host running a node, an origin and a load "
@@ -2349,17 +2363,17 @@ msgstr ""
 "内返回且三个节点都持有相同文件，每次都包括观察到效果的那个请求，请求每 5 ms 发送一次。这些都是在共享主机上的单次运行；第 X "
 "部分给出了表格和方法。"
 
-#: ../../cluster.rst:557
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:557
 msgid "Limits"
 msgstr "局限"
 
-#: ../../cluster.rst:560
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:560
 msgid ""
 "We list the known gaps of each record. They are taken from the records "
 "and are not repaired at the time of writing."
 msgstr "我们列出每条记录的已知不足。它们取自这些记录，在撰写本书时尚未修复。"
 
-#: ../../cluster.rst:562
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:562
 msgid ""
 "**SID 0022, bans and commands.** A ban issued after a lift holds on every "
 "node only when it ends after the lifted ban would have; a shorter ban "
@@ -2385,7 +2399,7 @@ msgstr ""
 "Maglev 表放置客户端的服务器池在运行时不接受权重和成员的修改。命令和解除没有指标。进程测试在一台主机上运行；第 X "
 "部分的三主机计时是唯一的跨主机测量。复制只在边缘模式下运行。"
 
-#: ../../cluster.rst:564
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:564
 msgid ""
 "**SID 0023, one file.** Files that the topology names by path, and files "
 "that a JLV file imports, are not sent. A node that was down keeps its old "
@@ -2398,7 +2412,7 @@ msgstr ""
 "文件导入的文件，不会被发送。宕机的节点保留旧文件，直到该命令再次运行。上一个文件的时间戳保存在内存中，因此重启后节点会再次接受最近 60 "
 "秒内的消息。节点由连接的源地址识别。传输经过认证，但不加密。"
 
-#: ../../cluster.rst:566
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:566
 msgid ""
 "**SID 0025, affinity and caps.** The share of a stopped node does not "
 "return after any bound; a cluster that starts with one node missing "
@@ -2418,7 +2432,7 @@ msgstr ""
 "字段，因此一个会话的第一个请求会被均衡而不会被记住。在一个纪元内，状态可以被重放。进程测试在没有丢失的回环接口上运行，没有任何测试在运行中的进程之间切断网络。在复制窗口内（两台主机上低于 "
 "50 ms）使用两个节点的客户端可能遇到两台服务器。"
 
-#: ../../cluster.rst:568
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:568
 msgid ""
 "**SID 0026, forwarding.** An established TCP connection breaks when the "
 "router moves its packets to another node. HTTP/3 and frontends with "
@@ -2437,7 +2451,7 @@ msgstr ""
 "以外的构建不把转发连接绑定到网格地址，也未经测试。所有测试和测量都在回环接口上运行；拒绝状态、``max_flows_per_peer`` "
 "上限、正在排空的所有者的拒绝，以及静默中继的十秒终止都没有进程测试。在一个纪元内，转发的数据报可以被重放。"
 
-#: ../../cluster.rst:570
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:570
 msgid ""
 "**SID 0027, the spill cache.** A memory limit below the size of the file "
 "kills the daemon or stalls the disk tier. A truncation of the file or a "
@@ -2460,7 +2474,7 @@ msgstr ""
 "93.84% 的初始分配返回了原服务器，目标为 99.9%（SID 0027）。没有任何服务器池使用该表的 ``spill`` "
 "部分会占用文件而毫无作用，并且没有警告。"
 
-#: ../../cluster.rst:572
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:572
 msgid ""
 "**SID 0028, the database.** The history is never pruned. Two nodes with "
 "the same name overwrite each other's report. ``global``, ``mesh`` and "
@@ -2475,7 +2489,7 @@ msgstr ""
 "也不等待各节点。运行时修改不是修订版本，下一个修订版本会替换它。SQLite 没有通知机制。同时带网格和数据库的节点，以及到 PostgreSQL "
 "的 TLS，未通过二进制程序测试。只在 Linux 上测试过。"
 
-#: ../../cluster.rst:574
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:574
 msgid ""
 "**SID 0029, the upgrade.** Adopted UDP mappings are outside the count of "
 "a fleet-wide cap. A mapping that a peer forwarded is answered directly "
@@ -2495,7 +2509,7 @@ msgstr ""
 "之后崩溃会造成中断，直到监管程序重启它。没有 ``sd_notify``。多条路径、真实的第二个用户、超过 6,000 个映射，以及与新密钥并存的 "
 "``reuse_port`` 都未经测试。发给静默替代进程的信号使用进程 ID，而内核可能复用该 ID。"
 
-#: ../../cluster.rst:576
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cluster.rst:576
 msgid ""
 "**SID 0031, the console.** The overhead criterion is not established. A "
 "member that joins is used after a restart only. The console does not "

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:30+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
 "n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 
-#: ../../protocol.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:1
 msgid "Part IV: The Sibuna Protocol"
 msgstr "الجزء الرابع: بروتوكول Sibuna"
 
-#: ../../protocol.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:4
 msgid ""
 "We specify the wire protocol as implemented: the interstitial round trip, "
 "the stateless challenge record, both solution formats, verification "
@@ -32,16 +32,18 @@ msgstr ""
 "الحالة، وتنسيقي الحل، وترتيب التحقق، وفرض الاستخدام لمرة واحدة، وملف "
 "تعريف ارتباط الجلسة."
 
-#: ../../protocol.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:6
 msgid "The Challenge Round Trip"
 msgstr "دورة التحدي"
 
-#: ../../protocol.rst:9 ../../protocol.rst:48 ../../protocol.rst:111
-#: ../../protocol.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:162
 msgid "Objectives"
 msgstr "الأهداف"
 
-#: ../../protocol.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:11
 msgid ""
 "By the end of this chapter, we should be able to trace a browser from its "
 "first request to a minted session, name every endpoint and JSON field "
@@ -52,7 +54,7 @@ msgstr ""
 "كل نقطة نهاية وكل حقل JSON مشارك، وشرح سبب حمل التحدي لقرار السياسة الخاص "
 "بالمسار المحمي."
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "A sequence diagram with the browser, its Web Worker and Sibuna. A "
 "navigation without a session receives the interstitial (HTTP 200). The "
@@ -71,7 +73,7 @@ msgstr ""
 "مجموعة المستهلَك ويصك رمز MAC ويجيب بـ Set-Cookie. ثم تعيد الصفحة التحميل "
 "بجلسة."
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "// protocol.rst: the challenge round trip. Steps on the left run in the "
 "browser, steps on\n"
@@ -138,7 +140,7 @@ msgstr ""
 "  spacing: 44,\n"
 ")\n"
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "The challenge round trip. Steps on the left run in the browser, steps on "
 "the right in Sibuna."
@@ -146,7 +148,7 @@ msgstr ""
 "دورة التحدي. تجري الخطوات التي على اليسار في المتصفح، والتي على اليمين في "
 "Sibuna."
 
-#: ../../protocol.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:17
 msgid ""
 "A navigation with no valid session reaches the policy engine and is "
 "classified ``CHALLENGE``. Because the request accepts ``text/html``, the "
@@ -167,7 +169,7 @@ msgstr ""
 "مختومة لهذا العميل بوسم BLAKE3 ذي مفتاح بمفتاحها المشتق الخاص، وصالحة مدة "
 "عمر تحدٍّ واحد."
 
-#: ../../protocol.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:18
 msgid ""
 "The interstitial fetches ``GET /__sibuna/challenge.json?path=<original "
 "URL>&need=<ticket>``. A valid ticket decides the challenge: the work is "
@@ -194,11 +196,11 @@ msgstr ""
 "له صيغة قياسية بالحالة ``400``. والتذكرة استرشادية: يظل القبول يفحص مستوى "
 "عمل الجلسة، فلا تكلف التذكرة المعادة أو المزورة حاملها إلا عملًا."
 
-#: ../../protocol.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:19
 msgid "The response is the challenge record:"
 msgstr "الاستجابة هي سجل التحدي:"
 
-#: ../../protocol.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:21
 msgid ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
@@ -206,7 +208,7 @@ msgstr ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
 
-#: ../../protocol.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:25
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
@@ -214,7 +216,7 @@ msgstr ""
 "بالنسبة إلى ``hashcash``، يمثل ``difficulty`` عدد البتات، ويساوي "
 "``challenges`` القيمة ``0``."
 
-#: ../../protocol.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:26
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
@@ -222,25 +224,25 @@ msgstr ""
 "يحله Web Worker بوحدة WebAssembly، أو بمُبرهِن JavaScript إذا لم تتوفر "
 "WebAssembly (الجزء السابع)، ويرسل إما"
 
-#: ../../protocol.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:28
 msgid "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 msgstr "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 
-#: ../../protocol.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:32
 msgid "or"
 msgstr "أو"
 
-#: ../../protocol.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:34
 msgid ""
 "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 msgstr ""
 "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 
-#: ../../protocol.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:38
 msgid "to ``POST /__sibuna/verify``."
 msgstr "إلى ``POST /__sibuna/verify``."
 
-#: ../../protocol.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:39
 msgid ""
 "On success the server answers ``200 {\"status\":\"ok\"}`` with a "
 "``Set-Cookie`` header, and the page reloads its original location. Every "
@@ -250,11 +252,11 @@ msgstr ""
 "``Set-Cookie``، وتعيد الصفحة تحميل موقعها الأصلي. يحمل كل طلب لاحق ملف "
 "تعريف الارتباط، ويُقبل قبل تقييم السياسة."
 
-#: ../../protocol.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:41
 msgid "Why the path travels with the challenge"
 msgstr "لماذا يرافق المسار التحدي"
 
-#: ../../protocol.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:43
 msgid ""
 "The interstitial is served at the protected URL, so the browser knows "
 "where it is. Sending the path lets the server pick the *per-rule* "
@@ -269,11 +271,11 @@ msgstr ""
 "Hashcash)، ويربط تجزئة القاعدة بالرمز، حيث تنقلها ``X-Sibuna-Rule-Hash`` "
 "إلى الخادم الأصلي."
 
-#: ../../protocol.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:45
 msgid "The Stateless Challenge Record"
 msgstr "سجل التحدي عديم الحالة"
 
-#: ../../protocol.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:50
 msgid ""
 "Read the challenge encoder, understand every field's purpose, and see how "
 "the per-challenge nonce is derived without an entropy syscall on the hot "
@@ -282,11 +284,11 @@ msgstr ""
 "اقرأ مرمِّز التحدي، وافهم غرض كل حقل، وانظر كيف تُشتق القيمة المؤقتة لكل "
 "تحدٍّ من دون استدعاء نظام لجلب العشوائية في المسار الساخن."
 
-#: ../../protocol.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:52
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
 msgstr "التنفيذ: ``Coordinator::create_challenge_with_spec``"
 
-#: ../../protocol.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:54
 msgid ""
 "Builds the 36-byte payload, tags it under the challenge key, and "
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
@@ -296,7 +298,7 @@ msgstr ""
 "52 بترميز base64url إلى معرف من 70 محرفًا. في "
 "``crates/challenge/src/coordinator.rs`` (الحزمة ``sibuna-challenge``)."
 
-#: ../../protocol.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:56
 msgid ""
 "pub fn create_challenge_with_spec(\n"
 "    &self,\n"
@@ -388,7 +390,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../protocol.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:100
 msgid ""
 "The identifier is an ``Encoded<70>``: the text lives in an array of "
 "exactly its length, so issuing a challenge never allocates. "
@@ -401,11 +403,11 @@ msgstr ""
 "العمل إلى وحدة المستوى نفسه: بتات Hashcash (64 على الأكثر)، أو عمق PoSW "
 "(``difficulty - 3``، محصورًا بين 4 و24)."
 
-#: ../../protocol.rst:102
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:102
 msgid "Three details deserve attention:"
 msgstr "تستحق ثلاثة تفاصيل الانتباه:"
 
-#: ../../protocol.rst:104
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:104
 msgid ""
 "*Adaptive difficulty.* The coordinator keeps an exponentially weighted "
 "moving average of the challenge issue rate in three atomics. Above a "
@@ -418,7 +420,7 @@ msgstr ""
 "مضاعفة للمعدل بت عمل واحدًا، بحد أقصى ستة. يدفع الإغراق تكلفة تزداد "
 "أسيًا، بينما تحتفظ الحركة الهادئة بالتكلفة الأساسية."
 
-#: ../../protocol.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:105
 msgid ""
 "*The nonce is a PRF output*, keyed by the challenge key over a counter, "
 "the clock, and the fingerprint. It is unique (counter) and unpredictable "
@@ -431,7 +433,7 @@ msgstr ""
 "الخصم حساب حلول مسبقًا لمعرفات لم تُصدر له، ولا يستدعي المسار الساخن نظام "
 "التشغيل أبدًا للحصول على العشوائية."
 
-#: ../../protocol.rst:106
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:106
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
@@ -439,11 +441,11 @@ msgstr ""
 "*الوسم يغطي الصعوبة.* لا يستطيع العميل خفض الصعوبة بتعديل السجل: فسيفشل "
 "الوسم قبل فحص أي إثبات."
 
-#: ../../protocol.rst:108
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:108
 msgid "Verification Order and Single Use"
 msgstr "ترتيب التحقق والاستخدام الواحد"
 
-#: ../../protocol.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:113
 msgid ""
 "Understand why the cheap checks run before the proof, why the challenge "
 "is marked spent only after the proof is valid, and how two concurrent "
@@ -452,11 +454,11 @@ msgstr ""
 "افهم لماذا تسبق الفحوص الرخيصة الإثبات، ولماذا لا يُسجَّل التحدي مُنفَقًا "
 "إلا بعد ثبوت صلاحية الإثبات، وكيف يُحسم تقديمان متزامنان للحل نفسه."
 
-#: ../../protocol.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:115
 msgid "Implementation: ``Coordinator::verify_and_mint``"
 msgstr "التنفيذ: ``Coordinator::verify_and_mint``"
 
-#: ../../protocol.rst:117
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:117
 msgid ""
 "Decodes and authenticates the identifier, checks age and client binding, "
 "verifies the proof for the recorded tier, records the tag as spent, and "
@@ -467,7 +469,7 @@ msgstr ""
 "الإثبات للمستوى المسجل، ويسجل الوسم مُنفَقًا، ويصدر رمز الجلسة. في "
 "``crates/challenge/src/coordinator.rs`` (الحزمة ``sibuna-challenge``)."
 
-#: ../../protocol.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:119
 msgid ""
 "pub fn verify_and_mint(\n"
 "    &self,\n"
@@ -545,7 +547,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../protocol.rst:155
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:155
 msgid ""
 "The order is deliberate. Tag, age, and binding are constant-time checks "
 "that reject garbage before any hashing. A wrong proof must not consume "
@@ -566,7 +568,7 @@ msgstr ""
 "(قيمة ``CLOCK_SKEW_SECONDS`` هي 60) السجلات الصادرة عن عقدة تتقدم ساعتها "
 "بأكثر من دقيقة، وإلا لأطالت هذه السجلات عمر التحدي."
 
-#: ../../protocol.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:157
 msgid ""
 "Errors surface to the client as ``400`` with an Elm-style diagnostic "
 "(Part XII): each ``VerifyError`` converts into "
@@ -581,11 +583,11 @@ msgstr ""
 "``DOUBLE SPEND`` و\\ ``FINGERPRINT MISMATCH`` و\\ ``WRONG SOLUTION TYPE`` "
 "و\\ ``MALFORMED CHALLENGE`` في جسم الاستجابة."
 
-#: ../../protocol.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:159
 msgid "The Session Cookie"
 msgstr "ملف تعريف ارتباط الجلسة"
 
-#: ../../protocol.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:164
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
@@ -593,11 +595,11 @@ msgstr ""
 "اقرأ الرمز القائم على التجزئة ذات المفتاح، وافهم سمات ملف تعريف الارتباط، "
 "واشرح الارتباط بالعميل."
 
-#: ../../protocol.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:166
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
 msgstr "التنفيذ: ``token::mac::mint`` و\\ ``token::mac::verify``"
 
-#: ../../protocol.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:168
 msgid ""
 "Serialises the 40-byte payload, appends the first 16 bytes of keyed "
 "BLAKE3 over it, and verifies with a constant-time comparison. In "
@@ -609,7 +611,7 @@ msgstr ""
 "``crates/challenge/src/token/mac.rs`` (الحزمة ``sibuna-challenge``). "
 "تستدعيه ``Coordinator::verify_cookie`` ببصمة العميل."
 
-#: ../../protocol.rst:170
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:170
 msgid ""
 "pub fn verify(\n"
 "    key: &[u8; 32],\n"
@@ -660,7 +662,7 @@ msgstr ""
 "    Ok(payload)\n"
 "}"
 
-#: ../../protocol.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:195
 msgid ""
 "The tag is checked before the payload is parsed: a payload of another "
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
@@ -670,11 +672,11 @@ msgstr ""
 "``TokenError::InvalidEncoding`` إلا بعد التأكد من أصالتها، ولا تصل "
 "الحمولة المزورة إلى المحلل أبدًا."
 
-#: ../../protocol.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:197
 msgid "The cookie is emitted as"
 msgstr "يُصدر ملف تعريف الارتباط على النحو التالي"
 
-#: ../../protocol.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:199
 msgid ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
@@ -682,7 +684,7 @@ msgstr ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
 
-#: ../../protocol.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:204
 msgid ""
 "``HttpOnly`` keeps it out of page scripts, ``SameSite=Lax`` stops "
 "cross-site replay while allowing top-level navigation, and ``Secure`` is "
@@ -700,7 +702,7 @@ msgstr ""
 "``TokenError::TokenBoundAddressMismatch``؛ ويختبر اختبار الطرف إلى الطرف "
 "\"the cookie is bound to the client identity\" هذا المسار تحديدًا."
 
-#: ../../protocol.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:206
 msgid ""
 "The payload begins with a version byte and the *work level* the holder "
 "paid: the mechanism (Hashcash or PoSW) and the work bits actually solved, "
@@ -729,11 +731,11 @@ msgstr ""
 "cheaper route does not admit a route that demands more work\" الاتجاهين "
 "كليهما."
 
-#: ../../protocol.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:208
 msgid "Forwarded addresses"
 msgstr "العناوين الممررة"
 
-#: ../../protocol.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:211
 msgid ""
 "Behind an ingress the client address arrives in ``X-Forwarded-For``. "
 "Sibuna trusts that header only with ``--trust-forwarded`` (implied in "
@@ -746,11 +748,11 @@ msgstr ""
 "forward-auth). يجب أن يبقيه الوكيل العكسي المكشوف مباشرة للإنترنت معطلًا، "
 "وإلا استطاع أي عميل اختيار ارتباطه ودلو حد المعدل الخاص به."
 
-#: ../../protocol.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:213
 msgid "Exercise 4.1"
 msgstr "تمرين 4.1"
 
-#: ../../protocol.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:215
 msgid ""
 "Sketch the sequence of two browsers behind one NAT address with identical "
 "User-Agents. Which checks do they share, which do they not, and what "
@@ -760,11 +762,11 @@ msgstr ""
 "التي يشتركان فيها، وما التي لا يشتركان فيها، وماذا يحتاج مهاجم على ذلك "
 "NAT لإعادة استخدام ملف تعريف ارتباط المتصفح الآخر؟"
 
-#: ../../protocol.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:217
 msgid "Explain the invariant"
 msgstr "اشرح اللامتغير"
 
-#: ../../protocol.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:219
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."

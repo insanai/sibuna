@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../edge.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:1
 msgid "Part VIII: The Edge Load Balancer"
 msgstr "Teil VIII: Der Edge-Load-Balancer"
 
-#: ../../edge.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:4
 msgid ""
 "The earlier Parts built a gate and a shield in front of one origin. This "
 "Part follows a connection through a node that serves many origins: it "
@@ -42,11 +42,11 @@ msgstr ""
 "0015 ist das übergeordnete Dokument, und jeder Abschnitt nennt das "
 "Dokument, das seinen Entwurf enthält."
 
-#: ../../edge.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:6
 msgid "Objectives"
 msgstr "Lernziele"
 
-#: ../../edge.rst:8
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:8
 msgid ""
 "By the end of this chapter, we should be able to explain why a flow "
 "belongs to one thread and why a reload fails no request, describe how a "
@@ -68,11 +68,11 @@ msgstr ""
 "Ergebnisregel eines Hooks formulieren können und die verbleibenden Lücken "
 "benennen können."
 
-#: ../../edge.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:10
 msgid "The Model"
 msgstr "Das Modell"
 
-#: ../../edge.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:13
 msgid ""
 "A node is described by four kinds of object. A *frontend* is a set of "
 "bound addresses and a protocol: ``tcp``, ``udp`` or ``http``. A *route* "
@@ -98,7 +98,7 @@ msgstr ""
 "nach aus; der erste Treffer wählt einen Pool, und der Standard-Pool "
 "übernimmt den Rest."
 
-#: ../../edge.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:15
 msgid ""
 "The unit of work is a *flow*. A TCP stream is a flow from accept to "
 "close. A UDP mapping, the association between one client address and one "
@@ -119,11 +119,11 @@ msgstr ""
 "Anfragen einer Keep-alive-Verbindung oder die Streams einer "
 "HTTP/2-Verbindung verschiedene Server erreichen können."
 
-#: ../../edge.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:17
 msgid "Flows Belong to One Thread"
 msgstr "Flüsse gehören zu einem Thread"
 
-#: ../../edge.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:20
 msgid ""
 "Each flow is owned by exactly one thread at a time. The edge worker "
 "accepts the connections of every frontend, owns the UDP mappings and the "
@@ -145,7 +145,7 @@ msgstr ""
 "schützt keine Sperre den Zustand eines Flusses, und ein Fehler in einer "
 "Verbindung schließt nur diese Verbindung."
 
-#: ../../edge.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:22
 msgid ""
 "The alternative is one table of flows that every thread reads and writes. "
 "It needs a lock for each access, or a lock-free structure in which every "
@@ -166,7 +166,7 @@ msgstr ""
 "geteilt: das Flussbudget, die Zahl aktiver Flüsse pro Server, die "
 "Zustandsflags und die veröffentlichte Routingtabelle."
 
-#: ../../edge.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:24
 msgid ""
 "The price of ownership is that a flow cannot move to a less busy thread. "
 "The assignment by fewest connections keeps the connection counts of the "
@@ -181,11 +181,11 @@ msgstr ""
 "gleicht Zahlen aus, nicht Arbeit: Eine beschäftigte und eine untätige "
 "Verbindung zählen gleich."
 
-#: ../../edge.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:26
 msgid "An Immutable Routing Snapshot"
 msgstr "Ein unveränderlicher Routing-Schnappschuss"
 
-#: ../../edge.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:29
 msgid ""
 "The routing table changes rarely and is read by every request. Sibuna "
 "therefore separates the two. A writer, which is a reload, an admin "
@@ -207,11 +207,11 @@ msgstr ""
 "Unterscheiden sie sich, nimmt er den Mutex einmal und holt den neuen "
 "Schnappschuss (SID 0019)."
 
-#: ../../edge.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:31
 msgid "Implementation: ``Shared::read``"
 msgstr "Implementierung: ``Shared::read``"
 
-#: ../../edge.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:33
 msgid ""
 "Runs a visitor on the current routing snapshot. The usual call compares "
 "the generation with a ``thread_local`` cache of at most eight entries and "
@@ -222,7 +222,7 @@ msgstr ""
 "von höchstens acht Einträgen und nimmt keine Sperre. In "
 "``crates/lb/src/http.rs`` (Crate ``sibuna-lb``)."
 
-#: ../../edge.rst:35
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:35
 msgid ""
 "fn read<R>(&self, visit: impl Fn(&Snapshot) -> R) -> R {\n"
 "    let generation = self.generation.load(Ordering::Acquire);\n"
@@ -256,7 +256,7 @@ msgstr ""
 "    visit(&snapshot)\n"
 "}"
 
-#: ../../edge.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:52
 msgid ""
 "The firewall decides a request under policy generation :math:`n`, and the "
 "route table selects its server a moment later. A reload may fall between "
@@ -279,7 +279,7 @@ msgstr ""
 "mit etwa 50.000 Anfragen in jedem von drei Läufen. Eine Anfrage, die zwei "
 "Revisionen zurückliegt, wird weiterhin abgelehnt."
 
-#: ../../edge.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:54
 msgid ""
 "A flow keeps its server across a reload for a simpler reason: its "
 "reservation does not live in the snapshot. A reservation is a ``Ticket`` "
@@ -299,11 +299,11 @@ msgstr ""
 "des Tickets seinen Platz an diesen Datensatz zurück, gleich welche "
 "Revision jetzt bedient."
 
-#: ../../edge.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:56
 msgid "Implementation: ``Pool::reserve_with``"
 msgstr "Implementierung: ``Pool::reserve_with``"
 
-#: ../../edge.rst:58
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:58
 msgid ""
 "Picks a server, counts itself on it with one atomic addition, and then "
 "checks the count. When another thread took the last place meanwhile, it "
@@ -316,12 +316,16 @@ msgstr ""
 "achtmal. So bedient ein Server nie mehr als sein ``max_flows``. In "
 "``crates/lb/src/pool.rs``."
 
-#: ../../edge.rst:60 ../../edge.rst:112 ../../edge.rst:232
-#: ../../edge.rst:278 ../../edge.rst:324 ../../edge.rst:399
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:60
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:112
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:232
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:278
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:403
 msgid "Explain the invariant"
 msgstr "Die Invariante erklären"
 
-#: ../../edge.rst:62
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:62
 msgid ""
 "Two threads reserve on a server with ``max_flows`` 10 that holds 9 flows. "
 "Show that at most one of them keeps the place, whatever the interleaving "
@@ -335,11 +339,11 @@ msgstr ""
 "erklären, warum ein Neuladen, das diesen Server aus der Datei entfernt, "
 "seine 9 Flüsse nicht beendet, und wann ihre Plätze zurückgegeben werden."
 
-#: ../../edge.rst:64
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:64
 msgid "Workers That Wait Without Threads"
 msgstr "Worker, die ohne Threads warten"
 
-#: ../../edge.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:67
 msgid ""
 "The firewall of the earlier Parts serves each connection on a thread. "
 "Beside HAProxy 3.0, that design reached 59% of HAProxy's plaintext HTTP "
@@ -354,11 +358,11 @@ msgstr ""
 "(SID 0015). SID 0016 ersetzte die Threads des Edge durch "
 "ereignisgesteuerte Worker."
 
-#: ../../edge.rst:69
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:69
 msgid "The Path of a Connection"
 msgstr "Der Weg einer Verbindung"
 
-#: ../../edge.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:73
 msgid ""
 "A client reaches the kernel listener, then the edge worker, which applies "
 "the connection rate, the flow budget and the connection hooks. A TCP flow "
@@ -380,7 +384,7 @@ msgstr ""
 "an, wählen einen Server aus dem Routing-Schnappschuss und tauschen dann "
 "Daten mit dem Server aus."
 
-#: ../../edge.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:73
 msgid ""
 "digraph edge_path {\n"
 "  // edge.rst: the path of a connection through a node. Each box is owned "
@@ -515,7 +519,7 @@ msgstr ""
 "  choose -> shared [constraint=false];\n"
 "}"
 
-#: ../../edge.rst:73
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:73
 msgid ""
 "The path of a connection through a node. Each box is owned by one thread "
 "or one group of threads; the dashed edges are the shared, read-mostly "
@@ -525,7 +529,7 @@ msgstr ""
 "Thread oder einer Gruppe von Threads; die gestrichelten Kanten sind der "
 "gemeinsame, überwiegend gelesene Zustand."
 
-#: ../../edge.rst:76
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:76
 msgid ""
 "A QUIC client of an HTTP/3 frontend does not pass the edge worker: the "
 "protocol runtime accepts it, applies the per-client bound through an "
@@ -537,11 +541,11 @@ msgstr ""
 "eine Zulassungsfunktion an und befragt die Verbindungs-Hooks, sobald der "
 "ClientHello gelesen ist (SID 0017, SID 0030)."
 
-#: ../../edge.rst:78
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:78
 msgid "Readiness and the Cost of Waiting"
 msgstr "Bereitschaft und die Kosten des Wartens"
 
-#: ../../edge.rst:81
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:81
 msgid ""
 "The edge starts one HTTP worker for each processor the process may use, "
 "up to 64. A worker is one thread with one poller (``epoll`` on Linux). "
@@ -560,7 +564,7 @@ msgstr ""
 "Arbeit, die diese Bytes erlauben, und kehrt in die Schleife zurück. Kein "
 "Thread wartet je auf einen langsamen Client."
 
-#: ../../edge.rst:83
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:83
 msgid ""
 "A connection is a record in the worker and a socket in the kernel. While "
 "it is idle it holds no buffer. When its socket becomes readable the "
@@ -585,7 +589,7 @@ msgstr ""
 "des Kernels, etwa 3,4 KiB vor jedem Puffer, ist dann der größere "
 "Kostenfaktor."
 
-#: ../../edge.rst:85
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:85
 msgid ""
 "The firewall decision did not become asynchronous. It needs no I/O, so it "
 "stays the synchronous function of the earlier Parts. The worker calls it "
@@ -610,11 +614,11 @@ msgstr ""
 "Antworten, im Ganzen, in zufälligen Stücken und byteweise eingespeist, "
 "sind die Bytes und die Ergebnisse gleich."
 
-#: ../../edge.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:87
 msgid "Every resource has a bound, and every state has a deadline:"
 msgstr "Jede Ressource hat eine Grenze, und jeder Zustand hat eine Frist:"
 
-#: ../../edge.rst:89
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:89
 msgid ""
 "The worker reads from a socket only while the buffer toward the other "
 "side is below 64 KiB. A slow reader thereby stops the reads of its peer."
@@ -623,7 +627,7 @@ msgstr ""
 "anderen Seite unter 64 KiB liegt. Ein langsamer Leser hält damit das "
 "Lesen seines Gegenübers an."
 
-#: ../../edge.rst:90
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:90
 msgid ""
 "One readiness event reads each socket of a connection at most once, at "
 "most 64 KiB, and causes at most eight rounds of work. A bulk transfer "
@@ -634,7 +638,7 @@ msgstr ""
 "Massenübertragung kann die kleinen Anfragen desselben Workers nicht "
 "aushungern."
 
-#: ../../edge.rst:91
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:91
 msgid ""
 "A timer wheel with one-second slots holds one deadline per connection: "
 "the idle timeout, a slow head, a slow body, a connect of five seconds, "
@@ -645,7 +649,7 @@ msgstr ""
 "Verbindungsaufbau von fünf Sekunden, Schweigen des Servers, einen "
 "Schreibvorgang ohne Fortschritt."
 
-#: ../../edge.rst:92
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:92
 msgid ""
 "A connection serves at most 4,096 requests. A worker keeps at most 64 "
 "idle server sockets per address and 1,024 in all."
@@ -653,7 +657,7 @@ msgstr ""
 "Eine Verbindung bedient höchstens 4.096 Anfragen. Ein Worker hält "
 "höchstens 64 untätige Server-Sockets pro Adresse und insgesamt 1.024."
 
-#: ../../edge.rst:94
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:94
 msgid ""
 "With these workers, plaintext HTTP at 256 connections reached 229,139 "
 "requests per second against HAProxy's 243,864, which is 94%, with a 99th "
@@ -663,11 +667,11 @@ msgstr ""
 "229.139 Anfragen pro Sekunde gegenüber 243.864 bei HAProxy, also 94 %, "
 "mit einem 99. Perzentil von 2,60 ms (SID 0016)."
 
-#: ../../edge.rst:96
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:96
 msgid "Implementation: ``Workers::submit``"
 msgstr "Implementierung: ``Workers::submit``"
 
-#: ../../edge.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:98
 msgid ""
 "Gives an accepted connection to the worker that serves the fewest "
 "connections, raises that worker's count and wakes its poller. The "
@@ -679,11 +683,11 @@ msgstr ""
 "Verbindung bleibt dann auf diesem Worker. In "
 "``cmd/sibuna/src/edge/workers.rs`` (Crate ``sibuna``)."
 
-#: ../../edge.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:100
 msgid "One Hop Fewer for HTTP/2 and HTTP/3"
 msgstr "Ein Hop weniger für HTTP/2 und HTTP/3"
 
-#: ../../edge.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:103
 msgid ""
 "HTTP/2 and HTTP/3 are terminated by a protocol runtime that uses "
 "maintained libraries (rustls, hyper, quinn with h3). At first the runtime "
@@ -701,7 +705,7 @@ msgstr ""
 "Laufzeit, bevor ein Worker die Anfrage sah, und weitere 30 us im Worker, "
 "um dieselbe Anfrage von einem Socket zu lesen und zu entscheiden."
 
-#: ../../edge.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:105
 msgid ""
 "The repair is to call the decision as a function on the thread that "
 "decoded the stream. The ingress crate defines plain data, ``Offer`` (the "
@@ -733,11 +737,11 @@ msgstr ""
 "CONTINUATION-Fluten und HPACK-Expansion dann zu unserer eigenen Arbeit "
 "würde."
 
-#: ../../edge.rst:107
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:107
 msgid "TLS on the Workers"
 msgstr "TLS auf den Workern"
 
-#: ../../edge.rst:110
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:110
 msgid ""
 "HTTPS kept one crossing: the runtime ended TLS and copied the clear bytes "
 "to a worker through a socket pair. SID 0024 lets the worker end the TLS "
@@ -769,7 +773,7 @@ msgstr ""
 "Anfragen pro Sekunde, während HAProxy mit denselben Headern 153.080 "
 "schafft."
 
-#: ../../edge.rst:114
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:114
 msgid ""
 "\"A worker never waits for a peer.\" Explain how this sentence, together "
 "with the 64 KiB high-water mark, guarantees that a client which stops "
@@ -784,11 +788,11 @@ msgstr ""
 "einen Worker noch für einen Roundtrip festhält (siehe den Abschnitt über "
 "Hooks)."
 
-#: ../../edge.rst:116
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:116
 msgid "Choosing a Server"
 msgstr "Einen Server wählen"
 
-#: ../../edge.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:119
 msgid ""
 "A new flow first filters the servers of its pool. A server is *eligible* "
 "when it is not the frontend's own address, not drained, healthy by its "
@@ -811,7 +815,7 @@ msgstr ""
 "wählbar ist. Backups werden nur gewählt, wenn kein primärer Server "
 "wählbar ist."
 
-#: ../../edge.rst:121
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:121
 msgid ""
 "Among the eligible servers the choice is made in a fixed order: a server "
 "named by a sticky cookie or by the learned table, then the server that "
@@ -830,11 +834,11 @@ msgstr ""
 "ganzzahligen Gewichten in Einheiten von 1/256, sodass Slow Start ein "
 "Gewicht in feinen Schritten senken kann."
 
-#: ../../edge.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:123
 msgid "Weighted Round Robin"
 msgstr "Weighted Round Robin"
 
-#: ../../edge.rst:126
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:126
 msgid ""
 "Round robin is the smooth weighted round robin of nginx (SID 0019). Each "
 "eligible server holds a credit. At each choice every server gains its "
@@ -850,11 +854,11 @@ msgstr ""
 "Wahlen kehren die Guthaben zu ihrem Ausgangswert zurück, und Server "
 ":math:`i` wurde genau :math:`w_i`-mal gewählt."
 
-#: ../../edge.rst:128
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:128
 msgid "Worked example: three servers of weights 5, 1 and 1"
 msgstr "Durchgerechnetes Beispiel: drei Server mit den Gewichten 5, 1 und 1"
 
-#: ../../edge.rst:130
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:130
 msgid ""
 ":math:`W = 7`. All credits start at 0. The table shows the credits after "
 "the gain, the choice, and the chosen server's credit after it pays 7. "
@@ -865,116 +869,119 @@ msgstr ""
 "Servers, nachdem er 7 gezahlt hat. Bei Gleichstand gewinnt der erste "
 "Server."
 
-#: ../../edge.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:133
 msgid "Step"
 msgstr "Schritt"
 
-#: ../../edge.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:133
 msgid "a, b, c"
 msgstr ""
 
-#: ../../edge.rst:133
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:133
 msgid "Chosen"
 msgstr "Gewählt"
 
-#: ../../edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
 msgid "1"
 msgstr ""
 
-#: ../../edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
 msgid "5, 1, 1"
 msgstr ""
 
-#: ../../edge.rst:135 ../../edge.rst:136 ../../edge.rst:138
-#: ../../edge.rst:140 ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "a"
 msgstr ""
 
-#: ../../edge.rst:135
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:135
 msgid "-2, 1, 1"
 msgstr ""
 
-#: ../../edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
 msgid "2"
 msgstr ""
 
-#: ../../edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
 msgid "3, 2, 2"
 msgstr ""
 
-#: ../../edge.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:136
 msgid "-4, 2, 2"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "3"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "1, 3, 3"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "b"
 msgstr ""
 
-#: ../../edge.rst:137
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:137
 msgid "1, -4, 3"
 msgstr ""
 
-#: ../../edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
 msgid "4"
 msgstr ""
 
-#: ../../edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
 msgid "6, -3, 4"
 msgstr ""
 
-#: ../../edge.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:138
 msgid "-1, -3, 4"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "5"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "4, -2, 5"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "c"
 msgstr ""
 
-#: ../../edge.rst:139
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:139
 msgid "4, -2, -2"
 msgstr ""
 
-#: ../../edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
 msgid "6"
 msgstr ""
 
-#: ../../edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
 msgid "9, -1, -1"
 msgstr ""
 
-#: ../../edge.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:140
 msgid "2, -1, -1"
 msgstr ""
 
-#: ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "7"
 msgstr ""
 
-#: ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "7, 0, 0"
 msgstr ""
 
-#: ../../edge.rst:141
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:141
 msgid "0, 0, 0"
 msgstr ""
 
-#: ../../edge.rst:144
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:144
 msgid ""
 "The sequence is ``a a b a c a a``: five turns for ``a``, one each for "
 "``b`` and ``c``, and the light servers are spread between the heavy "
@@ -986,11 +993,11 @@ msgstr ""
 "Servers verteilt, statt sich am Ende zu ballen. Die Guthaben nach Schritt "
 "7 sind die des Anfangs, sodass sich das Muster wiederholt."
 
-#: ../../edge.rst:146
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:146
 msgid "Least Connections and Two Choices"
 msgstr "Least Connections und zwei Wahlen"
 
-#: ../../edge.rst:149
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:149
 msgid ""
 "Weighted least connections, the default of a standalone pool, chooses the "
 "server with the fewest active flows per unit of weight. The comparison "
@@ -1007,7 +1014,7 @@ msgstr ""
 "zugelassenen Anfragen aufgelöst, wieder pro Gewichtseinheit, und ein "
 "Backup rangiert immer hinter einem primären Server."
 
-#: ../../edge.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:151
 msgid ""
 "The power of two choices with a peak-weighted moving latency "
 "(``p2c_pewma``) hashes the flow to two distinct eligible servers and "
@@ -1028,11 +1035,11 @@ msgstr ""
 "für jede Sekunde ohne Stichprobe auf halbem Weg zurück zu ihrem Ruhewert "
 "von 1 ms."
 
-#: ../../edge.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:153
 msgid "Consistent Hashing: the Problem"
 msgstr "Konsistentes Hashing: das Problem"
 
-#: ../../edge.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:156
 msgid ""
 "Several nodes of a cluster should send the same flow to the same server "
 "without talking to each other, and a change of the server set should move "
@@ -1045,11 +1052,11 @@ msgstr ""
 "Server :math:`h \\bmod N` für einen Flusshash :math:`h`, verfehlt die "
 "zweite Anforderung deutlich."
 
-#: ../../edge.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:158
 msgid "Worked example: one of five servers leaves"
 msgstr "Durchgerechnetes Beispiel: einer von fünf Servern scheidet aus"
 
-#: ../../edge.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:160
 msgid ""
 "Under modulo hashing, a flow with hash :math:`h` goes to position "
 ":math:`h \\bmod 5`, and after the departure to position :math:`h \\bmod "
@@ -1076,7 +1083,7 @@ msgstr ""
 "mussten. Allgemein behält ein Schritt von :math:`N` auf :math:`N - 1` "
 "Server :math:`(N-1)/(N(N-1)) = 1/N` der Flüsse."
 
-#: ../../edge.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:162
 msgid ""
 "A consistent method moves only the departed server's flows: :math:`1/5 = "
 "20\\%`. Rendezvous hashing, below, achieves exactly that. Sibuna's Maglev "
@@ -1104,11 +1111,11 @@ msgstr ""
 "Servern hielt der ausgeschiedene 9,999 % bis 10,000 % der Slots, und 120 "
 "bis 181 weitere Slots, 0,18 % bis 0,28 %, wechselten den Besitzer."
 
-#: ../../edge.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:164
 msgid "Maglev as Sibuna Builds It"
 msgstr "Maglev, wie Sibuna es baut"
 
-#: ../../edge.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:167
 msgid ""
 "Maglev (Eisenbud et al., 2016) fills a lookup table of :math:`M` slots. "
 "Each server derives two numbers from its name, an offset and a stride, "
@@ -1136,11 +1143,11 @@ msgstr ""
 "und die Clientadresse mit ihrem Port gehasht werden: ein Hash und ein "
 "Speicherzugriff."
 
-#: ../../edge.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:169
 msgid "Implementation: ``Table::build`` and ``Table::primary``"
 msgstr "Implementierung: ``Table::build`` und ``Table::primary``"
 
-#: ../../edge.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:171
 msgid ""
 "``build`` fills the 65,537 slots from servers in stable name order, "
 "skipping backups, with smooth weighted turns. ``primary`` hashes the "
@@ -1153,7 +1160,7 @@ msgstr ""
 "Client-Endpunkt, IPv4 in IPv6 abgebildet, auf einen Slot. In "
 "``crates/lb/src/maglev.rs``."
 
-#: ../../edge.rst:173
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:173
 msgid ""
 "for _ in 0..SIZE {\n"
 "    let mut best = 0;\n"
@@ -1173,7 +1180,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:192
 msgid ""
 "Every node builds the same table from the same file, so every node sends "
 "a flow with the same addresses to the same server. This is why the "
@@ -1192,11 +1199,11 @@ msgstr ""
 "jeder Knoten Server ohnehin nach seinen eigenen Zustandsprüfungen "
 "ausschließt."
 
-#: ../../edge.rst:194
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:194
 msgid "Bounded Loads"
 msgstr "Beschränkte Lasten"
 
-#: ../../edge.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:197
 msgid ""
 "A hash spreads flows evenly only on average. A popular client range can "
 "still crowd one server. Consistent hashing with bounded loads (Mirrokni, "
@@ -1215,11 +1222,11 @@ msgstr ""
 "und :math:`a_p` die des Primärservers :math:`p`. Der neue Fluss geht an "
 "den Primärserver, wenn dieser wählbar ist und"
 
-#: ../../edge.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:199
 msgid "a_p < \\left\\lceil \\frac{c\\,(L + 1)\\, w_p}{W} \\right\\rceil,"
 msgstr ""
 
-#: ../../edge.rst:203
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:203
 msgid ""
 "with :math:`c` given in percent as ``load_factor_pct`` (125 by default, "
 "at least 100). Otherwise the flow goes to the pool's fallback: weighted "
@@ -1231,11 +1238,11 @@ msgstr ""
 "Ausweichweg des Pools: Weighted Least Connections oder Power of Two "
 "Choices, wenn ``fallback`` den Wert ``pewma`` hat."
 
-#: ../../edge.rst:205
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:205
 msgid "Worked example: the bound with c = 1.25"
 msgstr "Durchgerechnetes Beispiel: die Grenze mit c = 1,25"
 
-#: ../../edge.rst:207
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:207
 msgid ""
 "Four servers of equal weight hold :math:`L = 99` flows, and a hundredth "
 "arrives. The bound is :math:`\\lceil 1.25 \\times 100 / 4 \\rceil = "
@@ -1257,7 +1264,7 @@ msgstr ""
 "1.25 \\times 40 \\times 3/4 \\rceil = \\lceil 37.5 \\rceil = 38` und "
 ":math:`\\lceil 1.25 \\times 40 / 4 \\rceil = \\lceil 12.5 \\rceil = 13`."
 
-#: ../../edge.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:209
 msgid ""
 "The overflow always finds a server below its bound. Suppose every server "
 ":math:`i` held at least :math:`c(L+1)w_i/W` flows. Summing over the "
@@ -1270,7 +1277,7 @@ msgstr ""
 "Mit :math:`c = 1.25` und vier gleichen Servern können höchstens drei "
 "gleichzeitig an der Grenze stehen."
 
-#: ../../edge.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:211
 msgid ""
 "With the least-connections fallback, and all servers eligible, one "
 "admission keeps every server within its cap: the hash path admits only "
@@ -1300,11 +1307,11 @@ msgstr ""
 "nächsten Server einer konsistenten Reihenfolge weiter, sodass zwei Knoten "
 "einen überlaufenden Fluss auf verschiedene Server setzen können."
 
-#: ../../edge.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:213
 msgid "Rendezvous Hashing for Source Stickiness"
 msgstr "Rendezvous-Hashing für Quell-Stickiness"
 
-#: ../../edge.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:216
 msgid ""
 "A pool with ``sticky: \"source\"`` sends each client address to the same "
 "server. It uses weighted rendezvous hashing (SID 0019). For client "
@@ -1316,11 +1323,11 @@ msgstr ""
 "Für Client :math:`x` und Server :math:`i` liefert der Hash eine Zahl "
 ":math:`u_i \\in (0, 1]`, und der *Abstand* ist"
 
-#: ../../edge.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:218
 msgid "d_i = \\frac{-\\log_2 u_i}{w_i}."
 msgstr ""
 
-#: ../../edge.rst:222
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:222
 msgid ""
 "The client goes to the nearest eligible server. The choice follows the "
 "weights exactly. Since :math:`-\\ln u_i` is exponentially distributed "
@@ -1339,7 +1346,7 @@ msgstr ""
 ":math:`i` angenommen. Die Basis des Logarithmus ändert alle Abstände um "
 "denselben Faktor und keine Rangfolge."
 
-#: ../../edge.rst:224
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:224
 msgid ""
 "The disruption is exactly the minimum. When server :math:`k` leaves, a "
 "client whose nearest server was not :math:`k` keeps it, because removing "
@@ -1358,7 +1365,7 @@ msgstr ""
 "und vergleicht :math:`d_i < d_j` als :math:`c_i w_j < c_j w_i` ohne "
 "Division."
 
-#: ../../edge.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:226
 msgid ""
 "Ranking every server for every request costs one hash and one logarithm "
 "per server. So the pool precomputes a table of 1,021 slots. A client "
@@ -1383,11 +1390,11 @@ msgstr ""
 "Gewicht 1 in einem Pool mit Gewicht 1.000 bedient einen Slot, nicht ein "
 "Tausendstel der Clients."
 
-#: ../../edge.rst:228
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:228
 msgid "Implementation: ``Pool::home`` and ``sticky::distance``"
 msgstr "Implementierung: ``Pool::home`` und ``sticky::distance``"
 
-#: ../../edge.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:230
 msgid ""
 "``home`` hashes the client to a slot and returns the first eligible "
 "server of the slot's four, falling back to ranking the pool. ``distance`` "
@@ -1401,7 +1408,7 @@ msgstr ""
 "\\log_2(\\mathrm{draw})` mit ihrem Gewicht. In "
 "``crates/lb/src/pool/extra.rs`` und ``crates/lb/src/sticky.rs``."
 
-#: ../../edge.rst:234
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:234
 msgid ""
 "Rendezvous hashing moves exactly the departed server's clients; the "
 "Maglev table moves them and about 0.1% more. Explain where the excess "
@@ -1416,11 +1423,11 @@ msgstr ""
 "aber, die morgen denselben Server finden müssen, Rendezvous-Hashing "
 "verwendet."
 
-#: ../../edge.rst:236
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:236
 msgid "Health, Slow Start, Draining and Failover"
 msgstr "Zustand, Slow Start, Draining und Failover"
 
-#: ../../edge.rst:239
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:239
 msgid ""
 "A server can be out of rotation for five reasons, and each has its own "
 "way back. Active probes and passive health judge the server; a failed "
@@ -1433,7 +1440,7 @@ msgstr ""
 "Verbindungsaufbau beurteilt einen Versuch; ein Draining ist das Wort des "
 "Betreibers; Slow Start regelt die Rückkehr."
 
-#: ../../edge.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:242
 msgid ""
 "In service leads to Down after fall failed probes, to Ejected after "
 "consecutive request failures, to Marked after a failed connect, and to "
@@ -1450,7 +1457,7 @@ msgstr ""
 "nach zwei Sekunden, „Im Draining“ bei erneuter Zulassung. Jede Rückkehr "
 "führt zu „Hochfahren“, das nach der Rampe zu „In Betrieb“ führt."
 
-#: ../../edge.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:242
 msgid ""
 "digraph server_states {\n"
 "  // edge.rst: the life of a server in a pool. Only \"In service\" and "
@@ -1535,7 +1542,7 @@ msgstr ""
 "penwidth=1.1];\n"
 "}"
 
-#: ../../edge.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:242
 msgid ""
 "The life of a server in a pool. Only \"In service\" and \"Ramping\" take "
 "new flows; slow start applies when it is configured."
@@ -1543,7 +1550,7 @@ msgstr ""
 "Das Leben eines Servers in einem Pool. Nur „In Betrieb“ und „Hochfahren“ "
 "nehmen neue Flüsse an; Slow Start gilt, wenn es konfiguriert ist."
 
-#: ../../edge.rst:245
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:245
 msgid ""
 "*Active probes* connect, or send ``GET``, at an interval. A server starts "
 "in service, leaves after ``fall`` failures in a row and returns after "
@@ -1578,7 +1585,7 @@ msgstr ""
 "laufen. Ein Draining überdauert ein Neuladen, solange die Datei den "
 "Server noch unter derselben Adresse nennt (SID 0018)."
 
-#: ../../edge.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:247
 msgid ""
 "*Slow start* gives a returning server a ramp :math:`R`. A server of "
 "configured weight :math:`W` that entered service :math:`t` ago has the "
@@ -1588,7 +1595,7 @@ msgstr ""
 "Server mit konfiguriertem Gewicht :math:`W`, der vor :math:`t` in Betrieb "
 "gegangen ist, hat in Einheiten von 1/256 das effektive Gewicht"
 
-#: ../../edge.rst:249
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:249
 msgid ""
 "w(t) = \\max\\left(1, \\left\\lfloor \\frac{256\\, W\\, t}{R} "
 "\\right\\rfloor\\right) \\text{ for } t < R, \\qquad w(t) = 256\\, W "
@@ -1598,7 +1605,7 @@ msgstr ""
 "\\right\\rfloor\\right) \\text{ für } t < R, \\qquad w(t) = 256\\, W "
 "\\text{ sonst.}"
 
-#: ../../edge.rst:253
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:253
 msgid ""
 "The weight is never zero, never above the configured weight, and never "
 "decreases while the server stays in service. Servers first seen together, "
@@ -1618,11 +1625,11 @@ msgstr ""
 "Gewicht 4 bei vollem Gewicht (1.024 Einheiten) gibt ihm Round Robin "
 ":math:`256/1280 = 20\\%` der Runden statt 50 %."
 
-#: ../../edge.rst:255
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:255
 msgid "Failover"
 msgstr "Failover"
 
-#: ../../edge.rst:258
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:258
 msgid ""
 "A request moves to another server only when sending it twice does no "
 "harm. A failed connect may always move: the server received nothing. "
@@ -1638,11 +1645,11 @@ msgstr ""
 "HTTP/3-Clients der Laufzeit fragen alle sie, sodass sie nicht "
 "auseinanderdriften können (SID 0019)."
 
-#: ../../edge.rst:260
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:260
 msgid "Implementation: ``recover``"
 msgstr "Implementierung: ``recover``"
 
-#: ../../edge.rst:262
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:262
 msgid ""
 "Decides what follows the loss of a server after the connection was made: "
 "reconnect to the same server, move to another, or fail. In "
@@ -1652,7 +1659,7 @@ msgstr ""
 "folgt: erneute Verbindung zum selben Server, Umzug zu einem anderen oder "
 "Fehlschlag. In ``crates/net/src/route.rs`` (Crate ``sibuna-net``)."
 
-#: ../../edge.rst:264
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:264
 msgid ""
 "pub fn recover(lost: Lost) -> Recovery {\n"
 "    if !(lost.unanswered && lost.kept && (lost.idempotent || "
@@ -1666,7 +1673,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:276
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:276
 msgid ""
 "A request is sent again only while no response byte arrived, only when "
 "the node still holds all of it (a body of at most 64 KiB that ended "
@@ -1692,7 +1699,7 @@ msgstr ""
 "Anfrage versucht daher keinen Server zweimal und höchstens ``retries + "
 "1`` Server."
 
-#: ../../edge.rst:280
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:280
 msgid ""
 "A ``POST`` with a 2 KiB body loses its server after the request was "
 "written and before any response byte. Trace ``recover`` and explain why "
@@ -1707,11 +1714,11 @@ msgstr ""
 "Server mit HTTP/2 ``REFUSED_STREAM`` geantwortet hat, und erneut "
 "nachverfolgen."
 
-#: ../../edge.rst:282
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:282
 msgid "Admission at the Socket"
 msgstr "Zulassung am Socket"
 
-#: ../../edge.rst:285
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:285
 msgid ""
 "An application filter can shed work only after the traffic reaches the "
 "host. The cheapest refusal is therefore the earliest one, and SID 0015 "
@@ -1723,7 +1730,7 @@ msgstr ""
 "und SID 0015 ordnet die Stufen so, dass jede weniger kostet als die "
 "nächste. SID 0032 hat sie für TCP- und UDP-Frontends vervollständigt."
 
-#: ../../edge.rst:287
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:287
 msgid ""
 "*Kernel listener admission.* ``defer_accept`` sets ``TCP_DEFER_ACCEPT`` "
 "on Linux: the kernel gives the node a connection only when its first "
@@ -1740,7 +1747,20 @@ msgstr ""
 "Privilegien; lehnt die Plattform eines ab, vermerkt der Knoten "
 "``EDGE013`` und arbeitet ohne."
 
-#: ../../edge.rst:288
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:288
+msgid ""
+"*Bans.* The ban table that the HTTP firewall shares with the packet "
+"worker refuses a banned address at accept on a TCP frontend and before a "
+"UDP mapping opens (SID 0034). ``auto_ban`` bans an address that keeps "
+"breaking its limits, on every node."
+msgstr ""
+"*Sperren.* Die Sperrtabelle, die die HTTP-Firewall mit dem Paket-Worker "
+"teilt, weist eine gesperrte Adresse auf einem TCP-Frontend schon bei der "
+"Annahme ab und bevor sich eine UDP-Zuordnung öffnet (SID 0034). "
+"``auto_ban`` sperrt eine Adresse, die ihre Limits immer wieder "
+"überschreitet, auf jedem Knoten."
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:289
 msgid ""
 "*Connection rate.* ``rate_limit.conn_per_10s`` per source IPv4 address or "
 "IPv6 /64, and ``udp_defense.threshold_pps`` for datagrams."
@@ -1748,22 +1768,39 @@ msgstr ""
 "*Verbindungsrate.* ``rate_limit.conn_per_10s`` pro IPv4-Quelladresse oder "
 "IPv6-/64-Netz und ``udp_defense.threshold_pps`` für Datagramme."
 
-#: ../../edge.rst:289
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:290
 msgid ""
 "*The flow budget.* One slot per client connection or UDP mapping, "
 "node-wide, up to ``global.max_flows`` (8,192 by default, at most "
-"1,000,000). UDP mappings take at most ``global.max_udp_flows`` of it, "
-"because their sources are not validated. HTTP adds "
-"``http.max_connections`` and ``http.max_connections_per_ip``."
+"1,000,000). A frontend may cap its own flows with ``max_flows`` and the "
+"flows of one address with ``max_flows_per_ip``. UDP mappings take at most "
+"``global.max_udp_flows`` of it, because their sources are not validated, "
+"and ``udp_defense.total_pps`` keeps half the packet budget of a UDP "
+"frontend for confirmed mappings. HTTP adds ``http.max_connections`` and "
+"``http.max_connections_per_ip``."
 msgstr ""
 "*Das Flussbudget.* Ein Slot pro Clientverbindung oder UDP-Zuordnung, "
 "knotenweit, bis zu ``global.max_flows`` (standardmäßig 8.192, höchstens "
-"1.000.000). UDP-Zuordnungen nehmen davon höchstens "
-"``global.max_udp_flows`` ein, weil ihre Quellen nicht validiert sind. "
-"HTTP fügt ``http.max_connections`` und ``http.max_connections_per_ip`` "
-"hinzu."
+"1.000.000). Ein Frontend kann seine eigenen Flüsse mit ``max_flows`` "
+"begrenzen und die Flüsse einer Adresse mit ``max_flows_per_ip``. "
+"UDP-Zuordnungen nehmen davon höchstens ``global.max_udp_flows`` ein, weil "
+"ihre Quellen nicht validiert sind, und ``udp_defense.total_pps`` hält die "
+"Hälfte des Paketbudgets eines UDP-Frontends für bestätigte Zuordnungen "
+"frei. HTTP fügt ``http.max_connections`` und "
+"``http.max_connections_per_ip`` hinzu."
 
-#: ../../edge.rst:290
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:291
+msgid ""
+"*Pressure.* Above ``global.pressure.on`` percent of the table, a new "
+"address passes only within ``new_per_second``, and an address that proved "
+"a working flow passes first."
+msgstr ""
+"*Druck.* Oberhalb von ``global.pressure.on`` Prozent der Tabelle kommt "
+"eine neue Adresse nur innerhalb von ``new_per_second`` durch, und eine "
+"Adresse, die einen funktionierenden Fluss nachgewiesen hat, kommt zuerst "
+"durch."
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:292
 msgid ""
 "*Bounded inspection*, of a TLS ClientHello on TCP, and of the QUIC header "
 "on UDP."
@@ -1771,7 +1808,7 @@ msgstr ""
 "*Begrenzte Untersuchung*, eines TLS-ClientHello bei TCP und des "
 "QUIC-Headers bei UDP."
 
-#: ../../edge.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:293
 msgid ""
 "*The connection hooks*, then the pool: a server's ``max_flows`` and, in a "
 "cluster, its share of a fleet-wide limit (Part IX)."
@@ -1779,32 +1816,49 @@ msgstr ""
 "*Die Verbindungs-Hooks*, dann der Pool: das ``max_flows`` eines Servers "
 "und im Cluster sein Anteil an einem flottenweiten Limit (Teil IX)."
 
-#: ../../edge.rst:292
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:294
 msgid "*The HTTP firewall*, for HTTP frontends only."
 msgstr "*Die HTTP-Firewall*, nur für HTTP-Frontends."
 
-#: ../../edge.rst:294
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:296
+msgid ""
+"Accept threads run the bans, the rate, the caps and pressure on several "
+"cores, and end a refused connection with a reset (SID 0034). The packet "
+"worker runs the stages after them."
+msgstr ""
+"Accept-Threads wenden die Sperren, die Rate, die Obergrenzen und den "
+"Druck auf mehreren Kernen an und beenden eine abgewiesene Verbindung mit "
+"einem Reset (SID 0034). Der Paket-Worker führt die Stufen danach aus."
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:298
 msgid "Implementation: ``FlowBudget::reserve``"
 msgstr "Implementierung: ``FlowBudget::reserve``"
 
-#: ../../edge.rst:296
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:300
 msgid ""
 "Takes one slot of the node-wide flow budget and returns a ``FlowPermit``, "
 "or nothing when the budget is full. The permit's ``Drop`` returns the "
 "slot on cancellation, close or expiry, so no path can leak one. A drain "
-"sets the limit to zero. In ``crates/lb/src/budget.rs``."
+"sets the limit to zero. ``FlowBudget::take`` does the same under the caps "
+"of a frontend and of an address and under pressure, all under one lock, "
+"so the caps hold whatever the order of the threads: ``caps_hold`` in the "
+"Lean model of SID 0034. In ``crates/lb/src/budget.rs``."
 msgstr ""
 "Nimmt einen Slot des knotenweiten Flussbudgets und gibt ein "
 "``FlowPermit`` zurück, oder nichts, wenn das Budget voll ist. Das "
 "``Drop`` der Erlaubnis gibt den Slot bei Abbruch, Schließen oder Ablauf "
 "zurück, sodass kein Pfad einen verlieren kann. Ein Draining setzt das "
-"Limit auf null. In ``crates/lb/src/budget.rs``."
+"Limit auf null. ``FlowBudget::take`` tut dasselbe unter den Obergrenzen "
+"eines Frontends und einer Adresse und unter Druck, alles unter einer "
+"einzigen Sperre, sodass die Obergrenzen bei jeder Reihenfolge der Threads "
+"gelten: ``caps_hold`` im Lean-Modell von SID 0034. In "
+"``crates/lb/src/budget.rs``."
 
-#: ../../edge.rst:298
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:302
 msgid "ClientHello Inspection and Fallback Classes"
 msgstr "ClientHello-Untersuchung und Ausweichklassen"
 
-#: ../../edge.rst:301
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:305
 msgid ""
 "A TCP frontend with ``tcp_inspect: \"tls_client_hello\"`` reads the start "
 "of each connection before it selects a pool, within ``inspect_bytes`` "
@@ -1823,7 +1877,7 @@ msgstr ""
 "gelesenen Bytes genau einmal erneut ein, vor jedem späteren Byte des "
 "Clients. Ein fehlgeschlagener Verbindungsaufbau erhält keines davon."
 
-#: ../../edge.rst:303
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:307
 msgid ""
 "The inspection ends in one of five classes, and every class has exactly "
 "one outcome, deny or one named pool (SID 0032). *Visible* is a whole "
@@ -1849,11 +1903,11 @@ msgstr ""
 "Die Standardwerte reproduzieren das Verhalten von vor den Klassen: "
 "``rules`` für fehlend und verschlüsselt, ``deny`` für die anderen beiden."
 
-#: ../../edge.rst:305
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:309
 msgid "Implementation: ``Plan::decide``"
 msgstr "Implementierung: ``Plan::decide``"
 
-#: ../../edge.rst:307
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:311
 msgid ""
 "Maps a class and the parsed ClientHello, if any, to a pool or to a "
 "refusal. The match is total, so no class is left without an outcome. In "
@@ -1863,7 +1917,7 @@ msgstr ""
 "einen Pool oder eine Ablehnung ab. Der Match ist total, sodass keine "
 "Klasse ohne Ergebnis bleibt. In ``crates/lb/src/inspect.rs``."
 
-#: ../../edge.rst:309
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:313
 msgid ""
 "Two cautions belong beside the feature. A JA4 fingerprint describes a "
 "handshake; any client can send the handshake of another, so it separates "
@@ -1880,11 +1934,11 @@ msgstr ""
 "Namen im äußeren Feld; der Edge kann GREASE nicht von echtem ECH "
 "unterscheiden, deshalb lehnt ``encrypted: deny`` die meisten Browser ab."
 
-#: ../../edge.rst:311
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:315
 msgid "QUIC Address Validation"
 msgstr "QUIC-Adressvalidierung"
 
-#: ../../edge.rst:314
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:318
 msgid ""
 "A UDP frontend bounds the replies of each mapping to three times the "
 "bytes the client sent. Without the bound, a spoofed source would turn the "
@@ -1914,7 +1968,7 @@ msgstr ""
 "Clients diese ID als Ziel trägt, ist die Adresse validiert, und die "
 "Antwortgrenze endet."
 
-#: ../../edge.rst:316
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:320
 msgid ""
 "The argument is that of RFC 9000, section 8.1. The ID was chosen by the "
 "origin and sent only to the claimed address. A sender that spoofs the "
@@ -1937,13 +1991,13 @@ msgstr ""
 "Validierung 83 bis 86 ms; ohne sie kamen in 3 Sekunden 17.060 Bytes an. "
 "Diese Zahlen zeigen die Größe des Effekts und sind kein Benchmark."
 
-#: ../../edge.rst:318
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:322
 msgid ""
 "Implementation: ``Validation::see_reply`` and ``Validation::see_request``"
 msgstr ""
 "Implementierung: ``Validation::see_reply`` und ``Validation::see_request``"
 
-#: ../../edge.rst:320
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:324
 msgid ""
 "``see_reply`` learns the origin's connection ID from a reply, refusing "
 "version zero, short IDs and echoes. ``see_request`` marks the mapping "
@@ -1955,7 +2009,7 @@ msgstr ""
 "markiert die Zuordnung als validiert, wenn der Client diese ID in einem "
 "langen oder kurzen Header wiederholt. In ``crates/lb/src/quic_edge.rs``."
 
-#: ../../edge.rst:322
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:326
 msgid ""
 "The edge does not send QUIC Retry itself. SID 0032 specifies the contract "
 "that edge and origin would have to share, a token format and key, an "
@@ -1971,7 +2025,7 @@ msgstr ""
 "QUIC-Bibliothek des Workspace hält ihr Tokenformat privat und bindet das "
 "Token an die Quelle des Datagramms, und die ist hinter dem Edge der Edge."
 
-#: ../../edge.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:330
 msgid ""
 "\"Validation never happens on a value that an off-path sender can know.\" "
 "For each of the three conditions on the learned connection ID (version "
@@ -1984,11 +2038,11 @@ msgstr ""
 "ID des eröffnenden Datagramms) den Angriff beschreiben, den sie "
 "verhindert."
 
-#: ../../edge.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:332
 msgid "Traffic Policy, the Gate and the Shield"
 msgstr "Verkehrsrichtlinie, Gate und Shield"
 
-#: ../../edge.rst:331
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:335
 msgid ""
 "An HTTP request passes the cheap checks before the expensive ones, and a "
 "hook only after both. The ban table and the request limiter come first. "
@@ -2025,11 +2079,11 @@ msgstr ""
 "Header-Änderungen und HSTS. Ein TCP- oder UDP-Frontend ruft die Firewall "
 "nie auf."
 
-#: ../../edge.rst:333
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:337
 msgid "Hooks"
 msgstr "Hooks"
 
-#: ../../edge.rst:336
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:340
 msgid ""
 "An operator sometimes needs a decision of his own on the path: a tenant "
 "check, an authorization service, a score. SID 0030 fixes where such a "
@@ -2057,7 +2111,7 @@ msgstr ""
 "ändern, keinen Server wählen und kein Feld der Rahmung hinzufügen oder "
 "eines, das Sibuna als eigene Aussage schreibt."
 
-#: ../../edge.rst:338
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:342
 msgid ""
 "A hook runs in one of three *tiers*. A *native* hook is Rust compiled "
 "into the daemon: trusted, unbudgeted, 42 ns per call with the chain and "
@@ -2073,11 +2127,11 @@ msgstr ""
 "Teil VII), ohne JIT und ohne ``unsafe``. Ein *Agent* ist ein anderer "
 "Prozess hinter einem Unix-Socket, einer Frist und einem Circuit Breaker."
 
-#: ../../edge.rst:340
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:344
 msgid "The Outcome Rule"
 msgstr "Die Ergebnisregel"
 
-#: ../../edge.rst:343
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:347
 msgid ""
 "An invocation ends with a verdict or with one of four failures: "
 "``timeout``, ``overload``, ``trap`` or ``unavailable``. Each plugin has "
@@ -2090,7 +2144,7 @@ msgstr ""
 "``admit`` schreibt. Für Stufe :math:`s`, geschriebene Wahl :math:`f` und "
 "Ergebnis :math:`r` gilt"
 
-#: ../../edge.rst:345
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:349
 msgid ""
 "\\mathit{outcome}(s, f, r) = \\begin{cases} \\mathrm{admit} & s = "
 "\\mathrm{telemetry} \\\\ v & r = \\mathrm{verdict}(v) \\\\ \\mathrm{deny} "
@@ -2098,7 +2152,7 @@ msgid ""
 "\\mathrm{failed},\\ f = \\mathrm{admit}. \\end{cases}"
 msgstr ""
 
-#: ../../edge.rst:349
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:353
 msgid ""
 "A chain admits only when every hook in it has the outcome admit; the "
 "first other verdict ends it. Hence a chain with a failing authorization "
@@ -2111,11 +2165,11 @@ msgstr ""
 "anderen antworten, und kein Fehlschlag lässt Datenverkehr zu, außer durch "
 "eine in der Datei geschriebene Wahl."
 
-#: ../../edge.rst:351
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:355
 msgid "Implementation: ``outcome`` and ``chain``"
 msgstr "Implementierung: ``outcome`` und ``chain``"
 
-#: ../../edge.rst:353
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:357
 msgid ""
 "The rule above and its fold over a chain, as two small functions modelled "
 "in ``docs/sid/assets/plugin-tiers.lean``. In "
@@ -2125,7 +2179,7 @@ msgstr ""
 "Funktionen, modelliert in ``docs/sid/assets/plugin-tiers.lean``. In "
 "``crates/plugin/src/verdict.rs`` (Crate ``sibuna-plugin``)."
 
-#: ../../edge.rst:355
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:359
 msgid ""
 "pub fn outcome(stage: Stage, on_failure: OnFailure, result: "
 "Result<Verdict, Failure>) -> Verdict {\n"
@@ -2138,11 +2192,11 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../edge.rst:366
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:370
 msgid "Fuel, Breakers and Parked Connections"
 msgstr "Fuel, Breaker und geparkte Verbindungen"
 
-#: ../../edge.rst:369
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:373
 msgid ""
 "A Wasm module is untrusted input, so every bound is set before it runs: "
 "at most 4 MiB of module, ``memory_pages`` pages of 64 KiB, 256 call "
@@ -2177,7 +2231,7 @@ msgstr ""
 "Interpreter von 2.324 Zeilen ohne ``unsafe`` und ohne neues Crate, "
 "gegenüber etwa 96.000 Zeilen und acht Crates."
 
-#: ../../edge.rst:371
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:375
 msgid ""
 "An agent call waits at most ``deadline`` (5 ms by default). Each thread "
 "keeps a breaker for each agent: ``failures`` failures in a row open it, "
@@ -2192,11 +2246,11 @@ msgstr ""
 "ihn schließt oder wieder öffnet. Ein ``overload`` ist nicht die Schuld "
 "des Agents und zählt nicht."
 
-#: ../../edge.rst:373
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:377
 msgid "Worked example: what a dead agent costs"
 msgstr "Durchgerechnetes Beispiel: was ein toter Agent kostet"
 
-#: ../../edge.rst:375
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:379
 msgid ""
 "Eight workers call an agent with ``deadline`` 5 ms and the default "
 "breaker, five failures and ``1s`` open. In the worst case each worker "
@@ -2215,7 +2269,7 @@ msgstr ""
 "Anfrage des geschützten Frontends das ``on_failure``-Ergebnis des Agents: "
 "Mit dem Standard wird sie abgelehnt."
 
-#: ../../edge.rst:377
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:381
 msgid ""
 "At the request stage an agent call holds the thread that serves the "
 "request, and on a worker the other connections of that worker wait for "
@@ -2241,7 +2295,7 @@ msgstr ""
 "Thread-Übergaben: 22,8 us gegenüber 12 us für denselben Aufruf auf dem "
 "aufrufenden Thread."
 
-#: ../../edge.rst:379
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:383
 msgid ""
 "Measured cost of one hook (SID 0030, one busy machine, optimized builds, "
 "loopback)"
@@ -2249,67 +2303,67 @@ msgstr ""
 "Gemessene Kosten eines Hooks (SID 0030, eine ausgelastete Maschine, "
 "optimierte Builds, Loopback)"
 
-#: ../../edge.rst:383
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:387
 msgid "Case"
 msgstr "Fall"
 
-#: ../../edge.rst:384
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:388
 msgid "In process"
 msgstr "Im Prozess"
 
-#: ../../edge.rst:385
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:389
 msgid "End to end per request"
 msgstr "Ende zu Ende pro Anfrage"
 
-#: ../../edge.rst:386
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:390
 msgid "No hook"
 msgstr "Kein Hook"
 
-#: ../../edge.rst:387
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:391
 msgid "1.1 ns (one load)"
 msgstr "1,1 ns (ein Speicherzugriff)"
 
-#: ../../edge.rst:388
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:392
 msgid "41.8 to 42.2 us"
 msgstr "41,8 bis 42,2 us"
 
-#: ../../edge.rst:389
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:393
 msgid "Native ``require_header``"
 msgstr "Nativ ``require_header``"
 
-#: ../../edge.rst:390
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:394
 msgid "42 ns"
 msgstr ""
 
-#: ../../edge.rst:391
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:395
 msgid "within the noise of about 2 us"
 msgstr "im Rauschen von etwa 2 us"
 
-#: ../../edge.rst:392
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:396
 msgid "Wasm, the example module"
 msgstr "Wasm, das Beispielmodul"
 
-#: ../../edge.rst:393
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:397
 msgid "2.2 to 2.4 us"
 msgstr "2,2 bis 2,4 us"
 
-#: ../../edge.rst:394
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:398
 msgid "+5.2 to +6.1 us"
 msgstr "+5,2 bis +6,1 us"
 
-#: ../../edge.rst:395
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:399
 msgid "Agent on a Unix socket"
 msgstr "Agent an einem Unix-Socket"
 
-#: ../../edge.rst:396
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:400
 msgid "12 to 18 us"
 msgstr "12 bis 18 us"
 
-#: ../../edge.rst:397
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:401
 msgid "+18.4 to +21.5 us"
 msgstr "+18,4 bis +21,5 us"
 
-#: ../../edge.rst:401
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:405
 msgid ""
 "\"A failure of an authorization hook denies.\" An attacker can make a "
 "Wasm hook fail with ``overload`` by sending a head larger than its input "
@@ -2324,11 +2378,11 @@ msgstr ""
 "``on_failure`` auf dem Standard bleibt, und was der Betreiber aufgibt, "
 "wenn er ``on_failure: \"admit\"`` schreibt."
 
-#: ../../edge.rst:403
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:407
 msgid "Automatic HTTPS"
 msgstr "Automatisches HTTPS"
 
-#: ../../edge.rst:406
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:410
 msgid ""
 "A frontend that names its hosts, ``tls: { auto: [\"example.org\"] }``, "
 "obtains its certificates itself (SID 0021). The node registers an ACME "
@@ -2370,11 +2424,11 @@ msgstr ""
 "Speicher lesen, und ein Thread fragt die ``ask``-URL und nimmt ein Token "
 "aus einem Bucket von ``rate`` Bestellungen pro Stunde, bevor er bestellt."
 
-#: ../../edge.rst:408
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:412
 msgid "Observation"
 msgstr "Beobachtung"
 
-#: ../../edge.rst:411
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:415
 msgid ""
 "The node counts what it does so that an operator can tell a refusal for "
 "lack of capacity from a refusal by policy (SID 0020). Each HTTP request "
@@ -2408,11 +2462,11 @@ msgstr ""
 "``rate_limit`` nach einem Blick auf die Clients. Eine Bereitschaftsroute "
 "wechselt auf 503, während der Knoten im Draining ist."
 
-#: ../../edge.rst:413
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:417
 msgid "The Measured Result"
 msgstr "Das gemessene Ergebnis"
 
-#: ../../edge.rst:416
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:420
 msgid ""
 "Part X compares the edge with HAProxy 3.0.11 on one host and on three. "
 "After SID 0024, with both proxies writing the same headers, Sibuna "
@@ -2440,15 +2494,15 @@ msgstr ""
 "billigerer HTTP/2-Pfad würde das ändern, und SID 0017 hält fest, warum "
 "wir keinen geschrieben haben."
 
-#: ../../edge.rst:418
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:422
 msgid "Exercises"
 msgstr "Übungen"
 
-#: ../../edge.rst:421
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:425
 msgid "Exercise 8.1"
 msgstr "Übung 8.1"
 
-#: ../../edge.rst:423
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:427
 msgid ""
 "A pool has ten servers of equal weight, and one leaves. What fraction of "
 "flows moves under modulo hashing, under rendezvous hashing, and, from the "
@@ -2461,7 +2515,7 @@ msgstr ""
 "etwa wie viele bei Sibunas Maglev-Tabelle? Dann dieselbe Frage für einen "
 "Server, der einem Pool von vier beitritt."
 
-#: ../../edge.rst:425
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:429
 msgid ""
 "Hint: Use the Chinese remainder theorem for modulo hashing, and the "
 "minimum of the other distances for rendezvous hashing."
@@ -2469,11 +2523,11 @@ msgstr ""
 "Hinweis: Für das Modulo-Hashing den Chinesischen Restsatz verwenden und "
 "für das Rendezvous-Hashing das Minimum der anderen Abstände."
 
-#: ../../edge.rst:427
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:431
 msgid "Exercise 8.2"
 msgstr "Übung 8.2"
 
-#: ../../edge.rst:429
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:433
 msgid ""
 "A bounded-Maglev pool has servers ``a``, ``b`` and ``c`` with weights 2, "
 "1 and 1, ``load_factor_pct`` 125, and 19 active flows. Compute the bound "
@@ -2489,7 +2543,7 @@ msgstr ""
 "Least-Connections-Ausweichweg, wenn ``a`` 9 und ``c`` 3 hält? Zeigen, "
 "dass stets ein Server unter seiner Grenze liegt."
 
-#: ../../edge.rst:431
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:435
 msgid ""
 "Hint: The bound is :math:`\\lceil c (L+1) w_p / W \\rceil`, and the "
 "contradiction argument of the worked example applies with weights."
@@ -2497,11 +2551,11 @@ msgstr ""
 "Hinweis: Die Grenze ist :math:`\\lceil c (L+1) w_p / W \\rceil`, und das "
 "Widerspruchsargument des durchgerechneten Beispiels gilt mit Gewichten."
 
-#: ../../edge.rst:433
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:437
 msgid "Exercise 8.3"
 msgstr "Übung 8.3"
 
-#: ../../edge.rst:435
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:439
 msgid ""
 "An HTTP frontend has the request chain ``[tenant, score, authz]``: a "
 "native ``require_header`` hook, a Wasm hook with ``on_failure: "
@@ -2519,7 +2573,7 @@ msgstr ""
 "fehlt? Was kostet jede Anfrage den Worker für den Agent? Was ändert sich, "
 "wenn ``authz`` mit ``on_failure: \"admit\"`` geschrieben wird?"
 
-#: ../../edge.rst:437
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:441
 msgid ""
 "Hint: Apply the outcome rule to each hook, then the chain rule. An open "
 "breaker costs no system call."
@@ -2527,11 +2581,11 @@ msgstr ""
 "Hinweis: Die Ergebnisregel auf jeden Hook anwenden, dann die Kettenregel. "
 "Ein offener Breaker kostet keinen Systemaufruf."
 
-#: ../../edge.rst:439
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:443
 msgid "Exercise 8.4"
 msgstr "Übung 8.4"
 
-#: ../../edge.rst:441
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:445
 msgid ""
 "A QUIC client sends one Initial of 1,200 bytes through a frontend with "
 "``udp_inspect: \"quic\"``, and the origin answers with eight datagrams of "
@@ -2548,7 +2602,7 @@ msgstr ""
 "erzeugen? Warum würde das Lernen aus einem Version-Negotiation-Paket das "
 "Argument brechen?"
 
-#: ../../edge.rst:443
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:447
 msgid ""
 "Hint: The bound is three times the bytes received. Compare what the "
 "origin chose with what the client chose."
@@ -2556,11 +2610,11 @@ msgstr ""
 "Hinweis: Die Grenze ist das Dreifache der empfangenen Bytes. Vergleichen, "
 "was der Ursprungsserver gewählt hat, mit dem, was der Client gewählt hat."
 
-#: ../../edge.rst:445
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:449
 msgid "Limits"
 msgstr "Grenzen"
 
-#: ../../edge.rst:448
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:452
 msgid ""
 "The known gaps of these records, and one consequence of the design, "
 "stated where an operator meets them:"
@@ -2568,7 +2622,7 @@ msgstr ""
 "Die bekannten Lücken dieser Dokumente und eine Folge des Entwurfs, "
 "genannt dort, wo ein Betreiber auf sie trifft:"
 
-#: ../../edge.rst:450
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:454
 msgid ""
 "*Ownership balances counts, not work.* A connection stays on the worker "
 "it was given; the assignment equalizes connection counts only."
@@ -2577,7 +2631,7 @@ msgstr ""
 "dem Worker, dem sie gegeben wurde; die Zuweisung gleicht nur die "
 "Verbindungszahlen an."
 
-#: ../../edge.rst:451
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:455
 msgid ""
 "*A reload that changes binds, the mesh roster or the spill section needs "
 "a restart.* Two reloads within the decision time of one request still "
@@ -2594,7 +2648,7 @@ msgstr ""
 "Laufzeit überdauern keinen Neustart, und ein Maglev-Pool nimmt zur "
 "Laufzeit nur ``drain`` an."
 
-#: ../../edge.rst:452
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:456
 msgid ""
 "*HTTP/2 runs on the runtime, not on the workers.* It carries 0.67 to 0.74 "
 "of HAProxy's rate on one host. HTTP/1.1 over TLS from a client that "
@@ -2614,7 +2668,7 @@ msgstr ""
 "einzige Sperre. gRPC von einem HTTP/2-Client im Klartext wird nicht "
 "angenommen."
 
-#: ../../edge.rst:453
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:457
 msgid ""
 "*The choice of a server still writes shared memory:* reference counts and "
 "the chosen server's counters, about a microsecond per call under eight "
@@ -2627,7 +2681,7 @@ msgstr ""
 "Moment wählen, können denselben am wenigsten belasteten Server nehmen; "
 "die Limits gelten weiterhin (SID 0019)."
 
-#: ../../edge.rst:454
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:458
 msgid ""
 "*Bounded loads with the pewma fallback are not a guarantee,* and the "
 "overflow is not placed consistently across nodes. The slot table of "
@@ -2637,7 +2691,7 @@ msgstr ""
 "der Überlauf wird nicht knotenübergreifend konsistent platziert. Die "
 "Slot-Tabelle der Quell-Stickiness hat eine Granularität von 1.021 Slots."
 
-#: ../../edge.rst:455
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:459
 msgid ""
 "*Failover cannot move everything.* A body longer than 64 KiB is streamed "
 "and cannot be sent again. A non-idempotent request to an HTTP/3 server "
@@ -2649,7 +2703,7 @@ msgstr ""
 "Anfrage an einen HTTP/3-Server zieht nach dem Senden nie um, weil die "
 "Client-Bibliothek keine Ablehnung meldet, die wir lesen können (SID 0019)."
 
-#: ../../edge.rst:456
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:460
 msgid ""
 "*Admission at the socket is incomplete for TCP and UDP.* TCP and UDP "
 "frontends do not consult the ban table. Per-prefix byte budgets for UDP "
@@ -2670,7 +2724,7 @@ msgstr ""
 "für Linux gebaut, und die Wirkung von ``backlog`` auf eine volle "
 "Warteschlange ist nicht gemessen (SID 0032)."
 
-#: ../../edge.rst:457
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:461
 msgid ""
 "*An agent call at the request stage holds its thread.* A QUIC "
 "connection's verdict does not stop its handshake. Parked flows cost two "
@@ -2688,7 +2742,7 @@ msgstr ""
 "langsamer als wasmi und wurde nicht extern begutachtet. Die "
 "Hook-Messungen wurden auf einer ausgelasteten Maschine gemacht (SID 0030)."
 
-#: ../../edge.rst:458
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:462
 msgid ""
 "*Observation has holes.* Chunk framing is not counted in ``bytes_in``; "
 "``tls_cipher`` is ``-`` for HTTP/3; a long-lived TCP connection writes "
@@ -2698,7 +2752,7 @@ msgstr ""
 "nicht gezählt; ``tls_cipher`` ist ``-`` für HTTP/3; eine langlebige "
 "TCP-Verbindung schreibt ihre Zeile erst an ihrem Ende (SID 0020)."
 
-#: ../../edge.rst:459
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:463
 msgid ""
 "*Automatic HTTPS* has no bound per client for issuance on demand beyond "
 "its guards and its bucket; the local authority's ACME server has no limit "
@@ -2711,7 +2765,7 @@ msgstr ""
 "und hält seine Bestellungen im Speicher auf einem Knoten; der "
 "Cloudflare-DNS-Provider wurde nie gegen Cloudflare ausgeführt (SID 0021)."
 
-#: ../../edge.rst:460
+#: ../../../../../../home/insan/projects/sibuna/docs/book/edge.rst:464
 msgid ""
 "*Scale is not yet qualified.* The flow table is configurable to one "
 "million entries; the ten-million-flow experiment and cooperative platform "

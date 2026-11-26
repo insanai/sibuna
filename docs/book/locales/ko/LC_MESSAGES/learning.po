@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:23+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../learning.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:1
 msgid "How to Read This Book"
 msgstr "이 책을 읽는 방법"
 
-#: ../../learning.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:4
 msgid ""
 "The timetable example gives us two questions to carry into the design "
 "chapters. Which requests does the edge admit, and which server handles an "
@@ -32,105 +32,105 @@ msgstr ""
 "시간표 예제에서 설계 장으로 가져갈 두 질문이 나옵니다. 에지는 어떤 요청을 허용하고, 허용한 요청은 어느 서버가 처리할까요? "
 "앞부분에서는 접근 허용의 비용과 정확성을 다룹니다. 이어서 한 에지가 서버를 선택하는 방법과 여러 에지가 협력하는 방법을 살펴봅니다."
 
-#: ../../learning.rst:10
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:10
 msgid "Question"
 msgstr "질문"
 
-#: ../../learning.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:11
 msgid "Where the answer develops"
 msgstr "답이 전개되는 곳"
 
-#: ../../learning.rst:12
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:12
 msgid "What does a puzzle buy?"
 msgstr "퍼즐로 무엇을 얻을까요?"
 
-#: ../../learning.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:13
 msgid "Parts I to III: cost, probability, and the limits of proof."
 msgstr "제I부부터 제III부까지: 비용, 확률, 증명의 한계."
 
-#: ../../learning.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:14
 msgid "How does Sibuna compare?"
 msgstr "Sibuna는 다른 제품과 비교해 어떨까요?"
 
-#: ../../learning.rst:15
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:15
 msgid ""
 "Part II: lineage and the feature tables; Part X: measurements beside "
 "Anubis and HAProxy."
 msgstr "제II부: 계보와 기능 표. 제X부: Anubis, HAProxy와 나란히 놓은 측정."
 
-#: ../../learning.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:16
 msgid "What does a session mean?"
 msgstr "세션은 무엇을 뜻할까요?"
 
-#: ../../learning.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:17
 msgid "Part IV: bindings, verification order, expiry, and replay."
 msgstr "제IV부: 바인딩, 검증 순서, 만료, 재전송."
 
-#: ../../learning.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:18
 msgid "Where does the memory go?"
 msgstr "메모리는 어디에 쓰일까요?"
 
-#: ../../learning.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:19
 msgid "Parts V and VI: buffers, threads, tables, automata, and publication."
 msgstr "제V부와 제VI부: 버퍼, 스레드, 테이블, 오토마톤, 게시."
 
-#: ../../learning.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:20
 msgid "How does the browser solve?"
 msgstr "브라우저는 퍼즐을 어떻게 풀까요?"
 
-#: ../../learning.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:21
 msgid "Part VII: worker messages, memory, and calibration."
 msgstr "제VII부: 워커 메시지, 메모리, 보정."
 
-#: ../../learning.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:22
 msgid "How does one node balance load?"
 msgstr "노드 하나는 부하를 어떻게 분산할까요?"
 
-#: ../../learning.rst:23
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:23
 msgid ""
 "Part VIII: flows, workers, choosing a server, admission at the socket, "
 "hooks."
 msgstr "제VIII부: 플로, 워커, 서버 선택, 소켓에서의 요청 허용, 훅."
 
-#: ../../learning.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:24
 msgid "How do several nodes act as one?"
 msgstr "여러 노드는 어떻게 하나처럼 동작할까요?"
 
-#: ../../learning.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:25
 msgid "Part IX: the mesh, shared affinity, fleet caps, forwarding, handoff."
 msgstr "제IX부: 메시, 공유 어피니티, 플릿 상한, 전달, 핸드오프."
 
-#: ../../learning.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:26
 msgid "How do we know it works?"
 msgstr "제대로 동작하는지 어떻게 알까요?"
 
-#: ../../learning.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:27
 msgid "Part X: three harnesses and what each excludes."
 msgstr "제X부: 하니스 세 개와 각 하니스가 측정에서 빼는 것."
 
-#: ../../learning.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:28
 msgid "How do we run it?"
 msgstr "어떻게 실행할까요?"
 
-#: ../../learning.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:29
 msgid ""
 "Part XI: flags, the edge topology, certificates, policy, storage, "
 "clustering, packaging."
 msgstr "제XI부: 플래그, 엣지 토폴로지, 인증서, 정책, 저장소, 클러스터 구성, 패키징."
 
-#: ../../learning.rst:30
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:30
 msgid "What was that error?"
 msgstr "방금 그 오류는 무엇이었을까요?"
 
-#: ../../learning.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:31
 msgid "Part XII: endpoints, statuses, errors, schema; Part XIII: the card."
 msgstr "제XII부: 엔드포인트, 상태, 오류, 스키마. 제XIII부: 카드."
 
-#: ../../learning.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:33
 msgid "Three Reading Paths"
 msgstr "세 가지 읽기 경로"
 
-#: ../../learning.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:36
 msgid ""
 "*Learning the design.* Parts I to IV in order, then the worked trace in "
 "Part VI, then Part VII. For the load balancer, Part VIII and then Part "
@@ -142,7 +142,7 @@ msgstr ""
 "제VIII부, 그다음 제IX부를 읽습니다. 이 두 부에는 제I부와 제V부의 소유권 개념만 있으면 됩니다. 연습 문제를 먼저 풀고, "
 "책 끝의 해답과는 그다음에만 비교합니다. 추적이 공유 테이블이나 빌린 슬라이스에 이르면 제V부로 돌아갑니다."
 
-#: ../../learning.rst:37
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:37
 msgid ""
 "For a first deployment, we work through :doc:`jlavi` after meeting "
 "frontends, routes and pools in :doc:`introduction`. Part XI then explains "
@@ -153,7 +153,7 @@ msgstr ""
 "합니다. 제XI부는 설치, 운영 상태 관찰, 설정 다시 읽기를 설명합니다. 제XII부와 제XIII부에는 참조 문서와 명령 요약이 "
 "있습니다."
 
-#: ../../learning.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:38
 msgid ""
 "*Changing the code.* Parts V and VI, the source anchors in every chapter, "
 "and the SID records they cite. Part X explains which harness will catch a "
@@ -163,11 +163,11 @@ msgstr ""
 "*코드를 바꾸려면.* 제V부와 제VI부, 각 장의 소스 위치, 그리고 그 위치가 인용하는 SID 기록을 봅니다. 제X부는 우리가 "
 "건드린 부분의 회귀를 어느 하니스가 잡아내는지 설명합니다. 제II부는 변경이 지켜야 할 제약을 나열합니다."
 
-#: ../../learning.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:40
 msgid "Conventions"
 msgstr "표기 규칙"
 
-#: ../../learning.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:43
 msgid ""
 "A *worked example* shows the intermediate states, not just the answer. An "
 "*exercise* asks us to change one assumption. Hints suggest a first step; "
@@ -182,7 +182,7 @@ msgstr ""
 "코드가 어긋나 보일 때 살펴볼 구현을 가리킵니다. 제목이 \"구현\"인 상자는 함수와 그 파일을 밝힙니다. 제목이 \"불변식 "
 "설명하기\"인 상자는 그 개념을 우리가 다시 가르쳐 보게 합니다."
 
-#: ../../learning.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/learning.rst:45
 msgid ""
 "In equations, :math:`b` is Hashcash difficulty in bits, :math:`n` is "
 "sequential-work depth, :math:`t` is the number of openings, :math:`p` is "

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:19+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: hi\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../protocol.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:1
 msgid "Part IV: The Sibuna Protocol"
 msgstr "भाग IV: Sibuna प्रोटोकॉल"
 
-#: ../../protocol.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:4
 msgid ""
 "We specify the wire protocol as implemented: the interstitial round trip, "
 "the stateless challenge record, both solution formats, verification "
@@ -31,16 +31,18 @@ msgstr ""
 "इंटरस्टिशियल का राउंड ट्रिप, स्टेटलेस चैलेंज रिकॉर्ड, समाधान के दोनों "
 "प्रारूप, सत्यापन का क्रम, एक-बार-उपयोग का प्रवर्तन, और सत्र कुकी।"
 
-#: ../../protocol.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:6
 msgid "The Challenge Round Trip"
 msgstr "चैलेंज का राउंड ट्रिप"
 
-#: ../../protocol.rst:9 ../../protocol.rst:48 ../../protocol.rst:111
-#: ../../protocol.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:48
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:162
 msgid "Objectives"
 msgstr "उद्देश्य"
 
-#: ../../protocol.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:11
 msgid ""
 "By the end of this chapter, we should be able to trace a browser from its "
 "first request to a minted session, name every endpoint and JSON field "
@@ -52,7 +54,7 @@ msgstr ""
 "JSON फ़ील्ड का नाम बताना, और समझाना कि चैलेंज संरक्षित पाथ का नीति निर्णय "
 "अपने साथ क्यों रखता है।"
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "A sequence diagram with the browser, its Web Worker and Sibuna. A "
 "navigation without a session receives the interstitial (HTTP 200). The "
@@ -72,7 +74,7 @@ msgstr ""
 "समुच्चय में दर्ज करता है, MAC टोकन बनाता है और Set-Cookie से उत्तर देता "
 "है। पेज सत्र के साथ फिर से लोड होता है।"
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "// protocol.rst: the challenge round trip. Steps on the left run in the "
 "browser, steps on\n"
@@ -139,7 +141,7 @@ msgstr ""
 "  spacing: 44,\n"
 ")\n"
 
-#: ../../protocol.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:14
 msgid ""
 "The challenge round trip. Steps on the left run in the browser, steps on "
 "the right in Sibuna."
@@ -147,7 +149,7 @@ msgstr ""
 "चैलेंज का राउंड ट्रिप। बाईं ओर के चरण ब्राउज़र में चलते हैं, और दाईं ओर "
 "के चरण Sibuna में।"
 
-#: ../../protocol.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:17
 msgid ""
 "A navigation with no valid session reaches the policy engine and is "
 "classified ``CHALLENGE``. Because the request accepts ``text/html``, the "
@@ -170,7 +172,7 @@ msgstr ""
 "व्युत्पन्न कुंजी के तहत कुंजी-युक्त BLAKE3 टैग से सील किया जाता है, और जो "
 "एक चैलेंज अवधि तक वैध रहता है।"
 
-#: ../../protocol.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:18
 msgid ""
 "The interstitial fetches ``GET /__sibuna/challenge.json?path=<original "
 "URL>&need=<ticket>``. A valid ticket decides the challenge: the work is "
@@ -199,11 +201,11 @@ msgstr ""
 "भी सत्र के वर्क लेवल की जाँच करता है, इसलिए रीप्ले किया गया या जाली टिकट "
 "केवल अपने धारक का कार्य बढ़ा सकता है।"
 
-#: ../../protocol.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:19
 msgid "The response is the challenge record:"
 msgstr "रिस्पॉन्स चैलेंज रिकॉर्ड है:"
 
-#: ../../protocol.rst:21
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:21
 msgid ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
@@ -211,7 +213,7 @@ msgstr ""
 "{\"id\":\"AQEND...70 "
 "chars\",\"algorithm\":\"posw\",\"difficulty\":13,\"challenges\":16,\"expires_at\":1757241234}"
 
-#: ../../protocol.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:25
 msgid ""
 "For ``hashcash``, ``difficulty`` is the bit count and ``challenges`` is "
 "``0``."
@@ -219,7 +221,7 @@ msgstr ""
 "``hashcash`` के लिए ``difficulty`` बिट की संख्या है और ``challenges`` का "
 "मान ``0`` है।"
 
-#: ../../protocol.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:26
 msgid ""
 "A Web Worker solves it with the WebAssembly module, or the JavaScript "
 "prover if WebAssembly is unavailable (Part VII), and posts either"
@@ -227,25 +229,25 @@ msgstr ""
 "एक Web Worker इसे WebAssembly मॉड्यूल से हल करता है, या WebAssembly "
 "उपलब्ध न हो तो JavaScript प्रूवर से (भाग VII), और या तो यह पोस्ट करता है"
 
-#: ../../protocol.rst:28
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:28
 msgid "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 msgstr "{\"challenge_id\":\"...\",\"nonce\":\"90766\"}"
 
-#: ../../protocol.rst:32
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:32
 msgid "or"
 msgstr "या यह"
 
-#: ../../protocol.rst:34
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:34
 msgid ""
 "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 msgstr ""
 "{\"challenge_id\":\"...\",\"proof\":\"<base64url, 32(1 + t(n+1)) bytes>\"}"
 
-#: ../../protocol.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:38
 msgid "to ``POST /__sibuna/verify``."
 msgstr "``POST /__sibuna/verify`` पर।"
 
-#: ../../protocol.rst:39
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:39
 msgid ""
 "On success the server answers ``200 {\"status\":\"ok\"}`` with a "
 "``Set-Cookie`` header, and the page reloads its original location. Every "
@@ -255,11 +257,11 @@ msgstr ""
 "उत्तर देता है, और पेज अपना मूल स्थान दोबारा लोड करता है। बाद का हर अनुरोध "
 "कुकी ले जाता है और नीति मूल्यांकन से पहले ही प्रवेश पा जाता है।"
 
-#: ../../protocol.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:41
 msgid "Why the path travels with the challenge"
 msgstr "पाथ चैलेंज के साथ क्यों जाता है"
 
-#: ../../protocol.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:43
 msgid ""
 "The interstitial is served at the protected URL, so the browser knows "
 "where it is. Sending the path lets the server pick the *per-rule* "
@@ -274,11 +276,11 @@ msgstr ""
 "ब्लॉग Hashcash के 16 बिट माँगता है) और नियम हैश को टोकन में बाँध देता है, "
 "जहाँ ``X-Sibuna-Rule-Hash`` उसे अपस्ट्रीम तक रिपोर्ट करता है।"
 
-#: ../../protocol.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:45
 msgid "The Stateless Challenge Record"
 msgstr "स्टेटलेस चैलेंज रिकॉर्ड"
 
-#: ../../protocol.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:50
 msgid ""
 "Read the challenge encoder, understand every field's purpose, and see how "
 "the per-challenge nonce is derived without an entropy syscall on the hot "
@@ -287,11 +289,11 @@ msgstr ""
 "चैलेंज एन्कोडर पढ़ें, हर फ़ील्ड का उद्देश्य समझें, और देखें कि हॉट पाथ पर "
 "entropy syscall के बिना प्रति-चैलेंज नॉनस कैसे निकाला जाता है।"
 
-#: ../../protocol.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:52
 msgid "Implementation: ``Coordinator::create_challenge_with_spec``"
 msgstr "इम्प्लीमेंटेशन: ``Coordinator::create_challenge_with_spec``"
 
-#: ../../protocol.rst:54
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:54
 msgid ""
 "Builds the 36-byte payload, tags it under the challenge key, and "
 "base64url-encodes the 52 bytes into a 70-character identifier. In "
@@ -301,7 +303,7 @@ msgstr ""
 "को base64url में एन्कोड करके 70 अक्षरों का पहचानकर्ता बनाता है। "
 "``crates/challenge/src/coordinator.rs`` में (क्रेट ``sibuna-challenge``)।"
 
-#: ../../protocol.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:56
 msgid ""
 "pub fn create_challenge_with_spec(\n"
 "    &self,\n"
@@ -393,7 +395,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../protocol.rst:100
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:100
 msgid ""
 "The identifier is an ``Encoded<70>``: the text lives in an array of "
 "exactly its length, so issuing a challenge never allocates. "
@@ -407,11 +409,11 @@ msgstr ""
 "है, Hashcash बिट (अधिकतम 64) या PoSW गहराई (``difficulty - 3``, 4 से 24 "
 "के बीच सीमित)।"
 
-#: ../../protocol.rst:102
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:102
 msgid "Three details deserve attention:"
 msgstr "तीन विवरण ध्यान देने योग्य हैं:"
 
-#: ../../protocol.rst:104
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:104
 msgid ""
 "*Adaptive difficulty.* The coordinator keeps an exponentially weighted "
 "moving average of the challenge issue rate in three atomics. Above a "
@@ -425,7 +427,7 @@ msgstr ""
 "छह तक। बाढ़ घातीय रूप से अधिक चुकाती है, जबकि शांत ट्रैफ़िक आधार लागत पर "
 "ही रहता है।"
 
-#: ../../protocol.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:105
 msgid ""
 "*The nonce is a PRF output*, keyed by the challenge key over a counter, "
 "the clock, and the fingerprint. It is unique (counter) and unpredictable "
@@ -439,7 +441,7 @@ msgstr ""
 "समाधान नहीं निकाल सकता जो उसे जारी नहीं किए गए, और हॉट पाथ entropy के लिए "
 "कभी ऑपरेटिंग सिस्टम को कॉल नहीं करता।"
 
-#: ../../protocol.rst:106
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:106
 msgid ""
 "*Difficulty travels inside the tag.* A client cannot lower the difficulty "
 "by editing the record: the tag would fail before any proof is examined."
@@ -447,11 +449,11 @@ msgstr ""
 "*कठिनाई टैग के भीतर बँधी रहती है।* क्लाइंट रिकॉर्ड संपादित करके कठिनाई कम "
 "नहीं कर सकता: किसी प्रमाण की जाँच से पहले ही टैग विफल हो जाएगा।"
 
-#: ../../protocol.rst:108
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:108
 msgid "Verification Order and Single Use"
 msgstr "सत्यापन का क्रम और एक-बार उपयोग"
 
-#: ../../protocol.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:113
 msgid ""
 "Understand why the cheap checks run before the proof, why the challenge "
 "is marked spent only after the proof is valid, and how two concurrent "
@@ -461,11 +463,11 @@ msgstr ""
 "प्रमाण के बाद ही spent क्यों चिह्नित किया जाता है, और एक ही समाधान के दो "
 "समवर्ती सबमिशन का निपटारा कैसे होता है।"
 
-#: ../../protocol.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:115
 msgid "Implementation: ``Coordinator::verify_and_mint``"
 msgstr "इम्प्लीमेंटेशन: ``Coordinator::verify_and_mint``"
 
-#: ../../protocol.rst:117
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:117
 msgid ""
 "Decodes and authenticates the identifier, checks age and client binding, "
 "verifies the proof for the recorded tier, records the tag as spent, and "
@@ -477,7 +479,7 @@ msgstr ""
 "दर्ज करता है, और सत्र टोकन जारी करता है। "
 "``crates/challenge/src/coordinator.rs`` में (क्रेट ``sibuna-challenge``)।"
 
-#: ../../protocol.rst:119
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:119
 msgid ""
 "pub fn verify_and_mint(\n"
 "    &self,\n"
@@ -555,7 +557,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../protocol.rst:155
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:155
 msgid ""
 "The order is deliberate. Tag, age, and binding are constant-time checks "
 "that reject garbage before any hashing. A wrong proof must not consume "
@@ -578,7 +580,7 @@ msgstr ""
 "मिनट से अधिक आगे चल रही है, क्योंकि अन्यथा वे किसी चैलेंज की अवधि बढ़ा "
 "देते।"
 
-#: ../../protocol.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:157
 msgid ""
 "Errors surface to the client as ``400`` with an Elm-style diagnostic "
 "(Part XII): each ``VerifyError`` converts into "
@@ -593,11 +595,11 @@ msgstr ""
 "रिस्पॉन्स बॉडी में ``DOUBLE SPEND``, ``FINGERPRINT MISMATCH``, ``WRONG "
 "SOLUTION TYPE`` और ``MALFORMED CHALLENGE`` की पुष्टि करते हैं।"
 
-#: ../../protocol.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:159
 msgid "The Session Cookie"
 msgstr "सत्र कुकी"
 
-#: ../../protocol.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:164
 msgid ""
 "Read the keyed-hash token, understand the cookie attributes, and explain "
 "the client binding."
@@ -605,11 +607,11 @@ msgstr ""
 "कुंजी-युक्त हैश वाला टोकन पढ़ें, कुकी के एट्रिब्यूट समझें, और क्लाइंट "
 "बाइंडिंग समझाएँ।"
 
-#: ../../protocol.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:166
 msgid "Implementation: ``token::mac::mint`` and ``token::mac::verify``"
 msgstr "इम्प्लीमेंटेशन: ``token::mac::mint`` और ``token::mac::verify``"
 
-#: ../../protocol.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:168
 msgid ""
 "Serialises the 40-byte payload, appends the first 16 bytes of keyed "
 "BLAKE3 over it, and verifies with a constant-time comparison. In "
@@ -622,7 +624,7 @@ msgstr ""
 "``Coordinator::verify_cookie`` इसे क्लाइंट के फ़िंगरप्रिंट के साथ कॉल "
 "करता है।"
 
-#: ../../protocol.rst:170
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:170
 msgid ""
 "pub fn verify(\n"
 "    key: &[u8; 32],\n"
@@ -674,7 +676,7 @@ msgstr ""
 "    Ok(payload)\n"
 "}"
 
-#: ../../protocol.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:195
 msgid ""
 "The tag is checked before the payload is parsed: a payload of another "
 "version is refused with ``TokenError::InvalidEncoding`` only once it is "
@@ -684,11 +686,11 @@ msgstr ""
 "``TokenError::InvalidEncoding`` के साथ तभी अस्वीकार होता है जब यह ज्ञात "
 "हो जाए कि वह प्रामाणिक है, और जाली पेलोड कभी पार्सर तक नहीं पहुँचता।"
 
-#: ../../protocol.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:197
 msgid "The cookie is emitted as"
 msgstr "कुकी इस रूप में भेजी जाती है"
 
-#: ../../protocol.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:199
 msgid ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
@@ -696,7 +698,7 @@ msgstr ""
 "Set-Cookie: __sibuna_token=<75 chars>; Path=/; Max-Age=86400; HttpOnly;\n"
 "    SameSite=Lax[; Secure]"
 
-#: ../../protocol.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:204
 msgid ""
 "``HttpOnly`` keeps it out of page scripts, ``SameSite=Lax`` stops "
 "cross-site replay while allowing top-level navigation, and ``Secure`` is "
@@ -715,7 +717,7 @@ msgstr ""
 "परीक्षण \"the cookie is bound to the client identity\" ठीक इसी पाथ को "
 "परखता है।"
 
-#: ../../protocol.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:206
 msgid ""
 "The payload begins with a version byte and the *work level* the holder "
 "paid: the mechanism (Hashcash or PoSW) and the work bits actually solved, "
@@ -745,11 +747,11 @@ msgstr ""
 "session earned on a cheaper route does not admit a route that demands "
 "more work\" दोनों दिशाओं को परखता है।"
 
-#: ../../protocol.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:208
 msgid "Forwarded addresses"
 msgstr "फ़ॉरवर्ड किए गए पते"
 
-#: ../../protocol.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:211
 msgid ""
 "Behind an ingress the client address arrives in ``X-Forwarded-For``. "
 "Sibuna trusts that header only with ``--trust-forwarded`` (implied in "
@@ -763,11 +765,11 @@ msgstr ""
 "को इसे बंद रखना चाहिए, अन्यथा कोई भी क्लाइंट अपनी बाइंडिंग और अपना "
 "रेट-लिमिट बकेट स्वयं चुन सकता है।"
 
-#: ../../protocol.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:213
 msgid "Exercise 4.1"
 msgstr "अभ्यास 4.1"
 
-#: ../../protocol.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:215
 msgid ""
 "Sketch the sequence of two browsers behind one NAT address with identical "
 "User-Agents. Which checks do they share, which do they not, and what "
@@ -777,11 +779,11 @@ msgstr ""
 "बनाएँ। वे कौन-सी जाँचें साझा करते हैं, कौन-सी नहीं, और उस NAT पर मौजूद "
 "हमलावर को दूसरे ब्राउज़र की कुकी दोबारा उपयोग करने के लिए क्या चाहिए?"
 
-#: ../../protocol.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:217
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाएँ"
 
-#: ../../protocol.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/protocol.rst:219
 msgid ""
 "Explain to an operator why the daemon does not \"remember\" outstanding "
 "challenges and why that is a security feature rather than a shortcut."

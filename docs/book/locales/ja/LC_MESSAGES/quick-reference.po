@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../quick-reference.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:1
 msgid "Part XIII: Quick Reference Card"
 msgstr "第XIII部：早見表"
 
-#: ../../quick-reference.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:4
 msgid ""
 "Keep beside a terminal: build, run, configure, route, observe, and "
 "diagnose. Part XII holds the full tables; this card holds what an "
@@ -29,11 +29,11 @@ msgid ""
 msgstr ""
 "ターミナルのそばに置いてください。ビルド、実行、設定、ルーティング、観測、診断を扱います。完全な表は第XII部にあります。この早見表には、運用者が入力するものをまとめています。"
 
-#: ../../quick-reference.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:6
 msgid "Build"
 msgstr "ビルド"
 
-#: ../../quick-reference.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:9
 msgid ""
 "cargo build --release -p sibuna                          # daemon + "
 "SQLite + console + JLV + ACME\n"
@@ -66,11 +66,11 @@ msgstr ""
 "cargo xtask bench product   # wrkによる製品全体の測定 -> benchmarks/results/\n"
 "guidedog build        # 本書（guidedog dsc：SIDの記録）"
 
-#: ../../quick-reference.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:22
 msgid "Run"
 msgstr "実行"
 
-#: ../../quick-reference.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:25
 msgid ""
 "# Shield (default): PoW + WAF, proxy to :3000\n"
 "sibuna -p 8080 -u 3000 -s /etc/sibuna/secret\n"
@@ -105,11 +105,11 @@ msgstr ""
 "/etc/sibuna/secret\n"
 "head -c 32 /dev/urandom | xxd -p -c 64 > /etc/sibuna/secret"
 
-#: ../../quick-reference.rst:41
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:41
 msgid "Edge load balancer"
 msgstr "エッジのロードバランサー"
 
-#: ../../quick-reference.rst:44
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:44
 msgid ""
 "sibuna lb --bind :8080 --server 10.0.0.1:80 --server 10.0.0.2:80   # no "
 "file needed\n"
@@ -260,7 +260,7 @@ msgstr ""
 "cat fullchain.pem privkey.pem > /etc/sibuna/certs/site.pem   # "
 "HAProxy形式のバンドル一つ"
 
-#: ../../quick-reference.rst:87
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:87
 msgid ""
 "{\n"
 "  \"http\": {\"surface\": \"shield\", \"rate_limit\": 100, "
@@ -296,7 +296,7 @@ msgid ""
 "}"
 msgstr ""
 
-#: ../../quick-reference.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:111
 msgid ""
 "``\"http\": {\"surface\": \"off\"}`` gives a load balancer with no "
 "firewall. TCP and UDP frontends never use the firewall."
@@ -304,13 +304,13 @@ msgstr ""
 "``\"http\": {\"surface\": \"off\"}``\\ "
 "は、ファイアウォールのないロードバランサーにします。TCPとUDPのフロントエンドはファイアウォールを使いません。"
 
-#: ../../quick-reference.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:113
 msgid ""
 "The operator console of the edge (SID 0031) needs a ``console`` section "
 "in the file:"
 msgstr "エッジの運用者コンソール（SID 0031）には、ファイルに\\ ``console``\\ 節が必要です。"
 
-#: ../../quick-reference.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:115
 msgid ""
 "# console: { listen: \"127.0.0.1:9443\", data_dir: \"/var/lib/sibuna\", "
 "node: 1 }\n"
@@ -341,7 +341,7 @@ msgstr ""
 "     -d '{\"line\":\"set server app/a state drain\"}' "
 "http://127.0.0.1:9443/console/api/edge/command"
 
-#: ../../quick-reference.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:125
 msgid ""
 "The command route takes ``set server ... state|weight``, ``add server``, "
 "``del server``, ``del ban``, ``reload cluster`` and ``show "
@@ -353,7 +353,7 @@ msgstr ""
 "servers|cluster|certs|ca``\\ を、それぞれ\\ ``sibuna ctl``\\ "
 "と同じ確認とともに受け付けます。運用者のロールが必要です。"
 
-#: ../../quick-reference.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:127
 msgid ""
 "Admission options of a frontend (SID 0032): ``\"defer_accept\": \"5s\"`` "
 "and ``\"backlog\": 4096`` on ``tcp`` and ``http``; ``\"inspect_bytes\"`` "
@@ -367,11 +367,30 @@ msgstr ""
 "``\"inspect_fallback\": {\"absent\": {\"action\": \"deny\"}}``\\ 。\\ "
 "``udp``\\ には\\ ``\"udp_inspect\": \"quic\"``\\ 。すべて既定では無効です。"
 
-#: ../../quick-reference.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:129
+msgid ""
+"Admission under attack (SID 0034): ``\"max_flows_per_ip\": 20`` and "
+"``\"max_flows\": 5000`` on any frontend; ``\"refuse\": \"reset\"`` (the "
+"default), ``\"close\"`` or ``\"tarpit\"`` and ``\"auto_ban\": "
+"{\"strikes\": 50, \"window\": \"10s\", \"ban\": \"10m\"}`` on ``tcp`` and "
+"``http``; ``\"total_pps\"`` in ``udp_defense``; ``\"pressure\": {\"on\": "
+"90, \"off\": 75, \"new_per_second\": 1000}`` (on by default, ``\"off\"`` "
+"switches it off) and ``\"accept_threads\": \"auto\"`` in ``global``."
+msgstr ""
+"攻撃下での許可（SID 0034）：どのフロントエンドにも\\ ``\"max_flows_per_ip\": 20``\\ と\\ "
+"``\"max_flows\": 5000``\\ 。\\ ``tcp``\\ と\\ ``http``\\ には、\\ "
+"``\"refuse\": \"reset\"``\\ （既定）、\\ ``\"close\"``\\ 、\\ ``\"tarpit\"``\\ "
+"のいずれかと、\\ ``\"auto_ban\": {\"strikes\": 50, \"window\": \"10s\", \"ban\": "
+"\"10m\"}``\\ 。\\ ``udp_defense``\\ には\\ ``\"total_pps\"``\\ 。\\ "
+"``global``\\ には、\\ ``\"pressure\": {\"on\": 90, \"off\": 75, "
+"\"new_per_second\": 1000}``\\ （既定で有効、\\ ``\"off\"``\\ で無効）と\\ "
+"``\"accept_threads\": \"auto\"``\\ 。"
+
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:131
 msgid "Console (opt-in preview)"
 msgstr "コンソール（オプトインのプレビュー）"
 
-#: ../../quick-reference.rst:132
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:134
 msgid ""
 "# Initialize while the daemon is stopped, then start the console\n"
 "sibuna init-admin admin --data-dir ./data\n"
@@ -381,7 +400,7 @@ msgstr ""
 "sibuna init-admin admin --data-dir ./data\n"
 "sibuna --data-dir ./data --console 127.0.0.1:19446"
 
-#: ../../quick-reference.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:140
 msgid ""
 "Open ``http://127.0.0.1:19446/console/`` and replace the temporary "
 "password. Add ``--console-location 1.3521,103.8198`` to place the node on "
@@ -396,248 +415,251 @@ msgstr ""
 "0007はCommittedです。コンソールはヘッドレスChromiumでのブラウザーのワークフローに合格しています（SID "
 "0010、基準5）。正式な性能分離の判定はまだ完了していません（第X部）。"
 
-#: ../../quick-reference.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:142
 msgid "Flags That Matter First"
 msgstr "まず押さえるべきフラグ"
 
-#: ../../quick-reference.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:149
 msgid "Flag"
 msgstr "フラグ"
 
-#: ../../quick-reference.rst:148
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:150
 msgid "Default"
 msgstr "既定値"
 
-#: ../../quick-reference.rst:149 ../../quick-reference.rst:318
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:151
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:320
 msgid "Meaning"
 msgstr "意味"
 
-#: ../../quick-reference.rst:150
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:152
 msgid "``-d, --difficulty``"
 msgstr "``-d, --difficulty``"
 
-#: ../../quick-reference.rst:151 ../../quick-reference.rst:157
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:159
 msgid "16"
 msgstr "16"
 
-#: ../../quick-reference.rst:152
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:154
 msgid "work bits (PoSW depth = bits - 3)"
 msgstr "作業ビット（PoSWの深さ = ビット - 3）"
 
-#: ../../quick-reference.rst:153
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:155
 msgid "``-a, --algorithm``"
 msgstr "``-a, --algorithm``"
 
-#: ../../quick-reference.rst:154
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:156
 msgid "posw"
 msgstr "posw"
 
-#: ../../quick-reference.rst:155
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:157
 msgid "``posw`` or ``hashcash``"
 msgstr "``posw``\\ または\\ ``hashcash``"
 
-#: ../../quick-reference.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:158
 msgid "``--posw-challenges``"
 msgstr "``--posw-challenges``"
 
-#: ../../quick-reference.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:160
 msgid "openings per proof"
 msgstr "証明あたりの開示数"
 
-#: ../../quick-reference.rst:159
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:161
 msgid "``--token-ttl``"
 msgstr "``--token-ttl``"
 
-#: ../../quick-reference.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:162
 msgid "86400"
 msgstr "86400"
 
-#: ../../quick-reference.rst:161
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:163
 msgid "session seconds"
 msgstr "セッションの秒数"
 
-#: ../../quick-reference.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:164
 msgid "``--challenge-ttl``"
 msgstr "``--challenge-ttl``"
 
-#: ../../quick-reference.rst:163
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:165
 msgid "300"
 msgstr "300"
 
-#: ../../quick-reference.rst:164
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:166
 msgid "challenge seconds"
 msgstr "チャレンジの秒数"
 
-#: ../../quick-reference.rst:165
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:167
 msgid "``--token-scheme``"
 msgstr "``--token-scheme``"
 
-#: ../../quick-reference.rst:166
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:168
 msgid "mac"
 msgstr "mac"
 
-#: ../../quick-reference.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:169
 msgid "``mac`` or ``ed25519``"
 msgstr "``mac``\\ または\\ ``ed25519``"
 
-#: ../../quick-reference.rst:168
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:170
 msgid "``--rate-limit / --rate-window``"
 msgstr "``--rate-limit / --rate-window``"
 
-#: ../../quick-reference.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:171
 msgid "100 / 10"
 msgstr "100 / 10"
 
-#: ../../quick-reference.rst:170
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:172
 msgid "GCRA burst per window"
 msgstr "窓あたりのGCRAのバースト"
 
-#: ../../quick-reference.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:173
 msgid "``--ban-seconds``"
 msgstr "``--ban-seconds``"
 
-#: ../../quick-reference.rst:172
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:174
 msgid "3600"
 msgstr "3600"
 
-#: ../../quick-reference.rst:173
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:175
 msgid "honeypot ban"
 msgstr "ハニーポットによる禁止"
 
-#: ../../quick-reference.rst:174
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:176
 msgid "``-w, --workers``"
 msgstr "``-w, --workers``"
 
-#: ../../quick-reference.rst:175
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:177
 msgid "CPUs"
 msgstr "CPU数"
 
-#: ../../quick-reference.rst:176
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:178
 msgid "accept threads"
 msgstr "受付スレッド"
 
-#: ../../quick-reference.rst:177
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:179
 msgid "``--max-connections``"
 msgstr "``--max-connections``"
 
-#: ../../quick-reference.rst:178
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:180
 msgid "1024"
 msgstr "1024"
 
-#: ../../quick-reference.rst:179
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:181
 msgid "then ``503``"
 msgstr "超えると\\ ``503``"
 
-#: ../../quick-reference.rst:180
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:182
 msgid "``--max-connections-per-ip``"
 msgstr "``--max-connections-per-ip``"
 
-#: ../../quick-reference.rst:181
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:183
 msgid "64"
 msgstr "64"
 
-#: ../../quick-reference.rst:182
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:184
 msgid "per peer address (IPv6: per ``--ipv6-prefix``), then ``503``"
 msgstr "相手アドレスごと（IPv6では\\ ``--ipv6-prefix``\\ ごと）、超えると\\ ``503``"
 
-#: ../../quick-reference.rst:183
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:185
 msgid "``--trusted-hops``"
 msgstr "``--trusted-hops``"
 
-#: ../../quick-reference.rst:184
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:186
 msgid "1"
 msgstr "1"
 
-#: ../../quick-reference.rst:185
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:187
 msgid "client = n-th ``X-Forwarded-For`` entry from the right"
 msgstr "クライアント = 右からn番目の\\ ``X-Forwarded-For``\\ の項目"
 
-#: ../../quick-reference.rst:186
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:188
 msgid "``--ja4-header``"
 msgstr "``--ja4-header``"
 
-#: ../../quick-reference.rst:187 ../../quick-reference.rst:196
-#: ../../quick-reference.rst:199
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:201
 msgid "off"
 msgstr "無効"
 
-#: ../../quick-reference.rst:188
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:190
 msgid "header with the ingress's JA4 fingerprint; read only when trusted"
 msgstr "イングレスのJA4フィンガープリントを持つヘッダー。信頼する場合にだけ読む"
 
-#: ../../quick-reference.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:191
 msgid "``--idle-timeout``"
 msgstr "``--idle-timeout``"
 
-#: ../../quick-reference.rst:190
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:192
 msgid "15"
 msgstr "15"
 
-#: ../../quick-reference.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:193
 msgid "reaper seconds"
 msgstr "回収の秒数"
 
-#: ../../quick-reference.rst:192
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:194
 msgid "``-P, --policy-file``"
 msgstr "``-P, --policy-file``"
 
-#: ../../quick-reference.rst:193
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:195
 msgid "none"
 msgstr "なし"
 
-#: ../../quick-reference.rst:194
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:196
 msgid "JSON policy"
 msgstr "JSONのポリシー"
 
-#: ../../quick-reference.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:197
 msgid "``--trust-forwarded``"
 msgstr "``--trust-forwarded``"
 
-#: ../../quick-reference.rst:197
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:199
 msgid "on in forward auth"
 msgstr "forward authでは有効"
 
-#: ../../quick-reference.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:200
 msgid "``--secure-cookie``"
 msgstr "``--secure-cookie``"
 
-#: ../../quick-reference.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:202
 msgid "add ``Secure``"
 msgstr "``Secure``\\ を付加"
 
-#: ../../quick-reference.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:204
 msgid "Endpoints Under ``/__sibuna/``"
 msgstr "``/__sibuna/``\\ 配下のエンドポイント"
 
-#: ../../quick-reference.rst:209
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:211
 msgid "Route"
 msgstr "ルート"
 
-#: ../../quick-reference.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:212
 msgid "Answer"
 msgstr "応答"
 
-#: ../../quick-reference.rst:211
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:213
 msgid "``challenge``"
 msgstr "``challenge``"
 
-#: ../../quick-reference.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:214
 msgid "interstitial HTML"
 msgstr "中間ページのHTML"
 
-#: ../../quick-reference.rst:213
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:215
 msgid "``challenge.json?need=&path=``"
 msgstr "``challenge.json?need=&path=``"
 
-#: ../../quick-reference.rst:214
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:216
 msgid "``{id, algorithm, difficulty, challenges, expires_at}``"
 msgstr "``{id, algorithm, difficulty, challenges, expires_at}``"
 
-#: ../../quick-reference.rst:215
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:217
 msgid "``verify`` (POST)"
 msgstr "``verify``\\ （POST）"
 
-#: ../../quick-reference.rst:216
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:218
 msgid ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``, else "
 "``400``"
@@ -645,171 +667,171 @@ msgstr ""
 "``{challenge_id, nonce | proof}`` -> ``200`` + ``Set-Cookie``、それ以外は\\ "
 "``400``"
 
-#: ../../quick-reference.rst:217
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:219
 msgid "``wasm/sibuna-pow.wasm``"
 msgstr "``wasm/sibuna-pow.wasm``"
 
-#: ../../quick-reference.rst:218
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:220
 msgid "14,744-byte solver"
 msgstr "14,744バイトのソルバー"
 
-#: ../../quick-reference.rst:219
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:221
 msgid "``worker.js``"
 msgstr "``worker.js``"
 
-#: ../../quick-reference.rst:220
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:222
 msgid "worker with WASM and JS provers"
 msgstr "WASMとJSの証明器を持つワーカー"
 
-#: ../../quick-reference.rst:221
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:223
 msgid "``honeypot``"
 msgstr "``honeypot``"
 
-#: ../../quick-reference.rst:222
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:224
 msgid "bans caller, ``403``; ``404`` for a subresource or cross-site fetch"
 msgstr "呼び出し元を禁止して\\ ``403``\\ 。サブリソースやクロスサイトの取得には\\ ``404``"
 
-#: ../../quick-reference.rst:223
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:225
 msgid "``health``"
 msgstr "``health``"
 
-#: ../../quick-reference.rst:224
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:226
 msgid "``{\"status\":\"ok\",...}``"
 msgstr "``{\"status\":\"ok\",...}``"
 
-#: ../../quick-reference.rst:225
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:227
 msgid "``metrics``"
 msgstr "``metrics``"
 
-#: ../../quick-reference.rst:226
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:228
 msgid "Prometheus text"
 msgstr "Prometheusのテキスト"
 
-#: ../../quick-reference.rst:228
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:230
 msgid "Route all of them to the daemon, never to the origin."
 msgstr "これらはすべてオリジンではなく、デーモンにルーティングしてください。"
 
-#: ../../quick-reference.rst:230
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:232
 msgid "Status Codes"
 msgstr "ステータスコード"
 
-#: ../../quick-reference.rst:237
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:239
 msgid "Code"
 msgstr "コード"
 
-#: ../../quick-reference.rst:238
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:240
 msgid "When"
 msgstr "発生条件"
 
-#: ../../quick-reference.rst:239
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:241
 msgid "200"
 msgstr "200"
 
-#: ../../quick-reference.rst:240
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:242
 msgid "admitted (forward auth), interstitial, internal routes"
 msgstr "許可（forward auth）、中間ページ、内部ルート"
 
-#: ../../quick-reference.rst:241
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:243
 msgid "400"
 msgstr "400"
 
-#: ../../quick-reference.rst:242
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:244
 msgid "malformed request or target, rejected solution (diagnostic body)"
 msgstr "不正な形式のリクエストや対象、拒否された解答（診断のボディー）"
 
-#: ../../quick-reference.rst:243
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:245
 msgid "401"
 msgstr "401"
 
-#: ../../quick-reference.rst:244
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:246
 msgid "challenge required: non-HTML client or forward auth"
 msgstr "チャレンジが必要：HTML以外のクライアント、またはforward auth"
 
-#: ../../quick-reference.rst:245
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:247
 msgid "403"
 msgstr "403"
 
-#: ../../quick-reference.rst:246
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:248
 msgid "policy or WAF denial, ban, honeypot"
 msgstr "ポリシーまたはWAFによる拒否、禁止、ハニーポット"
 
-#: ../../quick-reference.rst:247
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:249
 msgid "404"
 msgstr "404"
 
-#: ../../quick-reference.rst:248
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:250
 msgid "unknown ``/__sibuna/`` route, refused honeypot hit"
 msgstr "不明な\\ ``/__sibuna/``\\ のルート、拒否されたハニーポットへのアクセス"
 
-#: ../../quick-reference.rst:249
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:251
 msgid "413"
 msgstr "413"
 
-#: ../../quick-reference.rst:250
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:252
 msgid "solution body over the 64 KB buffer"
 msgstr "64 KBのバッファーを超える解答のボディー"
 
-#: ../../quick-reference.rst:251
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:253
 msgid "414"
 msgstr "414"
 
-#: ../../quick-reference.rst:252
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:254
 msgid "reported challenge URL over 8 KiB"
 msgstr "8 KiBを超える、報告されたチャレンジのURL"
 
-#: ../../quick-reference.rst:253
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:255
 msgid "417"
 msgstr "417"
 
-#: ../../quick-reference.rst:254
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:256
 msgid "unsupported request expectation"
 msgstr "サポートしないリクエストのexpectation"
 
-#: ../../quick-reference.rst:255
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:257
 msgid "429"
 msgstr "429"
 
-#: ../../quick-reference.rst:256
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:258
 msgid "GCRA limit, ``Retry-After`` seconds"
 msgstr "GCRAの制限、\\ ``Retry-After``\\ 秒"
 
-#: ../../quick-reference.rst:257
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:259
 msgid "431"
 msgstr "431"
 
-#: ../../quick-reference.rst:258
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:260
 msgid "head over 16 KB"
 msgstr "16 KBを超えるヘッダー部"
 
-#: ../../quick-reference.rst:259
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:261
 msgid "501"
 msgstr "501"
 
-#: ../../quick-reference.rst:260
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:262
 msgid "transfer coding other than chunked"
 msgstr "chunked以外の転送コーディング"
 
-#: ../../quick-reference.rst:261
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:263
 msgid "502"
 msgstr "502"
 
-#: ../../quick-reference.rst:262
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:264
 msgid "origin unreachable or malformed"
 msgstr "オリジンに到達できない、または不正な形式"
 
-#: ../../quick-reference.rst:263
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:265
 msgid "503"
 msgstr "503"
 
-#: ../../quick-reference.rst:264
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:266
 msgid "connection limits reached, or node draining"
 msgstr "接続数の上限に到達、またはノードがドレイン中"
 
-#: ../../quick-reference.rst:266
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:268
 msgid "Headers"
 msgstr "ヘッダー"
 
-#: ../../quick-reference.rst:269
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:271
 msgid ""
 "*Upstream (proxy)*: ``X-Forwarded-For`` (socket peer, after the received "
 "chain when trusted), ``X-Forwarded-Proto``, ``X-Real-IP`` (the judged "
@@ -821,7 +843,7 @@ msgstr ""
 "``X-Sibuna-Status: PASS``\\ 、\\ ``X-Sibuna-Rule: <rule>``\\ "
 "。ホップごとのフィールドと別形式の転送フィールドは、アンダースコアの綴りも含めて取り除きます。"
 
-#: ../../quick-reference.rst:270
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:272
 msgid ""
 "*Forward-auth reply*: ``X-Sibuna-Status``, ``X-Sibuna-Rule``, "
 "``X-Sibuna-Rule-Hash``."
@@ -829,11 +851,11 @@ msgstr ""
 "*forward-authの応答*\\ ：\\ ``X-Sibuna-Status``\\ 、\\ ``X-Sibuna-Rule``\\ 、\\ "
 "``X-Sibuna-Rule-Hash``\\ 。"
 
-#: ../../quick-reference.rst:271
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:273
 msgid "*Challenge reply*: ``X-Sibuna-Status: CHALLENGE``."
 msgstr "*チャレンジの応答*\\ ：\\ ``X-Sibuna-Status: CHALLENGE``\\ 。"
 
-#: ../../quick-reference.rst:272
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:274
 msgid ""
 "*Cookie*: ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
@@ -841,11 +863,11 @@ msgstr ""
 "*Cookie*\\ ：\\ ``__sibuna_token=<75 chars, 139 with ed25519>; Path=/; "
 "Max-Age=<ttl>; HttpOnly; SameSite=Lax[; Secure]``"
 
-#: ../../quick-reference.rst:274
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:276
 msgid "Policy File Skeleton"
 msgstr "ポリシーファイルの骨組み"
 
-#: ../../quick-reference.rst:277
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:279
 msgid ""
 "{ \"default_action\": \"CHALLENGE\", \"waf\": true,\n"
 "  \"thresholds\": {\"challenge_at\": 10, \"deny_at\": 40, \"bits_step\": "
@@ -887,7 +909,7 @@ msgstr ""
 "    {\"name\": \"headless\", \"user_agent\": \"Headless\", \"action\": "
 "\"WEIGH\", \"weight\": 30} ] }"
 
-#: ../../quick-reference.rst:291
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:293
 msgid ""
 "JA4: a whole fingerprint, or a prefix and ``*``; no fingerprint, no "
 "match. Patterns: ``*`` or ``.*`` any; ``^...$`` exact; trailing ``*`` "
@@ -900,11 +922,11 @@ msgstr ""
 "はパスの完全一致、それ以外は大文字小文字を区別しない部分文字列です。パスは正規形で照合します。順序：WAF -> トライのdeny/allow "
 "-> ルール -> スコア -> バイパス -> トライのchallenge -> bots -> 既定。"
 
-#: ../../quick-reference.rst:293
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:295
 msgid "Storage (Edge) in SQL"
 msgstr "SQLで見るストレージ（Edge）"
 
-#: ../../quick-reference.rst:296
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:298
 msgid ""
 "INSERT INTO policies (id, name, priority, path_pattern, action, "
 "difficulty, algorithm,\n"
@@ -936,7 +958,7 @@ msgstr ""
 "  FROM incidents_fts f JOIN security_incidents s ON s.id = f.rowid\n"
 "  WHERE incidents_fts MATCH 'union' ORDER BY rank LIMIT 20;"
 
-#: ../../quick-reference.rst:308
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:310
 msgid ""
 "SQLite (``sqlite3 <dir>/sibuna.db``); actions are lowercase. Score "
 ":math:`\\le -50` -> deny prefix; :math:`\\ge 50` -> allow. Cluster: same "
@@ -951,103 +973,103 @@ msgstr ""
 "、1から8,388,607の一意なNを指定した\\ ``--database-url-file <file> --cluster-node "
 "N``\\ 。メンバーリスト、リーダー、クラスター内のTLSはありません（SID 0011）。"
 
-#: ../../quick-reference.rst:310
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:312
 msgid "Diagnostics"
 msgstr "診断"
 
-#: ../../quick-reference.rst:317
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:319
 msgid "Title"
 msgstr "タイトル"
 
-#: ../../quick-reference.rst:319
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:321
 msgid "``MALFORMED CHALLENGE``"
 msgstr "``MALFORMED CHALLENGE``"
 
-#: ../../quick-reference.rst:320
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:322
 msgid "id edited or truncated; fetch a new one"
 msgstr "IDが編集されたか切り詰められた。新しいものを取得する"
 
-#: ../../quick-reference.rst:321
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:323
 msgid "``INVALID CHALLENGE TAG``"
 msgstr "``INVALID CHALLENGE TAG``"
 
-#: ../../quick-reference.rst:322
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:324
 msgid "not minted by this seed or node"
 msgstr "このシードまたはノードが発行したものではない"
 
-#: ../../quick-reference.rst:323
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:325
 msgid "``CHALLENGE EXPIRED``"
 msgstr "``CHALLENGE EXPIRED``"
 
-#: ../../quick-reference.rst:324
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:326
 msgid "older than TTL or clock skew > 60 s"
 msgstr "TTLより古い、または時計のずれが60秒超"
 
-#: ../../quick-reference.rst:325
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:327
 msgid "``CLIENT FINGERPRINT MISMATCH``"
 msgstr "``CLIENT FINGERPRINT MISMATCH``"
 
-#: ../../quick-reference.rst:326
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:328
 msgid "address or User-Agent changed"
 msgstr "アドレスまたはUser-Agentが変わった"
 
-#: ../../quick-reference.rst:327
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:329
 msgid "``DIFFICULTY NOT MET``"
 msgstr "``DIFFICULTY NOT MET``"
 
-#: ../../quick-reference.rst:328
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:330
 msgid "nonce lacks zero bits"
 msgstr "nonceのゼロビットが足りない"
 
-#: ../../quick-reference.rst:329
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:331
 msgid "``INVALID PROOF OF SEQUENTIAL WORK``"
 msgstr "``INVALID PROOF OF SEQUENTIAL WORK``"
 
-#: ../../quick-reference.rst:330
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:332
 msgid "openings do not reach the root"
 msgstr "開示が根に到達しない"
 
-#: ../../quick-reference.rst:331
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:333
 msgid "``WRONG SOLUTION TYPE``"
 msgstr "``WRONG SOLUTION TYPE``"
 
-#: ../../quick-reference.rst:332
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:334
 msgid "nonce for PoSW or proof for Hashcash"
 msgstr "PoSWにnonce、またはHashcashに証明"
 
-#: ../../quick-reference.rst:333
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:335
 msgid "``DOUBLE SPEND PREVENTED``"
 msgstr "``DOUBLE SPEND PREVENTED``"
 
-#: ../../quick-reference.rst:334
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:336
 msgid "challenge already used"
 msgstr "チャレンジはすでに使用済み"
 
-#: ../../quick-reference.rst:335
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:337
 msgid "``STORE FULL``"
 msgstr "``STORE FULL``"
 
-#: ../../quick-reference.rst:336
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:338
 msgid "spent set saturated; lower TTL or raise ``--spent-tags``"
 msgstr "使用済み集合が飽和。TTLを下げるか\\ ``--spent-tags``\\ を上げる"
 
-#: ../../quick-reference.rst:337
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:339
 msgid "``NETWORK BINDING MISMATCH``"
 msgstr "``NETWORK BINDING MISMATCH``"
 
-#: ../../quick-reference.rst:338
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:340
 msgid "cookie copied to another client"
 msgstr "Cookieが別のクライアントにコピーされた"
 
-#: ../../quick-reference.rst:339
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:341
 msgid "``INVALID COMMAND LINE``"
 msgstr "``INVALID COMMAND LINE``"
 
-#: ../../quick-reference.rst:340
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:342
 msgid "unknown option, bad value, or a removed Zaxonlite option"
 msgstr "不明なオプション、不正な値、または削除されたZaxonliteのオプション"
 
-#: ../../quick-reference.rst:342
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:344
 msgid ""
 "The edge prints diagnostics with codes of the families ``EDGE`` (start "
 "and reload), ``ADM`` (admin socket), ``ACME`` (automatic HTTPS), ``DBA`` "
@@ -1066,7 +1088,7 @@ msgstr ""
 "``sibuna_edge_hook_calls_total``\\ と、\\ "
 "``sibuna_edge_hook_breakers_open``\\ を使います。"
 
-#: ../../quick-reference.rst:344
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:346
 msgid ""
 "Metrics to alert on: ``denied``, ``rate_limited``, ``overloaded``, "
 "``upstream_errors``, ``incidents_dropped``, ``incident_write_failures``, "
@@ -1087,11 +1109,11 @@ msgstr ""
 "``sibuna_edge_acme_nearest_expiry_seconds``\\ 、\\ "
 "``sibuna_edge_forward_local_total``\\ 。"
 
-#: ../../quick-reference.rst:346
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:348
 msgid "Numbers to Remember"
 msgstr "覚えておく数値"
 
-#: ../../quick-reference.rst:349
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:351
 msgid ""
 "Challenge id 70 chars (36-byte payload + 16-byte tag); token 75 chars (40 "
 "+ 16), 139 with Ed25519; proof bytes :math:`32(1 + t(n+1))`; PoSW depth = "
@@ -1110,11 +1132,11 @@ msgstr ""
 "``--rate-table-cells``\\ ）。禁止は65,536スロット（\\ ``--ban-table-slots``\\ "
 "）。クライアントアドレスあたり64接続。インシデントリングは512。バッチは32。キャンペーンの距離は最新16,384個の埋め込みベクトルに対して0.35。keep-aliveは接続あたり4,096リクエスト。オリジンのプールは256ソケット。ストレージのジョブキューは32。"
 
-#: ../../quick-reference.rst:351
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:353
 msgid "Ingress Routing"
 msgstr "イングレスのルーティング"
 
-#: ../../quick-reference.rst:354
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:356
 msgid ""
 "Use the Nginx or Caddy recipe in Part XI, Forward Auth Behind an Ingress. "
 "Route ``/__sibuna/*`` directly; authorize application requests with the "
@@ -1126,7 +1148,7 @@ msgstr ""
 "``/__sibuna/*``\\ "
 "は直接ルーティングします。アプリケーションのリクエストは、元のURI、メソッド、信頼できるクライアントアドレスで認可します。受信したSibunaの監査用ヘッダーは、認可の結果で置き換えます。Nginxでは、チャレンジ、429、認可が利用できない場合を明示的に扱う必要があります。"
 
-#: ../../quick-reference.rst:356
+#: ../../../../../../home/insan/projects/sibuna/docs/book/quick-reference.rst:358
 msgid ""
 "``reverse_proxy`` carries admitted HTTP/1.1 bodies and WebSockets; "
 "``forward_auth`` grants admission and the ingress carries them. Omitted "

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:22+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../introduction.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:1
 msgid "What is Sibuna?"
 msgstr "Sibuna 是什么？"
 
-#: ../../introduction.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:4
 msgid ""
 "A passenger opens a railway timetable and asks for the next departure. We "
 "run two copies of the timetable application so that one can answer while "
@@ -34,11 +34,11 @@ msgstr ""
 "一位旅客打开列车时刻表，查询下一班车的发车时间。我们运行两个时刻表应用副本，一个重启时另一个仍能应答。旅客只需知道一个公共地址。Sibuna "
 "在这个地址接收请求，并选择请求的去向。这就是负载均衡器的作用。它也能检查 Web 请求，决定哪些可以到达应用。这就是 Web 应用防火墙的作用。"
 
-#: ../../introduction.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:6
 msgid "One request through the edge"
 msgstr "一个请求怎样经过边缘节点"
 
-#: ../../introduction.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:9
 msgid ""
 "The browser opens an encrypted connection to the timetable's public name. "
 "Sibuna presents a certificate for that name. If the browser trusts the "
@@ -50,7 +50,7 @@ msgstr ""
 "浏览器向时刻表的公共主机名发起加密连接。Sibuna 出示该名称的证书。如果浏览器信任证书，双方就建立安全连接。Sibuna 可以通过 Let's "
 "Encrypt 获取并续订公共证书。对于内部服务，它可以从本地证书颁发机构签发证书，我们将该机构的根证书装入客户端。"
 
-#: ../../introduction.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:11
 msgid ""
 "The address where Sibuna accepts traffic is a frontend. Once Sibuna has "
 "received the HTTP request, it can read the host and path. A route sends "
@@ -63,13 +63,13 @@ msgstr ""
 "可以读取主机名和路径。一条路由把时刻表查询送往包含两台应用服务器的池。这两台服务器称为源站。对于获准通过的请求，Sibuna "
 "从池中选择一个健康源站，将请求转发给它，再把应答送回旅客。"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid ""
 "Sibuna terminates HTTPS and forwards each admitted request to one healthy "
 "HTTP/1.1 origin."
 msgstr "Sibuna 终止 HTTPS，将每个获准请求转发到一个健康的 HTTP/1.1 源站。"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid ""
 "// introduction.rst: one public address in front of two timetable "
 "servers.\n"
@@ -103,11 +103,11 @@ msgstr ""
 "  edge(<sibuna>, <b>, \"-|>\", say(\"HTTP/1.1\"), label-side: right),\n"
 ")\n"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid "One public address, two timetable servers."
 msgstr "一个公共地址对应两台时刻表服务器。"
 
-#: ../../introduction.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:17
 msgid ""
 "The two connections can use different protocols. A browser might speak "
 "HTTP/3 to Sibuna while the timetable application speaks HTTP/1.1. An "
@@ -120,11 +120,11 @@ msgstr ""
 "客户端需要一条通往兼容服务的 HTTP/2 路由。普通 TCP 流或 UDP 数据报也可以发往一个池。这时 Sibuna "
 "可以直接转发流量，无需读取网页或对 HTTP 路径应用规则。"
 
-#: ../../introduction.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:19
 msgid "Who gets through?"
 msgstr "谁可以通过？"
 
-#: ../../introduction.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:22
 msgid ""
 "Suppose a script asks for the timetable faster than the application can "
 "compute it. Adding a second origin spreads the work across two machines. "
@@ -136,7 +136,7 @@ msgstr ""
 "假设一个脚本查询时刻表的速度超过了应用计算时刻表的速度。增加一个源站，可以让两台机器分担工作。防火墙规则则可以在任何源站开始计算前拒绝请求，或者请浏览器先解一道题。Sibuna "
 "验证答案后会签发一个带签名的会话，浏览器在下次访问时可以出示它。"
 
-#: ../../introduction.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:24
 msgid ""
 "Gate handles admission and local rate limits. Shield also inspects HTTP "
 "requests for patterns such as an attempted injection. We can apply the "
@@ -146,11 +146,11 @@ msgstr ""
 "Gate 负责准入和本地限流。Shield 还会检查 HTTP 请求，寻找疑似注入等模式。我们可以在旅客网站上启用 "
 "Shield，同时为自动化客户端提供单独的路由。该客户端采用服务所要求的身份认证方式。"
 
-#: ../../introduction.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:26
 msgid "From one node to a cluster"
 msgstr "从一个节点到集群"
 
-#: ../../introduction.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:29
 msgid ""
 "If one timetable server goes down and its health check fails, the edge "
 "can send new requests to the other server. If the edge itself goes down, "
@@ -161,7 +161,7 @@ msgstr ""
 "如果一台时刻表服务器停机且未通过健康检查，边缘节点可以把新请求发给另一台服务器。如果边缘节点本身停机，存活的源站也无法通过它应答。我们可以在同一个公共名称下放置第二个 "
 "Sibuna 节点，让网络把客户端引向可用节点。"
 
-#: ../../introduction.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:31
 msgid ""
 "The nodes each forward their own traffic. Through a mesh they can "
 "exchange routing configurations, bans and information about which origin "
@@ -171,7 +171,7 @@ msgid ""
 msgstr ""
 "每个节点都转发自己收到的流量。通过网状网络，它们可以交换路由配置、封禁信息以及客户端上次使用的源站信息。旅客的下一次连接可能到达不同的边缘节点。因此，集群章节要讨论哪些决定可以由节点独立做出，哪些事实需要让同伴知道。"
 
-#: ../../introduction.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:33
 msgid ""
 "Before we turn the page, suppose both timetable servers are healthy and a "
 "passenger receives a browser challenge. Which component made that "

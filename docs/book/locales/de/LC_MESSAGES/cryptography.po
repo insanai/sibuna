@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:18+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: de\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../cryptography.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:1
 msgid "Part III: Foundations from Cryptography Research"
 msgstr "Teil III: Grundlagen aus der kryptographischen Forschung"
 
-#: ../../cryptography.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:4
 msgid ""
 "We derive the cost models behind Sibuna's two proof-of-work tiers, "
 "present the Cohen-Pietrzak Proof of Sequential Work with its security "
@@ -34,16 +34,17 @@ msgstr ""
 "Challenges und Sitzungen mit schlüsselbasierten Hashes. SID 0006 hält die "
 "Annahmen und Quellen fest."
 
-#: ../../cryptography.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:6
 msgid "Hashcash: The Mathematics of Tier One"
 msgstr "Hashcash: Die Mathematik von Stufe eins"
 
-#: ../../cryptography.rst:9 ../../cryptography.rst:36
-#: ../../cryptography.rst:145
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:36
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:145
 msgid "Objectives"
 msgstr "Lernziele"
 
-#: ../../cryptography.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:11
 msgid ""
 "By the end of this chapter, we should be able to state the expected work, "
 "variance, and tail probability of a bit-level Hashcash puzzle, explain "
@@ -56,11 +57,11 @@ msgstr ""
 "des Angreifers begrenzt, und die beiden Grenzen beschreiben können, die "
 "eine zweite Stufe begründen."
 
-#: ../../cryptography.rst:13
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:13
 msgid "Definition and Cost"
 msgstr "Definition und Kosten"
 
-#: ../../cryptography.rst:16
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:16
 msgid ""
 "Sibuna's Tier One puzzle for challenge string :math:`C` and difficulty "
 ":math:`b` bits is: find :math:`N \\in \\mathbb{N}` such that "
@@ -79,7 +80,7 @@ msgstr ""
 "JavaScript-Fallback und dem nativen Verifizierer identisch, ohne einen "
 "Schritt binärer Kodierung."
 
-#: ../../cryptography.rst:18
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:18
 msgid ""
 "The unit of difficulty is an expected *hash trial*, not a compression "
 "function call. An input can occupy several SHA-256 blocks. Prefix "
@@ -94,7 +95,7 @@ msgstr ""
 "Digest; Implementierungen müssen sich auf die Aussage und die Kodierung "
 "der Nonce einigen, nicht auf geschätzte CPU-Kosten."
 
-#: ../../cryptography.rst:20
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:20
 msgid ""
 "For independent ideal digests, the trial count :math:`X` is geometric "
 "with :math:`p = 2^{-b}`. Its median is :math:`\\left\\lceil \\ln(1/2) / "
@@ -115,11 +116,11 @@ msgstr ""
 "zusätzliche Arbeit. Eine Zeitmessung einer Primitive lässt sich nicht in "
 "die Flutkapazität eines Servers umrechnen."
 
-#: ../../cryptography.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:22
 msgid "Two Limits of Search"
 msgstr "Zwei Grenzen der Suche"
 
-#: ../../cryptography.rst:25
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:25
 msgid ""
 "The first is variance: a long search is not necessarily a broken worker. "
 "The second is parallelism: independent nonce trials can run concurrently. "
@@ -136,11 +137,11 @@ msgstr ""
 "Zulassungsrichtlinie von Belang. Weder eine behauptete Hashrate noch ein "
 "einzelner Benchmark kann den Vorteil jedes Anfragenden begrenzen."
 
-#: ../../cryptography.rst:27
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:27
 msgid "Exercise 3.0"
 msgstr "Übung 3.0"
 
-#: ../../cryptography.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:29
 msgid ""
 "Using the geometric tail, estimate the probability of needing more than "
 ":math:`4.6 \\times 2^b` trials. Why is the expected trial count unchanged "
@@ -151,17 +152,17 @@ msgstr ""
 "erwartete Versuchszahl unverändert, wenn der Nonce-Raum auf mehrere "
 "Worker aufgeteilt wird?"
 
-#: ../../cryptography.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:31
 msgid "*Hint:* Count aggregate trials, not elapsed seconds."
 msgstr ""
 "*Hinweis:* Die Gesamtzahl der Versuche zählen, nicht die verstrichenen "
 "Sekunden."
 
-#: ../../cryptography.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:33
 msgid "Proof of Sequential Work: Tier Two"
 msgstr "Nachweis sequenzieller Arbeit: Stufe zwei"
 
-#: ../../cryptography.rst:38
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:38
 msgid ""
 "Understand the Cohen-Pietrzak labelling, why it forces sequential "
 "computation, what the verifier checks, the conditional sampling bound "
@@ -175,11 +176,11 @@ msgstr ""
 "das Post-Quanten-Ergebnis, die Speicherschranke des Beweisers und die "
 "Kalibrierungsdaten hinter der Zuordnung der Arbeitsbits kennen."
 
-#: ../../cryptography.rst:40
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:40
 msgid "Why Sequential Work"
 msgstr "Warum sequenzielle Arbeit"
 
-#: ../../cryptography.rst:43
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:43
 msgid ""
 "A sequential-work construction introduces dependencies between "
 "computations: a later label needs a value produced earlier. This "
@@ -193,7 +194,7 @@ msgstr ""
 "die Tiefe der Berechnung. Unabhängige Rätsel können weiterhin parallel "
 "laufen, und die Hash-Latenz der Hardware spielt weiterhin eine Rolle."
 
-#: ../../cryptography.rst:45
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:45
 msgid ""
 "Sibuna follows the hash-based construction described by Cohen and "
 "Pietrzak. Its graph has :math:`2^{n+1}-1` labels at depth :math:`n`, but "
@@ -212,11 +213,11 @@ msgstr ""
 "dürfen nicht zu einer uneingeschränkten Behauptung über jede konkrete "
 "Implementierung oder jeden Gegner gemacht werden."
 
-#: ../../cryptography.rst:47
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:47
 msgid "The Construction"
 msgstr "Die Konstruktion"
 
-#: ../../cryptography.rst:50
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:50
 msgid ""
 "Let :math:`n` be the depth and consider the complete binary tree with "
 "nodes named by binary strings of length at most :math:`n` (root "
@@ -235,7 +236,7 @@ msgstr ""
 "einmal absorbiertem :math:`\\chi` (derselbe Präfix-Trick wie beim "
 "Hashcash-Löser):"
 
-#: ../../cryptography.rst:52
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:52
 msgid ""
 "an internal node hashes its two children: :math:`\\ell_v = H(\\chi, v, "
 "\\ell_{v0}, \\ell_{v1})`;"
@@ -243,7 +244,7 @@ msgstr ""
 "Ein innerer Knoten hasht seine beiden Kinder: :math:`\\ell_v = H(\\chi, "
 "v, \\ell_{v0}, \\ell_{v1})`;"
 
-#: ../../cryptography.rst:53
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:53
 msgid ""
 "a leaf :math:`u = u_1 \\dots u_n` hashes the *left siblings of its "
 "ancestors* wherever the root path turned right: :math:`\\ell_u = H(\\chi, "
@@ -254,7 +255,7 @@ msgstr ""
 ":math:`\\ell_u = H(\\chi, u, \\{\\ell_{u_1 \\dots u_{i-1} 0} : u_i = "
 "1\\})`."
 
-#: ../../cryptography.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:56
 msgid ""
 "A complete binary tree of depth 3 with nodes named depth.index. The root "
 "path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is green, the siblings 1.0, "
@@ -269,7 +270,7 @@ msgstr ""
 "und 3.4 in das Blatt 3.5. Ein Pfeil unter den Blättern zeigt, dass sie "
 "von links nach rechts beschriftet werden."
 
-#: ../../cryptography.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:56
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/posw-tree.typ\": draw\n"
@@ -281,7 +282,7 @@ msgstr ""
 "#show: chart.with(lang: \"de\")\n"
 "#draw()\n"
 
-#: ../../cryptography.rst:56
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:56
 msgid ""
 "The depth-3 tree: an opening of leaf 3.5 sends the leaf label and the "
 "three sibling labels; the dashed edges are the left-sibling dependencies "
@@ -292,7 +293,7 @@ msgstr ""
 "Abhängigkeiten von linken Geschwistern, die die Beschriftung sequenziell "
 "machen."
 
-#: ../../cryptography.rst:59
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:59
 msgid ""
 "The left-sibling edges are what make the computation sequential: leaf "
 ":math:`u` cannot be labelled until every subtree to its left is complete, "
@@ -306,7 +307,7 @@ msgstr ""
 "Wurzellabel :math:`\\varphi = \\ell_\\varepsilon` hängt der Reihe nach "
 "von allen :math:`2^{n+1} - 1` Labels ab."
 
-#: ../../cryptography.rst:61
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:61
 msgid ""
 "**Openings.** After computing :math:`\\varphi`, the prover derives "
 ":math:`t` leaves by Fiat-Shamir, :math:`\\gamma_i = H(\\chi \\parallel "
@@ -329,11 +330,11 @@ msgstr ""
 "Labelberechnung kann mehrere Hash-Blöcke umfassen; Labels zu zählen heißt "
 "nicht, Kompressionsaufrufe zu zählen."
 
-#: ../../cryptography.rst:63
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:63
 msgid "Implementation: ``posw::verify_opening``"
 msgstr "Implementierung: ``posw::verify_opening``"
 
-#: ../../cryptography.rst:65
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:65
 msgid ""
 "Recomputes one opened leaf from its sibling labels and walks the path to "
 "the root. In ``crates/pow/src/posw.rs`` (crate ``sibuna-pow``)."
@@ -342,7 +343,7 @@ msgstr ""
 "den Pfad zur Wurzel hinauf. In ``crates/pow/src/posw.rs`` (Crate "
 "``sibuna-pow``)."
 
-#: ../../cryptography.rst:67
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:67
 msgid ""
 "fn verify_opening(base: &Sha256, n: u8, phi: &Label, gamma: u32, opening: "
 "&[Label]) -> bool {\n"
@@ -406,11 +407,11 @@ msgstr ""
 "    current == *phi\n"
 "}"
 
-#: ../../cryptography.rst:98
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:98
 msgid "Sampling, Soundness, and Their Limits"
 msgstr "Stichproben, Korrektheit und ihre Grenzen"
 
-#: ../../cryptography.rst:101
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:101
 msgid ""
 "Consider a fixed commitment with an independently detectable bad fraction "
 ":math:`\\alpha`. If each opening samples uniformly and independently, the "
@@ -427,11 +428,11 @@ msgstr ""
 "genommen ist sie kein Sicherheitsbeweis für ein Protokoll sequenzieller "
 "Arbeit."
 
-#: ../../cryptography.rst:103
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:103
 msgid "Worked example: a conditional sampling bound"
 msgstr "Durchgerechnetes Beispiel: eine bedingte Stichprobenschranke"
 
-#: ../../cryptography.rst:105
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:105
 msgid ""
 "With a fixed bad fraction :math:`\\alpha = 0.1` and :math:`t = 16` "
 "independent openings, the chance of missing every bad location is "
@@ -448,7 +449,7 @@ msgstr ""
 "durchprobieren, wählen, welches Commitment er offenlegt, oder Fehlschläge "
 "korrelieren, so berücksichtigt diese Rechnung diese Strategie nicht."
 
-#: ../../cryptography.rst:107
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:107
 msgid ""
 "The referenced sequential-work construction has a security analysis in an "
 "oracle model. Sibuna's domain separation, parameter mapping, truncation, "
@@ -465,11 +466,11 @@ msgstr ""
 "beweist keine Resistenz gegen Durchprobieren. Wir behaupten nicht "
 "bedingungslos, dass Betrug nie billiger ist."
 
-#: ../../cryptography.rst:109
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:109
 msgid "Exercise 3.1"
 msgstr "Übung 3.1"
 
-#: ../../cryptography.rst:111
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:111
 msgid ""
 "If an attacker tries :math:`g` independent commitments, each accepted "
 "with probability :math:`q`, derive the probability that at least one is "
@@ -480,17 +481,17 @@ msgstr ""
 "herleiten, dass mindestens eines akzeptiert wird. Welche Kosten fehlen in "
 "diesem Ausdruck?"
 
-#: ../../cryptography.rst:113
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:113
 msgid "*Hint:* First calculate the probability that all :math:`g` fail."
 msgstr ""
 "*Hinweis:* Zuerst die Wahrscheinlichkeit berechnen, dass alle :math:`g` "
 "scheitern."
 
-#: ../../cryptography.rst:115
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:115
 msgid "Prover Memory"
 msgstr "Speicher des Beweisers"
 
-#: ../../cryptography.rst:118
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:118
 msgid ""
 "A naive prover stores every label (:math:`2^{n+1} - 1` of them). Sibuna's "
 "prover keeps a stack of the current path's left-sibling labels (:math:`n "
@@ -516,11 +517,11 @@ msgstr ""
 "Browser-Tab und ein nativer Test teilen denselben Typ ``Workspace`` "
 "(``sibuna_pow::posw::Workspace``)."
 
-#: ../../cryptography.rst:120
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:120
 msgid "Parameters Are Not Timings"
 msgstr "Parameter sind keine Zeitangaben"
 
-#: ../../cryptography.rst:123
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:123
 msgid ""
 "Sibuna maps work bits to depth using :math:`n = b - 3`, clamped to the "
 "supported interval :math:`[4, 24]`. This is a work-scale convention, not "
@@ -539,7 +540,7 @@ msgstr ""
 "eingecheckte Primitive-Benchmark misst die Verifikation; er belegt keine "
 "Lösungslatenz im Browser."
 
-#: ../../cryptography.rst:125
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:125
 msgid ""
 "Proof size is :math:`32(1 + t(n+1))` bytes. At depth 13 with sixteen "
 "openings, this is :math:`32(1 + 16 \\times 14) = 7200` bytes. Raising the "
@@ -552,11 +553,11 @@ msgstr ""
 "Verifizierers, selbst wenn die dominierenden Kosten für den Aufbau des "
 "Baums gleich bleiben."
 
-#: ../../cryptography.rst:127
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:127
 msgid "Exercise 3.2"
 msgstr "Übung 3.2"
 
-#: ../../cryptography.rst:129
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:129
 msgid ""
 "Compute the proof size at depth 17 with 16 openings. Then double the "
 "opening count. Which term doubles and which term remains fixed?"
@@ -565,11 +566,11 @@ msgstr ""
 "der Öffnungen verdoppeln. Welcher Term verdoppelt sich, und welcher "
 "bleibt fest?"
 
-#: ../../cryptography.rst:131
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:131
 msgid "Choosing a Construction"
 msgstr "Eine Konstruktion wählen"
 
-#: ../../cryptography.rst:134
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:134
 msgid ""
 "The relevant comparison is a resource budget, not an algorithm's "
 "reputation. Record the prover's memory, the verifier's worst-case work, "
@@ -589,7 +590,7 @@ msgstr ""
 "Verzögerungskonstruktionen dienen einem anderen Vertrauensmodell als ein "
 "Gate mit gemeinsamem Geheimnis."
 
-#: ../../cryptography.rst:136
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:136
 msgid ""
 "Sibuna retains cheap hash verification and a hash-based sequential-work "
 "option. The latter requires more proof bytes and more careful parameter "
@@ -602,11 +603,12 @@ msgstr ""
 "es, fehlerhaft geformte Nachweise abzuweisen, bevor die teure "
 "Verifikation beginnt."
 
-#: ../../cryptography.rst:138 ../../cryptography.rst:210
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:138
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:210
 msgid "Explain the invariant"
 msgstr "Die Invariante erklären"
 
-#: ../../cryptography.rst:140
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:140
 msgid ""
 "Explain the distinction between an authentication tree, which proves that "
 "a label belongs to a commitment, and dependency edges, which constrain "
@@ -616,11 +618,11 @@ msgstr ""
 "beweist, dass ein Label zu einem Commitment gehört, und "
 "Abhängigkeitskanten, die einschränken, wie Labels berechnet werden."
 
-#: ../../cryptography.rst:142
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:142
 msgid "Symmetric Authentication: Challenges and Sessions"
 msgstr "Symmetrische Authentifizierung: Challenges und Sitzungen"
 
-#: ../../cryptography.rst:147
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:147
 msgid ""
 "Explain why a keyed pseudorandom function is the correct primitive when "
 "issuer and verifier are the same trust domain, state the forgery bound "
@@ -633,11 +635,11 @@ msgstr ""
 "angeben; den zustandslosen Challenge-Datensatz und die Schranke der "
 "Verbrauchsmenge beschreiben; den Schlüsselplan lesen."
 
-#: ../../cryptography.rst:149
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:149
 msgid "Issuer Equals Verifier"
 msgstr "Aussteller gleich Verifizierer"
 
-#: ../../cryptography.rst:152
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:152
 msgid ""
 "A digital signature lets *anyone* holding the public key verify, which is "
 "the right tool when verifiers must not be able to mint. Sibuna's verifier "
@@ -657,11 +659,11 @@ msgstr ""
 "Tokens ausstellen. Das Benchmark-Kapitel vergleicht die implementierten "
 "Token-Operationen."
 
-#: ../../cryptography.rst:154
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:154
 msgid "Lemma 3 (Forgery bound)"
 msgstr "Lemma 3 (Fälschungsschranke)"
 
-#: ../../cryptography.rst:156
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:156
 msgid ""
 "With BLAKE3 in keyed mode modelled as a PRF and a 16-byte tag, an "
 "adversary making :math:`q` verification queries forges a valid token with "
@@ -675,7 +677,7 @@ msgstr ""
 "+ \\varepsilon_{\\mathrm{PRF}}`. Bei einer Million Anfragen pro Sekunde "
 "sind das :math:`2^{-108}` pro Sekunde."
 
-#: ../../cryptography.rst:158
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:158
 msgid ""
 "A second consequence matters for the long term: Ed25519 rests on discrete "
 "logarithms in an elliptic-curve group, which Shor's algorithm breaks; a "
@@ -692,7 +694,7 @@ msgstr ""
 "(``--token-scheme ed25519``) für Einsätze, die Verifizierer brauchen, die "
 "keine Tokens ausstellen können."
 
-#: ../../cryptography.rst:160
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:160
 msgid ""
 "The tokens and the challenge records were therefore safe against a "
 "quantum adversary before the transport that carries them was. Since SID "
@@ -717,11 +719,11 @@ msgstr ""
 "akzeptieren sie nicht. Eine Signatur zählt außerdem nur während ihres "
 "eigenen Handshakes, sodass eine Aufzeichnung sie nicht preisgibt."
 
-#: ../../cryptography.rst:162
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:162
 msgid "The Key Schedule"
 msgstr "Der Schlüsselplan"
 
-#: ../../cryptography.rst:165
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:165
 msgid ""
 "One 32-byte master seed (from ``--secret-file``, ``SIBUNA_SECRET``, or a "
 "fresh random value) derives every purpose key with keyed BLAKE3 and a "
@@ -734,11 +736,11 @@ msgstr ""
 "für Token, Challenge, Ed25519 und Fingerabdruck sowie der "
 "Anforderungsschlüssel, der Anforderungstickets versiegelt (Teil IV)."
 
-#: ../../cryptography.rst:167
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:167
 msgid "Implementation: ``Keys::derive``"
 msgstr "Implementierung: ``Keys::derive``"
 
-#: ../../cryptography.rst:169
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:169
 msgid ""
 "Derives the five purpose keys from the seed. In "
 "``crates/challenge/src/keys.rs`` (crate ``sibuna-challenge``). ``Keys`` "
@@ -750,7 +752,7 @@ msgstr ""
 "und ``Seed`` überschreiben ihre Bytes beim Freigeben mit Nullen, und ihre "
 "``Debug``-Ausgabe ist geschwärzt."
 
-#: ../../cryptography.rst:171
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:171
 msgid ""
 "pub fn derive(seed: &Seed) -> Keys {\n"
 "    Keys {\n"
@@ -780,7 +782,7 @@ msgstr ""
 "    blake3::keyed_hash(seed.as_bytes(), purpose.as_bytes())\n"
 "}"
 
-#: ../../cryptography.rst:187
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:187
 msgid ""
 "In a cluster, ``Keys::bind_node`` replaces the challenge key by keyed "
 "BLAKE3 under it over ``sibuna/challenge-node/v1`` and the node id, so a "
@@ -793,7 +795,7 @@ msgstr ""
 "ausgestellt hat, während Sitzungstokens und Anforderungstickets auf jedem "
 "Mitglied gültig bleiben."
 
-#: ../../cryptography.rst:189
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:189
 msgid ""
 "Domain separation prevents accidental reuse across purposes; compromise "
 "of the master seed compromises every derived key. A cluster only has to "
@@ -803,11 +805,11 @@ msgstr ""
 "Zwecke hinweg; die Kompromittierung des Master-Seeds kompromittiert jeden "
 "abgeleiteten Schlüssel. Ein Cluster muss sich nur auf einen Seed einigen."
 
-#: ../../cryptography.rst:191
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:191
 msgid "Stateless Challenges"
 msgstr "Zustandslose Challenges"
 
-#: ../../cryptography.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:195
 msgid ""
 "Two byte layouts. The challenge identifier: ver, alg, diff and t of one "
 "byte each, then issued_at, fingerprint, nonce and rule_hash of eight "
@@ -828,7 +830,7 @@ msgstr ""
 "16-Byte-BLAKE3-Tag; 56 Bytes, gesendet als 75 Zeichen in URL-sicherem "
 "Base64."
 
-#: ../../cryptography.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:195
 msgid ""
 "#import \"chart.typ\": chart\n"
 "#import \"draw/wire-formats.typ\": draw\n"
@@ -840,7 +842,7 @@ msgstr ""
 "#show: chart.with(lang: \"de\")\n"
 "#draw()\n"
 
-#: ../../cryptography.rst:195
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:195
 msgid ""
 "Wire formats of the challenge identifier and the session token. The "
 "numbers above each record are byte offsets."
@@ -848,7 +850,7 @@ msgstr ""
 "Übertragungsformate der Challenge-Kennung und des Sitzungstokens. Die "
 "Zahlen über jedem Datensatz sind Byte-Offsets."
 
-#: ../../cryptography.rst:198
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:198
 msgid ""
 "A challenge identifier is a self-authenticating record: version, "
 "algorithm, difficulty, opening count, issue time, the client's keyed "
@@ -869,11 +871,11 @@ msgstr ""
 "Challenge-TTL, prüft den Fingerabdruck gegen den einreichenden Client und "
 "untersucht erst dann den Nachweis."
 
-#: ../../cryptography.rst:200
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:200
 msgid "Lemma 4 (State grows only with paid work)"
 msgstr "Lemma 4 (Zustand wächst nur mit bezahlter Arbeit)"
 
-#: ../../cryptography.rst:202
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:202
 msgid ""
 "Let :math:`S` be the set of challenge tags the daemon remembers. A tag "
 "enters :math:`S` only after a valid proof for it was accepted, and it "
@@ -894,7 +896,7 @@ msgstr ""
 "eine gültige Lösung abweisen. Dies ist eine Schranke für den Zustand, "
 "keine untere Schranke für die Rechenstrategie jedes Gegners."
 
-#: ../../cryptography.rst:204
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:204
 msgid ""
 "The spent set is 16 shards of Robin Hood open addressing over the 16-byte "
 "tags (Part V). The fingerprint is a keyed hash of the client address and "
@@ -908,11 +910,11 @@ msgstr ""
 "Schlüssel, sodass Fingerabdrücke anderer Clients nicht offline berechnet "
 "werden können."
 
-#: ../../cryptography.rst:206
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:206
 msgid "Exercise 3.3"
 msgstr "Übung 3.3"
 
-#: ../../cryptography.rst:208
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:208
 msgid ""
 "A token payload carries a work level, ``timestamp``, ``expiry``, "
 "``rule_hash``, and ``fingerprint``. Explain what each field prevents if "
@@ -922,7 +924,7 @@ msgstr ""
 "``rule_hash`` und ``fingerprint``. Erklären, was jedes Feld verhindert, "
 "wenn es entfernt würde, und warum das Tag alle fünf abdecken muss."
 
-#: ../../cryptography.rst:212
+#: ../../../../../../home/insan/projects/sibuna/docs/book/cryptography.rst:212
 msgid ""
 "A colleague proposes switching all tokens to Ed25519 \"because it is "
 "stronger\". Explain the trust-domain argument, the cost difference, and "

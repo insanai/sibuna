@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 10:42+0000\n"
+"POT-Creation-Date: 2026-11-26 11:27+0000\n"
 "PO-Revision-Date: 2026-10-16 05:33+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ../../introduction.rst:1
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:1
 msgid "What is Sibuna?"
 msgstr "Sibuna とは何か"
 
-#: ../../introduction.rst:4
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:4
 msgid ""
 "A passenger opens a railway timetable and asks for the next departure. We "
 "run two copies of the timetable application so that one can answer while "
@@ -35,11 +35,11 @@ msgstr ""
 "Sibuna です。この役割をロードバランサーといいます。Sibuna "
 "はウェブリクエストの中身を調べ、どれをアプリケーションに届けるかも判断できます。これがウェブアプリケーションファイアウォールの役割です。"
 
-#: ../../introduction.rst:6
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:6
 msgid "One request through the edge"
 msgstr "一つのリクエストの道筋"
 
-#: ../../introduction.rst:9
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:9
 msgid ""
 "The browser opens an encrypted connection to the timetable's public name. "
 "Sibuna presents a certificate for that name. If the browser trusts the "
@@ -52,7 +52,7 @@ msgstr ""
 "はその名前の証明書を提示します。ブラウザーが証明書を信頼すれば、安全な接続が成立します。Sibuna は Let's Encrypt "
 "を通じて公開証明書を取得し、更新できます。内部サービスにはローカル認証局から証明書を発行し、そのルート証明書をクライアントに登録できます。"
 
-#: ../../introduction.rst:11
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:11
 msgid ""
 "The address where Sibuna accepts traffic is a frontend. Once Sibuna has "
 "received the HTTP request, it can read the host and path. A route sends "
@@ -65,13 +65,13 @@ msgstr ""
 "はホストとパスを読めます。時刻表へのリクエストは、ルートに従って2台のアプリケーションサーバーからなるプールに向かいます。この2台がオリジンです。Sibuna "
 "は通過を認めたリクエストをプール内の正常なオリジンに転送し、その応答を乗客に返します。"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid ""
 "Sibuna terminates HTTPS and forwards each admitted request to one healthy "
 "HTTP/1.1 origin."
 msgstr "Sibuna が HTTPS を終端し、許可した各リクエストを正常な HTTP/1.1 オリジンの一方へ転送する。"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid ""
 "// introduction.rst: one public address in front of two timetable "
 "servers.\n"
@@ -105,11 +105,11 @@ msgstr ""
 "  edge(<sibuna>, <b>, \"-|>\", say(\"HTTP/1.1\"), label-side: right),\n"
 ")\n"
 
-#: ../../introduction.rst:14
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:14
 msgid "One public address, two timetable servers."
 msgstr "二つの時刻表サーバーが一つの公開アドレスを共有する。"
 
-#: ../../introduction.rst:17
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:17
 msgid ""
 "The two connections can use different protocols. A browser might speak "
 "HTTP/3 to Sibuna while the timetable application speaks HTTP/1.1. An "
@@ -122,11 +122,11 @@ msgstr ""
 "でも構いません。内部の gRPC クライアントには、対応するサービスまで HTTP/2 で届くルートが必要です。TCP ストリームや UDP "
 "データグラムもプールに転送できます。その場合はウェブページを読んだり、HTTP のパスにルールを適用したりする必要はありません。"
 
-#: ../../introduction.rst:19
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:19
 msgid "Who gets through?"
 msgstr "誰を通すか"
 
-#: ../../introduction.rst:22
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:22
 msgid ""
 "Suppose a script asks for the timetable faster than the application can "
 "compute it. Adding a second origin spreads the work across two machines. "
@@ -138,7 +138,7 @@ msgstr ""
 "あるスクリプトが、時刻表を計算するより速いペースで問い合わせを送るとします。オリジンを1台増やせば、処理は2台に分散します。一方、ファイアウォールは、どちらのオリジンが仕事を始めるよりも先に、リクエストを拒否したりブラウザーにパズルを出したりできます。答えを検証すると、Sibuna "
 "は署名付きセッションを発行します。ブラウザーは次の訪問でそれを提示できます。"
 
-#: ../../introduction.rst:24
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:24
 msgid ""
 "Gate handles admission and local rate limits. Shield also inspects HTTP "
 "requests for patterns such as an attempted injection. We can apply the "
@@ -149,11 +149,11 @@ msgstr ""
 "リクエストを調べ、インジェクションの試みなどに対応するパターンを探します。乗客向けのサイトに Shield "
 "を使い、機械クライアントには専用ルートを用意できます。そのクライアントは、呼び出すサービスが求める認証を受けます。"
 
-#: ../../introduction.rst:26
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:26
 msgid "From one node to a cluster"
 msgstr "1台からクラスタへ"
 
-#: ../../introduction.rst:29
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:29
 msgid ""
 "If one timetable server goes down and its health check fails, the edge "
 "can send new requests to the other server. If the edge itself goes down, "
@@ -164,7 +164,7 @@ msgstr ""
 "時刻表サーバーが1台停止してヘルスチェックに失敗すると、エッジは新しいリクエストをもう1台に送れます。しかしエッジ自体が停止すれば、残ったオリジンもそのエッジ経由では応答できません。同じ公開名の下にもう一つ "
 "Sibuna のノードを置き、稼働中のノードへネットワークが接続を導くようにできます。"
 
-#: ../../introduction.rst:31
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:31
 msgid ""
 "The nodes each forward their own traffic. Through a mesh they can "
 "exchange routing configurations, bans and information about which origin "
@@ -174,7 +174,7 @@ msgid ""
 msgstr ""
 "各ノードは自分が受けた通信を転送します。ノード同士はメッシュを通じてルートの設定、ブロック情報、クライアントが前に使ったオリジンの情報を交換できます。乗客の次の接続は別のエッジに届くかもしれません。そこでクラスタの章では、ノードが単独で決められることと、他のノードと共有すべき事実を考えます。"
 
-#: ../../introduction.rst:33
+#: ../../../../../../home/insan/projects/sibuna/docs/book/introduction.rst:33
 msgid ""
 "Before we turn the page, suppose both timetable servers are healthy and a "
 "passenger receives a browser challenge. Which component made that "
