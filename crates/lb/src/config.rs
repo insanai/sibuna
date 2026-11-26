@@ -748,6 +748,8 @@ impl Backend {
             .map(|r| crate::proxy::Spec::parse(r, protocol))
             .transpose()?
             .flatten();
+        // A probe of a pool that sends PROXY headers sends one too (SID 0036).
+        let health = health.map(|spec| spec.with_proxy_header(proxy_v2.is_some()));
         let origin =
             if protocol == Protocol::Http { crate::OriginOptions::parse(&mut r)? } else { None };
         let policy = std::sync::Arc::new(crate::PoolPolicy::parse(&mut r, protocol)?);

@@ -29,7 +29,15 @@ pub(crate) struct Spec {
     interval: Duration,
     rise: usize,
     fall: usize,
+    /// The pool sends PROXY headers, so a probe begins with one of its own (SID 0036).
+    proxy_header: bool,
 }
+
+/// A PROXY version 2 header with the `LOCAL` command and no addresses: a connection of
+/// the proxy itself, which a receiver must accept.
+const LOCAL_HEADER: [u8; 16] = *b"\r\n\r\n\0\r\nQUIT\n\x20\x00\x00\x00";
+/// The longest wait for a refusal after a probe's PROXY header.
+const REFUSAL_WAIT: Duration = Duration::from_millis(100);
 
 impl Spec {
     pub fn parse(mut r: ObjectReader<'_, '_>) -> io::Result<Self> {
@@ -68,7 +76,13 @@ impl Spec {
         let rise = number(&mut r, "rise", 2, 255)?;
         let fall = number(&mut r, "fall", 3, 255)?;
         field(r.finish())?;
-        Ok(Self { kind, timeout, interval, rise, fall })
+        Ok(Self { kind, timeout, interval, rise, fall, proxy_header: false })
+    }
+
+    /// The spec for a pool with `proxy_v2` when `on`: each probe begins with a `LOCAL`
+    /// header.
+    pub fn with_proxy_header(self, on: bool) -> Self {
+        Self { proxy_header: on, ..self }
     }
 
     pub fn is_http(&self) -> bool {
@@ -81,6 +95,9 @@ impl Spec {
         let Ok(mut stream) = TcpStream::connect_timeout(&addr, self.timeout) else {
             return false;
         };
+        if self.proxy_header && !local_header_accepted(&mut stream, deadline) {
+            return false;
+        }
         let Kind::Http { path, host, lowest, highest } = &self.kind else { return true };
         let host = if host.is_empty() { addr.to_string() } else { host.clone() };
         let request = format!(
@@ -110,6 +127,25 @@ impl Spec {
         }
         let status = std::str::from_utf8(&head[9..]).ok().and_then(|s| s.parse::<u16>().ok());
         head.starts_with(b"HTTP/1.") && status.is_some_and(|s| (*lowest..=*highest).contains(&s))
+    }
+}
+
+/// Writes the `LOCAL` header and waits briefly for a refusal. The kernel takes the bytes
+/// whether or not the server accepts them, so an end of stream or a reset within the wait
+/// fails the probe. Bytes from a server that speaks first, or silence, pass it.
+fn local_header_accepted(stream: &mut TcpStream, deadline: Instant) -> bool {
+    let left = || deadline.checked_duration_since(Instant::now()).filter(|left| !left.is_zero());
+    let Some(write) = left() else { return false };
+    if stream.set_write_timeout(Some(write)).is_err() || stream.write_all(&LOCAL_HEADER).is_err() {
+        return false;
+    }
+    let Some(read) = left() else { return false };
+    if stream.set_read_timeout(Some(read.min(REFUSAL_WAIT))).is_err() {
+        return false;
+    }
+    match stream.peek(&mut [0u8; 1]) {
+        Ok(count) => count > 0,
+        Err(error) => matches!(error.kind(), io::ErrorKind::WouldBlock | io::ErrorKind::TimedOut),
     }
 }
 
@@ -263,5 +299,90 @@ fn probe(lane: Published) {
             state.next = Some(Instant::now() + spec.interval);
         }
         std::thread::sleep(Duration::from_millis(25));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::net::TcpListener;
+    use std::thread;
+
+    use super::*;
+
+    fn spec(proxy_header: bool) -> Spec {
+        let value = sibuna_json::parse(br#"{"kind":"tcp","timeout":"2s"}"#).unwrap();
+        let reader = ObjectReader::with_path(&value, "health_check".to_owned()).unwrap();
+        Spec::parse(reader).unwrap().with_proxy_header(proxy_header)
+    }
+
+    /// Runs one probe against a server that does `serve` with the accepted connection.
+    fn probe_with(proxy_header: bool, serve: fn(TcpStream) -> Vec<u8>) -> (bool, Vec<u8>) {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = thread::spawn(move || serve(listener.accept().unwrap().0));
+        let passed = spec(proxy_header).passes(addr);
+        (passed, server.join().unwrap())
+    }
+
+    fn read_header(mut stream: TcpStream) -> Vec<u8> {
+        let mut header = [0u8; 16];
+        stream.read_exact(&mut header).unwrap();
+        // Hold the connection past the wait for a refusal.
+        thread::sleep(REFUSAL_WAIT * 2);
+        header.to_vec()
+    }
+
+    #[test]
+    fn pools_that_share_a_server_and_differ_in_proxy_headers_probe_it_apart() {
+        let probe = r#""health_check":{"kind":"tcp"}"#;
+        let source = format!(
+            r#"{{"frontends":{{"db":{{"proto":"tcp","binds":["127.0.0.1:1"],
+            "default_backend":"db"}}}},
+            "backends":{{
+            "db":{{"mode":"tcp","proxy_v2":{{"enabled":true}},{probe},"servers":["127.0.0.1:9"]}},
+            "plain":{{"mode":"tcp",{probe},"servers":["127.0.0.1:9"]}}}}}}"#
+        );
+        let mut config = Config::parse(source.as_bytes()).unwrap();
+        let mut checks = Checks::default();
+        checks.configure(&mut config).unwrap();
+        let flags: Vec<bool> = checks.current.keys().map(|(_, spec)| spec.proxy_header).collect();
+        assert_eq!(flags.len(), 2);
+        assert!(flags.contains(&true) && flags.contains(&false));
+    }
+
+    #[test]
+    fn a_probe_of_a_proxy_pool_begins_with_a_local_header_and_passes_when_it_is_taken() {
+        let (passed, received) = probe_with(true, read_header);
+        assert!(passed);
+        assert_eq!(received, LOCAL_HEADER);
+        let read = crate::proxy_header::parse_proxy_header(&received).unwrap();
+        assert_eq!((read.length, read.source), (16, None));
+    }
+
+    #[test]
+    fn a_server_that_closes_after_the_header_fails_the_probe() {
+        let (passed, _) = probe_with(true, |stream| {
+            drop(stream);
+            Vec::new()
+        });
+        assert!(!passed);
+    }
+
+    #[test]
+    fn a_server_that_speaks_first_passes_and_a_plain_probe_sends_nothing() {
+        let (passed, _) = probe_with(true, |mut stream| {
+            stream.write_all(b"220 ready\r\n").unwrap();
+            thread::sleep(REFUSAL_WAIT * 2);
+            Vec::new()
+        });
+        assert!(passed);
+        let (passed, received) = probe_with(false, |mut stream| {
+            stream.set_read_timeout(Some(REFUSAL_WAIT)).unwrap();
+            let mut bytes = Vec::new();
+            let _ = stream.read_to_end(&mut bytes);
+            bytes
+        });
+        assert!(passed);
+        assert!(received.is_empty());
     }
 }

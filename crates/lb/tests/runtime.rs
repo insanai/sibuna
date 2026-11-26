@@ -234,3 +234,31 @@ fn the_shortest_file_names_only_binds_and_servers() {
     assert!(global(r#""shutdown_timeout":"2h""#).is_err());
     assert!(global(r#""admin_socket":"""#).is_err());
 }
+
+/// A TCP frontend before the pool `db`: two pools share the server 127.0.0.1:9, one with
+/// PROXY headers. Both probe it.
+fn proxy_topology(vip: SocketAddr) -> Config {
+    let probe = r#""health_check":{"kind":"tcp","interval":"100ms","timeout":"1s"}"#;
+    let source = format!(
+        r#"{{"frontends":{{"db":{{"proto":"tcp","binds":["{vip}"],"default_backend":"db"}}}},
+        "backends":{{
+        "db":{{"mode":"tcp","proxy_v2":{{"enabled":true}},{probe},
+          "servers":[{{"name":"a","addr":"127.0.0.1:9"}}]}},
+        "plain":{{"mode":"tcp",{probe},"servers":[{{"name":"a","addr":"127.0.0.1:9"}}]}}}}}}"#
+    );
+    Config::parse(source.as_bytes()).unwrap()
+}
+
+#[test]
+fn a_server_added_to_a_proxy_pool_is_probed_with_a_local_header() {
+    use std::io::Read;
+    let mut edge = Edge::bind(proxy_topology(vip())).unwrap();
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap();
+    edge.add_server("db", "new", addr, 1).unwrap();
+    let (mut probe, _) = listener.accept().unwrap();
+    probe.set_read_timeout(Some(std::time::Duration::from_secs(3))).unwrap();
+    let mut header = [0u8; 16];
+    probe.read_exact(&mut header).unwrap();
+    assert_eq!(&header, b"\r\n\r\n\0\r\nQUIT\n\x20\x00\x00\x00");
+}
