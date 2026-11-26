@@ -109,7 +109,7 @@ struct Model {
 impl Model {
     fn lookup(&self, address: IpAddr) -> Option<(u8, Action)> {
         let key = mapped_key(address);
-        let ipv4 = key >> 32 == sibuna_cidr::IPV4_MAPPED_PREFIX >> 32;
+        let ipv4 = key >> 32 == IPV4_MAPPED_PREFIX >> 32;
         let mut best: Option<(u8, Action)> = None;
         for (&(network, length), &(action, _)) in &self.rows {
             // The trie lets IPv6 prefixes shorter than the IPv4 subtree apply to IPv4
