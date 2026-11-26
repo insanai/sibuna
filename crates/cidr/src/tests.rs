@@ -330,3 +330,22 @@ fn ipv6_prefixes_apply_to_ipv4_only_as_the_catch_all() {
     assert_eq!(trie.lookup_str(b"1.2.3.4"), Some(&Action::Challenge));
     assert_eq!(trie.lookup_str(b"2001:db8::1"), Some(&Action::Challenge));
 }
+
+#[test]
+fn lookup_prefix_reports_the_length_of_the_match_in_the_mapped_space() {
+    let mut trie = PrefixTrie::new();
+    let ip = |text: &str| text.parse::<IpAddr>().unwrap();
+    assert_eq!(trie.lookup_prefix(ip("10.1.2.3")), None);
+    trie.insert_cidr(b"::/0", 1u8).unwrap();
+    assert_eq!(trie.lookup_prefix(ip("10.1.2.3")), Some((0, &1)));
+    trie.insert_cidr(b"0.0.0.0/0", 2).unwrap();
+    assert_eq!(trie.lookup_prefix(ip("10.1.2.3")), Some((96, &2)));
+    trie.insert_cidr(b"10.0.0.0/8", 3).unwrap();
+    trie.insert_cidr(b"10.1.2.3", 4).unwrap();
+    assert_eq!(trie.lookup_prefix(ip("10.9.9.9")), Some((104, &3)));
+    assert_eq!(trie.lookup_prefix(ip("10.1.2.3")), Some((128, &4)));
+    trie.insert_cidr(b"2001:db8::/32", 5).unwrap();
+    assert_eq!(trie.lookup_prefix(ip("2001:db8::1")), Some((32, &5)));
+    // `lookup` is the value of `lookup_prefix`.
+    assert_eq!(trie.lookup(ip("10.9.9.9")), Some(&3));
+}

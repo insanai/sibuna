@@ -147,13 +147,21 @@ impl<V> PrefixTrie<V> {
 
     /// Returns the value of the longest prefix that contains `address`, if any.
     pub fn lookup(&self, address: IpAddr) -> Option<&V> {
+        self.lookup_prefix(address).map(|(_, value)| value)
+    }
+
+    /// Returns the longest prefix that contains `address` as its length in the mapped key
+    /// space (0 to 128; an IPv4 `/n` is `96 + n`) and its value, if any. Two tries answer
+    /// alike for one address, so callers compare the lengths of their answers.
+    pub fn lookup_prefix(&self, address: IpAddr) -> Option<(u8, &V)> {
         let key = mapped_key(address);
+        let root = self.nodes[0].value.as_ref().map(|value| (0, value));
         let (mut node, mut depth, mut best) = if is_ipv4_mapped(key) {
             let start = self.ipv4_root;
             let value = self.nodes[start as usize].value.as_ref();
-            (start, IPV4_DEPTH, value.or(self.nodes[0].value.as_ref()))
+            (start, IPV4_DEPTH, value.map(|value| (IPV4_DEPTH, value)).or(root))
         } else {
-            (0, 0, self.nodes[0].value.as_ref())
+            (0, 0, root)
         };
         while depth < 128 {
             let next = self.nodes[node as usize].children[bit_at(key, depth)];
@@ -161,8 +169,10 @@ impl<V> PrefixTrie<V> {
                 break;
             }
             node = next;
-            best = self.nodes[node as usize].value.as_ref().or(best);
             depth += 1;
+            if let Some(value) = self.nodes[node as usize].value.as_ref() {
+                best = Some((depth, value));
+            }
         }
         best
     }
