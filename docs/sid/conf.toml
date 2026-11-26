@@ -17,6 +17,9 @@ root_doc = "index"
 
 html_theme = "guidedog"
 html_title = "Sibuna Discussions"
+# figures.css lets a figure scroll sideways on a phone instead of shrinking.
+html_static_path = ["_static"]
+html_css_files = ["figures.css"]
 numfig = true
 
 pdf_paper_size = "a4"

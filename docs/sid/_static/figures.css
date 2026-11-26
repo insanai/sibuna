@@ -1,0 +1,7 @@
+/* On a phone a figure keeps its natural size and scrolls sideways, so its labels stay as
+   large as the text around them; guidedog does the same for Graphviz figures. The book
+   and the whitepaper have the same rule in their sibuna.css. */
+@media (max-width: 700px) {
+  .gd-article figure:has(img.typst-diagram) { overflow-x: auto; }
+  .gd-article figure:has(img.typst-diagram) img.typst-diagram { max-width: none; }
+}

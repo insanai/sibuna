@@ -52,3 +52,10 @@
 @media (max-width: 39.99rem) {
   .gd-typeset-line:not(:last-child) { text-align: start; text-align-last: start; }
 }
+
+/* On a phone a figure keeps its natural size and scrolls sideways, so its labels stay as
+   large as the text around them; guidedog does the same for Graphviz figures. */
+@media (max-width: 700px) {
+  .gd-article figure:has(img.typst-diagram) { overflow-x: auto; }
+  .gd-article figure:has(img.typst-diagram) img.typst-diagram { max-width: none; }
+}
