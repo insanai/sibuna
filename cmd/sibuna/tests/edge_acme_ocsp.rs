@@ -306,12 +306,15 @@ fn a_delegated_signer_is_accepted_and_a_silent_responder_staples_nothing() {
     responder.down.store(true, Ordering::Relaxed);
     let daemon = start(&authority, &home("silent"), "");
     daemon.ready();
-    let log = wait_for("the diagnostic", 20, || {
-        Some(daemon.log()).filter(|log| log.contains("NO OCSP RESPONSE (ACME013)"))
+    // The stderr reader publishes one line at a time. The hint completes the diagnostic.
+    let log = wait_for("the OCSP diagnostic and its hint", 20, || {
+        Some(daemon.log()).filter(|log| {
+            log.split_once("NO OCSP RESPONSE (ACME013)")
+                .is_some_and(|(_, body)| body.contains("\nHint: "))
+        })
     });
     assert!(log.contains(&format!("No OCSP response for the certificate of `{NAME}`")), "{log}");
     assert!(log.contains("the responder answered 503"), "{log}");
-    assert!(log.contains("Hint:"), "{log}");
     let (leaf, response) = daemon.handshake();
     assert!(!leaf.is_empty() && response.is_empty());
     assert_eq!(daemon.row()[5..8], ["ready", "listed", "-"], "{:?}", daemon.row());
