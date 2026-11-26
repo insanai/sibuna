@@ -1,0 +1,40 @@
+digraph edge_path {
+  // edge.rst: the path of a connection through a node. Each box is owned by one thread or
+  // one group of threads; the dashed edges are the shared, read-mostly state.
+  graph [rankdir=TB, bgcolor="transparent", pad=0.1, nodesep=0.25, ranksep=0.32];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9.5, fontcolor="#20352f", color="#6a7c73", fillcolor="#fffffc", penwidth=0.7, margin="0.1,0.05", height=0.3];
+  edge [fontname="Helvetica", fontsize=8, fontcolor="#55665e", color="#6a7c73", arrowsize=0.6, penwidth=0.7];
+
+  client [label="Client", color="#3d5d70", fillcolor="#e8eff2"];
+  kernel [label=<Kernel listener<BR/><FONT POINT-SIZE="8" COLOR="#55665e"><FONT FACE="Courier">defer_accept</FONT>, backlog</FONT>>];
+  edge_worker [label=<Edge worker<BR/><FONT POINT-SIZE="8" COLOR="#55665e">connection rate, flow budget,<BR/>connection hooks</FONT>>, color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c"];
+  inspect [label=<TCP: ClientHello inspection<BR/><FONT POINT-SIZE="8" COLOR="#55665e">five classes, fallback</FONT>>];
+  udp [label=<UDP: QUIC screen<BR/><FONT POINT-SIZE="8" COLOR="#55665e">mapping, reply bound</FONT>>];
+  worker [label=<HTTP worker<BR/><FONT POINT-SIZE="8" COLOR="#55665e">TLS for HTTP/1.1</FONT>>, color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c"];
+  runtime [label=<Protocol runtime<BR/><FONT POINT-SIZE="8" COLOR="#55665e">HTTP/2, HTTP/3</FONT>>, color="#176a4b", fillcolor="#e7eee4", fontcolor="#0c402c"];
+  relay [label=<Relay thread<BR/><FONT POINT-SIZE="8" COLOR="#55665e">byte pipe</FONT>>];
+  decide [label=<Bans, limiter, traffic policy,<BR/>gate or shield, request hooks>, color="#8f5512", fillcolor="#fbf4e4"];
+  choose [label=<Choose a server<BR/><FONT POINT-SIZE="8" COLOR="#55665e">from the snapshot</FONT>>];
+  shared [label=<Shared state<BR/><FONT POINT-SIZE="8" COLOR="#55665e">routing snapshot, server loads,<BR/>health flags</FONT>>, style="rounded,filled,dashed", fillcolor="#f7f6f1"];
+  server [label="Server", color="#3d5d70", fillcolor="#e8eff2"];
+  { rank=same; worker; runtime; }
+  { rank=same; relay; shared; choose; }
+
+  client -> kernel -> edge_worker;
+  edge_worker -> inspect [label="TCP"];
+  edge_worker -> udp [label="UDP"];
+  edge_worker -> worker [label="HTTP, fewest", color="#176a4b", penwidth=1.1];
+  worker -> runtime [label="offers h2"];
+  inspect -> relay [label="reserve, connect"];
+  worker -> decide [color="#176a4b", penwidth=1.1];
+  runtime -> decide [label=<<FONT FACE="Courier">Decide</FONT>>];
+  decide -> choose [color="#176a4b", penwidth=1.1];
+  relay -> server;
+  udp -> server;
+  choose -> server [label="exchange", color="#176a4b", penwidth=1.1];
+
+  // The shared state is read by the threads beside it; it is not a step of the path.
+  edge [style=dashed, arrowhead=none];
+  inspect -> shared;
+  choose -> shared [constraint=false];
+}
