@@ -108,5 +108,8 @@ Discussion registry
    * - 0032
      - :doc:`records/0032-staged-admission`
      - discussion
+   * - 0033
+     - :doc:`records/0033-reputation-deltas`
+     - discussion
 
 .. sid-generated-end

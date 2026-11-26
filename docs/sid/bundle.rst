@@ -38,5 +38,6 @@ Discussion reading order
    records/0030-plugin-tiers
    records/0031-edge-operator-console
    records/0032-staged-admission
+   records/0033-reputation-deltas
 
 .. sid-generated-end
