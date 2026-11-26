@@ -4,10 +4,9 @@
 // starts with `#show: figure-frame.with(lang: "en")`. Guidedog compiles each figure to one
 // SVG for the website and the PDF. Typst cannot import a file outside the project, so
 // docs/book/diagrams, docs/whitepaper/diagrams and docs/sid/diagrams keep identical
-// copies of this file. When we change it, we copy it to the other two:
-//
-//   cp docs/book/diagrams/style.typ docs/whitepaper/diagrams/style.typ
-//   cp docs/book/diagrams/style.typ docs/sid/diagrams/style.typ
+// copies of this file. We edit the book's copy and run `cargo xtask figures`, which
+// writes the other two; CI fails when a copy differs (`cargo xtask figures --check`).
+// Charts, figures drawn from data, add their own rules in charts/chart.typ.
 //
 // Translations. A gettext catalog translates a figure as one message: its whole source.
 // A translator copies the source, sets `lang` to the language and changes only the

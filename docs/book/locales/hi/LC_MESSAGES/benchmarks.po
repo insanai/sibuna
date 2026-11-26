@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-25 09:13+0000\n"
+"POT-Creation-Date: 2026-11-26 06:04+0000\n"
 "PO-Revision-Date: 2026-10-16 05:36+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -47,9 +47,9 @@ msgstr ""
 msgid "Methodology"
 msgstr "कार्यप्रणाली"
 
-#: ../../benchmarks.rst:9 ../../benchmarks.rst:229 ../../benchmarks.rst:438
-#: ../../benchmarks.rst:586 ../../benchmarks.rst:879
-#: ../../benchmarks.rst:1065
+#: ../../benchmarks.rst:9 ../../benchmarks.rst:226 ../../benchmarks.rst:435
+#: ../../benchmarks.rst:583 ../../benchmarks.rst:876
+#: ../../benchmarks.rst:1062
 msgid "Objectives"
 msgstr "उद्देश्य"
 
@@ -367,7 +367,7 @@ msgstr ""
 "कनेक्शन निष्क्रिय था, तो लेटेंसी वास्तविक भेजने के समय से गिनी जाती है, "
 "ताकि जनरेटर की अपनी sleep की देरी डेमन के खाते में न जाए।"
 
-#: ../../benchmarks.rst:69
+#: ../../benchmarks.rst:70
 msgid ""
 "A timeline with due times 0, T, 2T, 3T and 4T and four requests. Requests "
 "0 and 3 are sent when due and answered quickly. Request 1 is sent at T "
@@ -380,7 +380,19 @@ msgstr ""
 "के आने तक प्रतीक्षा करता है और फिर भेजा जाता है; उसकी दर्ज लेटेंसी 2T से "
 "शुरू होती है।"
 
-#: ../../benchmarks.rst:72
+#: ../../benchmarks.rst:70
+msgid ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/open-loop.typ\": draw\n"
+"#show: chart.with(lang: \"en\")\n"
+"#draw()\n"
+msgstr ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/open-loop.typ\": draw\n"
+"#show: chart.with(lang: \"hi\")\n"
+"#draw()\n"
+
+#: ../../benchmarks.rst:70
 msgid ""
 "One connection of the open-loop generator. Request 1 is answered after "
 "request 2 was due, so request 2 is sent at once and its latency counts "
@@ -391,7 +403,7 @@ msgstr ""
 "जाती है; अनुरोध 3 कनेक्शन को निष्क्रिय पाता है और उसकी लेटेंसी उसके भेजे "
 "जाने से गिनी जाती है।"
 
-#: ../../benchmarks.rst:74
+#: ../../benchmarks.rst:73
 msgid ""
 "The harness runs the Shield surface and the admitted workload at five "
 "offered rates: 10,000, 25,000, 50,000, 100,000 and 150,000 requests per "
@@ -413,11 +425,11 @@ msgstr ""
 "nearest-rank हैं; हर आँकड़ा तीन रन की माध्यिका है, और उसके साथ p99 का "
 "min-max।"
 
-#: ../../benchmarks.rst:76
+#: ../../benchmarks.rst:75
 msgid "CPU Sets"
 msgstr "CPU समुच्चय"
 
-#: ../../benchmarks.rst:79
+#: ../../benchmarks.rst:78
 msgid ""
 "The CPU sets matter more than any other setting. The daemons run on CPUs "
 "0 to 3 (``--cpus``; ``--workers`` is the size of that set). ``wrk``, the "
@@ -449,7 +461,19 @@ msgstr ""
 "(--load-cpus 8-15)। हर कोर का SMT sibling, यानी CPU 16 से 31, उपयोग नहीं "
 "होता।"
 
-#: ../../benchmarks.rst:84
+#: ../../benchmarks.rst:81
+msgid ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/cpu-sets.typ\": draw\n"
+"#show: chart.with(lang: \"en\")\n"
+"#draw()\n"
+msgstr ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/cpu-sets.typ\": draw\n"
+"#show: chart.with(lang: \"hi\")\n"
+"#draw()\n"
+
+#: ../../benchmarks.rst:81
 msgid ""
 "CPU sets on the AMD Ryzen 9 5950X. CPUs 0 to 7 are the eight cores of the "
 "first CCD, 8 to 15 those of the second, and 16 to 31 their SMT siblings. "
@@ -459,7 +483,7 @@ msgstr ""
 "15 दूसरे के, और 16 से 31 उनके SMT sibling। डेमन और लोड जनरेटर कभी कोई कोर "
 "साझा नहीं करते।"
 
-#: ../../benchmarks.rst:86
+#: ../../benchmarks.rst:84
 msgid ""
 "On other machines we choose sets that do not share cores (``lscpu -e`` "
 "shows the topology)."
@@ -467,11 +491,11 @@ msgstr ""
 "दूसरी मशीनों पर हम ऐसे समुच्चय चुनते हैं जो कोर साझा न करें (``lscpu -e`` "
 "टोपोलॉजी दिखाता है)।"
 
-#: ../../benchmarks.rst:88
+#: ../../benchmarks.rst:86
 msgid "Machine and Conditions"
 msgstr "मशीन और परिस्थितियाँ"
 
-#: ../../benchmarks.rst:91
+#: ../../benchmarks.rst:89
 msgid ""
 "The files were recorded on ``paxos-zig``: an AMD Ryzen 9 5950X 16-Core "
 "Processor (32 logical CPUs), Linux 7.0.0-28-generic x86_64, the "
@@ -508,7 +532,7 @@ msgstr ""
 "उनके एक-मिनट load average तुलना रन से पहले 3.53 और प्रवेश रन समाप्त होने "
 "पर 0.56 थे।"
 
-#: ../../benchmarks.rst:93
+#: ../../benchmarks.rst:91
 msgid ""
 "The files record one-minute load averages of 2.46 at the primitive run, "
 "1.30 before and 52.31 after the latency run, and 52.31 before and 33.39 "
@@ -520,11 +544,11 @@ msgstr ""
 "करती हैं। ऊँचे आँकड़े लेटेंसी जनरेटर के 64 थ्रेड हैं, जिसके तुरंत बाद "
 "उत्पाद रन चला।"
 
-#: ../../benchmarks.rst:95
+#: ../../benchmarks.rst:93
 msgid "Measurement scope"
 msgstr "मापन का दायरा"
 
-#: ../../benchmarks.rst:97
+#: ../../benchmarks.rst:95
 msgid ""
 "Only local measurements are emitted. Every run uses one host over "
 "loopback: no TLS, no WAN, no real browsers. The daemons run in memory, "
@@ -546,15 +570,15 @@ msgstr ""
 "लेटेंसी हार्नेस अपरिवर्तित रिलीज़ बाइनरी चलाते हैं, जिसकी पहचान उसका "
 "SHA-256 है। इस होस्ट पर रैंकिंग किसी दूसरे पर रैंकिंग नहीं है।"
 
-#: ../../benchmarks.rst:99
+#: ../../benchmarks.rst:97
 msgid "How to Reproduce"
 msgstr "दोबारा कैसे उत्पन्न करें"
 
-#: ../../benchmarks.rst:102
+#: ../../benchmarks.rst:100
 msgid "We need Linux, ``taskset`` (util-linux) and ``wrk`` on ``PATH``."
 msgstr "हमें Linux, ``taskset`` (util-linux) और ``PATH`` पर ``wrk`` चाहिए।"
 
-#: ../../benchmarks.rst:104
+#: ../../benchmarks.rst:102
 msgid ""
 "cargo xtask bench primitives\n"
 "cargo xtask bench product\n"
@@ -566,7 +590,7 @@ msgstr ""
 "cargo xtask bench latency\n"
 "cargo xtask bench help"
 
-#: ../../benchmarks.rst:111
+#: ../../benchmarks.rst:109
 msgid ""
 "``cargo xtask bench`` first builds the daemon with ``cargo build "
 "--release -p sibuna``, then runs ``sibuna-bench`` in release mode. The "
@@ -584,11 +608,11 @@ msgstr ""
 "``--seconds``, ``--rates`` और ``--warmup`` हैं। नीचे Anubis वाला अनुभाग "
 "वे कमांड देता है जिनसे वह तुलना दर्ज हुई।"
 
-#: ../../benchmarks.rst:113
+#: ../../benchmarks.rst:111
 msgid "Primitive Latencies"
 msgstr "प्रिमिटिव लेटेंसी"
 
-#: ../../benchmarks.rst:116
+#: ../../benchmarks.rst:114
 msgid ""
 "The table gives every row of the primitive run. The JSON file names each "
 "row by subsystem and workload (``pow_verify`` and ``hashcash_16_bits``, "
@@ -598,7 +622,7 @@ msgstr ""
 "सबसिस्टम और वर्कलोड से नाम देती है (उदाहरण के लिए ``pow_verify`` और "
 "``hashcash_16_bits``)।"
 
-#: ../../benchmarks.rst:118
+#: ../../benchmarks.rst:116
 msgid ""
 "Primitive timings in nanoseconds per operation on one Ryzen 9 5950X core "
 "(``benchmarks/results/primitives-latest.md``, generated "
@@ -607,240 +631,240 @@ msgstr ""
 "एक Ryzen 9 5950X कोर पर प्रति ऑपरेशन नैनोसेकंड में प्रिमिटिव समय-माप "
 "(``benchmarks/results/primitives-latest.md``, 2026-10-15T22:34:59Z पर बनी)"
 
-#: ../../benchmarks.rst:122 ../../benchmarks.rst:608
-#: ../../benchmarks.rst:698 ../../benchmarks.rst:889
-#: ../../benchmarks.rst:956 ../../benchmarks.rst:1075
-#: ../../benchmarks.rst:1177 ../../benchmarks.rst:1238
-#: ../../benchmarks.rst:1275 ../../benchmarks.rst:1375
-#: ../../benchmarks.rst:1419 ../../benchmarks.rst:1451
+#: ../../benchmarks.rst:120 ../../benchmarks.rst:605
+#: ../../benchmarks.rst:695 ../../benchmarks.rst:886
+#: ../../benchmarks.rst:953 ../../benchmarks.rst:1072
+#: ../../benchmarks.rst:1174 ../../benchmarks.rst:1235
+#: ../../benchmarks.rst:1272 ../../benchmarks.rst:1372
+#: ../../benchmarks.rst:1416 ../../benchmarks.rst:1448
 msgid "Workload"
 msgstr "वर्कलोड"
 
-#: ../../benchmarks.rst:123
+#: ../../benchmarks.rst:121
 msgid "ns/op"
 msgstr "ns/op"
 
-#: ../../benchmarks.rst:124
+#: ../../benchmarks.rst:122
 msgid "min-max"
 msgstr "min-max"
 
-#: ../../benchmarks.rst:125
+#: ../../benchmarks.rst:123
 msgid "Hashcash verify (16 bits)"
 msgstr "Hashcash सत्यापन (16 बिट)"
 
-#: ../../benchmarks.rst:126
+#: ../../benchmarks.rst:124
 msgid "70.2"
 msgstr "70.2"
 
-#: ../../benchmarks.rst:127
+#: ../../benchmarks.rst:125
 msgid "69.9-71.0"
 msgstr "69.9-71.0"
 
-#: ../../benchmarks.rst:128
+#: ../../benchmarks.rst:126
 msgid "PoSW verify (depth 13, t = 16)"
 msgstr "PoSW सत्यापन (गहराई 13, t = 16)"
 
-#: ../../benchmarks.rst:129
+#: ../../benchmarks.rst:127
 msgid "22272.4"
 msgstr "22272.4"
 
-#: ../../benchmarks.rst:130
+#: ../../benchmarks.rst:128
 msgid "22257.0-22316.4"
 msgstr "22257.0-22316.4"
 
-#: ../../benchmarks.rst:131
+#: ../../benchmarks.rst:129
 msgid "Bot signatures (40, Aho-Corasick)"
 msgstr "बॉट सिग्नेचर (40, Aho-Corasick)"
 
-#: ../../benchmarks.rst:132
+#: ../../benchmarks.rst:130
 msgid "55.7"
 msgstr "55.7"
 
-#: ../../benchmarks.rst:133
+#: ../../benchmarks.rst:131
 msgid "55.3-57.2"
 msgstr "55.3-57.2"
 
-#: ../../benchmarks.rst:134
+#: ../../benchmarks.rst:132
 msgid "Bot signatures (40, sequential search)"
 msgstr "बॉट सिग्नेचर (40, अनुक्रमिक खोज)"
 
-#: ../../benchmarks.rst:135
+#: ../../benchmarks.rst:133
 msgid "763.0"
 msgstr "763.0"
 
-#: ../../benchmarks.rst:136
+#: ../../benchmarks.rst:134
 msgid "762.2-763.5"
 msgstr "762.2-763.5"
 
-#: ../../benchmarks.rst:137
+#: ../../benchmarks.rst:135
 msgid "IPv4 CIDR lookup"
 msgstr "IPv4 CIDR लुकअप"
 
-#: ../../benchmarks.rst:138
+#: ../../benchmarks.rst:136
 msgid "32.0"
 msgstr "32.0"
 
-#: ../../benchmarks.rst:139
+#: ../../benchmarks.rst:137
 msgid "31.8-32.2"
 msgstr "31.8-32.2"
 
-#: ../../benchmarks.rst:140
+#: ../../benchmarks.rst:138
 msgid "IPv6 CIDR lookup"
 msgstr "IPv6 CIDR लुकअप"
 
-#: ../../benchmarks.rst:141
+#: ../../benchmarks.rst:139
 msgid "79.3"
 msgstr "79.3"
 
-#: ../../benchmarks.rst:142
+#: ../../benchmarks.rst:140
 msgid "78.5-79.6"
 msgstr "78.5-79.6"
 
-#: ../../benchmarks.rst:143
+#: ../../benchmarks.rst:141
 msgid "Session token (keyed BLAKE3)"
 msgstr "सत्र टोकन (कुंजी-युक्त BLAKE3)"
 
-#: ../../benchmarks.rst:144
+#: ../../benchmarks.rst:142
 msgid "155.8"
 msgstr "155.8"
 
-#: ../../benchmarks.rst:145
+#: ../../benchmarks.rst:143
 msgid "155.3-156.4"
 msgstr "155.3-156.4"
 
-#: ../../benchmarks.rst:146
+#: ../../benchmarks.rst:144
 msgid "Session token (Ed25519)"
 msgstr "सत्र टोकन (Ed25519)"
 
-#: ../../benchmarks.rst:147
+#: ../../benchmarks.rst:145
 msgid "40587.5"
 msgstr "40587.5"
 
-#: ../../benchmarks.rst:148
+#: ../../benchmarks.rst:146
 msgid "40544.6-40631.1"
 msgstr "40544.6-40631.1"
 
-#: ../../benchmarks.rst:149
+#: ../../benchmarks.rst:147
 msgid "Spent set (Robin Hood), spend and look up"
 msgstr "spent set (Robin Hood), खर्च और लुकअप"
 
-#: ../../benchmarks.rst:150
+#: ../../benchmarks.rst:148
 msgid "21.0"
 msgstr "21.0"
 
-#: ../../benchmarks.rst:151
+#: ../../benchmarks.rst:149
 msgid "20.8-21.3"
 msgstr "20.8-21.3"
 
-#: ../../benchmarks.rst:152
+#: ../../benchmarks.rst:150
 msgid "Rate limiter (GCRA), client bytes"
 msgstr "रेट लिमिटर (GCRA), क्लाइंट बाइट"
 
-#: ../../benchmarks.rst:153
+#: ../../benchmarks.rst:151
 msgid "12.8"
 msgstr "12.8"
 
-#: ../../benchmarks.rst:154
+#: ../../benchmarks.rst:152
 msgid "12.7-12.8"
 msgstr "12.7-12.8"
 
-#: ../../benchmarks.rst:155
+#: ../../benchmarks.rst:153
 msgid "Rate limiter, four rule scopes, client bytes"
 msgstr "रेट लिमिटर, चार नियम scope, क्लाइंट बाइट"
 
-#: ../../benchmarks.rst:156
+#: ../../benchmarks.rst:154
 msgid "13.1"
 msgstr "13.1"
 
-#: ../../benchmarks.rst:157
+#: ../../benchmarks.rst:155
 msgid "13.0-13.2"
 msgstr "13.0-13.2"
 
-#: ../../benchmarks.rst:158
+#: ../../benchmarks.rst:156
 msgid "Rate limiter (GCRA), hashed client"
 msgstr "रेट लिमिटर (GCRA), हैश किया गया क्लाइंट"
 
-#: ../../benchmarks.rst:159
+#: ../../benchmarks.rst:157
 msgid "6.2"
 msgstr "6.2"
 
-#: ../../benchmarks.rst:160
+#: ../../benchmarks.rst:158
 msgid "6.1-6.3"
 msgstr "6.1-6.3"
 
-#: ../../benchmarks.rst:161
+#: ../../benchmarks.rst:159
 msgid "Rate limiter, four rule scopes, hashed client"
 msgstr "रेट लिमिटर, चार नियम scope, हैश किया गया क्लाइंट"
 
-#: ../../benchmarks.rst:162
+#: ../../benchmarks.rst:160
 msgid "6.3"
 msgstr "6.3"
 
-#: ../../benchmarks.rst:163
+#: ../../benchmarks.rst:161
 msgid "6.2-6.4"
 msgstr "6.2-6.4"
 
-#: ../../benchmarks.rst:164
+#: ../../benchmarks.rst:162
 msgid "HTTP parse and cookie"
 msgstr "HTTP पार्स और कुकी"
 
-#: ../../benchmarks.rst:165
+#: ../../benchmarks.rst:163
 msgid "132.5"
 msgstr "132.5"
 
-#: ../../benchmarks.rst:166
+#: ../../benchmarks.rst:164
 msgid "132.3-133.2"
 msgstr "132.3-133.2"
 
-#: ../../benchmarks.rst:167
+#: ../../benchmarks.rst:165
 msgid "Classification, Shield profile"
 msgstr "वर्गीकरण, Shield प्रोफ़ाइल"
 
-#: ../../benchmarks.rst:168
+#: ../../benchmarks.rst:166
 msgid "790.8"
 msgstr "790.8"
 
-#: ../../benchmarks.rst:169
+#: ../../benchmarks.rst:167
 msgid "787.2-793.1"
 msgstr "787.2-793.1"
 
-#: ../../benchmarks.rst:170
+#: ../../benchmarks.rst:168
 msgid "Classification, Gate profile"
 msgstr "वर्गीकरण, Gate प्रोफ़ाइल"
 
-#: ../../benchmarks.rst:171
+#: ../../benchmarks.rst:169
 msgid "75.9"
 msgstr "75.9"
 
-#: ../../benchmarks.rst:172
+#: ../../benchmarks.rst:170
 msgid "75.6-76.1"
 msgstr "75.6-76.1"
 
-#: ../../benchmarks.rst:173
+#: ../../benchmarks.rst:171
 msgid "WAF body scan (8 KiB)"
 msgstr "WAF बॉडी स्कैन (8 KiB)"
 
-#: ../../benchmarks.rst:174
+#: ../../benchmarks.rst:172
 msgid "12784.3"
 msgstr "12784.3"
 
-#: ../../benchmarks.rst:175
+#: ../../benchmarks.rst:173
 msgid "12771.5-12809.2"
 msgstr "12771.5-12809.2"
 
-#: ../../benchmarks.rst:176
+#: ../../benchmarks.rst:174
 msgid "WAF body scan (8 KiB), SQL injection audited"
 msgstr "WAF बॉडी स्कैन (8 KiB), SQL injection ऑडिट मोड में"
 
-#: ../../benchmarks.rst:177
+#: ../../benchmarks.rst:175
 msgid "15485.4"
 msgstr "15485.4"
 
-#: ../../benchmarks.rst:178
+#: ../../benchmarks.rst:176
 msgid "15460.9-15530.1"
 msgstr "15460.9-15530.1"
 
-#: ../../benchmarks.rst:180
+#: ../../benchmarks.rst:178
 msgid ""
 "The spreads are narrow: no batch of any row lies more than 2.8% from its "
 "row's median. The figure shows the same rows on a logarithmic scale, "
@@ -850,19 +874,33 @@ msgstr ""
 "2.8% से अधिक दूर नहीं है। चित्र यही पंक्तियाँ लघुगणकीय पैमाने पर दिखाता "
 "है, जिससे 6 ns और 40 us की पंक्तियाँ साथ-साथ पढ़ने योग्य रहती हैं।"
 
-#: ../../benchmarks.rst:182
+#: ../../benchmarks.rst:181
 msgid ""
-"A bar chart of the table above on a logarithmic scale from 1 ns to 100 "
-"us, coloured by group: proof of work, matching, tokens, state and the "
-"request path. The rate limiter rows are the shortest bars, at 6.2 to 13.1 "
-"ns; Ed25519 token verification is the longest, at 40.6 us."
+"A dot plot of the table above on a logarithmic scale from 1 ns to 100 us, "
+"with the rows grouped under proof of work, matching, tokens, state and "
+"the request path. The rate limiter rows are the fastest, at 6.2 to 13.1 "
+"ns; Ed25519 token verification is the slowest, at 40.6 us. The sequential "
+"signature search, an open dot for comparison, takes 763 ns."
 msgstr ""
-"ऊपर की तालिका का एक बार चार्ट, 1 ns से 100 us तक के लघुगणकीय पैमाने पर, "
-"समूह के अनुसार रंगा हुआ: कार्य का प्रमाण, मिलान, टोकन, अवस्था और अनुरोध "
-"पाथ। रेट लिमिटर की पंक्तियाँ सबसे छोटी पट्टियाँ हैं, 6.2 से 13.1 ns; "
-"Ed25519 टोकन का सत्यापन सबसे लंबी पट्टी है, 40.6 us।"
+"ऊपर की तालिका का एक डॉट प्लॉट, 1 ns से 100 us तक के लघुगणकीय पैमाने पर, "
+"पंक्तियाँ इन समूहों में बँटी हुई: कार्य का प्रमाण, मिलान, टोकन, अवस्था और "
+"अनुरोध पाथ। रेट लिमिटर की पंक्तियाँ सबसे तेज़ हैं, 6.2 से 13.1 ns; "
+"Ed25519 टोकन का सत्यापन सबसे धीमा है, 40.6 us। अनुक्रमिक सिग्नेचर खोज, "
+"तुलना के लिए एक खाली बिंदु, 763 ns लेती है।"
 
-#: ../../benchmarks.rst:185
+#: ../../benchmarks.rst:181
+msgid ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/primitive-latency.typ\": draw\n"
+"#show: chart.with(lang: \"en\")\n"
+"#draw()\n"
+msgstr ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/primitive-latency.typ\": draw\n"
+"#show: chart.with(lang: \"hi\")\n"
+"#draw()\n"
+
+#: ../../benchmarks.rst:181
 msgid ""
 "Primitive timings on a logarithmic scale, drawn from "
 "``benchmarks/results/primitives-latest.json``."
@@ -870,11 +908,11 @@ msgstr ""
 "लघुगणकीय पैमाने पर प्रिमिटिव के समय, "
 "``benchmarks/results/primitives-latest.json`` से बनाए गए।"
 
-#: ../../benchmarks.rst:187
+#: ../../benchmarks.rst:184
 msgid "Proof-of-Work Verification"
 msgstr "Proof-of-work सत्यापन"
 
-#: ../../benchmarks.rst:190
+#: ../../benchmarks.rst:187
 msgid ""
 "Hashcash verification hashes a challenge, a separator and a decimal "
 "nonce: 70.2 ns. The sequential-work verifier checks graph openings: "
@@ -890,11 +928,11 @@ msgstr ""
 "और ``sibuna-crypto`` CPU में उपलब्ध होने पर SHA-NI निर्देशों का उपयोग "
 "करता है, जिनका पता रन टाइम पर लगता है (SID 0010)।"
 
-#: ../../benchmarks.rst:192
+#: ../../benchmarks.rst:189
 msgid "Matching"
 msgstr "मिलान"
 
-#: ../../benchmarks.rst:195
+#: ../../benchmarks.rst:192
 msgid ""
 "The dense Aho-Corasick automaton and sequential substring search use "
 "identical patterns and any-match semantics. The automaton is 13.7 times "
@@ -912,11 +950,11 @@ msgstr ""
 "footprint तालिका)। CIDR वर्गीकारक 32.0 ns (IPv4) और 79.3 ns (IPv6) लेते "
 "हैं।"
 
-#: ../../benchmarks.rst:197
+#: ../../benchmarks.rst:194
 msgid "Tokens"
 msgstr "टोकन"
 
-#: ../../benchmarks.rst:200
+#: ../../benchmarks.rst:197
 msgid ""
 "The BLAKE3 MAC token verifies in 155.8 ns. ``sibuna-crypto`` implements "
 "BLAKE3 portably, without SIMD paths; those win on large inputs, but "
@@ -934,11 +972,11 @@ msgstr ""
 "है और डिकोड की गई सार्वजनिक कुंजी रखता है। एक Ed25519 सत्यापन की लागत "
 "लगभग 260 MAC सत्यापनों के बराबर है; MAC Sibuna की डिफ़ॉल्ट टोकन योजना है।"
 
-#: ../../benchmarks.rst:202
+#: ../../benchmarks.rst:199
 msgid "State"
 msgstr "अवस्था"
 
-#: ../../benchmarks.rst:205
+#: ../../benchmarks.rst:202
 msgid ""
 "The spent-set row inserts a fresh tag and looks it up again: 21.0 ns. The "
 "table in this row has 16 shards of 4,096 slots (65,536 tags; the daemon's "
@@ -958,7 +996,7 @@ msgstr ""
 "करने का समय मापता था, एक ऐसी लागत जो चलता हुआ डेमन एक बार चुकाता है, और "
 "वह पंक्ति हम रिपोर्ट नहीं करते।"
 
-#: ../../benchmarks.rst:207
+#: ../../benchmarks.rst:204
 msgid ""
 "The rate limiter rows need care. The two rows for client bytes "
 "(``gcra_check`` and ``gcra_four_rule_scopes``) call the byte API: each "
@@ -976,7 +1014,7 @@ msgstr ""
 "पीड़ित की probe विंडो साझा करें (SID 0010 और ``sibuna-store`` का "
 "दस्तावेज़ीकरण)। ये पंक्तियाँ 12.8 और 13.1 ns लेती हैं।"
 
-#: ../../benchmarks.rst:209
+#: ../../benchmarks.rst:206
 msgid ""
 "The daemon does not use the byte API on the request path. It hashes the "
 "client once per request (``ClientHasher``) and passes the hash to every "
@@ -996,11 +1034,11 @@ msgstr ""
 "कुंजी-युक्त हैश की लगभग कीमत है, जिसे डेमन प्रति टेबल नहीं, प्रति अनुरोध "
 "एक बार चुकाता है।"
 
-#: ../../benchmarks.rst:211
+#: ../../benchmarks.rst:208
 msgid "HTTP Parser"
 msgstr "HTTP पार्सर"
 
-#: ../../benchmarks.rst:214
+#: ../../benchmarks.rst:211
 msgid ""
 "The parser row parses a 400-byte browser request and looks up a cookie: "
 "132.5 ns. The crate's own timing test agrees (``crates/http``: about 135 "
@@ -1012,11 +1050,11 @@ msgstr ""
 "(``crates/http``: उसी मशीन पर लगभग 135 से 180 ns)। पार्सर zero-copy है; "
 "हर फ़ील्ड कनेक्शन के बफ़र की एक स्लाइस है।"
 
-#: ../../benchmarks.rst:216
+#: ../../benchmarks.rst:213
 msgid "Policy Engine"
 msgstr "नीति इंजन"
 
-#: ../../benchmarks.rst:219
+#: ../../benchmarks.rst:216
 msgid ""
 "A full classification of a browser request takes 790.8 ns and the Gate "
 "profile 75.9 ns. The rows leave the request's parsed client address "
@@ -1032,11 +1070,11 @@ msgstr ""
 "इन पंक्तियों में एक छोटी लागत शामिल है जिसे डेमन इंजन के बाहर चुकाता है। "
 "इंजन की हीप टेबल कुल 209,052 बाइट हैं (SID 0002)।"
 
-#: ../../benchmarks.rst:221
+#: ../../benchmarks.rst:218
 msgid "WAF Inspection"
 msgstr "WAF निरीक्षण"
 
-#: ../../benchmarks.rst:224
+#: ../../benchmarks.rst:221
 msgid ""
 "The semantic scan of an 8 KiB body takes 12,784.3 ns, or :math:`12784.3 / "
 "8192 \\approx 1.56` ns per byte. The second row scans the same body with "
@@ -1058,11 +1096,11 @@ msgstr ""
 "खोजता है, इसलिए एक श्रेणी को ऑडिट करने की लागत सभी को enforce करने से "
 "लगभग पाँचवाँ हिस्सा अधिक है, प्रति श्रेणी एक स्कैन नहीं।"
 
-#: ../../benchmarks.rst:226
+#: ../../benchmarks.rst:223
 msgid "Whole-Product Comparison"
 msgstr "पूरे उत्पादों की तुलना"
 
-#: ../../benchmarks.rst:231
+#: ../../benchmarks.rst:228
 msgid ""
 "Read the throughput, latency, CPU time and memory of the daemon as a "
 "complete process, compare its surfaces and modes, and say in which rows "
@@ -1072,7 +1110,7 @@ msgstr ""
 "पढ़ें, उसकी सतहों और मोड की तुलना करें, और बताएँ कि किन पंक्तियों में "
 "सीमा डेमन तय करता है और किनमें लोड जनरेटर।"
 
-#: ../../benchmarks.rst:233
+#: ../../benchmarks.rst:230
 msgid ""
 "The tables give the medians of three five-second ``wrk`` runs for each "
 "surface and workload. The status beside each workload is the answer the "
@@ -1082,11 +1120,11 @@ msgstr ""
 "माध्यिकाएँ देती हैं। हर वर्कलोड के पास का स्टेटस वह उत्तर है जिसकी "
 "हार्नेस ने अपेक्षा की और जो उसे मिला।"
 
-#: ../../benchmarks.rst:235
+#: ../../benchmarks.rst:232
 msgid "Forward-Auth Mode"
 msgstr "Forward-auth मोड"
 
-#: ../../benchmarks.rst:238
+#: ../../benchmarks.rst:235
 msgid ""
 "The ingress asks the daemon whether to admit a request; there is no "
 "origin and no body relay, so this is the purest measure of admission cost."
@@ -1094,7 +1132,7 @@ msgstr ""
 "इनग्रेस डेमन से पूछता है कि किसी अनुरोध को प्रवेश दे या नहीं; कोई ऑरिजिन "
 "नहीं और कोई बॉडी रिले नहीं, इसलिए यह प्रवेश की लागत का सबसे शुद्ध माप है।"
 
-#: ../../benchmarks.rst:240
+#: ../../benchmarks.rst:237
 msgid ""
 "Forward-auth mode, Gate and Shield; latency in microseconds "
 "(``benchmarks/results/product-latest.md``, generated 2026-10-15T23:15:24Z)"
@@ -1102,225 +1140,225 @@ msgstr ""
 "Forward-auth मोड, Gate और Shield; लेटेंसी माइक्रोसेकंड में "
 "(``benchmarks/results/product-latest.md``, 2026-10-15T23:15:24Z पर बनी)"
 
-#: ../../benchmarks.rst:244 ../../benchmarks.rst:328
+#: ../../benchmarks.rst:241 ../../benchmarks.rst:325
 msgid "Surface"
 msgstr "सतह"
 
-#: ../../benchmarks.rst:245 ../../benchmarks.rst:329
+#: ../../benchmarks.rst:242 ../../benchmarks.rst:326
 msgid "Workload (status)"
 msgstr "वर्कलोड (स्टेटस)"
 
-#: ../../benchmarks.rst:246 ../../benchmarks.rst:330
+#: ../../benchmarks.rst:243 ../../benchmarks.rst:327
 msgid "req/s"
 msgstr "req/s"
 
-#: ../../benchmarks.rst:247 ../../benchmarks.rst:331
-#: ../../benchmarks.rst:450 ../../benchmarks.rst:509
+#: ../../benchmarks.rst:244 ../../benchmarks.rst:328
+#: ../../benchmarks.rst:447 ../../benchmarks.rst:506
 msgid "p50"
 msgstr "p50"
 
-#: ../../benchmarks.rst:248 ../../benchmarks.rst:332
-#: ../../benchmarks.rst:451 ../../benchmarks.rst:510
+#: ../../benchmarks.rst:245 ../../benchmarks.rst:329
+#: ../../benchmarks.rst:448 ../../benchmarks.rst:507
 msgid "p90"
 msgstr "p90"
 
-#: ../../benchmarks.rst:249 ../../benchmarks.rst:333
+#: ../../benchmarks.rst:246 ../../benchmarks.rst:330
 msgid "p99"
 msgstr "p99"
 
-#: ../../benchmarks.rst:250 ../../benchmarks.rst:334
-#: ../../benchmarks.rst:456 ../../benchmarks.rst:515
-#: ../../benchmarks.rst:624 ../../benchmarks.rst:644
-#: ../../benchmarks.rst:664 ../../benchmarks.rst:684
-#: ../../benchmarks.rst:714 ../../benchmarks.rst:734
-#: ../../benchmarks.rst:754 ../../benchmarks.rst:774
+#: ../../benchmarks.rst:247 ../../benchmarks.rst:331
+#: ../../benchmarks.rst:453 ../../benchmarks.rst:512
+#: ../../benchmarks.rst:621 ../../benchmarks.rst:641
+#: ../../benchmarks.rst:661 ../../benchmarks.rst:681
+#: ../../benchmarks.rst:711 ../../benchmarks.rst:731
+#: ../../benchmarks.rst:751 ../../benchmarks.rst:771
 msgid "CPU us/req"
 msgstr "CPU us/req"
 
-#: ../../benchmarks.rst:251 ../../benchmarks.rst:335
-#: ../../benchmarks.rst:629 ../../benchmarks.rst:649
-#: ../../benchmarks.rst:669 ../../benchmarks.rst:689
-#: ../../benchmarks.rst:719 ../../benchmarks.rst:739
-#: ../../benchmarks.rst:759 ../../benchmarks.rst:779
+#: ../../benchmarks.rst:248 ../../benchmarks.rst:332
+#: ../../benchmarks.rst:626 ../../benchmarks.rst:646
+#: ../../benchmarks.rst:666 ../../benchmarks.rst:686
+#: ../../benchmarks.rst:716 ../../benchmarks.rst:736
+#: ../../benchmarks.rst:756 ../../benchmarks.rst:776
 msgid "Peak RSS KiB"
 msgstr "पीक RSS KiB"
 
-#: ../../benchmarks.rst:252 ../../benchmarks.rst:260
-#: ../../benchmarks.rst:268 ../../benchmarks.rst:276
-#: ../../benchmarks.rst:336 ../../benchmarks.rst:344
-#: ../../benchmarks.rst:352 ../../benchmarks.rst:360
+#: ../../benchmarks.rst:249 ../../benchmarks.rst:257
+#: ../../benchmarks.rst:265 ../../benchmarks.rst:273
+#: ../../benchmarks.rst:333 ../../benchmarks.rst:341
+#: ../../benchmarks.rst:349 ../../benchmarks.rst:357
 msgid "Gate"
 msgstr "Gate"
 
-#: ../../benchmarks.rst:253 ../../benchmarks.rst:285
-#: ../../benchmarks.rst:337 ../../benchmarks.rst:369
+#: ../../benchmarks.rst:250 ../../benchmarks.rst:282
+#: ../../benchmarks.rst:334 ../../benchmarks.rst:366
 msgid "``admitted`` (200)"
 msgstr "``admitted`` (200)"
 
-#: ../../benchmarks.rst:254
+#: ../../benchmarks.rst:251
 msgid "211,345"
 msgstr "211,345"
 
-#: ../../benchmarks.rst:255 ../../benchmarks.rst:279
-#: ../../benchmarks.rst:303 ../../benchmarks.rst:395
+#: ../../benchmarks.rst:252 ../../benchmarks.rst:276
+#: ../../benchmarks.rst:300 ../../benchmarks.rst:392
 msgid "151"
 msgstr "151"
 
-#: ../../benchmarks.rst:256 ../../benchmarks.rst:272
-#: ../../benchmarks.rst:304 ../../benchmarks.rst:312
+#: ../../benchmarks.rst:253 ../../benchmarks.rst:269
+#: ../../benchmarks.rst:301 ../../benchmarks.rst:309
 msgid "175"
 msgstr "175"
 
-#: ../../benchmarks.rst:257 ../../benchmarks.rst:273
-#: ../../benchmarks.rst:281 ../../benchmarks.rst:305
-#: ../../benchmarks.rst:620 ../../benchmarks.rst:680
+#: ../../benchmarks.rst:254 ../../benchmarks.rst:270
+#: ../../benchmarks.rst:278 ../../benchmarks.rst:302
+#: ../../benchmarks.rst:617 ../../benchmarks.rst:677
 msgid "305"
 msgstr "305"
 
-#: ../../benchmarks.rst:258 ../../benchmarks.rst:282
+#: ../../benchmarks.rst:255 ../../benchmarks.rst:279
 msgid "11.84"
 msgstr "11.84"
 
-#: ../../benchmarks.rst:259
+#: ../../benchmarks.rst:256
 msgid "15912"
 msgstr "15912"
 
-#: ../../benchmarks.rst:261 ../../benchmarks.rst:293
+#: ../../benchmarks.rst:258 ../../benchmarks.rst:290
 msgid "``challenged`` (401)"
 msgstr "``challenged`` (401)"
 
-#: ../../benchmarks.rst:262
+#: ../../benchmarks.rst:259
 msgid "198,315"
 msgstr "198,315"
 
-#: ../../benchmarks.rst:263 ../../benchmarks.rst:347
+#: ../../benchmarks.rst:260 ../../benchmarks.rst:344
 msgid "160"
 msgstr "160"
 
-#: ../../benchmarks.rst:264
+#: ../../benchmarks.rst:261
 msgid "180"
 msgstr "180"
 
-#: ../../benchmarks.rst:265 ../../benchmarks.rst:640
+#: ../../benchmarks.rst:262 ../../benchmarks.rst:637
 msgid "326"
 msgstr "326"
 
-#: ../../benchmarks.rst:266
+#: ../../benchmarks.rst:263
 msgid "13.15"
 msgstr "13.15"
 
-#: ../../benchmarks.rst:267 ../../benchmarks.rst:275
-#: ../../benchmarks.rst:283
+#: ../../benchmarks.rst:264 ../../benchmarks.rst:272
+#: ../../benchmarks.rst:280
 msgid "16176"
 msgstr "16176"
 
-#: ../../benchmarks.rst:269 ../../benchmarks.rst:301
-#: ../../benchmarks.rst:353 ../../benchmarks.rst:385
+#: ../../benchmarks.rst:266 ../../benchmarks.rst:298
+#: ../../benchmarks.rst:350 ../../benchmarks.rst:382
 msgid "``allowed_static`` (200)"
 msgstr "``allowed_static`` (200)"
 
-#: ../../benchmarks.rst:270
+#: ../../benchmarks.rst:267
 msgid "211,053"
 msgstr "211,053"
 
-#: ../../benchmarks.rst:271 ../../benchmarks.rst:287
-#: ../../benchmarks.rst:311
+#: ../../benchmarks.rst:268 ../../benchmarks.rst:284
+#: ../../benchmarks.rst:308
 msgid "152"
 msgstr "152"
 
-#: ../../benchmarks.rst:274 ../../benchmarks.rst:665
+#: ../../benchmarks.rst:271 ../../benchmarks.rst:662
 msgid "11.73"
 msgstr "11.73"
 
-#: ../../benchmarks.rst:277 ../../benchmarks.rst:361
+#: ../../benchmarks.rst:274 ../../benchmarks.rst:358
 msgid "``attack`` (200)"
 msgstr "``attack`` (200)"
 
-#: ../../benchmarks.rst:278
+#: ../../benchmarks.rst:275
 msgid "211,618"
 msgstr "211,618"
 
-#: ../../benchmarks.rst:280
+#: ../../benchmarks.rst:277
 msgid "176"
 msgstr "176"
 
-#: ../../benchmarks.rst:284 ../../benchmarks.rst:292
-#: ../../benchmarks.rst:300 ../../benchmarks.rst:308
-#: ../../benchmarks.rst:368 ../../benchmarks.rst:376
-#: ../../benchmarks.rst:384 ../../benchmarks.rst:392
+#: ../../benchmarks.rst:281 ../../benchmarks.rst:289
+#: ../../benchmarks.rst:297 ../../benchmarks.rst:305
+#: ../../benchmarks.rst:365 ../../benchmarks.rst:373
+#: ../../benchmarks.rst:381 ../../benchmarks.rst:389
 msgid "Shield"
 msgstr "Shield"
 
-#: ../../benchmarks.rst:286
+#: ../../benchmarks.rst:283
 msgid "208,101"
 msgstr "208,101"
 
-#: ../../benchmarks.rst:288
+#: ../../benchmarks.rst:285
 msgid "178"
 msgstr "178"
 
-#: ../../benchmarks.rst:289 ../../benchmarks.rst:621
+#: ../../benchmarks.rst:286 ../../benchmarks.rst:618
 msgid "308"
 msgstr "308"
 
-#: ../../benchmarks.rst:290
+#: ../../benchmarks.rst:287
 msgid "12.87"
 msgstr "12.87"
 
-#: ../../benchmarks.rst:291
+#: ../../benchmarks.rst:288
 msgid "15928"
 msgstr "15928"
 
-#: ../../benchmarks.rst:294
+#: ../../benchmarks.rst:291
 msgid "197,532"
 msgstr "197,532"
 
-#: ../../benchmarks.rst:295
+#: ../../benchmarks.rst:292
 msgid "161"
 msgstr "161"
 
-#: ../../benchmarks.rst:296
+#: ../../benchmarks.rst:293
 msgid "183"
 msgstr "183"
 
-#: ../../benchmarks.rst:297
+#: ../../benchmarks.rst:294
 msgid "327"
 msgstr "327"
 
-#: ../../benchmarks.rst:298
+#: ../../benchmarks.rst:295
 msgid "13.77"
 msgstr "13.77"
 
-#: ../../benchmarks.rst:299 ../../benchmarks.rst:307
-#: ../../benchmarks.rst:315
+#: ../../benchmarks.rst:296 ../../benchmarks.rst:304
+#: ../../benchmarks.rst:312
 msgid "16192"
 msgstr "16192"
 
-#: ../../benchmarks.rst:302
+#: ../../benchmarks.rst:299
 msgid "211,636"
 msgstr "211,636"
 
-#: ../../benchmarks.rst:306
+#: ../../benchmarks.rst:303
 msgid "11.78"
 msgstr "11.78"
 
-#: ../../benchmarks.rst:309 ../../benchmarks.rst:393
+#: ../../benchmarks.rst:306 ../../benchmarks.rst:390
 msgid "``attack`` (403)"
 msgstr "``attack`` (403)"
 
-#: ../../benchmarks.rst:310
+#: ../../benchmarks.rst:307
 msgid "210,549"
 msgstr "210,549"
 
-#: ../../benchmarks.rst:313
+#: ../../benchmarks.rst:310
 msgid "307"
 msgstr "307"
 
-#: ../../benchmarks.rst:314
+#: ../../benchmarks.rst:311
 msgid "12.32"
 msgstr "12.32"
 
-#: ../../benchmarks.rst:317
+#: ../../benchmarks.rst:314
 msgid ""
 "In forward-auth mode the daemon is not the bottleneck. Its cores busy "
 "(CPU time over wall time, ``cores_busy_median`` in the JSON file) stay "
@@ -1344,11 +1382,11 @@ msgstr ""
 "लिए थोड़ा अधिक, और सबसे अधिक ``challenged`` पंक्तियों के लिए, जो चैलेंज "
 "उत्तर रेंडर करती हैं।"
 
-#: ../../benchmarks.rst:319
+#: ../../benchmarks.rst:316
 msgid "Reverse-Proxy Mode"
 msgstr "रिवर्स-प्रॉक्सी मोड"
 
-#: ../../benchmarks.rst:322
+#: ../../benchmarks.rst:319
 msgid ""
 "The daemon sits in front of the stub origin and relays admitted requests "
 "and responses. Proxied rows therefore include the origin's own cost and "
@@ -1358,7 +1396,7 @@ msgstr ""
 "रिले करता है। इसलिए प्रॉक्सी की गई पंक्तियों में ऑरिजिन की अपनी लागत और "
 "एक अतिरिक्त loopback hop शामिल है।"
 
-#: ../../benchmarks.rst:324
+#: ../../benchmarks.rst:321
 msgid ""
 "Reverse-proxy mode, Gate and Shield; latency in microseconds "
 "(``benchmarks/results/product-latest.md``, generated 2026-10-15T23:15:24Z)"
@@ -1366,189 +1404,189 @@ msgstr ""
 "रिवर्स-प्रॉक्सी मोड, Gate और Shield; लेटेंसी माइक्रोसेकंड में "
 "(``benchmarks/results/product-latest.md``, 2026-10-15T23:15:24Z पर बनी)"
 
-#: ../../benchmarks.rst:338
+#: ../../benchmarks.rst:335
 msgid "142,498"
 msgstr "142,498"
 
-#: ../../benchmarks.rst:339
+#: ../../benchmarks.rst:336
 msgid "427"
 msgstr "427"
 
-#: ../../benchmarks.rst:340
+#: ../../benchmarks.rst:337
 msgid "548"
 msgstr "548"
 
-#: ../../benchmarks.rst:341
+#: ../../benchmarks.rst:338
 msgid "768"
 msgstr "768"
 
-#: ../../benchmarks.rst:342
+#: ../../benchmarks.rst:339
 msgid "27.68"
 msgstr "27.68"
 
-#: ../../benchmarks.rst:343
+#: ../../benchmarks.rst:340
 msgid "15896"
 msgstr "15896"
 
-#: ../../benchmarks.rst:345 ../../benchmarks.rst:377
+#: ../../benchmarks.rst:342 ../../benchmarks.rst:374
 msgid "``challenged`` (200)"
 msgstr "``challenged`` (200)"
 
-#: ../../benchmarks.rst:346
+#: ../../benchmarks.rst:343
 msgid "199,465"
 msgstr "199,465"
 
-#: ../../benchmarks.rst:348
+#: ../../benchmarks.rst:345
 msgid "181"
 msgstr "181"
 
-#: ../../benchmarks.rst:349
+#: ../../benchmarks.rst:346
 msgid "324"
 msgstr "324"
 
-#: ../../benchmarks.rst:350
+#: ../../benchmarks.rst:347
 msgid "12.98"
 msgstr "12.98"
 
-#: ../../benchmarks.rst:351
+#: ../../benchmarks.rst:348
 msgid "16160"
 msgstr "16160"
 
-#: ../../benchmarks.rst:354
+#: ../../benchmarks.rst:351
 msgid "147,303"
 msgstr "147,303"
 
-#: ../../benchmarks.rst:355
+#: ../../benchmarks.rst:352
 msgid "411"
 msgstr "411"
 
-#: ../../benchmarks.rst:356
+#: ../../benchmarks.rst:353
 msgid "541"
 msgstr "541"
 
-#: ../../benchmarks.rst:357
+#: ../../benchmarks.rst:354
 msgid "759"
 msgstr "759"
 
-#: ../../benchmarks.rst:358
+#: ../../benchmarks.rst:355
 msgid "26.88"
 msgstr "26.88"
 
-#: ../../benchmarks.rst:359
+#: ../../benchmarks.rst:356
 msgid "16324"
 msgstr "16324"
 
-#: ../../benchmarks.rst:362
+#: ../../benchmarks.rst:359
 msgid "143,900"
 msgstr "143,900"
 
-#: ../../benchmarks.rst:363
+#: ../../benchmarks.rst:360
 msgid "422"
 msgstr "422"
 
-#: ../../benchmarks.rst:364 ../../benchmarks.rst:522
+#: ../../benchmarks.rst:361 ../../benchmarks.rst:519
 msgid "555"
 msgstr "555"
 
-#: ../../benchmarks.rst:365
+#: ../../benchmarks.rst:362
 msgid "745"
 msgstr "745"
 
-#: ../../benchmarks.rst:366
+#: ../../benchmarks.rst:363
 msgid "27.67"
 msgstr "27.67"
 
-#: ../../benchmarks.rst:367
+#: ../../benchmarks.rst:364
 msgid "16348"
 msgstr "16348"
 
-#: ../../benchmarks.rst:370
+#: ../../benchmarks.rst:367
 msgid "138,965"
 msgstr "138,965"
 
-#: ../../benchmarks.rst:371
+#: ../../benchmarks.rst:368
 msgid "438"
 msgstr "438"
 
-#: ../../benchmarks.rst:372
+#: ../../benchmarks.rst:369
 msgid "571"
 msgstr "571"
 
-#: ../../benchmarks.rst:373
+#: ../../benchmarks.rst:370
 msgid "857"
 msgstr "857"
 
-#: ../../benchmarks.rst:374
+#: ../../benchmarks.rst:371
 msgid "28.57"
 msgstr "28.57"
 
-#: ../../benchmarks.rst:375
+#: ../../benchmarks.rst:372
 msgid "16064"
 msgstr "16064"
 
-#: ../../benchmarks.rst:378
+#: ../../benchmarks.rst:375
 msgid "195,188"
 msgstr "195,188"
 
-#: ../../benchmarks.rst:379
+#: ../../benchmarks.rst:376
 msgid "162"
 msgstr "162"
 
-#: ../../benchmarks.rst:380
+#: ../../benchmarks.rst:377
 msgid "185"
 msgstr "185"
 
-#: ../../benchmarks.rst:381 ../../benchmarks.rst:731
+#: ../../benchmarks.rst:378 ../../benchmarks.rst:728
 msgid "328"
 msgstr "328"
 
-#: ../../benchmarks.rst:382
+#: ../../benchmarks.rst:379
 msgid "13.73"
 msgstr "13.73"
 
-#: ../../benchmarks.rst:383 ../../benchmarks.rst:391
-#: ../../benchmarks.rst:399
+#: ../../benchmarks.rst:380 ../../benchmarks.rst:388
+#: ../../benchmarks.rst:396
 msgid "16328"
 msgstr "16328"
 
-#: ../../benchmarks.rst:386
+#: ../../benchmarks.rst:383
 msgid "145,673"
 msgstr "145,673"
 
-#: ../../benchmarks.rst:387
+#: ../../benchmarks.rst:384
 msgid "415"
 msgstr "415"
 
-#: ../../benchmarks.rst:388
+#: ../../benchmarks.rst:385
 msgid "551"
 msgstr "551"
 
-#: ../../benchmarks.rst:389
+#: ../../benchmarks.rst:386
 msgid "746"
 msgstr "746"
 
-#: ../../benchmarks.rst:390
+#: ../../benchmarks.rst:387
 msgid "27.27"
 msgstr "27.27"
 
-#: ../../benchmarks.rst:394
+#: ../../benchmarks.rst:391
 msgid "209,507"
 msgstr "209,507"
 
-#: ../../benchmarks.rst:396
+#: ../../benchmarks.rst:393
 msgid "177"
 msgstr "177"
 
-#: ../../benchmarks.rst:397 ../../benchmarks.rst:681
-#: ../../benchmarks.rst:771
+#: ../../benchmarks.rst:394 ../../benchmarks.rst:678
+#: ../../benchmarks.rst:768
 msgid "306"
 msgstr "306"
 
-#: ../../benchmarks.rst:398
+#: ../../benchmarks.rst:395
 msgid "12.17"
 msgstr "12.17"
 
-#: ../../benchmarks.rst:401
+#: ../../benchmarks.rst:398
 msgid ""
 "Here the proxied rows (``admitted``, ``allowed_static``, and Gate's "
 "``attack``, which Gate relays) are CPU bound: cores busy is 3.96 to 3.98 "
@@ -1569,7 +1607,7 @@ msgstr ""
 "की अपनी दर पर शेड्यूलर की टेल है, इसलिए हम इसके बजाय अगले अध्याय की टेल "
 "पढ़ते हैं।"
 
-#: ../../benchmarks.rst:403
+#: ../../benchmarks.rst:400
 msgid ""
 "In three reverse-proxy rows ``wrk`` counted responses outside the 2xx and "
 "3xx classes where none was expected: 3 of 2,162,579 requests (Gate "
@@ -1595,11 +1633,11 @@ msgstr ""
 "दोबारा जुड़ गया। अब डेमन समापन रिस्पॉन्स लिखने से पहले स्थान लौटा देता है "
 "(SID 0002, \"bug fix\"); तालिकाएँ उस सुधार से पहले की हैं।"
 
-#: ../../benchmarks.rst:405
+#: ../../benchmarks.rst:402
 msgid "Footprint"
 msgstr "संसाधन उपयोग (Footprint)"
 
-#: ../../benchmarks.rst:408
+#: ../../benchmarks.rst:405
 msgid ""
 "Sizes and resident memory of the daemon "
 "(``benchmarks/results/product-latest.json``, generated "
@@ -1610,87 +1648,87 @@ msgstr ""
 "(``benchmarks/results/product-latest.json``, 2026-10-15T23:15:24Z पर बनी, "
 "और ``primitives-latest.json``, 2026-10-15T22:34:59Z पर बनी)"
 
-#: ../../benchmarks.rst:412 ../../benchmarks.rst:857
+#: ../../benchmarks.rst:409 ../../benchmarks.rst:854
 msgid "Measure"
 msgstr "माप"
 
-#: ../../benchmarks.rst:413 ../../benchmarks.rst:858
+#: ../../benchmarks.rst:410 ../../benchmarks.rst:855
 msgid "Value"
 msgstr "मान"
 
-#: ../../benchmarks.rst:414
+#: ../../benchmarks.rst:411
 msgid "Daemon binary"
 msgstr "डेमन बाइनरी"
 
-#: ../../benchmarks.rst:415
+#: ../../benchmarks.rst:412
 msgid "49,113,856 bytes"
 msgstr "49,113,856 bytes"
 
-#: ../../benchmarks.rst:416
+#: ../../benchmarks.rst:413
 msgid "Idle resident memory, product runs"
 msgstr "निष्क्रिय resident मेमोरी, उत्पाद रन"
 
-#: ../../benchmarks.rst:417
+#: ../../benchmarks.rst:414
 msgid "5,592 to 5,788 KiB"
 msgstr "5,592 से 5,788 KiB"
 
-#: ../../benchmarks.rst:418
+#: ../../benchmarks.rst:415
 msgid "Peak resident memory during a workload"
 msgstr "किसी वर्कलोड के दौरान पीक resident मेमोरी"
 
-#: ../../benchmarks.rst:419
+#: ../../benchmarks.rst:416
 msgid "15,896 to 16,348 KiB"
 msgstr "15,896 से 16,348 KiB"
 
-#: ../../benchmarks.rst:420
+#: ../../benchmarks.rst:417
 msgid "Resident memory after the workloads"
 msgstr "वर्कलोड के बाद resident मेमोरी"
 
-#: ../../benchmarks.rst:421
+#: ../../benchmarks.rst:418
 msgid "16,176 to 16,348 KiB"
 msgstr "16,176 से 16,348 KiB"
 
-#: ../../benchmarks.rst:422
+#: ../../benchmarks.rst:419
 msgid "Idle resident memory, primitive run"
 msgstr "निष्क्रिय resident मेमोरी, प्रिमिटिव रन"
 
-#: ../../benchmarks.rst:423
+#: ../../benchmarks.rst:420
 msgid "6,052 KiB"
 msgstr "6,052 KiB"
 
-#: ../../benchmarks.rst:424
+#: ../../benchmarks.rst:421
 msgid "Policy engine tables"
 msgstr "नीति इंजन टेबल"
 
-#: ../../benchmarks.rst:425
+#: ../../benchmarks.rst:422
 msgid "209,052 bytes (heap)"
 msgstr "209,052 बाइट (हीप)"
 
-#: ../../benchmarks.rst:426
+#: ../../benchmarks.rst:423
 msgid "Bot signature table"
 msgstr "बॉट सिग्नेचर टेबल"
 
-#: ../../benchmarks.rst:427
+#: ../../benchmarks.rst:424
 msgid "42,244 bytes (heap)"
 msgstr "42,244 बाइट (हीप)"
 
-#: ../../benchmarks.rst:428
+#: ../../benchmarks.rst:425
 msgid "WAF table"
 msgstr "WAF टेबल"
 
-#: ../../benchmarks.rst:429
+#: ../../benchmarks.rst:426
 msgid "164,908 bytes (heap)"
 msgstr "164,908 बाइट (हीप)"
 
-#: ../../benchmarks.rst:430
+#: ../../benchmarks.rst:427
 msgid "Browser solver module (WebAssembly)"
 msgstr "ब्राउज़र सॉल्वर मॉड्यूल (WebAssembly)"
 
-#: ../../benchmarks.rst:431
+#: ../../benchmarks.rst:428
 msgid "14,744 bytes"
 msgstr "14,744 bytes"
 
-#: ../../benchmarks.rst:433
+#: ../../benchmarks.rst:430
 msgid ""
 "The ranges run over the four product runs (two modes, two surfaces), and "
 "for the peak over their sixteen workloads. The table sizes are heap sizes "
@@ -1700,11 +1738,11 @@ msgstr ""
 "वर्कलोड पर। टेबल के आकार इंजन द्वारा रिपोर्ट किए गए हीप आकार हैं। रिकॉर्ड "
 "बाइनरी के आकार का विभाजन नहीं देता।"
 
-#: ../../benchmarks.rst:435
+#: ../../benchmarks.rst:432
 msgid "Latency at Equal Offered Load"
 msgstr "समान प्रस्तावित लोड पर लेटेंसी"
 
-#: ../../benchmarks.rst:440
+#: ../../benchmarks.rst:437
 msgid ""
 "Read a latency distribution at a fixed offered load, read a tail "
 "percentile together with its spread, and follow one tail defect from its "
@@ -1714,7 +1752,7 @@ msgstr ""
 "उसके फैलाव के साथ पढ़ें, और टेल के एक दोष को उसके मापन से उसके सुधार तक "
 "देखें।"
 
-#: ../../benchmarks.rst:442
+#: ../../benchmarks.rst:439
 msgid ""
 "Both tables come from one run of ``cargo xtask bench latency``. The "
 "errors column counts the generator's connection, I/O and framing errors."
@@ -1723,7 +1761,7 @@ msgstr ""
 "त्रुटियों वाला कॉलम जनरेटर की कनेक्शन, I/O और फ़्रेमिंग त्रुटियाँ गिनता "
 "है।"
 
-#: ../../benchmarks.rst:444
+#: ../../benchmarks.rst:441
 msgid ""
 "Forward-auth mode, Shield, admitted requests at fixed offered rates; "
 "latency in microseconds (``benchmarks/results/latency-latest.md``, "
@@ -1733,191 +1771,191 @@ msgstr ""
 "लेटेंसी माइक्रोसेकंड में (``benchmarks/results/latency-latest.md``, "
 "2026-10-15T23:07:14Z पर बनी)"
 
-#: ../../benchmarks.rst:448 ../../benchmarks.rst:507
+#: ../../benchmarks.rst:445 ../../benchmarks.rst:504
 msgid "Offered req/s"
 msgstr "प्रस्तावित req/s"
 
-#: ../../benchmarks.rst:449 ../../benchmarks.rst:508
+#: ../../benchmarks.rst:446 ../../benchmarks.rst:505
 msgid "Achieved req/s"
 msgstr "प्राप्त req/s"
 
-#: ../../benchmarks.rst:452 ../../benchmarks.rst:511
+#: ../../benchmarks.rst:449 ../../benchmarks.rst:508
 msgid "p99 (min-max)"
 msgstr "p99 (min-max)"
 
-#: ../../benchmarks.rst:453 ../../benchmarks.rst:512
+#: ../../benchmarks.rst:450 ../../benchmarks.rst:509
 msgid "p99.9"
 msgstr "p99.9"
 
-#: ../../benchmarks.rst:454 ../../benchmarks.rst:513
+#: ../../benchmarks.rst:451 ../../benchmarks.rst:510
 msgid "max"
 msgstr "अधिकतम"
 
-#: ../../benchmarks.rst:455 ../../benchmarks.rst:514
+#: ../../benchmarks.rst:452 ../../benchmarks.rst:511
 msgid "Errors"
 msgstr "त्रुटियाँ"
 
-#: ../../benchmarks.rst:457 ../../benchmarks.rst:458
-#: ../../benchmarks.rst:516 ../../benchmarks.rst:517
+#: ../../benchmarks.rst:454 ../../benchmarks.rst:455
+#: ../../benchmarks.rst:513 ../../benchmarks.rst:514
 msgid "10,000"
 msgstr "10,000"
 
-#: ../../benchmarks.rst:459
+#: ../../benchmarks.rst:456
 msgid "30"
 msgstr "30"
 
-#: ../../benchmarks.rst:460
+#: ../../benchmarks.rst:457
 msgid "32"
 msgstr "32"
 
-#: ../../benchmarks.rst:461
+#: ../../benchmarks.rst:458
 msgid "37 (36-39)"
 msgstr "37 (36-39)"
 
-#: ../../benchmarks.rst:462 ../../benchmarks.rst:1129
-#: ../../benchmarks.rst:1464
+#: ../../benchmarks.rst:459 ../../benchmarks.rst:1126
+#: ../../benchmarks.rst:1461
 msgid "58"
 msgstr "58"
 
-#: ../../benchmarks.rst:463
+#: ../../benchmarks.rst:460
 msgid "355"
 msgstr "355"
 
-#: ../../benchmarks.rst:464 ../../benchmarks.rst:473
-#: ../../benchmarks.rst:482 ../../benchmarks.rst:491
-#: ../../benchmarks.rst:500 ../../benchmarks.rst:523
-#: ../../benchmarks.rst:532 ../../benchmarks.rst:541
-#: ../../benchmarks.rst:550 ../../benchmarks.rst:864
+#: ../../benchmarks.rst:461 ../../benchmarks.rst:470
+#: ../../benchmarks.rst:479 ../../benchmarks.rst:488
+#: ../../benchmarks.rst:497 ../../benchmarks.rst:520
+#: ../../benchmarks.rst:529 ../../benchmarks.rst:538
+#: ../../benchmarks.rst:547 ../../benchmarks.rst:861
 msgid "0"
 msgstr "0"
 
-#: ../../benchmarks.rst:465
+#: ../../benchmarks.rst:462
 msgid "16.92"
 msgstr "16.92"
 
-#: ../../benchmarks.rst:466 ../../benchmarks.rst:467
-#: ../../benchmarks.rst:525 ../../benchmarks.rst:526
+#: ../../benchmarks.rst:463 ../../benchmarks.rst:464
+#: ../../benchmarks.rst:522 ../../benchmarks.rst:523
 msgid "25,000"
 msgstr "25,000"
 
-#: ../../benchmarks.rst:468
+#: ../../benchmarks.rst:465
 msgid "28"
 msgstr "28"
 
-#: ../../benchmarks.rst:469
+#: ../../benchmarks.rst:466
 msgid "31"
 msgstr "31"
 
-#: ../../benchmarks.rst:470
+#: ../../benchmarks.rst:467
 msgid "34 (32-34)"
 msgstr "34 (32-34)"
 
-#: ../../benchmarks.rst:471 ../../benchmarks.rst:1288
-#: ../../benchmarks.rst:1330
+#: ../../benchmarks.rst:468 ../../benchmarks.rst:1285
+#: ../../benchmarks.rst:1327
 msgid "45"
 msgstr "45"
 
-#: ../../benchmarks.rst:472
+#: ../../benchmarks.rst:469
 msgid "1035"
 msgstr "1035"
 
-#: ../../benchmarks.rst:474
+#: ../../benchmarks.rst:471
 msgid "15.83"
 msgstr "15.83"
 
-#: ../../benchmarks.rst:475 ../../benchmarks.rst:476
-#: ../../benchmarks.rst:534 ../../benchmarks.rst:535
+#: ../../benchmarks.rst:472 ../../benchmarks.rst:473
+#: ../../benchmarks.rst:531 ../../benchmarks.rst:532
 msgid "50,000"
 msgstr "50,000"
 
-#: ../../benchmarks.rst:477 ../../benchmarks.rst:495
+#: ../../benchmarks.rst:474 ../../benchmarks.rst:492
 msgid "25"
 msgstr "25"
 
-#: ../../benchmarks.rst:478
+#: ../../benchmarks.rst:475
 msgid "27"
 msgstr "27"
 
-#: ../../benchmarks.rst:479
+#: ../../benchmarks.rst:476
 msgid "30 (30-30)"
 msgstr "30 (30-30)"
 
-#: ../../benchmarks.rst:480
+#: ../../benchmarks.rst:477
 msgid "40"
 msgstr "40"
 
-#: ../../benchmarks.rst:481
+#: ../../benchmarks.rst:478
 msgid "3029"
 msgstr "3029"
 
-#: ../../benchmarks.rst:483
+#: ../../benchmarks.rst:480
 msgid "13.83"
 msgstr "13.83"
 
-#: ../../benchmarks.rst:484 ../../benchmarks.rst:543
+#: ../../benchmarks.rst:481 ../../benchmarks.rst:540
 msgid "100,000"
 msgstr "100,000"
 
-#: ../../benchmarks.rst:485
+#: ../../benchmarks.rst:482
 msgid "99,998"
 msgstr "99,998"
 
-#: ../../benchmarks.rst:486
+#: ../../benchmarks.rst:483
 msgid "24"
 msgstr "24"
 
-#: ../../benchmarks.rst:487
+#: ../../benchmarks.rst:484
 msgid "26"
 msgstr "26"
 
-#: ../../benchmarks.rst:488
+#: ../../benchmarks.rst:485
 msgid "41 (40-42)"
 msgstr "41 (40-42)"
 
-#: ../../benchmarks.rst:489 ../../benchmarks.rst:1122
-#: ../../benchmarks.rst:1164 ../../benchmarks.rst:1336
-#: ../../benchmarks.rst:1350 ../../benchmarks.rst:1358
-#: ../../benchmarks.rst:1364
+#: ../../benchmarks.rst:486 ../../benchmarks.rst:1119
+#: ../../benchmarks.rst:1161 ../../benchmarks.rst:1333
+#: ../../benchmarks.rst:1347 ../../benchmarks.rst:1355
+#: ../../benchmarks.rst:1361
 msgid "62"
 msgstr "62"
 
-#: ../../benchmarks.rst:490
+#: ../../benchmarks.rst:487
 msgid "2358"
 msgstr "2358"
 
-#: ../../benchmarks.rst:492
+#: ../../benchmarks.rst:489
 msgid "13.48"
 msgstr "13.48"
 
-#: ../../benchmarks.rst:493 ../../benchmarks.rst:552
+#: ../../benchmarks.rst:490 ../../benchmarks.rst:549
 msgid "150,000"
 msgstr "150,000"
 
-#: ../../benchmarks.rst:494
+#: ../../benchmarks.rst:491
 msgid "149,996"
 msgstr "149,996"
 
-#: ../../benchmarks.rst:496
+#: ../../benchmarks.rst:493
 msgid "36"
 msgstr "36"
 
-#: ../../benchmarks.rst:497
+#: ../../benchmarks.rst:494
 msgid "51 (51-52)"
 msgstr "51 (51-52)"
 
-#: ../../benchmarks.rst:498 ../../benchmarks.rst:539
+#: ../../benchmarks.rst:495 ../../benchmarks.rst:536
 msgid "74"
 msgstr "74"
 
-#: ../../benchmarks.rst:499
+#: ../../benchmarks.rst:496
 msgid "1753"
 msgstr "1753"
 
-#: ../../benchmarks.rst:501
+#: ../../benchmarks.rst:498
 msgid "14.16"
 msgstr "14.16"
 
-#: ../../benchmarks.rst:503
+#: ../../benchmarks.rst:500
 msgid ""
 "Reverse-proxy mode, Shield, admitted requests at fixed offered rates; "
 "latency in microseconds (``benchmarks/results/latency-latest.md``, "
@@ -1927,135 +1965,135 @@ msgstr ""
 "लेटेंसी माइक्रोसेकंड में (``benchmarks/results/latency-latest.md``, "
 "2026-10-15T23:07:14Z पर बनी)"
 
-#: ../../benchmarks.rst:518 ../../benchmarks.rst:1144
+#: ../../benchmarks.rst:515 ../../benchmarks.rst:1141
 msgid "56"
 msgstr "56"
 
-#: ../../benchmarks.rst:519 ../../benchmarks.rst:1143
-#: ../../benchmarks.rst:1151 ../../benchmarks.rst:1158
-#: ../../benchmarks.rst:1343 ../../benchmarks.rst:1351
-#: ../../benchmarks.rst:1470 ../../benchmarks.rst:1471
+#: ../../benchmarks.rst:516 ../../benchmarks.rst:1140
+#: ../../benchmarks.rst:1148 ../../benchmarks.rst:1155
+#: ../../benchmarks.rst:1340 ../../benchmarks.rst:1348
+#: ../../benchmarks.rst:1467 ../../benchmarks.rst:1468
 msgid "61"
 msgstr "61"
 
-#: ../../benchmarks.rst:520
+#: ../../benchmarks.rst:517
 msgid "65 (65-66)"
 msgstr "65 (65-66)"
 
-#: ../../benchmarks.rst:521
+#: ../../benchmarks.rst:518
 msgid "76"
 msgstr "76"
 
-#: ../../benchmarks.rst:524
+#: ../../benchmarks.rst:521
 msgid "32.25"
 msgstr "32.25"
 
-#: ../../benchmarks.rst:527
+#: ../../benchmarks.rst:524
 msgid "51"
 msgstr "51"
 
-#: ../../benchmarks.rst:528
+#: ../../benchmarks.rst:525
 msgid "54"
 msgstr "54"
 
-#: ../../benchmarks.rst:529
+#: ../../benchmarks.rst:526
 msgid "58 (58-60)"
 msgstr "58 (58-60)"
 
-#: ../../benchmarks.rst:530
+#: ../../benchmarks.rst:527
 msgid "72"
 msgstr "72"
 
-#: ../../benchmarks.rst:531
+#: ../../benchmarks.rst:528
 msgid "1105"
 msgstr "1105"
 
-#: ../../benchmarks.rst:533
+#: ../../benchmarks.rst:530
 msgid "28.63"
 msgstr "28.63"
 
-#: ../../benchmarks.rst:536 ../../benchmarks.rst:1101
-#: ../../benchmarks.rst:1295 ../../benchmarks.rst:1301
+#: ../../benchmarks.rst:533 ../../benchmarks.rst:1098
+#: ../../benchmarks.rst:1292 ../../benchmarks.rst:1298
 msgid "47"
 msgstr "47"
 
-#: ../../benchmarks.rst:537 ../../benchmarks.rst:1287
+#: ../../benchmarks.rst:534 ../../benchmarks.rst:1284
 msgid "50"
 msgstr "50"
 
-#: ../../benchmarks.rst:538
+#: ../../benchmarks.rst:535
 msgid "60 (58-66)"
 msgstr "60 (58-66)"
 
-#: ../../benchmarks.rst:540
+#: ../../benchmarks.rst:537
 msgid "3066"
 msgstr "3066"
 
-#: ../../benchmarks.rst:542
+#: ../../benchmarks.rst:539
 msgid "27.45"
 msgstr "27.45"
 
-#: ../../benchmarks.rst:544
+#: ../../benchmarks.rst:541
 msgid "99,996"
 msgstr "99,996"
 
-#: ../../benchmarks.rst:545
+#: ../../benchmarks.rst:542
 msgid "55"
 msgstr "55"
 
-#: ../../benchmarks.rst:546
+#: ../../benchmarks.rst:543
 msgid "75"
 msgstr "75"
 
-#: ../../benchmarks.rst:547
+#: ../../benchmarks.rst:544
 msgid "100 (100-104)"
 msgstr "100 (100-104)"
 
-#: ../../benchmarks.rst:548
+#: ../../benchmarks.rst:545
 msgid "150"
 msgstr "150"
 
-#: ../../benchmarks.rst:549
+#: ../../benchmarks.rst:546
 msgid "2239"
 msgstr "2239"
 
-#: ../../benchmarks.rst:551
+#: ../../benchmarks.rst:548
 msgid "28.42"
 msgstr "28.42"
 
-#: ../../benchmarks.rst:553
+#: ../../benchmarks.rst:550
 msgid "134,344"
 msgstr "134,344"
 
-#: ../../benchmarks.rst:554
+#: ../../benchmarks.rst:551
 msgid "583934"
 msgstr "583934"
 
-#: ../../benchmarks.rst:555
+#: ../../benchmarks.rst:552
 msgid "1544160"
 msgstr "1544160"
 
-#: ../../benchmarks.rst:556
+#: ../../benchmarks.rst:553
 msgid "1906273 (1631234-2218760)"
 msgstr "1906273 (1631234-2218760)"
 
-#: ../../benchmarks.rst:557
+#: ../../benchmarks.rst:554
 msgid "1967134"
 msgstr "1967134"
 
-#: ../../benchmarks.rst:558
+#: ../../benchmarks.rst:555
 msgid "1989964"
 msgstr "1989964"
 
-#: ../../benchmarks.rst:559
+#: ../../benchmarks.rst:556
 msgid "4"
 msgstr "4"
 
-#: ../../benchmarks.rst:560
+#: ../../benchmarks.rst:557
 msgid "29.22"
 msgstr "29.22"
 
-#: ../../benchmarks.rst:562
+#: ../../benchmarks.rst:559
 msgid ""
 "In forward-auth mode the p50 stays between 24 and 30 us at every rate. "
 "The p99 stays at or under 51 us up to 150,000 requests per second, and "
@@ -2066,7 +2104,7 @@ msgstr ""
 "सेकंड 150,000 अनुरोधों तक 51 us या उससे कम रहता है, और p99.9 74 us या "
 "उससे कम। डेमन प्रति अनुरोध 13.48 से 16.92 us CPU खर्च करता है।"
 
-#: ../../benchmarks.rst:564
+#: ../../benchmarks.rst:561
 msgid ""
 "In reverse-proxy mode the p50 is 47 to 56 us up to 100,000 requests per "
 "second, the p99 100 us and the p99.9 150 us at 100,000. At 150,000 "
@@ -2085,7 +2123,7 @@ msgstr ""
 "प्रॉक्सी थ्रूपुट के पास है (Shield ``admitted`` के लिए प्रति सेकंड "
 "138,965 अनुरोध)। उस पंक्ति की चार त्रुटियाँ ओवरलोड में हुईं।"
 
-#: ../../benchmarks.rst:566
+#: ../../benchmarks.rst:563
 msgid ""
 "The p99 spreads are narrow below saturation; the widest is the "
 "reverse-proxy p99 at 50,000 requests per second, 58 to 66 us. The max "
@@ -2097,11 +2135,11 @@ msgstr ""
 "के 15 लाख तक के अनुरोधों में से एक अनुरोध है। साझा होस्ट पर हम इसे डेमन "
 "का गुण नहीं, होस्ट का सबसे खराब क्षण मानते हैं।"
 
-#: ../../benchmarks.rst:568
+#: ../../benchmarks.rst:565
 msgid "What the Measurement Changed"
 msgstr "मापन ने क्या बदला"
 
-#: ../../benchmarks.rst:571
+#: ../../benchmarks.rst:568
 msgid ""
 "External load has changed Sibuna's design. The daemon serves each "
 "connection on a thread of its own (SID 0002, SID 0010), and its first "
@@ -2115,7 +2153,7 @@ msgstr ""
 "एक को डेमन 4,096 अनुरोधों के बाद बंद करता है, प्रति सेकंड 100,000 स्वीकृत "
 "अनुरोधों पर 99.9वाँ पर्सेंटाइल 0.3 से 2 ms था।"
 
-#: ../../benchmarks.rst:573
+#: ../../benchmarks.rst:570
 msgid ""
 "The diagnosis, recorded in SID 0002 and in the documentation of "
 "``cmd/sibuna/src/tasks.rs``, is thread turnover. Creating and ending a "
@@ -2145,7 +2183,7 @@ msgstr ""
 "है, वह रुकने के बजाय समाप्त हो जाता है। पहले की तरह एक साथ अधिकतम "
 "``--max-connections`` कनेक्शन सर्व होते हैं।"
 
-#: ../../benchmarks.rst:575
+#: ../../benchmarks.rst:572
 msgid ""
 "The tables above are from the run after the fix: a p99.9 of 62 us in "
 "forward-auth mode and 150 us in reverse-proxy mode at 100,000 requests "
@@ -2157,11 +2195,11 @@ msgstr ""
 "सुधार से पहले के रन परिणाम फ़ाइलों के रूप में नहीं रखे गए, इसीलिए उनके "
 "आँकड़े केवल SID 0002 में और इस अनुभाग में दिखते हैं।"
 
-#: ../../benchmarks.rst:577
+#: ../../benchmarks.rst:574
 msgid "Worked example: why the stall showed at p99.9"
 msgstr "हल किया गया उदाहरण: रुकावट p99.9 पर क्यों दिखी"
 
-#: ../../benchmarks.rst:579
+#: ../../benchmarks.rst:576
 msgid ""
 "At 100,000 requests per second over 64 connections, each connection "
 "carries :math:`100000 / 64 = 1562.5` requests per second. The daemon "
@@ -2180,7 +2218,7 @@ msgstr ""
 "2.62 \\approx 24.4` नए कनेक्शन खोलता है। प्रति कनेक्शन एक थ्रेड के साथ, "
 "यह हर सेकंड लगभग 24 थ्रेड शुरू होना और 24 थ्रेड समाप्त होना है।"
 
-#: ../../benchmarks.rst:581
+#: ../../benchmarks.rst:578
 msgid ""
 "A 10-second run at this rate measures 1,000,000 requests. Its p99.9 is "
 "exceeded by 1,000 of them, 100 per second; its p99 by 1,000 per second. "
@@ -2200,11 +2238,11 @@ msgstr ""
 "की टेल को हिला देती है। इसीलिए ऐसे दोष को देखने के लिए p99.9 और हर अनुरोध "
 "पर टाइमर चाहिए।"
 
-#: ../../benchmarks.rst:583
+#: ../../benchmarks.rst:580
 msgid "Sibuna and Anubis"
 msgstr "Sibuna और Anubis"
 
-#: ../../benchmarks.rst:588
+#: ../../benchmarks.rst:585
 msgid ""
 "Read Sibuna's figures beside those of an established product under the "
 "same load, and say which differences come from the products and which "
@@ -2213,7 +2251,7 @@ msgstr ""
 "समान लोड के तहत एक स्थापित उत्पाद के आँकड़ों के साथ Sibuna के आँकड़े "
 "पढ़ें, और बताएँ कि कौन-से अंतर उत्पादों से आते हैं और कौन-से सेटअप से।"
 
-#: ../../benchmarks.rst:590
+#: ../../benchmarks.rst:587
 msgid ""
 "Anubis, by Techaro, is a widely deployed proof-of-work gate that sits in "
 "front of web sites, much as Sibuna's Gate does. We measured the official "
@@ -2227,7 +2265,7 @@ msgstr ""
 "40,001,698 बाइट) को उसी होस्ट पर, उन्हीं CPU पर, उन्हीं वर्कलोड के साथ "
 "Sibuna के साथ मापा। दोनों परिणाम फ़ाइलें इनसे दर्ज की गईं:"
 
-#: ../../benchmarks.rst:592
+#: ../../benchmarks.rst:589
 msgid ""
 "cargo xtask bench product --anubis <path/to/anubis>\n"
 "cargo xtask bench admission --anubis <path/to/anubis>"
@@ -2235,7 +2273,7 @@ msgstr ""
 "cargo xtask bench product --anubis <path/to/anubis>\n"
 "cargo xtask bench admission --anubis <path/to/anubis>"
 
-#: ../../benchmarks.rst:597
+#: ../../benchmarks.rst:594
 msgid ""
 "Anubis started as the earlier Python drivers of this project started it: "
 "``--bind``, ``--metrics-bind``, ``--target=`` (empty in forward-auth "
@@ -2269,11 +2307,11 @@ msgstr ""
 "forward-auth मोड में ``admitted`` और ``challenged`` वर्कलोड Anubis के "
 "check endpoint (``/.within.website/x/cmd/anubis/api/check``) से पूछते हैं।"
 
-#: ../../benchmarks.rst:599
+#: ../../benchmarks.rst:596
 msgid "Whole-Product Workloads"
 msgstr "पूरे उत्पाद के वर्कलोड"
 
-#: ../../benchmarks.rst:602
+#: ../../benchmarks.rst:599
 msgid ""
 "The four workloads, the load and the statistics are those of the "
 "whole-product harness, with one change: the origin is ``caddy respond``, "
@@ -2287,7 +2325,7 @@ msgstr ""
 "तक ``TIME_WAIT`` में 3,000 से कम सॉकेट न रह जाएँ, क्योंकि Anubis के "
 "रिवर्स-प्रॉक्सी रन दसियों हज़ार सॉकेट पीछे छोड़ते हैं।"
 
-#: ../../benchmarks.rst:604
+#: ../../benchmarks.rst:601
 msgid ""
 "Forward-auth mode: medians of three five-second ``wrk`` runs "
 "(``benchmarks/results/comparison-latest.md``, generated "
@@ -2297,203 +2335,203 @@ msgstr ""
 "(``benchmarks/results/comparison-latest.md``, 2026-10-16T00:55:19Z पर "
 "बनी)।"
 
-#: ../../benchmarks.rst:609 ../../benchmarks.rst:699
+#: ../../benchmarks.rst:606 ../../benchmarks.rst:696
 msgid "Figure"
 msgstr "आँकड़ा"
 
-#: ../../benchmarks.rst:610 ../../benchmarks.rst:700
+#: ../../benchmarks.rst:607 ../../benchmarks.rst:697
 msgid "Sibuna Gate"
 msgstr "Sibuna Gate"
 
-#: ../../benchmarks.rst:611 ../../benchmarks.rst:701
+#: ../../benchmarks.rst:608 ../../benchmarks.rst:698
 msgid "Sibuna Shield"
 msgstr "Sibuna Shield"
 
-#: ../../benchmarks.rst:612 ../../benchmarks.rst:702
+#: ../../benchmarks.rst:609 ../../benchmarks.rst:699
 msgid "Anubis 1.27.0"
 msgstr "Anubis 1.27.0"
 
-#: ../../benchmarks.rst:613 ../../benchmarks.rst:703
+#: ../../benchmarks.rst:610 ../../benchmarks.rst:700
 msgid "``admitted``"
 msgstr "``admitted``"
 
-#: ../../benchmarks.rst:614 ../../benchmarks.rst:634
-#: ../../benchmarks.rst:654 ../../benchmarks.rst:674
-#: ../../benchmarks.rst:704 ../../benchmarks.rst:724
-#: ../../benchmarks.rst:744 ../../benchmarks.rst:764
+#: ../../benchmarks.rst:611 ../../benchmarks.rst:631
+#: ../../benchmarks.rst:651 ../../benchmarks.rst:671
+#: ../../benchmarks.rst:701 ../../benchmarks.rst:721
+#: ../../benchmarks.rst:741 ../../benchmarks.rst:761
 msgid "req/s (status)"
 msgstr "req/s (स्टेटस)"
 
-#: ../../benchmarks.rst:615
+#: ../../benchmarks.rst:612
 msgid "210,682 (200)"
 msgstr "210,682 (200)"
 
-#: ../../benchmarks.rst:616
+#: ../../benchmarks.rst:613
 msgid "208,635 (200)"
 msgstr "208,635 (200)"
 
-#: ../../benchmarks.rst:617
+#: ../../benchmarks.rst:614
 msgid "36,509 (200)"
 msgstr "36,509 (200)"
 
-#: ../../benchmarks.rst:619 ../../benchmarks.rst:639
-#: ../../benchmarks.rst:659 ../../benchmarks.rst:679
-#: ../../benchmarks.rst:709 ../../benchmarks.rst:729
-#: ../../benchmarks.rst:749 ../../benchmarks.rst:769
+#: ../../benchmarks.rst:616 ../../benchmarks.rst:636
+#: ../../benchmarks.rst:656 ../../benchmarks.rst:676
+#: ../../benchmarks.rst:706 ../../benchmarks.rst:726
+#: ../../benchmarks.rst:746 ../../benchmarks.rst:766
 msgid "p99 us"
 msgstr "p99 us"
 
-#: ../../benchmarks.rst:622
+#: ../../benchmarks.rst:619
 msgid "7,477"
 msgstr "7,477"
 
-#: ../../benchmarks.rst:625
+#: ../../benchmarks.rst:622
 msgid "12.09"
 msgstr "12.09"
 
-#: ../../benchmarks.rst:626
+#: ../../benchmarks.rst:623
 msgid "13.21"
 msgstr "13.21"
 
-#: ../../benchmarks.rst:627
+#: ../../benchmarks.rst:624
 msgid "106.30"
 msgstr "106.30"
 
-#: ../../benchmarks.rst:630
+#: ../../benchmarks.rst:627
 msgid "16,228"
 msgstr "16,228"
 
-#: ../../benchmarks.rst:631
+#: ../../benchmarks.rst:628
 msgid "16,316"
 msgstr "16,316"
 
-#: ../../benchmarks.rst:632
+#: ../../benchmarks.rst:629
 msgid "32,624"
 msgstr "32,624"
 
-#: ../../benchmarks.rst:633 ../../benchmarks.rst:723
+#: ../../benchmarks.rst:630 ../../benchmarks.rst:720
 msgid "``challenged``"
 msgstr "``challenged``"
 
-#: ../../benchmarks.rst:635
+#: ../../benchmarks.rst:632
 msgid "198,251 (401)"
 msgstr "198,251 (401)"
 
-#: ../../benchmarks.rst:636
+#: ../../benchmarks.rst:633
 msgid "193,087 (401)"
 msgstr "193,087 (401)"
 
-#: ../../benchmarks.rst:637
+#: ../../benchmarks.rst:634
 msgid "113,170 (401)"
 msgstr "113,170 (401)"
 
-#: ../../benchmarks.rst:641
+#: ../../benchmarks.rst:638
 msgid "342"
 msgstr "342"
 
-#: ../../benchmarks.rst:642
+#: ../../benchmarks.rst:639
 msgid "3,781"
 msgstr "3,781"
 
-#: ../../benchmarks.rst:645
+#: ../../benchmarks.rst:642
 msgid "13.49"
 msgstr "13.49"
 
-#: ../../benchmarks.rst:646
+#: ../../benchmarks.rst:643
 msgid "15.02"
 msgstr "15.02"
 
-#: ../../benchmarks.rst:647
+#: ../../benchmarks.rst:644
 msgid "32.96"
 msgstr "32.96"
 
-#: ../../benchmarks.rst:650 ../../benchmarks.rst:670
-#: ../../benchmarks.rst:690
+#: ../../benchmarks.rst:647 ../../benchmarks.rst:667
+#: ../../benchmarks.rst:687
 msgid "16,240"
 msgstr "16,240"
 
-#: ../../benchmarks.rst:651 ../../benchmarks.rst:671
-#: ../../benchmarks.rst:691
+#: ../../benchmarks.rst:648 ../../benchmarks.rst:668
+#: ../../benchmarks.rst:688
 msgid "16,328"
 msgstr "16,328"
 
-#: ../../benchmarks.rst:652
+#: ../../benchmarks.rst:649
 msgid "32,696"
 msgstr "32,696"
 
-#: ../../benchmarks.rst:653 ../../benchmarks.rst:743
+#: ../../benchmarks.rst:650 ../../benchmarks.rst:740
 msgid "``allowed_static``"
 msgstr "``allowed_static``"
 
-#: ../../benchmarks.rst:655
+#: ../../benchmarks.rst:652
 msgid "212,569 (200)"
 msgstr "212,569 (200)"
 
-#: ../../benchmarks.rst:656
+#: ../../benchmarks.rst:653
 msgid "212,444 (200)"
 msgstr "212,444 (200)"
 
-#: ../../benchmarks.rst:657
+#: ../../benchmarks.rst:654
 msgid "89,904 (200)"
 msgstr "89,904 (200)"
 
-#: ../../benchmarks.rst:660 ../../benchmarks.rst:661
+#: ../../benchmarks.rst:657 ../../benchmarks.rst:658
 msgid "304"
 msgstr "304"
 
-#: ../../benchmarks.rst:662
+#: ../../benchmarks.rst:659
 msgid "4,547"
 msgstr "4,547"
 
-#: ../../benchmarks.rst:666
+#: ../../benchmarks.rst:663
 msgid "11.95"
 msgstr "11.95"
 
-#: ../../benchmarks.rst:667
+#: ../../benchmarks.rst:664
 msgid "41.63"
 msgstr "41.63"
 
-#: ../../benchmarks.rst:672
+#: ../../benchmarks.rst:669
 msgid "33,396"
 msgstr "33,396"
 
-#: ../../benchmarks.rst:673 ../../benchmarks.rst:763
+#: ../../benchmarks.rst:670 ../../benchmarks.rst:760
 msgid "``attack``"
 msgstr "``attack``"
 
-#: ../../benchmarks.rst:675
+#: ../../benchmarks.rst:672
 msgid "212,086 (200)"
 msgstr "212,086 (200)"
 
-#: ../../benchmarks.rst:676
+#: ../../benchmarks.rst:673
 msgid "211,347 (403)"
 msgstr "211,347 (403)"
 
-#: ../../benchmarks.rst:677
+#: ../../benchmarks.rst:674
 msgid "36,853 (200)"
 msgstr "36,853 (200)"
 
-#: ../../benchmarks.rst:682
+#: ../../benchmarks.rst:679
 msgid "7,283"
 msgstr "7,283"
 
-#: ../../benchmarks.rst:685
+#: ../../benchmarks.rst:682
 msgid "12.07"
 msgstr "12.07"
 
-#: ../../benchmarks.rst:686
+#: ../../benchmarks.rst:683
 msgid "12.56"
 msgstr "12.56"
 
-#: ../../benchmarks.rst:687
+#: ../../benchmarks.rst:684
 msgid "104.88"
 msgstr "104.88"
 
-#: ../../benchmarks.rst:692
+#: ../../benchmarks.rst:689
 msgid "33,764"
 msgstr "33,764"
 
-#: ../../benchmarks.rst:694
+#: ../../benchmarks.rst:691
 msgid ""
 "Reverse-proxy mode, behind ``caddy respond``: medians of three "
 "five-second ``wrk`` runs (``benchmarks/results/comparison-latest.md``, "
@@ -2503,177 +2541,177 @@ msgstr ""
 "रन की माध्यिकाएँ (``benchmarks/results/comparison-latest.md``, "
 "2026-10-16T00:55:19Z पर बनी)।"
 
-#: ../../benchmarks.rst:705
+#: ../../benchmarks.rst:702
 msgid "106,376 (200)"
 msgstr "106,376 (200)"
 
-#: ../../benchmarks.rst:706
+#: ../../benchmarks.rst:703
 msgid "103,298 (200)"
 msgstr "103,298 (200)"
 
-#: ../../benchmarks.rst:707
+#: ../../benchmarks.rst:704
 msgid "19,398 (200)"
 msgstr "19,398 (200)"
 
-#: ../../benchmarks.rst:710
+#: ../../benchmarks.rst:707
 msgid "3,331"
 msgstr "3,331"
 
-#: ../../benchmarks.rst:711
+#: ../../benchmarks.rst:708
 msgid "3,321"
 msgstr "3,321"
 
-#: ../../benchmarks.rst:712
+#: ../../benchmarks.rst:709
 msgid "11,062"
 msgstr "11,062"
 
-#: ../../benchmarks.rst:715
+#: ../../benchmarks.rst:712
 msgid "27.02"
 msgstr "27.02"
 
-#: ../../benchmarks.rst:716
+#: ../../benchmarks.rst:713
 msgid "27.92"
 msgstr "27.92"
 
-#: ../../benchmarks.rst:717
+#: ../../benchmarks.rst:714
 msgid "190.40"
 msgstr "190.40"
 
-#: ../../benchmarks.rst:720
+#: ../../benchmarks.rst:717
 msgid "16,528"
 msgstr "16,528"
 
-#: ../../benchmarks.rst:721
+#: ../../benchmarks.rst:718
 msgid "16,444"
 msgstr "16,444"
 
-#: ../../benchmarks.rst:722
+#: ../../benchmarks.rst:719
 msgid "39,980"
 msgstr "39,980"
 
-#: ../../benchmarks.rst:725
+#: ../../benchmarks.rst:722
 msgid "198,402 (200)"
 msgstr "198,402 (200)"
 
-#: ../../benchmarks.rst:726
+#: ../../benchmarks.rst:723
 msgid "197,327 (200)"
 msgstr "197,327 (200)"
 
-#: ../../benchmarks.rst:727
+#: ../../benchmarks.rst:724
 msgid "28,842 (200)"
 msgstr "28,842 (200)"
 
-#: ../../benchmarks.rst:730
+#: ../../benchmarks.rst:727
 msgid "325"
 msgstr "325"
 
-#: ../../benchmarks.rst:732
+#: ../../benchmarks.rst:729
 msgid "9,546"
 msgstr "9,546"
 
-#: ../../benchmarks.rst:735
+#: ../../benchmarks.rst:732
 msgid "13.05"
 msgstr "13.05"
 
-#: ../../benchmarks.rst:736
+#: ../../benchmarks.rst:733
 msgid "13.78"
 msgstr "13.78"
 
-#: ../../benchmarks.rst:737
+#: ../../benchmarks.rst:734
 msgid "137.73"
 msgstr "137.73"
 
-#: ../../benchmarks.rst:740 ../../benchmarks.rst:760
-#: ../../benchmarks.rst:780
+#: ../../benchmarks.rst:737 ../../benchmarks.rst:757
+#: ../../benchmarks.rst:777
 msgid "16,544"
 msgstr "16,544"
 
-#: ../../benchmarks.rst:741 ../../benchmarks.rst:761
-#: ../../benchmarks.rst:781
+#: ../../benchmarks.rst:738 ../../benchmarks.rst:758
+#: ../../benchmarks.rst:778
 msgid "16,464"
 msgstr "16,464"
 
-#: ../../benchmarks.rst:742
+#: ../../benchmarks.rst:739
 msgid "516,872"
 msgstr "516,872"
 
-#: ../../benchmarks.rst:745
+#: ../../benchmarks.rst:742
 msgid "105,427 (200)"
 msgstr "105,427 (200)"
 
-#: ../../benchmarks.rst:746
+#: ../../benchmarks.rst:743
 msgid "106,819 (200)"
 msgstr "106,819 (200)"
 
-#: ../../benchmarks.rst:747
+#: ../../benchmarks.rst:744
 msgid "28,862 (200)"
 msgstr "28,862 (200)"
 
-#: ../../benchmarks.rst:750
+#: ../../benchmarks.rst:747
 msgid "3,320"
 msgstr "3,320"
 
-#: ../../benchmarks.rst:751
+#: ../../benchmarks.rst:748
 msgid "3,316"
 msgstr "3,316"
 
-#: ../../benchmarks.rst:752
+#: ../../benchmarks.rst:749
 msgid "30,124"
 msgstr "30,124"
 
-#: ../../benchmarks.rst:755
+#: ../../benchmarks.rst:752
 msgid "26.24"
 msgstr "26.24"
 
-#: ../../benchmarks.rst:756
+#: ../../benchmarks.rst:753
 msgid "26.52"
 msgstr "26.52"
 
-#: ../../benchmarks.rst:757
+#: ../../benchmarks.rst:754
 msgid "135.41"
 msgstr "135.41"
 
-#: ../../benchmarks.rst:762
+#: ../../benchmarks.rst:759
 msgid "616,548"
 msgstr "616,548"
 
-#: ../../benchmarks.rst:765
+#: ../../benchmarks.rst:762
 msgid "105,616 (200)"
 msgstr "105,616 (200)"
 
-#: ../../benchmarks.rst:766
+#: ../../benchmarks.rst:763
 msgid "210,483 (403)"
 msgstr "210,483 (403)"
 
-#: ../../benchmarks.rst:767
+#: ../../benchmarks.rst:764
 msgid "23,399 (200)"
 msgstr "23,399 (200)"
 
-#: ../../benchmarks.rst:770
+#: ../../benchmarks.rst:767
 msgid "3,327"
 msgstr "3,327"
 
-#: ../../benchmarks.rst:772
+#: ../../benchmarks.rst:769
 msgid "14,124"
 msgstr "14,124"
 
-#: ../../benchmarks.rst:775
+#: ../../benchmarks.rst:772
 msgid "26.98"
 msgstr "26.98"
 
-#: ../../benchmarks.rst:776
+#: ../../benchmarks.rst:773
 msgid "12.28"
 msgstr "12.28"
 
-#: ../../benchmarks.rst:777
+#: ../../benchmarks.rst:774
 msgid "169.04"
 msgstr "169.04"
 
-#: ../../benchmarks.rst:782
+#: ../../benchmarks.rst:779
 msgid "599,516"
 msgstr "599,516"
 
-#: ../../benchmarks.rst:784
+#: ../../benchmarks.rst:781
 msgid ""
 "In forward-auth mode Sibuna served 193,087 to 212,569 requests per second "
 "with a p99 of 304 to 342 us, and Anubis 36,509 (``admitted``) to 113,170 "
@@ -2699,7 +2737,7 @@ msgstr ""
 "में 155.8 ns); नीचे के प्रवेश मापन, जहाँ HS512 टोकन Anubis की सत्र जाँचों "
 "को आधे से अधिक बढ़ा देते हैं, इस व्याख्या का समर्थन करते हैं।"
 
-#: ../../benchmarks.rst:786
+#: ../../benchmarks.rst:783
 msgid ""
 "In reverse-proxy mode Sibuna's proxied rows served 103,298 to 106,819 "
 "requests per second at 2.77 to 2.98 cores busy. They are below the "
@@ -2731,11 +2769,11 @@ msgstr ""
 "रिकॉर्ड का संकेत देता है, लेकिन हार्नेस ने कारण की पुष्टि नहीं की। Sibuna "
 "का पीक दोनों मोड की हर पंक्ति में 16,228 और 16,544 KiB के बीच रहा।"
 
-#: ../../benchmarks.rst:788
+#: ../../benchmarks.rst:785
 msgid "Several rows are not like for like either:"
 msgstr "कई पंक्तियाँ भी एक जैसी स्थितियों की तुलना नहीं करतीं:"
 
-#: ../../benchmarks.rst:790
+#: ../../benchmarks.rst:787
 msgid ""
 "In forward-auth mode Anubis answers ``/robots.txt`` and the ``attack`` "
 "path itself with ``200``, without an origin; Sibuna answers them as it "
@@ -2745,7 +2783,7 @@ msgstr ""
 "स्वयं ``200`` से देता है, बिना ऑरिजिन के; Sibuna उनका उत्तर वैसे ही देता "
 "है जैसे उस मोड में किसी भी अनुरोध का।"
 
-#: ../../benchmarks.rst:791
+#: ../../benchmarks.rst:788
 msgid ""
 "Anubis has no request inspection, so it admits the SQL injection of the "
 "``attack`` workload. Shield refuses it with ``403``, after more work; "
@@ -2755,7 +2793,7 @@ msgstr ""
 "injection को प्रवेश देता है। Shield उसे अधिक कार्य के बाद ``403`` से "
 "अस्वीकार करता है; Gate उसे प्रवेश देता है, जैसे Anubis।"
 
-#: ../../benchmarks.rst:792
+#: ../../benchmarks.rst:789
 msgid ""
 "The products sign sessions differently (Ed25519 for Anubis by default, a "
 "keyed BLAKE3 MAC for Sibuna), and they render different challenge pages."
@@ -2764,11 +2802,11 @@ msgstr ""
 "डिफ़ॉल्ट रूप से Ed25519, Sibuna के लिए कुंजी-युक्त BLAKE3 MAC), और वे "
 "अलग-अलग चैलेंज पेज रेंडर करते हैं।"
 
-#: ../../benchmarks.rst:794
+#: ../../benchmarks.rst:791
 msgid "Admission Operations"
 msgstr "प्रवेश ऑपरेशन"
 
-#: ../../benchmarks.rst:797
+#: ../../benchmarks.rst:794
 msgid ""
 "The admission harness times the four operations that admission is made "
 "of, in forward-auth mode, with each product on two CPUs (two Sibuna "
@@ -2784,15 +2822,15 @@ msgstr ""
 "प्रमाण, जो बैच से पहले तैयार किए जाते हैं। हम सात बैच की माध्यिका रिपोर्ट "
 "करते हैं।"
 
-#: ../../benchmarks.rst:799
+#: ../../benchmarks.rst:796
 msgid "Session check: the check endpoint with a valid session (``200``)."
 msgstr "सत्र जाँच: वैध सत्र के साथ check endpoint (``200``)।"
 
-#: ../../benchmarks.rst:800
+#: ../../benchmarks.rst:797
 msgid "Unauthenticated check: the same without a cookie (``401``)."
 msgstr "अप्रमाणित जाँच: वही, बिना कुकी के (``401``)।"
 
-#: ../../benchmarks.rst:801
+#: ../../benchmarks.rst:798
 msgid ""
 "Challenge bootstrap: what a browser fetches to start a challenge. For "
 "Sibuna that is two requests, the interstitial and the challenge record; "
@@ -2802,7 +2840,7 @@ msgstr ""
 "लिए यह दो अनुरोध हैं, इंटरस्टिशियल और चैलेंज रिकॉर्ड; Anubis के लिए एक, "
 "एम्बेडेड चैलेंज वाला पेज।"
 
-#: ../../benchmarks.rst:802
+#: ../../benchmarks.rst:799
 msgid ""
 "Proof verification: one fresh proof per operation. Sibuna's proof "
 "challenges are issued 25 ms apart, below the 50 per second at which its "
@@ -2816,7 +2854,7 @@ msgstr ""
 "Sibuna ``--challenge-rate-limit 100000000`` के साथ चलता है, इसलिए उसका "
 "लिमिटर जाँचा जाता है लेकिन कभी समाप्त नहीं होता।"
 
-#: ../../benchmarks.rst:804
+#: ../../benchmarks.rst:801
 msgid ""
 "Anubis ran twice, with its default Ed25519 tokens and with "
 "``--hs512-secret``."
@@ -2824,7 +2862,7 @@ msgstr ""
 "Anubis दो बार चला, अपने डिफ़ॉल्ट Ed25519 टोकन के साथ और "
 "``--hs512-secret`` के साथ।"
 
-#: ../../benchmarks.rst:806
+#: ../../benchmarks.rst:803
 msgid ""
 "Admission operations per second, two clients, product on two CPUs "
 "(``benchmarks/results/admission-latest.md``, generated "
@@ -2833,103 +2871,103 @@ msgstr ""
 "प्रति सेकंड प्रवेश ऑपरेशन, दो क्लाइंट, उत्पाद दो CPU पर "
 "(``benchmarks/results/admission-latest.md``, 2026-10-16T00:55:44Z पर बनी)"
 
-#: ../../benchmarks.rst:810
+#: ../../benchmarks.rst:807
 msgid "Product (token)"
 msgstr "उत्पाद (टोकन)"
 
-#: ../../benchmarks.rst:811
+#: ../../benchmarks.rst:808
 msgid "Session check"
 msgstr "सत्र जाँच"
 
-#: ../../benchmarks.rst:812
+#: ../../benchmarks.rst:809
 msgid "Unauthenticated check"
 msgstr "अप्रमाणित जाँच"
 
-#: ../../benchmarks.rst:813
+#: ../../benchmarks.rst:810
 msgid "Challenge bootstrap"
 msgstr "चैलेंज बूटस्ट्रैप"
 
-#: ../../benchmarks.rst:814
+#: ../../benchmarks.rst:811
 msgid "Proof verification"
 msgstr "प्रमाण सत्यापन"
 
-#: ../../benchmarks.rst:815
+#: ../../benchmarks.rst:812
 msgid "RSS after, KiB"
 msgstr "बाद में RSS, KiB"
 
-#: ../../benchmarks.rst:816
+#: ../../benchmarks.rst:813
 msgid "Sibuna (keyed BLAKE3)"
 msgstr "Sibuna (कुंजी-युक्त BLAKE3)"
 
-#: ../../benchmarks.rst:817
+#: ../../benchmarks.rst:814
 msgid "88,104"
 msgstr "88,104"
 
-#: ../../benchmarks.rst:818
+#: ../../benchmarks.rst:815
 msgid "78,997"
 msgstr "78,997"
 
-#: ../../benchmarks.rst:819
+#: ../../benchmarks.rst:816
 msgid "42,664"
 msgstr "42,664"
 
-#: ../../benchmarks.rst:820
+#: ../../benchmarks.rst:817
 msgid "57,924"
 msgstr "57,924"
 
-#: ../../benchmarks.rst:821
+#: ../../benchmarks.rst:818
 msgid "7,792"
 msgstr "7,792"
 
-#: ../../benchmarks.rst:822
+#: ../../benchmarks.rst:819
 msgid "Anubis 1.27.0 (Ed25519)"
 msgstr "Anubis 1.27.0 (Ed25519)"
 
-#: ../../benchmarks.rst:823
+#: ../../benchmarks.rst:820
 msgid "10,951"
 msgstr "10,951"
 
-#: ../../benchmarks.rst:824
+#: ../../benchmarks.rst:821
 msgid "28,619"
 msgstr "28,619"
 
-#: ../../benchmarks.rst:825
+#: ../../benchmarks.rst:822
 msgid "7,893"
 msgstr "7,893"
 
-#: ../../benchmarks.rst:826
+#: ../../benchmarks.rst:823
 msgid "12,668"
 msgstr "12,668"
 
-#: ../../benchmarks.rst:827
+#: ../../benchmarks.rst:824
 msgid "33,400"
 msgstr "33,400"
 
-#: ../../benchmarks.rst:828
+#: ../../benchmarks.rst:825
 msgid "Anubis 1.27.0 (HS512)"
 msgstr "Anubis 1.27.0 (HS512)"
 
-#: ../../benchmarks.rst:829
+#: ../../benchmarks.rst:826
 msgid "16,976"
 msgstr "16,976"
 
-#: ../../benchmarks.rst:830
+#: ../../benchmarks.rst:827
 msgid "27,785"
 msgstr "27,785"
 
-#: ../../benchmarks.rst:831
+#: ../../benchmarks.rst:828
 msgid "7,952"
 msgstr "7,952"
 
-#: ../../benchmarks.rst:832
+#: ../../benchmarks.rst:829
 msgid "19,261"
 msgstr "19,261"
 
-#: ../../benchmarks.rst:833
+#: ../../benchmarks.rst:830
 msgid "29,840"
 msgstr "29,840"
 
-#: ../../benchmarks.rst:835
+#: ../../benchmarks.rst:832
 msgid ""
 "The ranges of the seven batches are in the file. Sibuna's lie within 11% "
 "of its medians; Anubis's are wider (its unauthenticated checks with "
@@ -2947,7 +2985,7 @@ msgstr ""
 "Sibuna सत्र जाँच के लिए 22.7 us, Ed25519 टोकन के साथ Anubis जाँच के लिए "
 "182.5 us और HS512 के साथ 117.7 us।"
 
-#: ../../benchmarks.rst:837
+#: ../../benchmarks.rst:834
 msgid ""
 "In none of the rows above did Anubis serve more requests, or use less CPU "
 "or memory, than Sibuna. That is a statement about these workloads on this "
@@ -2957,11 +2995,11 @@ msgstr ""
 "न कम CPU या मेमोरी उपयोग की। यह इस होस्ट पर इन वर्कलोड के बारे में एक कथन "
 "है, इससे अधिक कुछ नहीं।"
 
-#: ../../benchmarks.rst:839
+#: ../../benchmarks.rst:836
 msgid "Reading the Anubis rows"
 msgstr "Anubis की पंक्तियों को पढ़ना"
 
-#: ../../benchmarks.rst:841
+#: ../../benchmarks.rst:838
 msgid ""
 "Anubis is a capable, widely deployed product, and these rows are not a "
 "claim that it is slow. It runs on a garbage-collected runtime, signs "
@@ -2982,11 +3020,11 @@ msgstr ""
 "कितनी लागत पड़ी। Sibuna नया है, और ये किसी स्थापित उत्पाद के साथ उसके "
 "पहले मापन हैं।"
 
-#: ../../benchmarks.rst:843
+#: ../../benchmarks.rst:840
 msgid "Console Overhead"
 msgstr "कंसोल का अतिरिक्त भार"
 
-#: ../../benchmarks.rst:846
+#: ../../benchmarks.rst:843
 msgid ""
 "SID 0007 sets the console's isolation contract. Enabling the console may "
 "cost at most 1% of data-plane throughput and at most 10% of p99 latency, "
@@ -3004,7 +3042,7 @@ msgstr ""
 "noisy रन अनुपालन स्थापित नहीं करते, और प्रिमिटिव आधार-रेखाएँ और smoke रन "
 "गेट का विकल्प नहीं हो सकते।"
 
-#: ../../benchmarks.rst:848
+#: ../../benchmarks.rst:845
 msgid ""
 "SID 0010 records one measurement: with the console compiled in, disabled, "
 "storage only, or enabled and idle, the 16 product workloads stay within "
@@ -3019,7 +3057,7 @@ msgstr ""
 "परिणाम फ़ाइल नहीं बताता। लोड में आठ सक्रिय डैशबोर्ड वाला कॉन्फ़िगरेशन "
 "मापा नहीं गया है, इसलिए SID 0007 का औपचारिक गेट खुला रहता है।"
 
-#: ../../benchmarks.rst:850
+#: ../../benchmarks.rst:847
 msgid ""
 "The eight-dashboard run checks function, not overhead. ``sibuna-browser "
 "dashboards`` started a release daemon on one SQLite node with its "
@@ -3045,7 +3083,7 @@ msgstr ""
 "वाले द्वारा जारी कोड से खुले wall display के रूप में, क्योंकि कंसोल प्रति "
 "पता और प्रति खाता प्रति मिनट पाँच साइन-इन की अनुमति देता है।"
 
-#: ../../benchmarks.rst:853
+#: ../../benchmarks.rst:850
 msgid ""
 "Eight Traffic dashboards on one node "
 "(``benchmarks/results/console-8-dashboards-2026-10-15.md``, recorded "
@@ -3055,61 +3093,61 @@ msgstr ""
 "(``benchmarks/results/console-8-dashboards-2026-10-15.md``, 2026-10-15 को "
 "दर्ज, Chromium 155.0.8059.39)। परिणाम: PASS"
 
-#: ../../benchmarks.rst:859
+#: ../../benchmarks.rst:856
 msgid "Data-plane requests"
 msgstr "Data-plane अनुरोध"
 
-#: ../../benchmarks.rst:860
+#: ../../benchmarks.rst:857
 msgid ""
 "6,000 in 30.0 s (200 per second, 4 threads, one connection per request)"
 msgstr ""
 "30.0 s में 6,000 (प्रति सेकंड 200, 4 थ्रेड, प्रति अनुरोध एक कनेक्शन)"
 
-#: ../../benchmarks.rst:861
+#: ../../benchmarks.rst:858
 msgid "Answered"
 msgstr "उत्तर दिए गए"
 
-#: ../../benchmarks.rst:862
+#: ../../benchmarks.rst:859
 msgid "6,000: 200 x 1,200, 401 x 3,000, 403 x 600, 404 x 600, 500 x 600"
 msgstr "6,000: 200 x 1,200, 401 x 3,000, 403 x 600, 404 x 600, 500 x 600"
 
-#: ../../benchmarks.rst:863
+#: ../../benchmarks.rst:860
 msgid "Errors (no reply)"
 msgstr "त्रुटियाँ (कोई उत्तर नहीं)"
 
-#: ../../benchmarks.rst:865
+#: ../../benchmarks.rst:862
 msgid "Latency p50 / p90 / p99 / max"
 msgstr "लेटेंसी p50 / p90 / p99 / अधिकतम"
 
-#: ../../benchmarks.rst:866
+#: ../../benchmarks.rst:863
 msgid "246 / 311 / 373 / 552 us (connect included)"
 msgstr "246 / 311 / 373 / 552 us (connect सहित)"
 
-#: ../../benchmarks.rst:867
+#: ../../benchmarks.rst:864
 msgid "Daemon VmRSS at start"
 msgstr "शुरुआत में डेमन VmRSS"
 
-#: ../../benchmarks.rst:868
+#: ../../benchmarks.rst:865
 msgid "36,152 KiB"
 msgstr "36,152 KiB"
 
-#: ../../benchmarks.rst:869
+#: ../../benchmarks.rst:866
 msgid "Daemon VmRSS with 8 dashboards open"
 msgstr "8 डैशबोर्ड खुले होने पर डेमन VmRSS"
 
-#: ../../benchmarks.rst:870
+#: ../../benchmarks.rst:867
 msgid "38,028 KiB"
 msgstr "38,028 KiB"
 
-#: ../../benchmarks.rst:871
+#: ../../benchmarks.rst:868
 msgid "Daemon VmRSS after the traffic"
 msgstr "ट्रैफ़िक के बाद डेमन VmRSS"
 
-#: ../../benchmarks.rst:872
+#: ../../benchmarks.rst:869
 msgid "41,496 KiB (VmHWM 41,496 KiB)"
 msgstr "41,496 KiB (VmHWM 41,496 KiB)"
 
-#: ../../benchmarks.rst:874
+#: ../../benchmarks.rst:871
 msgid ""
 "The tiles were read every two seconds during the traffic and 3 seconds "
 "after it. Every dashboard ended with the same totals (Requests 6,000, "
@@ -3130,11 +3168,11 @@ msgstr ""
 "के डेमन में SQLite स्टोरेज और कंसोल है, उत्पाद हार्नेस के मेमोरी में चलने "
 "वाले डेमन के विपरीत, इसलिए इसकी resident मेमोरी उनसे तुलनीय नहीं है।"
 
-#: ../../benchmarks.rst:876
+#: ../../benchmarks.rst:873
 msgid "Edge Load Balancing and HAProxy"
 msgstr "एज लोड बैलेंसिंग और HAProxy"
 
-#: ../../benchmarks.rst:881
+#: ../../benchmarks.rst:878
 msgid ""
 "By the end of this chapter, we should be able to say where the edge load "
 "balancer matches HAProxy, where it does not, and which part of the design "
@@ -3143,7 +3181,7 @@ msgstr ""
 "इस अध्याय के अंत तक हमें यह बता पाना चाहिए कि एज लोड बैलेंसर कहाँ HAProxy "
 "के बराबर है, कहाँ नहीं, और डिज़ाइन का कौन-सा भाग हर अंतर को समझाता है।"
 
-#: ../../benchmarks.rst:883
+#: ../../benchmarks.rst:880
 msgid ""
 "We ran Sibuna's edge mode beside HAProxy 3.0.11 on one host over "
 "loopback. Two origins had four CPUs, the proxy eight and the load "
@@ -3161,7 +3199,7 @@ msgstr ""
 "सेकंड का एक मैनुअल रन है, दोहराया गया मापन नहीं, इसलिए हम कुछ प्रतिशत के "
 "अंतर को शोर मानते हैं।"
 
-#: ../../benchmarks.rst:885
+#: ../../benchmarks.rst:882
 msgid ""
 "Requests per second through each proxy. ``tcp`` forwards the HTTP byte "
 "stream through a TCP frontend. ``off`` is ``http.surface``."
@@ -3169,221 +3207,221 @@ msgstr ""
 "हर प्रॉक्सी से होकर प्रति सेकंड अनुरोध। ``tcp`` HTTP बाइट स्ट्रीम को एक "
 "TCP फ़्रंटएंड से होकर फ़ॉरवर्ड करता है। ``off`` ``http.surface`` है।"
 
-#: ../../benchmarks.rst:890 ../../benchmarks.rst:957
-#: ../../benchmarks.rst:1076 ../../benchmarks.rst:1276
+#: ../../benchmarks.rst:887 ../../benchmarks.rst:954
+#: ../../benchmarks.rst:1073 ../../benchmarks.rst:1273
 msgid "Connections"
 msgstr "कनेक्शन"
 
-#: ../../benchmarks.rst:891 ../../benchmarks.rst:958
-#: ../../benchmarks.rst:1077 ../../benchmarks.rst:1179
-#: ../../benchmarks.rst:1239 ../../benchmarks.rst:1277
-#: ../../benchmarks.rst:1377 ../../benchmarks.rst:1420
-#: ../../benchmarks.rst:1453
+#: ../../benchmarks.rst:888 ../../benchmarks.rst:955
+#: ../../benchmarks.rst:1074 ../../benchmarks.rst:1176
+#: ../../benchmarks.rst:1236 ../../benchmarks.rst:1274
+#: ../../benchmarks.rst:1374 ../../benchmarks.rst:1417
+#: ../../benchmarks.rst:1450
 msgid "HAProxy"
 msgstr "HAProxy"
 
-#: ../../benchmarks.rst:892
+#: ../../benchmarks.rst:889
 msgid "Sibuna ``off``"
 msgstr "Sibuna ``off``"
 
-#: ../../benchmarks.rst:893
+#: ../../benchmarks.rst:890
 msgid "Sibuna ``shield``"
 msgstr "Sibuna ``shield``"
 
-#: ../../benchmarks.rst:894 ../../benchmarks.rst:1079
-#: ../../benchmarks.rst:1181 ../../benchmarks.rst:1241
-#: ../../benchmarks.rst:1279 ../../benchmarks.rst:1379
-#: ../../benchmarks.rst:1422
+#: ../../benchmarks.rst:891 ../../benchmarks.rst:1076
+#: ../../benchmarks.rst:1178 ../../benchmarks.rst:1238
+#: ../../benchmarks.rst:1276 ../../benchmarks.rst:1376
+#: ../../benchmarks.rst:1419
 msgid "Sibuna / HAProxy"
 msgstr "Sibuna / HAProxy"
 
-#: ../../benchmarks.rst:895 ../../benchmarks.rst:901
-#: ../../benchmarks.rst:1082 ../../benchmarks.rst:1089
-#: ../../benchmarks.rst:1096 ../../benchmarks.rst:1282
-#: ../../benchmarks.rst:1289 ../../benchmarks.rst:1296
-#: ../../benchmarks.rst:1423
+#: ../../benchmarks.rst:892 ../../benchmarks.rst:898
+#: ../../benchmarks.rst:1079 ../../benchmarks.rst:1086
+#: ../../benchmarks.rst:1093 ../../benchmarks.rst:1279
+#: ../../benchmarks.rst:1286 ../../benchmarks.rst:1293
+#: ../../benchmarks.rst:1420
 msgid "tcp"
 msgstr "tcp"
 
-#: ../../benchmarks.rst:896 ../../benchmarks.rst:914
-#: ../../benchmarks.rst:926 ../../benchmarks.rst:938
-#: ../../benchmarks.rst:969 ../../benchmarks.rst:981
-#: ../../benchmarks.rst:993 ../../benchmarks.rst:1090
-#: ../../benchmarks.rst:1111 ../../benchmarks.rst:1132
-#: ../../benchmarks.rst:1153 ../../benchmarks.rst:1290
-#: ../../benchmarks.rst:1311 ../../benchmarks.rst:1332
-#: ../../benchmarks.rst:1353
+#: ../../benchmarks.rst:893 ../../benchmarks.rst:911
+#: ../../benchmarks.rst:923 ../../benchmarks.rst:935
+#: ../../benchmarks.rst:966 ../../benchmarks.rst:978
+#: ../../benchmarks.rst:990 ../../benchmarks.rst:1087
+#: ../../benchmarks.rst:1108 ../../benchmarks.rst:1129
+#: ../../benchmarks.rst:1150 ../../benchmarks.rst:1287
+#: ../../benchmarks.rst:1308 ../../benchmarks.rst:1329
+#: ../../benchmarks.rst:1350
 msgid "256"
 msgstr "256"
 
-#: ../../benchmarks.rst:897
+#: ../../benchmarks.rst:894
 msgid "237,451"
 msgstr "237,451"
 
-#: ../../benchmarks.rst:898
+#: ../../benchmarks.rst:895
 msgid "230,181"
 msgstr "230,181"
 
-#: ../../benchmarks.rst:900 ../../benchmarks.rst:912
+#: ../../benchmarks.rst:897 ../../benchmarks.rst:909
 msgid "0.97"
 msgstr "0.97"
 
-#: ../../benchmarks.rst:902 ../../benchmarks.rst:920
-#: ../../benchmarks.rst:975 ../../benchmarks.rst:1097
-#: ../../benchmarks.rst:1118 ../../benchmarks.rst:1139
-#: ../../benchmarks.rst:1160 ../../benchmarks.rst:1297
-#: ../../benchmarks.rst:1318 ../../benchmarks.rst:1339
-#: ../../benchmarks.rst:1360
+#: ../../benchmarks.rst:899 ../../benchmarks.rst:917
+#: ../../benchmarks.rst:972 ../../benchmarks.rst:1094
+#: ../../benchmarks.rst:1115 ../../benchmarks.rst:1136
+#: ../../benchmarks.rst:1157 ../../benchmarks.rst:1294
+#: ../../benchmarks.rst:1315 ../../benchmarks.rst:1336
+#: ../../benchmarks.rst:1357
 msgid "2,048"
 msgstr "2,048"
 
-#: ../../benchmarks.rst:903
+#: ../../benchmarks.rst:900
 msgid "183,887"
 msgstr "183,887"
 
-#: ../../benchmarks.rst:904
+#: ../../benchmarks.rst:901
 msgid "184,890"
 msgstr "184,890"
 
-#: ../../benchmarks.rst:906 ../../benchmarks.rst:1247
+#: ../../benchmarks.rst:903 ../../benchmarks.rst:1244
 msgid "1.01"
 msgstr "1.01"
 
-#: ../../benchmarks.rst:907 ../../benchmarks.rst:913
-#: ../../benchmarks.rst:919 ../../benchmarks.rst:962
-#: ../../benchmarks.rst:968 ../../benchmarks.rst:974
-#: ../../benchmarks.rst:1103 ../../benchmarks.rst:1110
-#: ../../benchmarks.rst:1117 ../../benchmarks.rst:1184
-#: ../../benchmarks.rst:1191 ../../benchmarks.rst:1244
-#: ../../benchmarks.rst:1303 ../../benchmarks.rst:1310
-#: ../../benchmarks.rst:1317 ../../benchmarks.rst:1382
-#: ../../benchmarks.rst:1389 ../../benchmarks.rst:1427
-#: ../../benchmarks.rst:1458
+#: ../../benchmarks.rst:904 ../../benchmarks.rst:910
+#: ../../benchmarks.rst:916 ../../benchmarks.rst:959
+#: ../../benchmarks.rst:965 ../../benchmarks.rst:971
+#: ../../benchmarks.rst:1100 ../../benchmarks.rst:1107
+#: ../../benchmarks.rst:1114 ../../benchmarks.rst:1181
+#: ../../benchmarks.rst:1188 ../../benchmarks.rst:1241
+#: ../../benchmarks.rst:1300 ../../benchmarks.rst:1307
+#: ../../benchmarks.rst:1314 ../../benchmarks.rst:1379
+#: ../../benchmarks.rst:1386 ../../benchmarks.rst:1424
+#: ../../benchmarks.rst:1455
 msgid "http"
 msgstr "http"
 
-#: ../../benchmarks.rst:908 ../../benchmarks.rst:932
-#: ../../benchmarks.rst:963 ../../benchmarks.rst:987
-#: ../../benchmarks.rst:1083 ../../benchmarks.rst:1104
-#: ../../benchmarks.rst:1125 ../../benchmarks.rst:1146
-#: ../../benchmarks.rst:1283 ../../benchmarks.rst:1304
-#: ../../benchmarks.rst:1325 ../../benchmarks.rst:1346
+#: ../../benchmarks.rst:905 ../../benchmarks.rst:929
+#: ../../benchmarks.rst:960 ../../benchmarks.rst:984
+#: ../../benchmarks.rst:1080 ../../benchmarks.rst:1101
+#: ../../benchmarks.rst:1122 ../../benchmarks.rst:1143
+#: ../../benchmarks.rst:1280 ../../benchmarks.rst:1301
+#: ../../benchmarks.rst:1322 ../../benchmarks.rst:1343
 msgid "16"
 msgstr "16"
 
-#: ../../benchmarks.rst:909
+#: ../../benchmarks.rst:906
 msgid "140,003"
 msgstr "140,003"
 
-#: ../../benchmarks.rst:910
+#: ../../benchmarks.rst:907
 msgid "135,488"
 msgstr "135,488"
 
-#: ../../benchmarks.rst:911
+#: ../../benchmarks.rst:908
 msgid "140,064"
 msgstr "140,064"
 
-#: ../../benchmarks.rst:915
+#: ../../benchmarks.rst:912
 msgid "242,695"
 msgstr "242,695"
 
-#: ../../benchmarks.rst:916
+#: ../../benchmarks.rst:913
 msgid "143,405"
 msgstr "143,405"
 
-#: ../../benchmarks.rst:917
+#: ../../benchmarks.rst:914
 msgid "145,434"
 msgstr "145,434"
 
-#: ../../benchmarks.rst:918 ../../benchmarks.rst:1149
+#: ../../benchmarks.rst:915 ../../benchmarks.rst:1146
 msgid "0.59"
 msgstr "0.59"
 
-#: ../../benchmarks.rst:921
+#: ../../benchmarks.rst:918
 msgid "172,950"
 msgstr "172,950"
 
-#: ../../benchmarks.rst:922
+#: ../../benchmarks.rst:919
 msgid "132,752"
 msgstr "132,752"
 
-#: ../../benchmarks.rst:923
+#: ../../benchmarks.rst:920
 msgid "137,037"
 msgstr "137,037"
 
-#: ../../benchmarks.rst:924 ../../benchmarks.rst:1209
+#: ../../benchmarks.rst:921 ../../benchmarks.rst:1206
 msgid "0.77"
 msgstr "0.77"
 
-#: ../../benchmarks.rst:925 ../../benchmarks.rst:980
-#: ../../benchmarks.rst:1124 ../../benchmarks.rst:1131
-#: ../../benchmarks.rst:1138 ../../benchmarks.rst:1198
-#: ../../benchmarks.rst:1205 ../../benchmarks.rst:1250
-#: ../../benchmarks.rst:1324 ../../benchmarks.rst:1331
-#: ../../benchmarks.rst:1338 ../../benchmarks.rst:1396
-#: ../../benchmarks.rst:1403 ../../benchmarks.rst:1431
-#: ../../benchmarks.rst:1465
+#: ../../benchmarks.rst:922 ../../benchmarks.rst:977
+#: ../../benchmarks.rst:1121 ../../benchmarks.rst:1128
+#: ../../benchmarks.rst:1135 ../../benchmarks.rst:1195
+#: ../../benchmarks.rst:1202 ../../benchmarks.rst:1247
+#: ../../benchmarks.rst:1321 ../../benchmarks.rst:1328
+#: ../../benchmarks.rst:1335 ../../benchmarks.rst:1393
+#: ../../benchmarks.rst:1400 ../../benchmarks.rst:1428
+#: ../../benchmarks.rst:1462
 msgid "https"
 msgstr "https"
 
-#: ../../benchmarks.rst:927 ../../benchmarks.rst:982
+#: ../../benchmarks.rst:924 ../../benchmarks.rst:979
 msgid "166,407"
 msgstr "166,407"
 
-#: ../../benchmarks.rst:928 ../../benchmarks.rst:983
+#: ../../benchmarks.rst:925 ../../benchmarks.rst:980
 msgid "88,785"
 msgstr "88,785"
 
-#: ../../benchmarks.rst:929
+#: ../../benchmarks.rst:926
 msgid "83,962"
 msgstr "83,962"
 
-#: ../../benchmarks.rst:930 ../../benchmarks.rst:991
+#: ../../benchmarks.rst:927 ../../benchmarks.rst:988
 msgid "0.53"
 msgstr "0.53"
 
-#: ../../benchmarks.rst:931 ../../benchmarks.rst:937
-#: ../../benchmarks.rst:986 ../../benchmarks.rst:992
-#: ../../benchmarks.rst:1145 ../../benchmarks.rst:1152
-#: ../../benchmarks.rst:1159 ../../benchmarks.rst:1256
-#: ../../benchmarks.rst:1345 ../../benchmarks.rst:1352
-#: ../../benchmarks.rst:1359
+#: ../../benchmarks.rst:928 ../../benchmarks.rst:934
+#: ../../benchmarks.rst:983 ../../benchmarks.rst:989
+#: ../../benchmarks.rst:1142 ../../benchmarks.rst:1149
+#: ../../benchmarks.rst:1156 ../../benchmarks.rst:1253
+#: ../../benchmarks.rst:1342 ../../benchmarks.rst:1349
+#: ../../benchmarks.rst:1356
 msgid "h2, 10 streams"
 msgstr "h2, 10 स्ट्रीम"
 
-#: ../../benchmarks.rst:933 ../../benchmarks.rst:988
+#: ../../benchmarks.rst:930 ../../benchmarks.rst:985
 msgid "195,808"
 msgstr "195,808"
 
-#: ../../benchmarks.rst:934 ../../benchmarks.rst:989
+#: ../../benchmarks.rst:931 ../../benchmarks.rst:986
 msgid "72,602"
 msgstr "72,602"
 
-#: ../../benchmarks.rst:935
+#: ../../benchmarks.rst:932
 msgid "69,169"
 msgstr "69,169"
 
-#: ../../benchmarks.rst:936
+#: ../../benchmarks.rst:933
 msgid "0.37"
 msgstr "0.37"
 
-#: ../../benchmarks.rst:939 ../../benchmarks.rst:994
+#: ../../benchmarks.rst:936 ../../benchmarks.rst:991
 msgid "167,124"
 msgstr "167,124"
 
-#: ../../benchmarks.rst:940 ../../benchmarks.rst:995
+#: ../../benchmarks.rst:937 ../../benchmarks.rst:992
 msgid "64,555"
 msgstr "64,555"
 
-#: ../../benchmarks.rst:941
+#: ../../benchmarks.rst:938
 msgid "61,849"
 msgstr "61,849"
 
-#: ../../benchmarks.rst:942
+#: ../../benchmarks.rst:939
 msgid "0.39"
 msgstr "0.39"
 
-#: ../../benchmarks.rst:944
+#: ../../benchmarks.rst:941
 msgid ""
 "TCP forwarding equals HAProxy. The relay threads wait with epoll and move "
 "bytes between two sockets, which is what HAProxy does. Sibuna held 2,048 "
@@ -3394,7 +3432,7 @@ msgstr ""
 "Sibuna ने 2,048 स्ट्रीम 9 MiB resident मेमोरी में रखीं, जबकि HAProxy ने "
 "51 MiB में।"
 
-#: ../../benchmarks.rst:946
+#: ../../benchmarks.rst:943
 msgid ""
 "HTTP equals HAProxy at 16 connections and falls behind from 256. The HTTP "
 "firewall serves each connection on a thread of its own with blocking "
@@ -3410,7 +3448,7 @@ msgstr ""
 "जबकि HAProxy का 2.3 ms। इवेंट लूप कई तैयार सॉकेट के लिए एक wake-up चुकाता "
 "है। प्रति कनेक्शन थ्रेड हर एक के लिए एक चुकाता है।"
 
-#: ../../benchmarks.rst:948
+#: ../../benchmarks.rst:945
 msgid ""
 "TLS and HTTP/2 fall further behind. A separate runtime terminates them "
 "and hands each connection or exchange to a firewall thread over a socket "
@@ -3424,7 +3462,7 @@ msgstr ""
 "फ़ायरवॉल की नहीं है: allow-all नीति के साथ gate और shield ``off`` जितनी "
 "तेज़ी से चले।"
 
-#: ../../benchmarks.rst:950
+#: ../../benchmarks.rst:947
 msgid ""
 "The measurement said where the next work lay, and SID 0016 did that work. "
 "Edge mode now serves HTTP on event-driven workers: one thread per "
@@ -3441,92 +3479,92 @@ msgstr ""
 "रहता है। अगली तालिका उसी होस्ट पर HTTP सेल दोहराती है। उसका रिकॉर्ड "
 "``benchmarks/results/edge-workers-2026-11-24.md`` है।"
 
-#: ../../benchmarks.rst:952
+#: ../../benchmarks.rst:949
 msgid ""
 "Requests per second on the thread path and on the event-driven workers."
 msgstr "थ्रेड पाथ पर और इवेंट-ड्रिवन वर्करों पर प्रति सेकंड अनुरोध।"
 
-#: ../../benchmarks.rst:959
+#: ../../benchmarks.rst:956
 msgid "Sibuna threads"
 msgstr "Sibuna थ्रेड"
 
-#: ../../benchmarks.rst:960
+#: ../../benchmarks.rst:957
 msgid "Sibuna workers"
 msgstr "Sibuna वर्कर"
 
-#: ../../benchmarks.rst:961
+#: ../../benchmarks.rst:958
 msgid "Workers / HAProxy"
 msgstr "वर्कर / HAProxy"
 
-#: ../../benchmarks.rst:964
+#: ../../benchmarks.rst:961
 msgid "139,618"
 msgstr "139,618"
 
-#: ../../benchmarks.rst:965
+#: ../../benchmarks.rst:962
 msgid "135,435"
 msgstr "135,435"
 
-#: ../../benchmarks.rst:966
+#: ../../benchmarks.rst:963
 msgid "162,810"
 msgstr "162,810"
 
-#: ../../benchmarks.rst:967
+#: ../../benchmarks.rst:964
 msgid "1.17"
 msgstr "1.17"
 
-#: ../../benchmarks.rst:970
+#: ../../benchmarks.rst:967
 msgid "243,864"
 msgstr "243,864"
 
-#: ../../benchmarks.rst:971
+#: ../../benchmarks.rst:968
 msgid "143,311"
 msgstr "143,311"
 
-#: ../../benchmarks.rst:972
+#: ../../benchmarks.rst:969
 msgid "229,139"
 msgstr "229,139"
 
-#: ../../benchmarks.rst:973
+#: ../../benchmarks.rst:970
 msgid "0.94"
 msgstr "0.94"
 
-#: ../../benchmarks.rst:976
+#: ../../benchmarks.rst:973
 msgid "163,491"
 msgstr "163,491"
 
-#: ../../benchmarks.rst:977
+#: ../../benchmarks.rst:974
 msgid "133,301"
 msgstr "133,301"
 
-#: ../../benchmarks.rst:978
+#: ../../benchmarks.rst:975
 msgid "176,448"
 msgstr "176,448"
 
-#: ../../benchmarks.rst:979 ../../benchmarks.rst:1086
+#: ../../benchmarks.rst:976 ../../benchmarks.rst:1083
 msgid "1.08"
 msgstr "1.08"
 
-#: ../../benchmarks.rst:984
+#: ../../benchmarks.rst:981
 msgid "146,874"
 msgstr "146,874"
 
-#: ../../benchmarks.rst:985
+#: ../../benchmarks.rst:982
 msgid "0.88"
 msgstr "0.88"
 
-#: ../../benchmarks.rst:990
+#: ../../benchmarks.rst:987
 msgid "103,903"
 msgstr "103,903"
 
-#: ../../benchmarks.rst:996
+#: ../../benchmarks.rst:993
 msgid "96,977"
 msgstr "96,977"
 
-#: ../../benchmarks.rst:997
+#: ../../benchmarks.rst:994
 msgid "0.58"
 msgstr "0.58"
 
-#: ../../benchmarks.rst:999
+#: ../../benchmarks.rst:996
 msgid ""
 "Plaintext HTTP now runs between 94% and 117% of HAProxy. The 99th "
 "percentile at 256 connections fell from 16.15 ms to 2.60 ms, against 1.47 "
@@ -3540,7 +3578,7 @@ msgstr ""
 "है, क्योंकि हर स्ट्रीम प्रोटोकॉल रनटाइम और वर्कर के बीच एक सॉकेट जोड़ी "
 "पार करती है।"
 
-#: ../../benchmarks.rst:1001
+#: ../../benchmarks.rst:998
 msgid ""
 "Memory changed more than throughput. A connection no longer has a thread. "
 "In a run without load, 20,000 idle keep-alive connections raised the "
@@ -3554,7 +3592,7 @@ msgstr ""
 "27 MiB रखी। थ्रेड गिनती पूरे समय 35 रही। इन आँकड़ों में कर्नेल की सॉकेट "
 "मेमोरी शामिल नहीं है।"
 
-#: ../../benchmarks.rst:1003
+#: ../../benchmarks.rst:1000
 msgid ""
 "In a later run on the same host we added Envoy 1.40.2 with eight worker "
 "threads. Sibuna served 2.9 to 3.2 times Envoy's plaintext requests, 1.7 "
@@ -3574,7 +3612,7 @@ msgstr ""
 "32 us, लेकिन HTTP/2 पर वह 76 us खर्च करता है, जिसमें से TLS और HTTP/2 "
 "रनटाइम वर्कर के अनुरोध देखने से पहले 46 us लेता है।"
 
-#: ../../benchmarks.rst:1005
+#: ../../benchmarks.rst:1002
 msgid ""
 "We then removed the hop that the last table shows (SID 0017): an HTTP/2 "
 "or HTTP/3 request is decided on the thread that decoded it. HTTP/2 rose "
@@ -3588,7 +3626,7 @@ msgstr ""
 "तक बढ़ा, जो 20% से 37% अधिक है, Envoy का 1.6 से 1.7 गुना और HAProxy का "
 "70% से 83%। कोई अनुरोध विफल नहीं हुआ।"
 
-#: ../../benchmarks.rst:1007
+#: ../../benchmarks.rst:1004
 msgid ""
 "The workers use the processors they are given. Confined to one, two, four "
 "and eight processors, the daemon served 68,000, 92,000, 176,000 and "
@@ -3598,7 +3636,7 @@ msgstr ""
 "प्रोसेसरों तक सीमित रहने पर डेमन ने 256 कनेक्शन पर प्रति सेकंड 68,000, "
 "92,000, 176,000 और 227,000 plaintext अनुरोध सर्व किए।"
 
-#: ../../benchmarks.rst:1009
+#: ../../benchmarks.rst:1006
 msgid ""
 "On three hosts we ran three nodes with a mesh and held 300 WebSocket "
 "tunnels through each. Stopping an origin failed 10 of about 114,000 "
@@ -3612,32 +3650,32 @@ msgstr ""
 "करने और रोकने पर दूसरे नोडों से होकर कोई अनुरोध विफल नहीं हुआ, और बचे हुए "
 "नोड से होकर हर tunnel खुली रही।"
 
-#: ../../benchmarks.rst:1011
+#: ../../benchmarks.rst:1008
 msgid "Not Measured"
 msgstr "जो मापा नहीं गया"
 
-#: ../../benchmarks.rst:1014
+#: ../../benchmarks.rst:1011
 msgid ""
 "What this part does not measure, and what stands in for a measurement"
 msgstr "यह भाग क्या नहीं मापता, और मापन की जगह क्या है"
 
-#: ../../benchmarks.rst:1018
+#: ../../benchmarks.rst:1015
 msgid "Subject"
 msgstr "विषय"
 
-#: ../../benchmarks.rst:1019
+#: ../../benchmarks.rst:1016
 msgid "Why it is not measured here"
 msgstr "यहाँ क्यों नहीं मापा गया"
 
-#: ../../benchmarks.rst:1020
+#: ../../benchmarks.rst:1017
 msgid "What stands in"
 msgstr "इसकी जगह क्या है"
 
-#: ../../benchmarks.rst:1021
+#: ../../benchmarks.rst:1018
 msgid "SafeLine community edition 9.x"
 msgstr "SafeLine community edition 9.x"
 
-#: ../../benchmarks.rst:1022
+#: ../../benchmarks.rst:1019
 msgid ""
 "Ships only as a Docker Compose stack; the host had no Docker daemon, and "
 "the detector image is not an open-source build that can be compiled there"
@@ -3646,7 +3684,7 @@ msgstr ""
 "नहीं था, और डिटेक्टर इमेज ऐसा open-source बिल्ड नहीं है जिसे वहाँ कंपाइल "
 "किया जा सके"
 
-#: ../../benchmarks.rst:1023
+#: ../../benchmarks.rst:1020
 msgid ""
 "Published, vendor-reported facts (checked September 2026): detection rate "
 "71.65% (balance) and 76.17% (strict), false positives 0.07% (balance) and "
@@ -3658,17 +3696,17 @@ msgstr ""
 "(balance) और 0.22% (strict); न्यूनतम होस्ट SSSE3 वाला Linux x86_64 या "
 "arm64, 1 CPU कोर, 1 GB RAM, 5 GB डिस्क, Docker 20.10.14+ और Compose 2.0+"
 
-#: ../../benchmarks.rst:1024
+#: ../../benchmarks.rst:1021
 msgid "Cloudflare WAF"
 msgstr "Cloudflare WAF"
 
-#: ../../benchmarks.rst:1025
+#: ../../benchmarks.rst:1022
 msgid ""
 "A hosted service; a loopback measurement would measure the network path, "
 "not the WAF"
 msgstr "एक होस्टेड सेवा; loopback मापन WAF को नहीं, नेटवर्क पाथ को मापेगा"
 
-#: ../../benchmarks.rst:1026
+#: ../../benchmarks.rst:1023
 msgid ""
 "Published plan quotas (checked September 2026): custom rules Free 5, Pro "
 "20, Business 100, Enterprise 1000; rate limiting rules Free 1, Pro 2, "
@@ -3678,15 +3716,15 @@ msgstr ""
 "20, Business 100, Enterprise 1000; rate limiting नियम Free 1, Pro 2, "
 "Business 5, Enterprise 100"
 
-#: ../../benchmarks.rst:1027
+#: ../../benchmarks.rst:1024
 msgid "A cluster under load"
 msgstr "लोड में एक क्लस्टर"
 
-#: ../../benchmarks.rst:1028
+#: ../../benchmarks.rst:1025
 msgid "No harness drives several nodes on one PostgreSQL database yet"
 msgstr "अभी कोई हार्नेस एक PostgreSQL डेटाबेस पर कई नोड नहीं चलाता"
 
-#: ../../benchmarks.rst:1029
+#: ../../benchmarks.rst:1026
 msgid ""
 "The protocol properties that SID 0011 specifies (one shared seed, "
 "issuer-bound challenges) and its three-node functional test (criterion "
@@ -3696,15 +3734,15 @@ msgstr ""
 "जारीकर्ता से बँधे चैलेंज) और उसका तीन-नोड कार्यात्मक परीक्षण (मानदंड 2); "
 "कोई मापन नहीं"
 
-#: ../../benchmarks.rst:1030
+#: ../../benchmarks.rst:1027
 msgid "Storage on the request path"
 msgstr "अनुरोध पाथ पर स्टोरेज"
 
-#: ../../benchmarks.rst:1031
+#: ../../benchmarks.rst:1028
 msgid "Both daemons run in memory in every harness"
 msgstr "हर हार्नेस में दोनों डेमन मेमोरी में चलते हैं"
 
-#: ../../benchmarks.rst:1032
+#: ../../benchmarks.rst:1029
 msgid ""
 "SID 0011: one storage thread owns all SQL, and the request path never "
 "waits on it"
@@ -3712,11 +3750,11 @@ msgstr ""
 "SID 0011: एक स्टोरेज थ्रेड सारे SQL का स्वामी है, और अनुरोध पाथ कभी उसकी "
 "प्रतीक्षा नहीं करता"
 
-#: ../../benchmarks.rst:1033
+#: ../../benchmarks.rst:1030
 msgid "TLS, WAN, real browsers"
 msgstr "TLS, WAN, वास्तविक ब्राउज़र"
 
-#: ../../benchmarks.rst:1034
+#: ../../benchmarks.rst:1031
 msgid ""
 "The harnesses use loopback and HTTP; sessions are solved once per case by "
 "``sibuna-pow``"
@@ -3724,19 +3762,19 @@ msgstr ""
 "हार्नेस loopback और HTTP का उपयोग करते हैं; सत्र हर स्थिति के लिए एक बार "
 "``sibuna-pow`` से हल किए जाते हैं"
 
-#: ../../benchmarks.rst:1035
+#: ../../benchmarks.rst:1032
 msgid "Nothing; a deployment measures its own path"
 msgstr "कुछ नहीं; हर डिप्लॉयमेंट अपना पाथ स्वयं मापता है"
 
-#: ../../benchmarks.rst:1036
+#: ../../benchmarks.rst:1033
 msgid "The browser solver's solve time"
 msgstr "ब्राउज़र सॉल्वर का हल-समय"
 
-#: ../../benchmarks.rst:1037
+#: ../../benchmarks.rst:1034
 msgid "The harness solves at 8 bits with the native solver"
 msgstr "हार्नेस नेटिव सॉल्वर से 8 बिट पर हल करता है"
 
-#: ../../benchmarks.rst:1038
+#: ../../benchmarks.rst:1035
 msgid ""
 "The module size above; Part VII explains why native timings do not stand "
 "for browser solve times"
@@ -3744,27 +3782,27 @@ msgstr ""
 "ऊपर दिया मॉड्यूल का आकार; भाग VII समझाता है कि नेटिव समय-माप ब्राउज़र के "
 "हल-समय का प्रतिनिधित्व क्यों नहीं करते"
 
-#: ../../benchmarks.rst:1039
+#: ../../benchmarks.rst:1036
 msgid "Allocation counts"
 msgstr "आवंटन की गिनती"
 
-#: ../../benchmarks.rst:1040
+#: ../../benchmarks.rst:1037
 msgid "The harness does not instrument the allocator"
 msgstr "हार्नेस एलोकेटर को instrument नहीं करता"
 
-#: ../../benchmarks.rst:1041
+#: ../../benchmarks.rst:1038
 msgid "The steady-state tests of Part V"
 msgstr "भाग V के steady-state परीक्षण"
 
-#: ../../benchmarks.rst:1042
+#: ../../benchmarks.rst:1039
 msgid "Console isolation with eight active dashboards under load"
 msgstr "लोड में आठ सक्रिय डैशबोर्ड के साथ कंसोल का पृथक्करण"
 
-#: ../../benchmarks.rst:1043
+#: ../../benchmarks.rst:1040
 msgid "The formal gate of SID 0007 has not been run"
 msgstr "SID 0007 का औपचारिक गेट नहीं चलाया गया है"
 
-#: ../../benchmarks.rst:1044
+#: ../../benchmarks.rst:1041
 msgid ""
 "The SID 0010 figure (within about 1%, console idle) and the functional "
 "run above"
@@ -3772,7 +3810,7 @@ msgstr ""
 "SID 0010 का आँकड़ा (लगभग 1% के भीतर, कंसोल निष्क्रिय) और ऊपर का "
 "कार्यात्मक रन"
 
-#: ../../benchmarks.rst:1046
+#: ../../benchmarks.rst:1043
 msgid ""
 "A row in this table is not a claim about the product's performance. "
 "SafeLine's own numbers concern detection quality, not throughput, and "
@@ -3785,11 +3823,11 @@ msgstr ""
 "है। Docker होस्ट वाला कोई भी व्यक्ति SafeLine को उन्हीं ``wrk`` वर्कलोड "
 "के पीछे चला सकता है।"
 
-#: ../../benchmarks.rst:1048
+#: ../../benchmarks.rst:1045
 msgid "Exercise 10.1"
 msgstr "अभ्यास 10.1"
 
-#: ../../benchmarks.rst:1050
+#: ../../benchmarks.rst:1047
 msgid ""
 "Run ``cargo xtask bench primitives`` on another machine and compare the "
 "Hashcash verification and token verification rows with the reference "
@@ -3800,11 +3838,11 @@ msgstr ""
 "सत्यापन तथा टोकन सत्यापन की पंक्तियों की तुलना संदर्भ होस्ट से करें। "
 "दोनों में से कौन हार्डवेयर हैश निर्देशों पर अधिक निर्भर है, और क्यों?"
 
-#: ../../benchmarks.rst:1052
+#: ../../benchmarks.rst:1049
 msgid "Exercise 10.2"
 msgstr "अभ्यास 10.2"
 
-#: ../../benchmarks.rst:1054
+#: ../../benchmarks.rst:1051
 msgid ""
 "In the forward-auth table, compute the cores busy of a row: its CPU "
 "microseconds per request times its requests per second, divided by one "
@@ -3819,7 +3857,7 @@ msgstr ""
 "पहली तालिका की वर्गीकरण लागत से करें। प्रति अनुरोध CPU लागत इतनी अधिक "
 "क्यों है, और अंतर किन घटकों से आता है?"
 
-#: ../../benchmarks.rst:1056
+#: ../../benchmarks.rst:1053
 msgid ""
 "*Hint:* list everything between ``accept`` and the flushed response that "
 "the primitive suite does not time."
@@ -3827,11 +3865,11 @@ msgstr ""
 "*संकेत:* ``accept`` और flush किए गए रिस्पॉन्स के बीच की वे सब चीज़ें "
 "सूचीबद्ध करें जिनका समय प्रिमिटिव सूट नहीं मापता।"
 
-#: ../../benchmarks.rst:1058
+#: ../../benchmarks.rst:1055
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाएँ"
 
-#: ../../benchmarks.rst:1060
+#: ../../benchmarks.rst:1057
 msgid ""
 "Every figure in this part is a median over repetitions, with its spread "
 "beside it. Explain the difference between a median-of-batches figure and "
@@ -3844,11 +3882,11 @@ msgstr ""
 "प्रिमिटिव तालिका पहला और लेटेंसी तालिका दूसरा क्यों रिपोर्ट करती है, और "
 "केवल दूसरा ही ऊपर वर्णित थ्रेड-turnover रुकावट को क्यों प्रकट कर सकता था।"
 
-#: ../../benchmarks.rst:1062
+#: ../../benchmarks.rst:1059
 msgid "The Build of 2026-11-25 and a Cluster of Three Hosts"
 msgstr "2026-11-25 का बिल्ड और तीन होस्ट का एक क्लस्टर"
 
-#: ../../benchmarks.rst:1067
+#: ../../benchmarks.rst:1064
 msgid ""
 "By the end of this chapter, we should be able to say what the build with "
 "traffic policy, observability and the cluster commands costs against "
@@ -3860,7 +3898,7 @@ msgstr ""
 "तीन नोड मिलकर कितना संभालते हैं, और एक प्रतिबंध और एक फ़ाइल कितनी तेज़ी "
 "से क्लस्टर पार करते हैं।"
 
-#: ../../benchmarks.rst:1069
+#: ../../benchmarks.rst:1066
 msgid ""
 "We repeated the comparison with HAProxy 3.0.11 on the same host with the "
 "build of commit ``2efd741``. The method is that of the previous chapter: "
@@ -3877,216 +3915,216 @@ msgstr ""
 "चलने वाले अनुरोधों को इसी संख्या से सीमित करता है, और दस-दस स्ट्रीम वाले "
 "2,048 HTTP/2 कनेक्शन पिछले रन की छोटी सीमा से अधिक हैं।"
 
-#: ../../benchmarks.rst:1071
+#: ../../benchmarks.rst:1068
 msgid ""
 "One host, requests per second and the CPU seconds of the proxy during the "
 "eight seconds."
 msgstr ""
 "एक होस्ट, प्रति सेकंड अनुरोध और आठ सेकंड के दौरान प्रॉक्सी के CPU सेकंड।"
 
-#: ../../benchmarks.rst:1078 ../../benchmarks.rst:1180
-#: ../../benchmarks.rst:1240 ../../benchmarks.rst:1278
-#: ../../benchmarks.rst:1378 ../../benchmarks.rst:1421
-#: ../../benchmarks.rst:1452
+#: ../../benchmarks.rst:1075 ../../benchmarks.rst:1177
+#: ../../benchmarks.rst:1237 ../../benchmarks.rst:1275
+#: ../../benchmarks.rst:1375 ../../benchmarks.rst:1418
+#: ../../benchmarks.rst:1449
 msgid "Sibuna"
 msgstr "Sibuna"
 
-#: ../../benchmarks.rst:1080 ../../benchmarks.rst:1182
-#: ../../benchmarks.rst:1280 ../../benchmarks.rst:1380
+#: ../../benchmarks.rst:1077 ../../benchmarks.rst:1179
+#: ../../benchmarks.rst:1277 ../../benchmarks.rst:1377
 msgid "HAProxy CPU s"
 msgstr "HAProxy CPU सेकंड"
 
-#: ../../benchmarks.rst:1081 ../../benchmarks.rst:1183
-#: ../../benchmarks.rst:1281 ../../benchmarks.rst:1381
+#: ../../benchmarks.rst:1078 ../../benchmarks.rst:1180
+#: ../../benchmarks.rst:1278 ../../benchmarks.rst:1378
 msgid "Sibuna CPU s"
 msgstr "Sibuna CPU सेकंड"
 
-#: ../../benchmarks.rst:1084
+#: ../../benchmarks.rst:1081
 msgid "170,191"
 msgstr "170,191"
 
-#: ../../benchmarks.rst:1085
+#: ../../benchmarks.rst:1082
 msgid "183,082"
 msgstr "183,082"
 
-#: ../../benchmarks.rst:1087
+#: ../../benchmarks.rst:1084
 msgid "52"
 msgstr "52"
 
-#: ../../benchmarks.rst:1088 ../../benchmarks.rst:1123
-#: ../../benchmarks.rst:1395
+#: ../../benchmarks.rst:1085 ../../benchmarks.rst:1120
+#: ../../benchmarks.rst:1392
 msgid "44"
 msgstr "44"
 
-#: ../../benchmarks.rst:1091
+#: ../../benchmarks.rst:1088
 msgid "232,439"
 msgstr "232,439"
 
-#: ../../benchmarks.rst:1092
+#: ../../benchmarks.rst:1089
 msgid "238,578"
 msgstr "238,578"
 
-#: ../../benchmarks.rst:1093
+#: ../../benchmarks.rst:1090
 msgid "1.03"
 msgstr "1.03"
 
-#: ../../benchmarks.rst:1094 ../../benchmarks.rst:1116
-#: ../../benchmarks.rst:1137 ../../benchmarks.rst:1294
-#: ../../benchmarks.rst:1316
+#: ../../benchmarks.rst:1091 ../../benchmarks.rst:1113
+#: ../../benchmarks.rst:1134 ../../benchmarks.rst:1291
+#: ../../benchmarks.rst:1313
 msgid "53"
 msgstr "53"
 
-#: ../../benchmarks.rst:1095 ../../benchmarks.rst:1109
-#: ../../benchmarks.rst:1197 ../../benchmarks.rst:1309
-#: ../../benchmarks.rst:1323
+#: ../../benchmarks.rst:1092 ../../benchmarks.rst:1106
+#: ../../benchmarks.rst:1194 ../../benchmarks.rst:1306
+#: ../../benchmarks.rst:1320
 msgid "46"
 msgstr "46"
 
-#: ../../benchmarks.rst:1098
+#: ../../benchmarks.rst:1095
 msgid "178,740"
 msgstr "178,740"
 
-#: ../../benchmarks.rst:1099
+#: ../../benchmarks.rst:1096
 msgid "187,957"
 msgstr "187,957"
 
-#: ../../benchmarks.rst:1100
+#: ../../benchmarks.rst:1097
 msgid "1.05"
 msgstr "1.05"
 
-#: ../../benchmarks.rst:1102 ../../benchmarks.rst:1302
-#: ../../benchmarks.rst:1388
+#: ../../benchmarks.rst:1099 ../../benchmarks.rst:1299
+#: ../../benchmarks.rst:1385
 msgid "42"
 msgstr "42"
 
-#: ../../benchmarks.rst:1105
+#: ../../benchmarks.rst:1102
 msgid "138,108"
 msgstr "138,108"
 
-#: ../../benchmarks.rst:1106
+#: ../../benchmarks.rst:1103
 msgid "158,058"
 msgstr "158,058"
 
-#: ../../benchmarks.rst:1107 ../../benchmarks.rst:1335
-#: ../../benchmarks.rst:1393
+#: ../../benchmarks.rst:1104 ../../benchmarks.rst:1332
+#: ../../benchmarks.rst:1390
 msgid "1.14"
 msgstr "1.14"
 
-#: ../../benchmarks.rst:1108 ../../benchmarks.rst:1308
-#: ../../benchmarks.rst:1329
+#: ../../benchmarks.rst:1105 ../../benchmarks.rst:1305
+#: ../../benchmarks.rst:1326
 msgid "59"
 msgstr "59"
 
-#: ../../benchmarks.rst:1112
+#: ../../benchmarks.rst:1109
 msgid "242,281"
 msgstr "242,281"
 
-#: ../../benchmarks.rst:1113
+#: ../../benchmarks.rst:1110
 msgid "223,457"
 msgstr "223,457"
 
-#: ../../benchmarks.rst:1114
+#: ../../benchmarks.rst:1111
 msgid "0.92"
 msgstr "0.92"
 
-#: ../../benchmarks.rst:1115 ../../benchmarks.rst:1136
-#: ../../benchmarks.rst:1150 ../../benchmarks.rst:1157
-#: ../../benchmarks.rst:1315 ../../benchmarks.rst:1322
-#: ../../benchmarks.rst:1357
+#: ../../benchmarks.rst:1112 ../../benchmarks.rst:1133
+#: ../../benchmarks.rst:1147 ../../benchmarks.rst:1154
+#: ../../benchmarks.rst:1312 ../../benchmarks.rst:1319
+#: ../../benchmarks.rst:1354
 msgid "63"
 msgstr "63"
 
-#: ../../benchmarks.rst:1119
+#: ../../benchmarks.rst:1116
 msgid "174,374"
 msgstr "174,374"
 
-#: ../../benchmarks.rst:1120
+#: ../../benchmarks.rst:1117
 msgid "168,190"
 msgstr "168,190"
 
-#: ../../benchmarks.rst:1121
+#: ../../benchmarks.rst:1118
 msgid "0.96"
 msgstr "0.96"
 
-#: ../../benchmarks.rst:1126
+#: ../../benchmarks.rst:1123
 msgid "107,538"
 msgstr "107,538"
 
-#: ../../benchmarks.rst:1127
+#: ../../benchmarks.rst:1124
 msgid "85,703"
 msgstr "85,703"
 
-#: ../../benchmarks.rst:1128
+#: ../../benchmarks.rst:1125
 msgid "0.80"
 msgstr "0.80"
 
-#: ../../benchmarks.rst:1130 ../../benchmarks.rst:1337
-#: ../../benchmarks.rst:1402 ../../benchmarks.rst:1463
+#: ../../benchmarks.rst:1127 ../../benchmarks.rst:1334
+#: ../../benchmarks.rst:1399 ../../benchmarks.rst:1460
 msgid "48"
 msgstr "48"
 
-#: ../../benchmarks.rst:1133
+#: ../../benchmarks.rst:1130
 msgid "168,360"
 msgstr "168,360"
 
-#: ../../benchmarks.rst:1134
+#: ../../benchmarks.rst:1131
 msgid "146,329"
 msgstr "146,329"
 
-#: ../../benchmarks.rst:1135 ../../benchmarks.rst:1188
-#: ../../benchmarks.rst:1386
+#: ../../benchmarks.rst:1132 ../../benchmarks.rst:1185
+#: ../../benchmarks.rst:1383
 msgid "0.87"
 msgstr "0.87"
 
-#: ../../benchmarks.rst:1140
+#: ../../benchmarks.rst:1137
 msgid "130,548"
 msgstr "130,548"
 
-#: ../../benchmarks.rst:1141
+#: ../../benchmarks.rst:1138
 msgid "121,450"
 msgstr "121,450"
 
-#: ../../benchmarks.rst:1142 ../../benchmarks.rst:1400
+#: ../../benchmarks.rst:1139 ../../benchmarks.rst:1397
 msgid "0.93"
 msgstr "0.93"
 
-#: ../../benchmarks.rst:1147
+#: ../../benchmarks.rst:1144
 msgid "204,190"
 msgstr "204,190"
 
-#: ../../benchmarks.rst:1148
+#: ../../benchmarks.rst:1145
 msgid "120,026"
 msgstr "120,026"
 
-#: ../../benchmarks.rst:1154
+#: ../../benchmarks.rst:1151
 msgid "165,114"
 msgstr "165,114"
 
-#: ../../benchmarks.rst:1155
+#: ../../benchmarks.rst:1152
 msgid "103,592"
 msgstr "103,592"
 
-#: ../../benchmarks.rst:1156
+#: ../../benchmarks.rst:1153
 msgid "0.63"
 msgstr "0.63"
 
-#: ../../benchmarks.rst:1161
+#: ../../benchmarks.rst:1158
 msgid "123,725"
 msgstr "123,725"
 
-#: ../../benchmarks.rst:1162
+#: ../../benchmarks.rst:1159
 msgid "85,587"
 msgstr "85,587"
 
-#: ../../benchmarks.rst:1163 ../../benchmarks.rst:1438
+#: ../../benchmarks.rst:1160 ../../benchmarks.rst:1435
 msgid "0.69"
 msgstr "0.69"
 
-#: ../../benchmarks.rst:1165 ../../benchmarks.rst:1365
+#: ../../benchmarks.rst:1162 ../../benchmarks.rst:1362
 msgid "60"
 msgstr "60"
 
-#: ../../benchmarks.rst:1167
+#: ../../benchmarks.rst:1164
 msgid ""
 "Sibuna carries TCP and plain HTTP at the rate of HAProxy with less CPU. "
 "It carries HTTPS at 80 to 93 percent and HTTP/2 at 59 to 69 percent. The "
@@ -4103,7 +4141,7 @@ msgstr ""
 "पर्सेंटाइल 2,048 HTTPS कनेक्शन पर HAProxy से कम था (95 ms के मुक़ाबले 68 "
 "ms) और 2,048 HTTP/2 कनेक्शन पर अधिक (0.53 s के मुक़ाबले 1.02 s)।"
 
-#: ../../benchmarks.rst:1169
+#: ../../benchmarks.rst:1166
 msgid ""
 "The load run found a fault that no test had found. On the worker path a "
 "connection serves 4,096 requests, and the node closed it while the server "
@@ -4124,7 +4162,7 @@ msgstr ""
 "कनेक्शन पर http और https पंक्तियाँ सुधार के साथ मापी गईं। तालिका की बाक़ी "
 "पंक्तियाँ उससे पहले के कमिट पर मापी गईं, जो और किसी बात में अलग नहीं है।"
 
-#: ../../benchmarks.rst:1171
+#: ../../benchmarks.rst:1168
 msgid ""
 "For the cluster we ran one node on each of three hosts, 16, 16 and 32 "
 "CPUs, in containers on one network. Each host also ran an origin and a "
@@ -4145,7 +4183,7 @@ msgstr ""
 "ऑरिजिन तक प्रति सेकंड 58,000 से 105,000 अनुरोध पहुँचाता है, और दो होस्ट "
 "के बीच एक round trip में लगभग एक मिलीसेकंड लगता है।"
 
-#: ../../benchmarks.rst:1173
+#: ../../benchmarks.rst:1170
 msgid ""
 "Three hosts, three nodes loaded at once: requests per second of all nodes "
 "together, and the CPU seconds of the three proxies together during the "
@@ -4154,89 +4192,89 @@ msgstr ""
 "तीन होस्ट, एक साथ लोड डाले गए तीन नोड: सभी नोडों के मिलाकर प्रति सेकंड "
 "अनुरोध, और दस सेकंड के दौरान तीनों प्रॉक्सी के मिलाकर CPU सेकंड।"
 
-#: ../../benchmarks.rst:1178 ../../benchmarks.rst:1376
+#: ../../benchmarks.rst:1175 ../../benchmarks.rst:1373
 msgid "Connections per node"
 msgstr "प्रति नोड कनेक्शन"
 
-#: ../../benchmarks.rst:1185 ../../benchmarks.rst:1199
-#: ../../benchmarks.rst:1383 ../../benchmarks.rst:1397
+#: ../../benchmarks.rst:1182 ../../benchmarks.rst:1196
+#: ../../benchmarks.rst:1380 ../../benchmarks.rst:1394
 msgid "64"
 msgstr "64"
 
-#: ../../benchmarks.rst:1186
+#: ../../benchmarks.rst:1183
 msgid "104,391"
 msgstr "104,391"
 
-#: ../../benchmarks.rst:1187
+#: ../../benchmarks.rst:1184
 msgid "90,764"
 msgstr "90,764"
 
-#: ../../benchmarks.rst:1189 ../../benchmarks.rst:1401
+#: ../../benchmarks.rst:1186 ../../benchmarks.rst:1398
 msgid "97"
 msgstr "97"
 
-#: ../../benchmarks.rst:1190
+#: ../../benchmarks.rst:1187
 msgid "43"
 msgstr "43"
 
-#: ../../benchmarks.rst:1192 ../../benchmarks.rst:1206
-#: ../../benchmarks.rst:1390 ../../benchmarks.rst:1404
+#: ../../benchmarks.rst:1189 ../../benchmarks.rst:1203
+#: ../../benchmarks.rst:1387 ../../benchmarks.rst:1401
 msgid "512"
 msgstr "512"
 
-#: ../../benchmarks.rst:1193
+#: ../../benchmarks.rst:1190
 msgid "110,354"
 msgstr "110,354"
 
-#: ../../benchmarks.rst:1194
+#: ../../benchmarks.rst:1191
 msgid "98,462"
 msgstr "98,462"
 
-#: ../../benchmarks.rst:1195
+#: ../../benchmarks.rst:1192
 msgid "0.89"
 msgstr "0.89"
 
-#: ../../benchmarks.rst:1196
+#: ../../benchmarks.rst:1193
 msgid "77"
 msgstr "77"
 
-#: ../../benchmarks.rst:1200
+#: ../../benchmarks.rst:1197
 msgid "96,657"
 msgstr "96,657"
 
-#: ../../benchmarks.rst:1201
+#: ../../benchmarks.rst:1198
 msgid "87,985"
 msgstr "87,985"
 
-#: ../../benchmarks.rst:1202
+#: ../../benchmarks.rst:1199
 msgid "0.91"
 msgstr "0.91"
 
-#: ../../benchmarks.rst:1203
+#: ../../benchmarks.rst:1200
 msgid "88"
 msgstr "88"
 
-#: ../../benchmarks.rst:1204
+#: ../../benchmarks.rst:1201
 msgid "71"
 msgstr "71"
 
-#: ../../benchmarks.rst:1207
+#: ../../benchmarks.rst:1204
 msgid "106,803"
 msgstr "106,803"
 
-#: ../../benchmarks.rst:1208
+#: ../../benchmarks.rst:1205
 msgid "81,722"
 msgstr "81,722"
 
-#: ../../benchmarks.rst:1210
+#: ../../benchmarks.rst:1207
 msgid "103"
 msgstr "103"
 
-#: ../../benchmarks.rst:1211
+#: ../../benchmarks.rst:1208
 msgid "69"
 msgstr "69"
 
-#: ../../benchmarks.rst:1213
+#: ../../benchmarks.rst:1210
 msgid ""
 "Across hosts Sibuna carries 77 to 91 percent of what HAProxy carries, "
 "with 44 to 81 percent of its CPU time. No request failed with either "
@@ -4248,7 +4286,7 @@ msgstr ""
 "साथ कोई अनुरोध विफल नहीं हुआ। ये साझा होस्ट पर एकल रन हैं, और पंक्तियाँ "
 "रन-दर-रन कई प्रतिशत बदलती हैं।"
 
-#: ../../benchmarks.rst:1215
+#: ../../benchmarks.rst:1212
 msgid ""
 "We also timed what the cluster shares, on the same three hosts with "
 "``surface: \"shield\"``."
@@ -4256,47 +4294,47 @@ msgstr ""
 "हमने उन्हीं तीन होस्ट पर ``surface: \"shield\"`` के साथ यह भी मापा कि "
 "क्लस्टर क्या साझा करता है।"
 
-#: ../../benchmarks.rst:1217
+#: ../../benchmarks.rst:1214
 msgid ""
 "Three hosts: the time from a command on one node to its effect on the "
 "others, three rounds."
 msgstr ""
 "तीन होस्ट: एक नोड पर कमांड से दूसरों पर उसके प्रभाव तक का समय, तीन दौर।"
 
-#: ../../benchmarks.rst:1221
+#: ../../benchmarks.rst:1218
 msgid "Event"
 msgstr "घटना"
 
-#: ../../benchmarks.rst:1222
+#: ../../benchmarks.rst:1219
 msgid "Time"
 msgstr "समय"
 
-#: ../../benchmarks.rst:1223
+#: ../../benchmarks.rst:1220
 msgid "A client banned on one node is refused by the two others"
 msgstr "एक नोड पर प्रतिबंधित क्लाइंट को दो अन्य नोड अस्वीकार करते हैं"
 
-#: ../../benchmarks.rst:1224
+#: ../../benchmarks.rst:1221
 msgid "20 to 64 ms"
 msgstr "20 से 64 ms"
 
-#: ../../benchmarks.rst:1225
+#: ../../benchmarks.rst:1222
 msgid "``del ban`` on one node: all three admit the client again"
 msgstr "एक नोड पर ``del ban``: तीनों क्लाइंट को फिर से प्रवेश देते हैं"
 
-#: ../../benchmarks.rst:1226
+#: ../../benchmarks.rst:1223
 msgid "13 to 48 ms"
 msgstr "13 से 48 ms"
 
-#: ../../benchmarks.rst:1227
+#: ../../benchmarks.rst:1224
 msgid ""
 "``reload cluster``: the command returns and all three hold the same file"
 msgstr "``reload cluster``: कमांड लौटती है और तीनों के पास एक ही फ़ाइल है"
 
-#: ../../benchmarks.rst:1228
+#: ../../benchmarks.rst:1225
 msgid "30 ms"
 msgstr "30 ms"
 
-#: ../../benchmarks.rst:1230
+#: ../../benchmarks.rst:1227
 msgid ""
 "The times include the request that observes the effect, sent every 5 ms. "
 "``show cluster`` showed the same digest on all three nodes before and "
@@ -4306,7 +4344,7 @@ msgstr ""
 "है। रीलोड से पहले और बाद में ``show cluster`` ने तीनों नोडों पर एक ही "
 "digest दिखाया।"
 
-#: ../../benchmarks.rst:1232
+#: ../../benchmarks.rst:1229
 msgid ""
 "**Like for like.** The HAProxy file of the tables above adds no header to "
 "a request. Sibuna always adds seven: ``X-Forwarded-For``, "
@@ -4328,7 +4366,7 @@ msgstr ""
 "प्रॉक्सी ने ``TLS_AES_256_GCM_SHA384`` और एक ही ECDSA P-256 सर्टिफ़िकेट "
 "के साथ TLS 1.3 negotiate किया, और दोनों एक ही आठ CPU पर चले।"
 
-#: ../../benchmarks.rst:1234
+#: ../../benchmarks.rst:1231
 msgid ""
 "One host, 256 connections, both proxies writing the same seven headers. "
 "The CPU time is that of the proxy for one request."
@@ -4336,71 +4374,71 @@ msgstr ""
 "एक होस्ट, 256 कनेक्शन, दोनों प्रॉक्सी एक ही सात हेडर लिखते हुए। CPU समय "
 "एक अनुरोध के लिए प्रॉक्सी का है।"
 
-#: ../../benchmarks.rst:1242
+#: ../../benchmarks.rst:1239
 msgid "HAProxy CPU per request"
 msgstr "प्रति अनुरोध HAProxy CPU"
 
-#: ../../benchmarks.rst:1243
+#: ../../benchmarks.rst:1240
 msgid "Sibuna CPU per request"
 msgstr "प्रति अनुरोध Sibuna CPU"
 
-#: ../../benchmarks.rst:1245
+#: ../../benchmarks.rst:1242
 msgid "223,139"
 msgstr "223,139"
 
-#: ../../benchmarks.rst:1246
+#: ../../benchmarks.rst:1243
 msgid "224,363"
 msgstr "224,363"
 
-#: ../../benchmarks.rst:1248
+#: ../../benchmarks.rst:1245
 msgid "35.6 us"
 msgstr "35.6 us"
 
-#: ../../benchmarks.rst:1249
+#: ../../benchmarks.rst:1246
 msgid "29.6 us"
 msgstr "29.6 us"
 
-#: ../../benchmarks.rst:1251
+#: ../../benchmarks.rst:1248
 msgid "166,054"
 msgstr "166,054"
 
-#: ../../benchmarks.rst:1252
+#: ../../benchmarks.rst:1249
 msgid "149,168"
 msgstr "149,168"
 
-#: ../../benchmarks.rst:1253
+#: ../../benchmarks.rst:1250
 msgid "0.90"
 msgstr "0.90"
 
-#: ../../benchmarks.rst:1254
+#: ../../benchmarks.rst:1251
 msgid "47.9 us"
 msgstr "47.9 us"
 
-#: ../../benchmarks.rst:1255
+#: ../../benchmarks.rst:1252
 msgid "44.9 us"
 msgstr "44.9 us"
 
-#: ../../benchmarks.rst:1257
+#: ../../benchmarks.rst:1254
 msgid "152,781"
 msgstr "152,781"
 
-#: ../../benchmarks.rst:1258
+#: ../../benchmarks.rst:1255
 msgid "104,384"
 msgstr "104,384"
 
-#: ../../benchmarks.rst:1259
+#: ../../benchmarks.rst:1256
 msgid "0.68"
 msgstr "0.68"
 
-#: ../../benchmarks.rst:1260
+#: ../../benchmarks.rst:1257
 msgid "51.8 us"
 msgstr "51.8 us"
 
-#: ../../benchmarks.rst:1261
+#: ../../benchmarks.rst:1258
 msgid "74.2 us"
 msgstr "74.2 us"
 
-#: ../../benchmarks.rst:1263
+#: ../../benchmarks.rst:1260
 msgid ""
 "The CPU time of each thread group explains the two differences that "
 "remain. HAProxy runs eight threads, and one thread does everything for a "
@@ -4416,7 +4454,7 @@ msgstr ""
 "वर्करों पर, सर्व करता है, और एक अनुरोध के लिए HAProxy से कम CPU खर्च करता "
 "है।"
 
-#: ../../benchmarks.rst:1265
+#: ../../benchmarks.rst:1262
 msgid ""
 "For HTTPS, Sibuna ends TLS on the threads of the protocol runtime and "
 "serves the request on a worker. Every request and every response crosses "
@@ -4432,7 +4470,7 @@ msgstr ""
 "की प्रतीक्षा करता रहा। सोलह थ्रेड ने आठ CPU भी साझा किए, और कर्नेल ने "
 "लगभग हर ग्यारह अनुरोधों में एक बार किसी थ्रेड से CPU ले लिया।"
 
-#: ../../benchmarks.rst:1267
+#: ../../benchmarks.rst:1264
 msgid ""
 "For HTTP/2, the whole exchange runs in the protocol runtime, which is a "
 "general asynchronous runtime with a general HTTP/2 library. It used all "
@@ -4446,7 +4484,7 @@ msgstr ""
 "इसी उद्देश्य के लिए लिखे गए multiplexer के साथ 52 us चाहिए। यह पंक्ति CPU "
 "से बँधी है, और केवल एक सस्ता HTTP/2 पाथ इसे बढ़ाएगा।"
 
-#: ../../benchmarks.rst:1269
+#: ../../benchmarks.rst:1266
 msgid ""
 "**TLS on the workers.** SID 0024 removes the first of the two "
 "differences: a worker now ends the TLS of an HTTP/1.1 connection itself. "
@@ -4457,7 +4495,7 @@ msgstr ""
 "HTTP/1.1 कनेक्शन का TLS स्वयं समाप्त करता है। हमने उसी होस्ट पर फिर से "
 "मापा, HAProxy उन्हीं सात हेडर के साथ, हर पंक्ति के लिए आठ सेकंड, एक रन।"
 
-#: ../../benchmarks.rst:1271
+#: ../../benchmarks.rst:1268
 msgid ""
 "One host after SID 0024, both proxies writing the same headers: requests "
 "per second and the CPU seconds of the proxy during the eight seconds."
@@ -4465,148 +4503,148 @@ msgstr ""
 "SID 0024 के बाद एक होस्ट, दोनों प्रॉक्सी एक ही हेडर लिखते हुए: प्रति "
 "सेकंड अनुरोध और आठ सेकंड के दौरान प्रॉक्सी के CPU सेकंड।"
 
-#: ../../benchmarks.rst:1284
+#: ../../benchmarks.rst:1281
 msgid "168,827"
 msgstr "168,827"
 
-#: ../../benchmarks.rst:1285
+#: ../../benchmarks.rst:1282
 msgid "185,780"
 msgstr "185,780"
 
-#: ../../benchmarks.rst:1286 ../../benchmarks.rst:1434
+#: ../../benchmarks.rst:1283 ../../benchmarks.rst:1431
 msgid "1.10"
 msgstr "1.10"
 
-#: ../../benchmarks.rst:1291
+#: ../../benchmarks.rst:1288
 msgid "233,412"
 msgstr "233,412"
 
-#: ../../benchmarks.rst:1292
+#: ../../benchmarks.rst:1289
 msgid "239,183"
 msgstr "239,183"
 
-#: ../../benchmarks.rst:1293 ../../benchmarks.rst:1314
-#: ../../benchmarks.rst:1430
+#: ../../benchmarks.rst:1290 ../../benchmarks.rst:1311
+#: ../../benchmarks.rst:1427
 msgid "1.02"
 msgstr "1.02"
 
-#: ../../benchmarks.rst:1298
+#: ../../benchmarks.rst:1295
 msgid "180,614"
 msgstr "180,614"
 
-#: ../../benchmarks.rst:1299
+#: ../../benchmarks.rst:1296
 msgid "187,670"
 msgstr "187,670"
 
-#: ../../benchmarks.rst:1300 ../../benchmarks.rst:1426
+#: ../../benchmarks.rst:1297 ../../benchmarks.rst:1423
 msgid "1.04"
 msgstr "1.04"
 
-#: ../../benchmarks.rst:1305
+#: ../../benchmarks.rst:1302
 msgid "125,481"
 msgstr "125,481"
 
-#: ../../benchmarks.rst:1306
+#: ../../benchmarks.rst:1303
 msgid "154,815"
 msgstr "154,815"
 
-#: ../../benchmarks.rst:1307
+#: ../../benchmarks.rst:1304
 msgid "1.23"
 msgstr "1.23"
 
-#: ../../benchmarks.rst:1312
+#: ../../benchmarks.rst:1309
 msgid "217,896"
 msgstr "217,896"
 
-#: ../../benchmarks.rst:1313
+#: ../../benchmarks.rst:1310
 msgid "221,286"
 msgstr "221,286"
 
-#: ../../benchmarks.rst:1319
+#: ../../benchmarks.rst:1316
 msgid "159,747"
 msgstr "159,747"
 
-#: ../../benchmarks.rst:1320
+#: ../../benchmarks.rst:1317
 msgid "169,664"
 msgstr "169,664"
 
-#: ../../benchmarks.rst:1321
+#: ../../benchmarks.rst:1318
 msgid "1.06"
 msgstr "1.06"
 
-#: ../../benchmarks.rst:1326
+#: ../../benchmarks.rst:1323
 msgid "100,137"
 msgstr "100,137"
 
-#: ../../benchmarks.rst:1327
+#: ../../benchmarks.rst:1324
 msgid "133,896"
 msgstr "133,896"
 
-#: ../../benchmarks.rst:1328
+#: ../../benchmarks.rst:1325
 msgid "1.34"
 msgstr "1.34"
 
-#: ../../benchmarks.rst:1333
+#: ../../benchmarks.rst:1330
 msgid "153,080"
 msgstr "153,080"
 
-#: ../../benchmarks.rst:1334
+#: ../../benchmarks.rst:1331
 msgid "174,901"
 msgstr "174,901"
 
-#: ../../benchmarks.rst:1340
+#: ../../benchmarks.rst:1337
 msgid "120,893"
 msgstr "120,893"
 
-#: ../../benchmarks.rst:1341
+#: ../../benchmarks.rst:1338
 msgid "142,710"
 msgstr "142,710"
 
-#: ../../benchmarks.rst:1342
+#: ../../benchmarks.rst:1339
 msgid "1.18"
 msgstr "1.18"
 
-#: ../../benchmarks.rst:1344
+#: ../../benchmarks.rst:1341
 msgid "37"
 msgstr "37"
 
-#: ../../benchmarks.rst:1347
+#: ../../benchmarks.rst:1344
 msgid "180,326"
 msgstr "180,326"
 
-#: ../../benchmarks.rst:1348
+#: ../../benchmarks.rst:1345
 msgid "120,663"
 msgstr "120,663"
 
-#: ../../benchmarks.rst:1349
+#: ../../benchmarks.rst:1346
 msgid "0.67"
 msgstr "0.67"
 
-#: ../../benchmarks.rst:1354
+#: ../../benchmarks.rst:1351
 msgid "149,909"
 msgstr "149,909"
 
-#: ../../benchmarks.rst:1355
+#: ../../benchmarks.rst:1352
 msgid "105,047"
 msgstr "105,047"
 
-#: ../../benchmarks.rst:1356
+#: ../../benchmarks.rst:1353
 msgid "0.70"
 msgstr "0.70"
 
-#: ../../benchmarks.rst:1361
+#: ../../benchmarks.rst:1358
 msgid "116,731"
 msgstr "116,731"
 
-#: ../../benchmarks.rst:1362
+#: ../../benchmarks.rst:1359
 msgid "86,234"
 msgstr "86,234"
 
-#: ../../benchmarks.rst:1363
+#: ../../benchmarks.rst:1360
 msgid "0.74"
 msgstr "0.74"
 
-#: ../../benchmarks.rst:1367
+#: ../../benchmarks.rst:1364
 msgid ""
 "Before the change Sibuna carried 149,168 HTTPS requests per second with "
 "256 connections. It now carries 174,901, and the whole of that work runs "
@@ -4622,7 +4660,7 @@ msgstr ""
 "के साथ, और HTTP/2 पर पीछे, जो नहीं बदला। किसी भी पंक्ति में कोई अनुरोध "
 "विफल नहीं हुआ।"
 
-#: ../../benchmarks.rst:1369
+#: ../../benchmarks.rst:1366
 msgid ""
 "On the three hosts the network still sets the ceiling, and the lines "
 "differ from run to run by more than the two proxies differ from each "
@@ -4631,7 +4669,7 @@ msgstr ""
 "तीन होस्ट पर सीमा अब भी नेटवर्क तय करता है, और पंक्तियाँ रन-दर-रन दोनों "
 "प्रॉक्सी के आपसी अंतर से अधिक बदलती हैं।"
 
-#: ../../benchmarks.rst:1371
+#: ../../benchmarks.rst:1368
 msgid ""
 "Three hosts after SID 0024, both proxies writing the same headers: "
 "requests per second of all nodes together and the CPU seconds of the "
@@ -4641,59 +4679,59 @@ msgstr ""
 "के मिलाकर प्रति सेकंड अनुरोध और दस सेकंड के दौरान तीनों प्रॉक्सी के CPU "
 "सेकंड।"
 
-#: ../../benchmarks.rst:1384
+#: ../../benchmarks.rst:1381
 msgid "102,446"
 msgstr "102,446"
 
-#: ../../benchmarks.rst:1385
+#: ../../benchmarks.rst:1382
 msgid "89,124"
 msgstr "89,124"
 
-#: ../../benchmarks.rst:1387
+#: ../../benchmarks.rst:1384
 msgid "102"
 msgstr "102"
 
-#: ../../benchmarks.rst:1391
+#: ../../benchmarks.rst:1388
 msgid "85,149"
 msgstr "85,149"
 
-#: ../../benchmarks.rst:1392
+#: ../../benchmarks.rst:1389
 msgid "97,173"
 msgstr "97,173"
 
-#: ../../benchmarks.rst:1394
+#: ../../benchmarks.rst:1391
 msgid "66"
 msgstr "66"
 
-#: ../../benchmarks.rst:1398
+#: ../../benchmarks.rst:1395
 msgid "97,068"
 msgstr "97,068"
 
-#: ../../benchmarks.rst:1399
+#: ../../benchmarks.rst:1396
 msgid "90,399"
 msgstr "90,399"
 
-#: ../../benchmarks.rst:1405
+#: ../../benchmarks.rst:1402
 msgid "80,596"
 msgstr "80,596"
 
-#: ../../benchmarks.rst:1406
+#: ../../benchmarks.rst:1403
 msgid "92,652"
 msgstr "92,652"
 
-#: ../../benchmarks.rst:1407
+#: ../../benchmarks.rst:1404
 msgid "1.15"
 msgstr "1.15"
 
-#: ../../benchmarks.rst:1408
+#: ../../benchmarks.rst:1405
 msgid "93"
 msgstr "93"
 
-#: ../../benchmarks.rst:1409
+#: ../../benchmarks.rst:1406
 msgid "49"
 msgstr "49"
 
-#: ../../benchmarks.rst:1411
+#: ../../benchmarks.rst:1408
 msgid ""
 "The CPU time of Sibuna for HTTPS on the three hosts fell from 69 to 71 "
 "seconds before the change to 48 to 49 seconds."
@@ -4701,7 +4739,7 @@ msgstr ""
 "तीन होस्ट पर HTTPS के लिए Sibuna का CPU समय बदलाव से पहले के 69 से 71 "
 "सेकंड से घटकर 48 से 49 सेकंड हो गया।"
 
-#: ../../benchmarks.rst:1413
+#: ../../benchmarks.rst:1410
 msgid ""
 "After the cluster features, the hooks and the console view were merged, "
 "we ran the single host again with 256 connections, once for eight seconds "
@@ -4711,50 +4749,50 @@ msgstr ""
 "पर 256 कनेक्शन के साथ फिर से चलाया, हर मामले में एक बार आठ सेकंड के लिए। "
 "कोई अनुरोध विफल नहीं हुआ।"
 
-#: ../../benchmarks.rst:1415
+#: ../../benchmarks.rst:1412
 msgid ""
 "One host after all merges of 2026-11-25, 256 connections: requests per "
 "second."
 msgstr ""
 "2026-11-25 के सभी merge के बाद एक होस्ट, 256 कनेक्शन: प्रति सेकंड अनुरोध।"
 
-#: ../../benchmarks.rst:1424
+#: ../../benchmarks.rst:1421
 msgid "230,934"
 msgstr "230,934"
 
-#: ../../benchmarks.rst:1425
+#: ../../benchmarks.rst:1422
 msgid "240,967"
 msgstr "240,967"
 
-#: ../../benchmarks.rst:1428
+#: ../../benchmarks.rst:1425
 msgid "219,798"
 msgstr "219,798"
 
-#: ../../benchmarks.rst:1429
+#: ../../benchmarks.rst:1426
 msgid "224,375"
 msgstr "224,375"
 
-#: ../../benchmarks.rst:1432
+#: ../../benchmarks.rst:1429
 msgid "162,520"
 msgstr "162,520"
 
-#: ../../benchmarks.rst:1433
+#: ../../benchmarks.rst:1430
 msgid "178,261"
 msgstr "178,261"
 
-#: ../../benchmarks.rst:1435 ../../benchmarks.rst:1472
+#: ../../benchmarks.rst:1432 ../../benchmarks.rst:1469
 msgid "h2"
 msgstr "h2"
 
-#: ../../benchmarks.rst:1436
+#: ../../benchmarks.rst:1433
 msgid "150,384"
 msgstr "150,384"
 
-#: ../../benchmarks.rst:1437
+#: ../../benchmarks.rst:1434
 msgid "103,789"
 msgstr "103,789"
 
-#: ../../benchmarks.rst:1440
+#: ../../benchmarks.rst:1437
 msgid ""
 "The new features cost nothing that this measurement can see while they "
 "are not configured. HTTP/2 stays where it was."
@@ -4762,11 +4800,11 @@ msgstr ""
 "जब तक नई सुविधाएँ कॉन्फ़िगर नहीं की गई हैं, तब तक उनकी कोई ऐसी लागत नहीं "
 "है जिसे यह मापन देख सके। HTTP/2 वहीं रहता है जहाँ था।"
 
-#: ../../benchmarks.rst:1442
+#: ../../benchmarks.rst:1439
 msgid "Sibuna, HAProxy and Envoy"
 msgstr "Sibuna, HAProxy और Envoy"
 
-#: ../../benchmarks.rst:1445
+#: ../../benchmarks.rst:1442
 msgid ""
 "On the same host and with the same build we then ran the three proxies "
 "one after another, three times each, with 256 connections for eight "
@@ -4785,7 +4823,7 @@ msgstr ""
 "सर्टिफ़िकेट एक ही थे। तालिका तीन रन की माध्यिका (median) देती है। एक "
 "मामले के रनों के बीच फैलाव अधिकतम 4% था। कोई अनुरोध विफल नहीं हुआ।"
 
-#: ../../benchmarks.rst:1447
+#: ../../benchmarks.rst:1444
 msgid ""
 "One host, 256 connections, three proxies: requests per second, the median "
 "of three runs, and the resident memory at the end of the run."
@@ -4793,79 +4831,79 @@ msgstr ""
 "एक होस्ट, 256 कनेक्शन, तीन प्रॉक्सी: प्रति सेकंड अनुरोध, तीन रन की "
 "माध्यिका, और रन के अंत में resident मेमोरी।"
 
-#: ../../benchmarks.rst:1454
+#: ../../benchmarks.rst:1451
 msgid "Envoy"
 msgstr "Envoy"
 
-#: ../../benchmarks.rst:1455
+#: ../../benchmarks.rst:1452
 msgid "Sibuna MiB"
 msgstr "Sibuna MiB"
 
-#: ../../benchmarks.rst:1456
+#: ../../benchmarks.rst:1453
 msgid "HAProxy MiB"
 msgstr "HAProxy MiB"
 
-#: ../../benchmarks.rst:1457
+#: ../../benchmarks.rst:1454
 msgid "Envoy MiB"
 msgstr "Envoy MiB"
 
-#: ../../benchmarks.rst:1459
+#: ../../benchmarks.rst:1456
 msgid "220,040"
 msgstr "220,040"
 
-#: ../../benchmarks.rst:1460
+#: ../../benchmarks.rst:1457
 msgid "220,323"
 msgstr "220,323"
 
-#: ../../benchmarks.rst:1461
+#: ../../benchmarks.rst:1458
 msgid "70,909"
 msgstr "70,909"
 
-#: ../../benchmarks.rst:1462
+#: ../../benchmarks.rst:1459
 msgid "14"
 msgstr "14"
 
-#: ../../benchmarks.rst:1466
+#: ../../benchmarks.rst:1463
 msgid "174,611"
 msgstr "174,611"
 
-#: ../../benchmarks.rst:1467
+#: ../../benchmarks.rst:1464
 msgid "165,199"
 msgstr "165,199"
 
-#: ../../benchmarks.rst:1468
+#: ../../benchmarks.rst:1465
 msgid "63,399"
 msgstr "63,399"
 
-#: ../../benchmarks.rst:1469
+#: ../../benchmarks.rst:1466
 msgid "21"
 msgstr "21"
 
-#: ../../benchmarks.rst:1473
+#: ../../benchmarks.rst:1470
 msgid "104,132"
 msgstr "104,132"
 
-#: ../../benchmarks.rst:1474
+#: ../../benchmarks.rst:1471
 msgid "153,899"
 msgstr "153,899"
 
-#: ../../benchmarks.rst:1475
+#: ../../benchmarks.rst:1472
 msgid "68,972"
 msgstr "68,972"
 
-#: ../../benchmarks.rst:1476
+#: ../../benchmarks.rst:1473
 msgid "116"
 msgstr "116"
 
-#: ../../benchmarks.rst:1477
+#: ../../benchmarks.rst:1474
 msgid "112"
 msgstr "112"
 
-#: ../../benchmarks.rst:1478
+#: ../../benchmarks.rst:1475
 msgid "140"
 msgstr "140"
 
-#: ../../benchmarks.rst:1480
+#: ../../benchmarks.rst:1477
 msgid ""
 "We read the table modestly. Sibuna and HAProxy are level for plaintext "
 "HTTP, and Sibuna is about 6% ahead with TLS. HAProxy is about half again "
@@ -4894,7 +4932,7 @@ msgstr ""
 "बड़ा समूह, जिन्हें यह मापन नहीं देखता। हमने Envoy पर कोई TCP लिसनर "
 "कॉन्फ़िगर नहीं किया, इसलिए उसकी कोई TCP पंक्ति नहीं है।"
 
-#: ../../benchmarks.rst:1482
+#: ../../benchmarks.rst:1479
 msgid ""
 "All three are measured on one machine over loopback, with a two-byte "
 "response and no network between client and proxy. A small response makes "

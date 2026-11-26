@@ -46,10 +46,9 @@ The expectation follows from the tail sum:
 
 A difficulty step doubles expected trials. It does not promise that every puzzle takes twice as long. Some succeed on the first trial; some take far longer than the mean. A client that measures only one solve has mostly measured this randomness.
 
-.. figure:: /assets/figures/survival.svg
+.. typst-diagram:: diagrams/charts/survival.typ
+   :caption: Survival probability of hash search: the probability that a search is still running after :math:`x` times the expected number of trials, in the large-work approximation :math:`P(K > x/p) \approx e^{-x}`.
    :alt: A curve falling from 1 at x = 0 towards 0 at x = 4. At x = 1 a marked point shows that a search is still running with probability e to the minus 1, about 0.368; at x of about 3.0 a second point shows that 95 percent of searches have ended.
-
-   Survival probability of hash search: the probability that a search is still running after :math:`x` times the expected number of trials, in the large-work approximation :math:`P(K > x/p) \approx e^{-x}`.
 
 .. admonition:: Worked example: expectation is not a deadline
 

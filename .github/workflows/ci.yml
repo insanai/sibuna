@@ -50,7 +50,7 @@ jobs:
         run: cargo xtask check
       - name: Third-party license list
         run: cargo xtask licenses --check
-      - name: Rendered figures match their Typst sources
+      - name: Figure copies match their sources
         run: cargo xtask figures --check
   test:
     name: Tests on SQLite

@@ -13,7 +13,7 @@ A change to storage also runs the PostgreSQL suite (`SIBUNA_TEST_DATABASE_URL` s
 postgres`), and a change to a measured subsystem reruns the matching `cargo xtask bench`
 command and commits the files it writes under `benchmarks/results/`.
 
-A change to a figure of the book or the whitepaper, or to a result file a figure reads, is followed by `cargo xtask figures`, which renders the figures whose Typst sources changed. We commit the SVG files with `docs/figures/rendered.txt`; CI checks them with `cargo xtask figures --check`. `docs/figures/README.md` describes the figures and their languages.
+Guidedog draws the figures of the book and the whitepaper from their Typst and Graphviz sources during every build; we commit no rendered images. The projects keep copies of the files they share (the figure style, the chart helpers and word tables) and of the benchmark results the charts read. A change to one of these sources, or to a result file a chart reads, is followed by `cargo xtask figures`, which writes the copies; CI checks them with `cargo xtask figures --check`. The comments of `docs/book/diagrams/style.typ` and `docs/book/diagrams/charts/chart.typ` are the figure guideline.
 
 ---
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-24 10:43+0000\n"
+"POT-Creation-Date: 2026-11-26 06:04+0000\n"
 "PO-Revision-Date: 2026-10-16 05:17+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -190,7 +190,7 @@ msgstr ""
 "में औसत से कहीं अधिक समय लगता है। जो क्लाइंट केवल एक हल को मापता है, उसने "
 "मुख्यतः इसी यादृच्छिकता को मापा है।"
 
-#: ../../foundations.rst:49
+#: ../../foundations.rst:50
 msgid ""
 "A curve falling from 1 at x = 0 towards 0 at x = 4. At x = 1 a marked "
 "point shows that a search is still running with probability e to the "
@@ -202,7 +202,19 @@ msgstr ""
 "जारी रहती है; x लगभग 3.0 पर दूसरा बिंदु दिखाता है कि 95 प्रतिशत खोजें "
 "समाप्त हो चुकी हैं।"
 
-#: ../../foundations.rst:52
+#: ../../foundations.rst:50
+msgid ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/survival.typ\": draw\n"
+"#show: chart.with(lang: \"en\")\n"
+"#draw()\n"
+msgstr ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/survival.typ\": draw\n"
+"#show: chart.with(lang: \"hi\")\n"
+"#draw()\n"
+
+#: ../../foundations.rst:50
 msgid ""
 "Survival probability of hash search: the probability that a search is "
 "still running after :math:`x` times the expected number of trials, in the "
@@ -212,11 +224,11 @@ msgstr ""
 "संख्या के :math:`x` गुना प्रयासों के बाद भी खोज जारी रहने की प्रायिकता, "
 "बड़े कार्य वाले सन्निकटन :math:`P(K > x/p) \\approx e^{-x}` में।"
 
-#: ../../foundations.rst:54
+#: ../../foundations.rst:53
 msgid "Worked example: expectation is not a deadline"
 msgstr "हल किया गया उदाहरण: अपेक्षा कोई समय-सीमा नहीं है"
 
-#: ../../foundations.rst:56
+#: ../../foundations.rst:55
 msgid ""
 "At :math:`b = 16`, the expected work is 65,536 hashes. The probability of "
 "still searching after that many trials is approximately :math:`e^{-1} = "
@@ -232,11 +244,11 @@ msgstr ""
 "को अपेक्षित पूर्णता समय पर विफलता घोषित करने के बजाय इस फैलाव को सहना "
 "चाहिए।"
 
-#: ../../foundations.rst:58
+#: ../../foundations.rst:57
 msgid "Sessions Amortise Work"
 msgstr "सत्र कार्य की लागत बाँटते हैं"
 
-#: ../../foundations.rst:61
+#: ../../foundations.rst:60
 msgid ""
 "Suppose a session permits :math:`m` requests before expiry, a puzzle "
 "costs :math:`c_p`, verification costs :math:`c_v`, and a session check "
@@ -254,11 +266,11 @@ msgstr ""
 "दोनों की समान रूप से मदद करता है। इसे चुनना नीति का निर्णय है, "
 "क्रिप्टोग्राफ़िक अनुकूलन नहीं।"
 
-#: ../../foundations.rst:63
+#: ../../foundations.rst:62
 msgid "Exercise 1.1"
 msgstr "अभ्यास 1.1"
 
-#: ../../foundations.rst:65
+#: ../../foundations.rst:64
 msgid ""
 "A client gets 100 requests per session and performs a puzzle costing one "
 "million trials. What is the amortized work per request? What changes if "
@@ -268,16 +280,16 @@ msgstr ""
 "पहेली हल करता है। प्रति अनुरोध औसत कार्य कितना है? यदि वह सत्र को किसी "
 "दूसरी प्रोसेस के साथ साझा करे तो क्या बदलता है?"
 
-#: ../../foundations.rst:67
+#: ../../foundations.rst:66
 msgid ""
 "Hint: Distinguish the accounting model from the token's actual bindings."
 msgstr "संकेत: लेखांकन मॉडल और टोकन की वास्तविक बाइंडिंग में अंतर करें।"
 
-#: ../../foundations.rst:69
+#: ../../foundations.rst:68
 msgid "Bounded State Is a Second Budget"
 msgstr "सीमित अवस्था एक दूसरा बजट है"
 
-#: ../../foundations.rst:72
+#: ../../foundations.rst:71
 msgid ""
 "Moving work off the request path does not make it disappear. Let "
 "incidents arrive at rate :math:`\\lambda`, let the storage thread persist "
@@ -289,11 +301,11 @@ msgstr ""
 "से सहेजता है, और कतार :math:`Q` रिकॉर्ड रख सकती है। जब :math:`\\lambda > "
 "\\mu` हो, तो एक तरल (fluid) सन्निकटन देता है"
 
-#: ../../foundations.rst:74
+#: ../../foundations.rst:73
 msgid "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 msgstr "t_{\\mathrm{fill}} \\approx \\frac{Q}{\\lambda - \\mu}."
 
-#: ../../foundations.rst:78
+#: ../../foundations.rst:77
 msgid ""
 "A larger queue buys time; it does not create throughput. Batching "
 "amortizes transaction cost, but retained records still need memory and "
@@ -308,11 +320,11 @@ msgstr ""
 "वह मेमोरी में रखी अवस्था से अनुरोधों के निर्णय लेता रहता है। ऑपरेटर को "
 "HTTP सफलता दर के साथ-साथ खोए हुए साक्ष्य की भी निगरानी करनी चाहिए।"
 
-#: ../../foundations.rst:80
+#: ../../foundations.rst:79
 msgid "Exercise 1.2"
 msgstr "अभ्यास 1.2"
 
-#: ../../foundations.rst:82
+#: ../../foundations.rst:81
 msgid ""
 "A queue holds 512 records. Arrival rate is 1,000/s and drain rate is "
 "600/s. How long can an initially empty queue absorb the excess? Why is "
@@ -322,35 +334,35 @@ msgstr ""
 "शुरू में खाली कतार अतिरिक्त भार को कितनी देर तक सोख सकती है? उत्तर केवल "
 "एक सन्निकटन क्यों है?"
 
-#: ../../foundations.rst:84
+#: ../../foundations.rst:83
 msgid ""
 "Hint: Use the difference of rates, then consider bursts and batch commits."
 msgstr ""
 "संकेत: दरों का अंतर उपयोग करें, फिर बर्स्ट और बैच कमिट पर विचार करें।"
 
-#: ../../foundations.rst:86
+#: ../../foundations.rst:85
 msgid "The Invariants We Will Carry Forward"
 msgstr "वे अपरिवर्तनीय नियम जिन्हें हम आगे ले जाएँगे"
 
-#: ../../foundations.rst:89
+#: ../../foundations.rst:88
 msgid "Untrusted requests cannot create unbounded server state."
 msgstr "अविश्वसनीय अनुरोध सर्वर पर असीमित अवस्था नहीं बना सकते।"
 
-#: ../../foundations.rst:90
+#: ../../foundations.rst:89
 msgid "A valid admission token does not bypass an application denial."
 msgstr "वैध प्रवेश टोकन एप्लिकेशन की अस्वीकृति को बायपास नहीं करता।"
 
-#: ../../foundations.rst:91
+#: ../../foundations.rst:90
 msgid "A buffer remains alive for every slice borrowed from it."
 msgstr "किसी बफ़र से उधार ली गई हर स्लाइस के रहते वह बफ़र जीवित रहता है।"
 
-#: ../../foundations.rst:92
+#: ../../foundations.rst:91
 msgid ""
 "A durable retry cannot multiply an incident or its reputation effect."
 msgstr ""
 "टिकाऊ रीट्राई किसी घटना या उसके प्रतिष्ठा प्रभाव को कई गुना नहीं कर सकता।"
 
-#: ../../foundations.rst:93
+#: ../../foundations.rst:92
 msgid ""
 "A published policy snapshot is immutable until its last reader releases "
 "it."
@@ -358,7 +370,7 @@ msgstr ""
 "प्रकाशित नीति स्नैपशॉट तब तक अपरिवर्तनीय रहता है जब तक उसका अंतिम पाठक "
 "उसे छोड़ नहीं देता।"
 
-#: ../../foundations.rst:95
+#: ../../foundations.rst:94
 msgid ""
 "The rest of the book derives the mechanisms that make these statements "
 "true, and the tests that would reveal a violation. A fast path is useful "
@@ -368,11 +380,11 @@ msgstr ""
 "परीक्षण भी जो किसी उल्लंघन को उजागर करेंगे। कोई तेज़ पाथ केवल तभी तक "
 "उपयोगी है जब तक ये कथन सत्य रहते हैं।"
 
-#: ../../foundations.rst:97
+#: ../../foundations.rst:96
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाएँ"
 
-#: ../../foundations.rst:99
+#: ../../foundations.rst:98
 msgid ""
 "State the gate inequality :math:`c_g < (1-a) c_o` in words, then explain "
 "why a measured verification latency alone cannot tell an operator whether "
