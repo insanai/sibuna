@@ -43,8 +43,8 @@ msgstr ""
 "や暗号、設定ファイルの知識はいりません。設計の章では、同じ判断をアルゴリズムやコードの中まで追います。システムの目的が分かったところで、測定と運用に進みます。"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:8
-msgid "Sibuna 1.0.0-rc.5, November 2026"
-msgstr "Sibuna 1.0.0-rc.5、2026年11月"
+msgid "Sibuna 1.0.0-rc.6, November 2026"
+msgstr "Sibuna 1.0.0-rc.6、2026年11月"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:10
 msgid ""

@@ -50,8 +50,8 @@ msgstr ""
 "del sistema."
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:8
-msgid "Sibuna 1.0.0-rc.5, November 2026"
-msgstr "Sibuna 1.0.0-rc.5, noviembre de 2026"
+msgid "Sibuna 1.0.0-rc.6, November 2026"
+msgstr "Sibuna 1.0.0-rc.6, noviembre de 2026"
 
 #: ../../../../../../home/insan/projects/sibuna/docs/book/preface.rst:10
 msgid ""

@@ -1,0 +1,11 @@
+Sibuna 1.0.0-rc.6 corrects admission accounting and refusal reporting in the distributed load balancer.
+
+- UDP packet budgets reserve whole datagrams. A budget of one packet per second can open its first mapping. Per-source refusal statistics include both UDP rate limits.
+- Disabling pressure on reload updates the console, metrics and operator log. Old client proofs expire permanently when their 24-hour window ends.
+- A trusted PROXY connection takes a node flow slot before it enters the worker queue. After reading the header, the frontend applies strikes and the configured refusal action to the named client. The descriptor estimate includes the configured tarpits.
+- Peer-forwarded TCP connections pass the owner's admission checks. Inherited UDP mappings count against the replacement's frontend and client limits.
+- The operator book shows pressure, refusal causes and the current minute's most refused sources in the running console.
+
+TLS 1.3 on the edge, origins and management HTTP paths offers X25519MLKEM768 with classical fallback. SQLx manages the optional PostgreSQL TLS connection separately. Sibuna supports classical certificate signatures with either key exchange.
+
+SHA256SUMS covers the published assets. The OpenBSD package is optional and is attached when its native checks pass.
