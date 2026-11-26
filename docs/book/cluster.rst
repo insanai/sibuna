@@ -63,13 +63,13 @@ A fixed roster and authenticated datagrams
 
 The nodes of a cluster form a mesh (SID 0015). The roster is fixed for the life of a process and holds at most 64 nodes. Every node knows every other by its address. The nodes speak by UDP datagrams on one port. A datagram begins with ``S``, ``E``, a version and a kind. It carries the boot nonce of the sender and a sequence number, and it ends with a 16-byte tag: the keyed BLAKE3 hash of every byte before it, under the group key of the key file. A node reads a datagram only from an address of the roster and only with a valid tag. The kind lies inside the hashed bytes, so a datagram of one kind cannot be turned into another. A datagram holds at most 1,200 bytes, so it fits one packet on every path.
 
-.. graphviz:: diagrams/cluster-topology.dot
-   :caption: A cluster of three nodes. The router spreads the clients; the dashed edges are the mesh; the dotted edges are the database of SID 0028, which a cluster may use instead of sending files.
-   :alt: Clients reach a DNS or ECMP router, which sends flows to nodes A, B and C. The three nodes are joined pairwise by dashed mesh edges. All three send flows to the servers of the pools. A PostgreSQL database of revisions is joined to each node by a dotted edge.
+.. typst-diagram:: diagrams/cluster-topology.typ
+   :caption: A cluster of three nodes. The router spreads the clients; the dashed edges are the mesh; the dotted edge is the database of SID 0028, which a cluster may use instead of sending files.
+   :alt: Clients reach a DNS or ECMP router, which sends flows to nodes A, B and C. The three nodes are joined pairwise by dashed mesh edges. All three send flows to the servers of the pools. A PostgreSQL database of revisions is joined to the group of the three nodes by a dotted edge.
 
 Every pair of nodes exchanges the same things. The next figure shows one pair.
 
-.. graphviz:: diagrams/mesh-pair.dot
+.. typst-diagram:: diagrams/mesh-pair.typ
    :caption: What flows between two nodes, by port. The kind of each datagram is in parentheses.
    :alt: Node A and node B joined by three edges. The first, UDP on the mesh port 7946, carries probes, bans (kind 3), commands (kind 4), lifts (kind 5), sticky entries (kind 6) and the status of shares (kind 7). The second, TCP on the mesh port, carries the configuration file and its digest. The third, TCP and UDP on the mesh port plus one, carries forwarded flows.
 

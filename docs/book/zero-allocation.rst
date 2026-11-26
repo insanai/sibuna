@@ -637,7 +637,7 @@ Read-Copy-Update Engine Publication
 
 The policy engine is rebuilt off the hot path when policies change. Requests must never observe a half-built engine, and an engine must never be freed while a request is still reading it. Sibuna publishes each engine as an ``Arc<Engine>`` in an ``EngineSlot``, and each connection reads it through an ``EngineCache``:
 
-.. graphviz:: diagrams/engine-publication.dot
+.. typst-diagram:: diagrams/engine-publication.typ
    :caption: Engine publication. The storage thread publishes a complete engine and advances the generation; each connection checks the generation with one acquire load and clones the published Arc only after a publication. An old engine is freed when the last cache holding it lets go.
    :alt: The storage thread builds Engine v2 off the request path and publishes it into the EngineSlot, which holds an RwLock around the current Arc and an atomic generation. Connection thread A has refreshed: its cache holds generation 2 and an Arc of Engine v2, and its next refresh is one acquire load with no clone. Connection thread B still holds generation 1 and an Arc of Engine v1; on its next refresh it sees the generation moved, takes the read lock and clones the Arc of v2. Engine v1 is freed when B lets go of it.
 
