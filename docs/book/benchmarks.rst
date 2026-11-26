@@ -66,10 +66,9 @@ Latency at Equal Load
 
 The open-loop generator (``sibuna-bench generate``) runs one blocking thread per connection. Each of 64 connections sends ``GET /private`` with a session on a fixed schedule: request :math:`k` of a connection is due at :math:`t_0 + o + kT`, where :math:`o` is the connection's offset and :math:`T` its interval, independent of earlier answers. When an answer arrives after the next request was due, that request goes out at once and its latency counts from the time it was due, as in ``wrk2``. When the connection was idle at the due time, latency counts from the actual send, so the generator's own sleep overshoot is not charged to the daemon.
 
-.. figure:: /assets/figures/open-loop.svg
+.. typst-diagram:: diagrams/charts/open-loop.typ
+   :caption: One connection of the open-loop generator. Request 1 is answered after request 2 was due, so request 2 is sent at once and its latency counts from 2T; request 3 finds the connection idle and counts from its send.
    :alt: A timeline with due times 0, T, 2T, 3T and 4T and four requests. Requests 0 and 3 are sent when due and answered quickly. Request 1 is sent at T and answered after 2T. Request 2, due at 2T, waits until that answer arrives and is then sent; its recorded latency starts at 2T.
-
-   One connection of the open-loop generator. Request 1 is answered after request 2 was due, so request 2 is sent at once and its latency counts from 2T; request 3 finds the connection idle and counts from its send.
 
 The harness runs the Shield surface and the admitted workload at five offered rates: 10,000, 25,000, 50,000, 100,000 and 150,000 requests per second, each with a 2-second warm-up, 10 measured seconds and 3 runs. The harness can measure two daemon builds in one run: it then starts both on the same CPU set and alternates between them at every rate and repetition, the idle one using no CPU, so that slow drift of the machine affects both alike. The recorded run did so. Percentiles are nearest-rank over every measured request of one run; each figure is the median of the three runs, with the min-max of p99 beside it.
 
@@ -78,10 +77,9 @@ CPU Sets
 
 The CPU sets matter more than any other setting. The daemons run on CPUs 0 to 3 (``--cpus``; ``--workers`` is the size of that set). ``wrk``, the latency generator and the origin run on CPUs 8 to 15 (``--load-cpus``). The primitive suite runs on CPU 4 (``--cpu``). Every process is pinned with ``taskset -c`` before it starts, so every thread it creates inherits the set. The admission harness uses two CPUs, 0 and 1, for the product, and CPUs 8 to 15 for its clients.
 
-.. figure:: /assets/figures/cpu-sets.svg
+.. typst-diagram:: diagrams/charts/cpu-sets.typ
+   :caption: CPU sets on the AMD Ryzen 9 5950X. CPUs 0 to 7 are the eight cores of the first CCD, 8 to 15 those of the second, and 16 to 31 their SMT siblings. Daemon and load generator never share a core.
    :alt: Two rows of eight cores. In CCD 0, cores 0 to 3 run the daemons (--cpus 0-3), core 4 the primitive suite (--cpu 4), and cores 5 to 7 are not assigned. In CCD 1, cores 8 to 15 run wrk, the latency generator and the origin (--load-cpus 8-15). Each core's SMT sibling, CPUs 16 to 31, is not used.
-
-   CPU sets on the AMD Ryzen 9 5950X. CPUs 0 to 7 are the eight cores of the first CCD, 8 to 15 those of the second, and 16 to 31 their SMT siblings. Daemon and load generator never share a core.
 
 On other machines we choose sets that do not share cores (``lscpu -e`` shows the topology).
 
@@ -179,10 +177,9 @@ The table gives every row of the primitive run. The JSON file names each row by 
 
 The spreads are narrow: no batch of any row lies more than 2.8% from its row's median. The figure shows the same rows on a logarithmic scale, which keeps rows of 6 ns and of 40 us readable side by side.
 
-.. figure:: /assets/figures/primitive-latency.svg
-   :alt: A bar chart of the table above on a logarithmic scale from 1 ns to 100 us, coloured by group: proof of work, matching, tokens, state and the request path. The rate limiter rows are the shortest bars, at 6.2 to 13.1 ns; Ed25519 token verification is the longest, at 40.6 us.
-
-   Primitive timings on a logarithmic scale, drawn from ``benchmarks/results/primitives-latest.json``.
+.. typst-diagram:: diagrams/charts/primitive-latency.typ
+   :caption: Primitive timings on a logarithmic scale, drawn from ``benchmarks/results/primitives-latest.json``.
+   :alt: A dot plot of the table above on a logarithmic scale from 1 ns to 100 us, with the rows grouped under proof of work, matching, tokens, state and the request path. The rate limiter rows are the fastest, at 6.2 to 13.1 ns; Ed25519 token verification is the slowest, at 40.6 us. The sequential signature search, an open dot for comparison, takes 763 ns.
 
 Proof-of-Work Verification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

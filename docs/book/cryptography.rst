@@ -52,10 +52,9 @@ Let :math:`n` be the depth and consider the complete binary tree with nodes name
 - an internal node hashes its two children: :math:`\ell_v = H(\chi, v, \ell_{v0}, \ell_{v1})`;
 - a leaf :math:`u = u_1 \dots u_n` hashes the *left siblings of its ancestors* wherever the root path turned right: :math:`\ell_u = H(\chi, u, \{\ell_{u_1 \dots u_{i-1} 0} : u_i = 1\})`.
 
-.. figure:: /assets/figures/posw-tree.svg
-   :alt: A complete binary tree of depth 3 with nodes named depth.index. The root path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is amber, the siblings 1.0, 2.3 and 3.4 sent in its opening are green, and dashed red arrows run from 1.0 and 3.4 into leaf 3.5. An arrow under the leaves shows that they are labelled from left to right.
-
-   The depth-3 tree: an opening of leaf 3.5 sends the leaf label and the three sibling labels; the dashed edges are the left-sibling dependencies that make labelling sequential.
+.. typst-diagram:: diagrams/charts/posw-tree.typ
+   :caption: The depth-3 tree: an opening of leaf 3.5 sends the leaf label and the three sibling labels; the dashed edges are the left-sibling dependencies that make labelling sequential.
+   :alt: A complete binary tree of depth 3 with nodes named depth.index. The root path of leaf 3.5 (nodes 0.0, 1.1, 2.2, 3.5) is green, the siblings 1.0, 2.3 and 3.4 sent in its opening are slate, and dashed gold arrows run from 1.0 and 3.4 into leaf 3.5. An arrow under the leaves shows that they are labelled from left to right.
 
 The left-sibling edges are what make the computation sequential: leaf :math:`u` cannot be labelled until every subtree to its left is complete, so a depth-first post-order traversal is forced and the root label :math:`\varphi = \ell_\varepsilon` depends on all :math:`2^{n+1} - 1` labels in sequence.
 
@@ -190,10 +189,9 @@ Domain separation prevents accidental reuse across purposes; compromise of the m
 Stateless Challenges
 ~~~~~~~~~~~~~~~~~~~~
 
-.. figure:: /assets/figures/wire-formats.svg
+.. typst-diagram:: diagrams/charts/wire-formats.typ
+   :caption: Wire formats of the challenge identifier and the session token. The numbers above each record are byte offsets.
    :alt: Two byte layouts. The challenge identifier: ver, alg, diff and t of one byte each, then issued_at, fingerprint, nonce and rule_hash of eight bytes each, a 36-byte payload, followed by a 16-byte BLAKE3 tag; 52 bytes, sent as 70 URL-safe base64 characters. The session token: ver, alg and bits of one byte each, res of five bytes, then timestamp, expiry, rule_hash and fingerprint of eight bytes each, a 40-byte payload, followed by a 16-byte BLAKE3 tag; 56 bytes, sent as 75 URL-safe base64 characters.
-
-   Wire formats of the challenge identifier and the session token. The numbers above each record are byte offsets.
 
 A challenge identifier is a self-authenticating record: version, algorithm, difficulty, opening count, issue time, the client's keyed fingerprint, a PRF-derived nonce, and the hash of the policy rule that demanded the challenge, followed by a 16-byte tag under the challenge key. Issuing one writes nothing. Verification decodes the record, checks the tag in constant time, checks the age against the challenge TTL, checks the fingerprint against the submitting client, and only then examines the proof.
 

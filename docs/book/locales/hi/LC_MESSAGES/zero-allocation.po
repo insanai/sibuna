@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: The Sibuna Book 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-26 04:13+0000\n"
+"POT-Creation-Date: 2026-11-26 06:04+0000\n"
 "PO-Revision-Date: 2026-10-16 05:28+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -41,7 +41,7 @@ msgstr ""
 msgid "The Connection Loop"
 msgstr "कनेक्शन लूप"
 
-#: ../../zero-allocation.rst:9 ../../zero-allocation.rst:401
+#: ../../zero-allocation.rst:9 ../../zero-allocation.rst:400
 msgid "Objectives"
 msgstr "उद्देश्य"
 
@@ -432,7 +432,7 @@ msgstr ""
 "फ़्रेम किया गया हो और बॉडी पूरी तरह बफ़र हुई हो; अगले अनुभाग दिखाते हैं "
 "कि प्रॉक्सी यह कैसे तय करता है।"
 
-#: ../../zero-allocation.rst:118
+#: ../../zero-allocation.rst:119
 msgid ""
 "The 64 KiB read buffer of one connection: a served part, then the unread "
 "window of request head (at most 16 KiB), body prefix and pending bytes, "
@@ -450,7 +450,19 @@ msgstr ""
 "reader.consume(head_len + body_len) विंडो की शुरुआत को लंबित बाइट तक ले "
 "जाता है।"
 
-#: ../../zero-allocation.rst:121
+#: ../../zero-allocation.rst:119
+msgid ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/read-buffer.typ\": draw\n"
+"#show: chart.with(lang: \"en\")\n"
+"#draw()\n"
+msgstr ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/read-buffer.typ\": draw\n"
+"#show: chart.with(lang: \"hi\")\n"
+"#draw()\n"
+
+#: ../../zero-allocation.rst:119
 msgid ""
 "The connection's read buffer while one request is served. Every field of "
 "the request is a slice of it."
@@ -458,7 +470,7 @@ msgstr ""
 "एक अनुरोध सर्व होते समय कनेक्शन का रीड बफ़र। अनुरोध का हर फ़ील्ड इसकी एक "
 "स्लाइस है।"
 
-#: ../../zero-allocation.rst:123
+#: ../../zero-allocation.rst:122
 msgid ""
 "fn serve_one<W: Write>(\n"
 "    reader: &mut Reader<'_, &TcpStream>,\n"
@@ -526,11 +538,11 @@ msgstr ""
 "    serve_with_body(reader, link, peer, head_len, framing)\n"
 "}"
 
-#: ../../zero-allocation.rst:156
+#: ../../zero-allocation.rst:155
 msgid "What the borrow checker proves"
 msgstr "borrow checker क्या सिद्ध करता है"
 
-#: ../../zero-allocation.rst:158
+#: ../../zero-allocation.rst:157
 msgid ""
 "The request slices stay valid only until the next fill of the buffer. "
 "Sibuna states that rule as a type, not as a comment: the request is a "
@@ -550,7 +562,7 @@ msgstr ""
 "कॉल के लौटने के बाद ही ``reader.consume`` चल सकता है; इन्हें उलटे क्रम "
 "में लिखने पर कोड कंपाइल नहीं होता।"
 
-#: ../../zero-allocation.rst:160
+#: ../../zero-allocation.rst:159
 msgid ""
 "The same rule explains two choices that look odd at first. First, "
 "``serve_with_body`` parses the head a second time. The first parse must "
@@ -578,11 +590,11 @@ msgstr ""
 "वह पढ़ा हुआ वापस नहीं लौटा सकता, क्लाइंट कनेक्शन केवल तभी रखा जाता है जब "
 "बॉडी पूरी तरह बफ़र हुई हो।"
 
-#: ../../zero-allocation.rst:162
+#: ../../zero-allocation.rst:161
 msgid "The Proxy Head Rewrite"
 msgstr "प्रॉक्सी हेड का पुनर्लेखन"
 
-#: ../../zero-allocation.rst:165
+#: ../../zero-allocation.rst:164
 msgid ""
 "The head is not forwarded verbatim. ``write_request_head`` "
 "(``crates/net/src/request.rs``, crate ``sibuna-net``) re-emits the "
@@ -609,7 +621,7 @@ msgstr ""
 "देता है। फिर वह ऑडिट समुच्चय जोड़ता है। बॉडी की फ़्रेमिंग बनाई जाती है, "
 "कभी कॉपी नहीं की जाती:"
 
-#: ../../zero-allocation.rst:167
+#: ../../zero-allocation.rst:166
 msgid ""
 "for header in request.headers() {\n"
 "    if is_hop_by_hop(header.name) || nominated(request, header.name) {\n"
@@ -651,7 +663,7 @@ msgstr ""
 "chunked\\r\\n\")?,\n"
 "}"
 
-#: ../../zero-allocation.rst:188
+#: ../../zero-allocation.rst:187
 msgid ""
 "A ``Content-Length`` is re-emitted. A chunked body that ended within the "
 "connection buffer is decoded in place and sent with its length. A longer "
@@ -669,7 +681,7 @@ msgstr ""
 "है, और एक canonical chunk के रूप में बाहर जाती है, इसलिए ऑरिजिन कभी "
 "क्लाइंट के chunk आकार, extension या trailer नहीं देखता। ऑडिट समुच्चय:"
 
-#: ../../zero-allocation.rst:190
+#: ../../zero-allocation.rst:189
 msgid ""
 "Connection: keep-alive\n"
 "X-Forwarded-For: <client>\n"
@@ -685,7 +697,7 @@ msgstr ""
 "X-Sibuna-Status: PASS\n"
 "X-Sibuna-Rule: session | robots-txt | ip/cidr-trie | ..."
 
-#: ../../zero-allocation.rst:199
+#: ../../zero-allocation.rst:198
 msgid ""
 "Bodies larger than the buffer are relayed in 16 KiB pieces from the "
 "client to the origin writer (``relay_body``) before the response is "
@@ -701,7 +713,7 @@ msgstr ""
 "पुष्टि करता है कि पुनर्लेखन एक जाली ``X-Forwarded-For`` को हटा देता है और "
 "ऑडिट फ़ील्ड जोड़ता है।"
 
-#: ../../zero-allocation.rst:201
+#: ../../zero-allocation.rst:200
 msgid ""
 "The proxy's three buffers, the origin read buffer (one response head, 16 "
 "KiB), the origin write buffer (8 KiB) and the upload buffer (16 KiB), "
@@ -717,11 +729,11 @@ msgstr ""
 "और ऑरिजिन रीडर और writer उन्हें एक समय पर एक एक्सचेंज के लिए उधार लेते "
 "हैं।"
 
-#: ../../zero-allocation.rst:203
+#: ../../zero-allocation.rst:202
 msgid "Relaying the Origin Response"
 msgstr "ऑरिजिन रिस्पॉन्स का रिले"
 
-#: ../../zero-allocation.rst:206
+#: ../../zero-allocation.rst:205
 msgid ""
 "The first proxy streamed the origin's bytes until the origin closed and "
 "then closed the client: correct framing with no parsing, at the price of "
@@ -737,11 +749,11 @@ msgstr ""
 "ephemeral पोर्ट समाप्त हो गए। अब प्रॉक्सी ऑरिजिन का हेड (अधिकतम 16 KiB) "
 "पढ़ता है और RFC 9112 के नियमों से बॉडी को वर्गीकृत करता है:"
 
-#: ../../zero-allocation.rst:208
+#: ../../zero-allocation.rst:207
 msgid "Implementation: ``parse_response_head``"
 msgstr "इम्प्लीमेंटेशन: ``parse_response_head``"
 
-#: ../../zero-allocation.rst:210
+#: ../../zero-allocation.rst:209
 msgid ""
 "Returns the status, one of four framings (no body for HEAD, 1xx, 204 and "
 "304; a ``Content-Length``; chunked transfer coding; or close-delimited) "
@@ -753,7 +765,7 @@ msgstr ""
 "और यह लौटाता है कि ऑरिजिन कनेक्शन रखता है या नहीं। "
 "``crates/net/src/response.rs`` में (क्रेट ``sibuna-net``)।"
 
-#: ../../zero-allocation.rst:212
+#: ../../zero-allocation.rst:211
 msgid ""
 "pub enum Framing { None, Length(u64), Chunked, UntilClose }\n"
 "\n"
@@ -831,7 +843,7 @@ msgstr ""
 "    Some(ResponseHead { status, framing, keep_alive })\n"
 "}"
 
-#: ../../zero-allocation.rst:248
+#: ../../zero-allocation.rst:247
 msgid ""
 "The parser refuses what the proxy must not relay: a bad status line, a "
 "field name that is not a token, a control byte in a value, conflicting "
@@ -845,7 +857,7 @@ msgstr ""
 "``Connection`` फ़ील्ड जो ``Content-Length`` या ``Transfer-Encoding`` को "
 "नामित करता है। इसका कार्य हेड में रैखिक है, और यह कभी panic नहीं करता।"
 
-#: ../../zero-allocation.rst:250
+#: ../../zero-allocation.rst:249
 msgid ""
 "The head is re-emitted to the client with the origin's ``Connection`` "
 "headers replaced by Sibuna's own decision, and the body is relayed "
@@ -867,7 +879,7 @@ msgstr ""
 "छोटे राइट की धारा जैसे-जैसे बनती है वैसे-वैसे पहुँचाई जाती है, जबकि बड़ा "
 "स्थानांतरण फिर भी प्रति रीड और राइट एक पूरा बफ़र ले जाता है।"
 
-#: ../../zero-allocation.rst:252
+#: ../../zero-allocation.rst:251
 msgid ""
 "let keep = client_keep_alive && parsed.framing != Framing::UntilClose;\n"
 "write_client_head(client, head, keep).map_err(client_head_error)?;\n"
@@ -895,7 +907,7 @@ msgstr ""
 "client.flush().map_err(|_| ProxyError::ClientFailed)?;\n"
 "Ok(Relayed { client_keep: keep, origin_reusable: parsed.keep_alive })"
 
-#: ../../zero-allocation.rst:266
+#: ../../zero-allocation.rst:265
 msgid ""
 "Parsing an eight-field origin head takes 322 ns, and a keep-alive ``GET`` "
 "with a 1 KiB response proxied over loopback takes 29.8 us (measured in "
@@ -906,11 +918,11 @@ msgstr ""
 "लगते हैं (अक्टूबर 2026 में मापा गया; ``crates/net/src/lib.rs`` मापन का "
 "दस्तावेज़ देता है)।"
 
-#: ../../zero-allocation.rst:268
+#: ../../zero-allocation.rst:267
 msgid "The Origin Pool"
 msgstr "ऑरिजिन पूल"
 
-#: ../../zero-allocation.rst:271
+#: ../../zero-allocation.rst:270
 msgid ""
 "Parsing the framing also tells the proxy whether the *origin* socket can "
 "be used again: an HTTP/1.1 response without ``Connection: close`` (or an "
@@ -933,7 +945,7 @@ msgstr ""
 "loopback पर प्रॉक्सी के ephemeral पोर्ट जल्दी समाप्त हो जाते हैं, और उसका "
 "थ्रूपुट गिर जाता है।"
 
-#: ../../zero-allocation.rst:273
+#: ../../zero-allocation.rst:272
 msgid ""
 "A pool under one lock would make every proxied request contend for that "
 "lock. So the pool (``crates/net/src/pool.rs``) is striped: 16 stripes of "
@@ -950,7 +962,7 @@ msgstr ""
 "है, और नया कनेक्शन बनाने से पहले, किसी पकड़े हुए लॉक की प्रतीक्षा किए "
 "बिना, दूसरी पट्टियों में देखता है।"
 
-#: ../../zero-allocation.rst:275
+#: ../../zero-allocation.rst:274
 msgid ""
 "pub fn take(&self) -> Option<Arc<TcpStream>> {\n"
 "    if self.is_stopping() {\n"
@@ -984,7 +996,7 @@ msgstr ""
 "    })\n"
 "}"
 
-#: ../../zero-allocation.rst:293
+#: ../../zero-allocation.rst:292
 msgid ""
 "A pooled socket may have been closed by the origin while idle. The proxy "
 "notices in one of two ways, a failed write or an end-of-stream before the "
@@ -1012,7 +1024,7 @@ msgstr ""
 "किया, और टुकड़ों में रिले की गई बॉडी दोबारा नहीं भेजी जा सकती; दोनों "
 "स्थितियों में क्लाइंट को ``502`` मिलता है।"
 
-#: ../../zero-allocation.rst:295
+#: ../../zero-allocation.rst:294
 msgid ""
 "let safe = matches!(request.method, Method::Get | Method::Head | "
 "Method::Options);\n"
@@ -1079,7 +1091,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:325
+#: ../../zero-allocation.rst:324
 msgid ""
 "Unit tests relay fixed byte strings through the same functions and assert "
 "the output is byte-identical apart from the connection header "
@@ -1100,11 +1112,11 @@ msgstr ""
 "रिस्पॉन्स) को दोबारा चलाता है और ऑरिजिन तथा क्लाइंट को मिलने वाले हर बाइट "
 "की तुलना करता है।"
 
-#: ../../zero-allocation.rst:327
+#: ../../zero-allocation.rst:326
 msgid "Why the origin socket is an ``Arc``"
 msgstr "ऑरिजिन सॉकेट एक ``Arc`` क्यों है"
 
-#: ../../zero-allocation.rst:329
+#: ../../zero-allocation.rst:328
 msgid ""
 "A socket descriptor is a small integer that the kernel reuses as soon as "
 "it is closed. Shutdown must interrupt an exchange in flight, yet it must "
@@ -1128,11 +1140,11 @@ msgstr ""
 "होता है, इसलिए जब तक कोई उस तक पहुँच सकता है, वह न बंद हो सकता है, न "
 "दोबारा उपयोग हो सकता है।"
 
-#: ../../zero-allocation.rst:331
+#: ../../zero-allocation.rst:330
 msgid "Idle Deadlines"
 msgstr "निष्क्रियता की समय-सीमाएँ"
 
-#: ../../zero-allocation.rst:334
+#: ../../zero-allocation.rst:333
 msgid ""
 "Every client connection registers its socket in an ``IdleTable`` "
 "(``crates/net/src/idle.rs``) and receives a ``Lease``. The lease's "
@@ -1155,7 +1167,7 @@ msgstr ""
 "को, जुड़े हुए ऑरिजिन सॉकेट के साथ, बंद कर देता है, ताकि किसी भी ओर "
 "अवरुद्ध थ्रेड end of stream देखे और अपना स्लॉट छोड़ दे।"
 
-#: ../../zero-allocation.rst:336
+#: ../../zero-allocation.rst:335
 msgid ""
 "Deadlines therefore measure silence, never the length of a response: a "
 "large download that keeps moving is never cut. Upload bytes come from the "
@@ -1169,7 +1181,7 @@ msgstr ""
 "निष्क्रिय अवधि में कम से कम 16 KiB माँगता है; यह न्यूनतम-दर वाले अनुरोध "
 "टाइमआउट की slow-body रक्षा है।"
 
-#: ../../zero-allocation.rst:338
+#: ../../zero-allocation.rst:337
 msgid ""
 "The table has one small lock per slot and no table-wide lock. It holds a "
 "``try_clone`` of each client socket and an ``Arc`` of each attached "
@@ -1184,11 +1196,11 @@ msgstr ""
 "इसलिए कोई पुराना कनेक्शन कभी वह स्लॉट नहीं छोड़ सकता जिसे किसी नए ने ले "
 "लिया हो।"
 
-#: ../../zero-allocation.rst:340
+#: ../../zero-allocation.rst:339
 msgid "Upgraded Connections"
 msgstr "अपग्रेड किए गए कनेक्शन"
 
-#: ../../zero-allocation.rst:343
+#: ../../zero-allocation.rst:342
 msgid ""
 "After a validated ``101``, a WebSocket upgrade is relayed both ways. Each "
 "direction runs on a thread of its own with one fixed buffer: the "
@@ -1210,7 +1222,7 @@ msgstr ""
 "रखता है, और जब हर कनेक्शन अपग्रेड हो तो कनेक्शन थ्रेड की संख्या "
 "``--max-connections`` की दोगुनी तक पहुँच सकती है।"
 
-#: ../../zero-allocation.rst:345
+#: ../../zero-allocation.rst:344
 msgid ""
 "Both directions share one idle deadline (``--websocket-idle-timeout``, "
 "300 seconds by default): bytes moving either way refresh one stamp. Each "
@@ -1233,11 +1245,11 @@ msgstr ""
 "होने से पहले कनेक्शन अपना cache किया गया नीति इंजन छोड़ देता है, ताकि "
 "घंटों तक चल सकने वाला कनेक्शन किसी पुराने इंजन को जीवित न रखे।"
 
-#: ../../zero-allocation.rst:347
+#: ../../zero-allocation.rst:346
 msgid "Stopping"
 msgstr "रोकना"
 
-#: ../../zero-allocation.rst:350
+#: ../../zero-allocation.rst:349
 msgid ""
 "``Running::stop``, and equally ``Drop`` for ``Running``, stops the daemon "
 "in a fixed order. It sets the stopping flag and wakes every accept worker "
@@ -1253,7 +1265,7 @@ msgstr ""
 "(``IdleTable::shutdown``), ऑरिजिन पूल को रोकता है, हर कनेक्शन थ्रेड को "
 "join करता है, रीपर को join करता है, और पूल के सॉकेट बंद करता है।"
 
-#: ../../zero-allocation.rst:352
+#: ../../zero-allocation.rst:351
 msgid ""
 "SIGINT and SIGTERM reach that sequence through ordinary Rust. Before it "
 "spawns any thread, the daemon blocks both signals (every later thread "
@@ -1273,11 +1285,11 @@ msgstr ""
 "डेमन का एकमात्र ``unsafe`` कोड है: उन कुछ C library फ़ंक्शन की घोषणाएँ "
 "जिन्हें ``std`` रैप नहीं करता।"
 
-#: ../../zero-allocation.rst:354
+#: ../../zero-allocation.rst:353
 msgid "Release by ``Drop``"
 msgstr "``Drop`` द्वारा मुक्ति"
 
-#: ../../zero-allocation.rst:356
+#: ../../zero-allocation.rst:355
 msgid ""
 "Explicit cleanup calls must be written in reverse order of setup, and "
 "every early return must be read against them. In Sibuna each resource "
@@ -1295,11 +1307,11 @@ msgstr ""
 "हर मुक्ति को scope से बाहर जाने वाले हर पाथ पर डालता है, उससे होकर "
 "गुज़रने वाले panic unwinding सहित, इसलिए कोई पाथ इसे भूल नहीं सकता।"
 
-#: ../../zero-allocation.rst:358
+#: ../../zero-allocation.rst:357
 msgid "What We Measured"
 msgstr "हमने क्या मापा"
 
-#: ../../zero-allocation.rst:361
+#: ../../zero-allocation.rst:360
 msgid ""
 "The table shows Shield in reverse-proxy mode on one Ryzen 9 5950X: the "
 "daemon pinned to four CPUs, ``wrk`` with two threads and 64 connections "
@@ -1313,7 +1325,7 @@ msgstr ""
 "``benchmarks/results/product-latest.md`` से कॉपी की गई हैं; पूरा रिकॉर्ड "
 "भाग X में है।"
 
-#: ../../zero-allocation.rst:363
+#: ../../zero-allocation.rst:362
 msgid ""
 "Shield in reverse-proxy mode, from "
 "``benchmarks/results/product-latest.md``"
@@ -1321,100 +1333,100 @@ msgstr ""
 "रिवर्स-प्रॉक्सी मोड में Shield, ``benchmarks/results/product-latest.md`` "
 "से"
 
-#: ../../zero-allocation.rst:366 ../../zero-allocation.rst:417
+#: ../../zero-allocation.rst:365 ../../zero-allocation.rst:416
 msgid "Workload"
 msgstr "वर्कलोड"
 
-#: ../../zero-allocation.rst:367
+#: ../../zero-allocation.rst:366
 msgid "Status"
 msgstr "स्टेटस"
 
-#: ../../zero-allocation.rst:368
+#: ../../zero-allocation.rst:367
 msgid "req/s"
 msgstr "req/s"
 
-#: ../../zero-allocation.rst:369
+#: ../../zero-allocation.rst:368
 msgid "p50 / p99 (us)"
 msgstr "p50 / p99 (us)"
 
-#: ../../zero-allocation.rst:370
+#: ../../zero-allocation.rst:369
 msgid "CPU per request (us)"
 msgstr "प्रति अनुरोध CPU (us)"
 
-#: ../../zero-allocation.rst:371
+#: ../../zero-allocation.rst:370
 msgid "admitted with session, proxied"
 msgstr "सत्र के साथ स्वीकृत, प्रॉक्सी किया गया"
 
-#: ../../zero-allocation.rst:372 ../../zero-allocation.rst:377
-#: ../../zero-allocation.rst:382
+#: ../../zero-allocation.rst:371 ../../zero-allocation.rst:376
+#: ../../zero-allocation.rst:381
 msgid "200"
 msgstr "200"
 
-#: ../../zero-allocation.rst:373
+#: ../../zero-allocation.rst:372
 msgid "138,965"
 msgstr "138,965"
 
-#: ../../zero-allocation.rst:374
+#: ../../zero-allocation.rst:373
 msgid "438 / 857"
 msgstr "438 / 857"
 
-#: ../../zero-allocation.rst:375
+#: ../../zero-allocation.rst:374
 msgid "28.57"
 msgstr "28.57"
 
-#: ../../zero-allocation.rst:376
+#: ../../zero-allocation.rst:375
 msgid "challenged (interstitial)"
 msgstr "चैलेंज किया गया (इंटरस्टिशियल)"
 
-#: ../../zero-allocation.rst:378
+#: ../../zero-allocation.rst:377
 msgid "195,188"
 msgstr "195,188"
 
-#: ../../zero-allocation.rst:379
+#: ../../zero-allocation.rst:378
 msgid "162 / 328"
 msgstr "162 / 328"
 
-#: ../../zero-allocation.rst:380
+#: ../../zero-allocation.rst:379
 msgid "13.73"
 msgstr "13.73"
 
-#: ../../zero-allocation.rst:381
+#: ../../zero-allocation.rst:380
 msgid "static allowed, proxied"
 msgstr "स्टैटिक अनुमत, प्रॉक्सी किया गया"
 
-#: ../../zero-allocation.rst:383
+#: ../../zero-allocation.rst:382
 msgid "145,673"
 msgstr "145,673"
 
-#: ../../zero-allocation.rst:384
+#: ../../zero-allocation.rst:383
 msgid "415 / 746"
 msgstr "415 / 746"
 
-#: ../../zero-allocation.rst:385
+#: ../../zero-allocation.rst:384
 msgid "27.27"
 msgstr "27.27"
 
-#: ../../zero-allocation.rst:386
+#: ../../zero-allocation.rst:385
 msgid "WAF denied (with session)"
 msgstr "WAF द्वारा अस्वीकृत (सत्र के साथ)"
 
-#: ../../zero-allocation.rst:387
+#: ../../zero-allocation.rst:386
 msgid "403"
 msgstr "403"
 
-#: ../../zero-allocation.rst:388
+#: ../../zero-allocation.rst:387
 msgid "209,507"
 msgstr "209,507"
 
-#: ../../zero-allocation.rst:389
+#: ../../zero-allocation.rst:388
 msgid "151 / 306"
 msgstr "151 / 306"
 
-#: ../../zero-allocation.rst:390
+#: ../../zero-allocation.rst:389
 msgid "12.17"
 msgstr "12.17"
 
-#: ../../zero-allocation.rst:392
+#: ../../zero-allocation.rst:391
 msgid ""
 "``wrk`` keeps 64 requests in flight, so on the CPU-bound proxied paths "
 "requests queue for the four CPUs, and the p99 there is the scheduler's "
@@ -1444,11 +1456,11 @@ msgstr ""
 "``crates/net/tests/steady_state.rs`` 500 प्रॉक्सी किए गए keep-alive "
 "अनुरोधों में कोई आवंटन नहीं पाता।"
 
-#: ../../zero-allocation.rst:394
+#: ../../zero-allocation.rst:393
 msgid "Exercise 5.1"
 msgstr "अभ्यास 5.1"
 
-#: ../../zero-allocation.rst:396
+#: ../../zero-allocation.rst:395
 msgid ""
 "A client sends a 200 KB upload. Trace which bytes live in the 64 KiB "
 "buffer, which are relayed by ``relay_body`` through the upload buffer, "
@@ -1458,11 +1470,11 @@ msgstr ""
 "बफ़र में रहते हैं, कौन-से ``relay_body`` द्वारा अपलोड बफ़र से रिले होते "
 "हैं, और प्रॉक्सी को रिले करने से *पहले* हेड ऑरिजिन को क्यों लिखना होगा।"
 
-#: ../../zero-allocation.rst:398
+#: ../../zero-allocation.rst:397
 msgid "Concurrent State Without Allocation"
 msgstr "आवंटन के बिना समवर्ती अवस्था"
 
-#: ../../zero-allocation.rst:403
+#: ../../zero-allocation.rst:402
 msgid ""
 "Analyse the shard locks, the Robin Hood spent set, the GCRA limiter, the "
 "versioned ban table, the MPSC incident ring, and the read-copy-update "
@@ -1473,7 +1485,7 @@ msgstr ""
 "घटना रिंग, और ``Arc`` तथा generation-checked cache के साथ नीति इंजन के "
 "read-copy-update प्रकाशन का विश्लेषण करें।"
 
-#: ../../zero-allocation.rst:405
+#: ../../zero-allocation.rst:404
 msgid ""
 "Every store in ``sibuna-store`` allocates its fixed capacity once, when "
 "it is built, and never allocates or blocks on a global lock afterwards. "
@@ -1484,11 +1496,11 @@ msgstr ""
 "है। किसी को बैकग्राउंड sweeper की ज़रूरत नहीं: समाप्त हुई अवस्था उसी "
 "स्थान पर वापस ली जाती है।"
 
-#: ../../zero-allocation.rst:407
+#: ../../zero-allocation.rst:406
 msgid "Locks and Sharding"
 msgstr "लॉक और शार्डिंग"
 
-#: ../../zero-allocation.rst:410
+#: ../../zero-allocation.rst:409
 msgid ""
 "The critical sections in Sibuna's tables are tens of instructions long, "
 "far shorter than a kernel futex round trip. Tables are split into 16 "
@@ -1501,7 +1513,7 @@ msgstr ""
 "है, इसलिए दो ऑपरेशन :math:`1/16` प्रायिकता से होड़ करते हैं, और हर शार्ड "
 "अपनी अलग cache line पर है, इसलिए पड़ोसी लॉक false sharing नहीं करते।"
 
-#: ../../zero-allocation.rst:412
+#: ../../zero-allocation.rst:411
 msgid ""
 "The tables use ``std::sync::Mutex``: one compare-and-swap when "
 "uncontended, a short spin while the holder runs, then a futex wait. The "
@@ -1517,67 +1529,67 @@ msgstr ""
 "को कहा। spin lock होड़-रहित ऑपरेशन पर लगभग एक नैनोसेकंड बचाता है, लेकिन "
 "होड़ में हार जाता है:"
 
-#: ../../zero-allocation.rst:414
+#: ../../zero-allocation.rst:413
 msgid "Shard lock throughput on a Ryzen 9 5950X (October 2026)"
 msgstr "Ryzen 9 5950X पर शार्ड लॉक का थ्रूपुट (अक्टूबर 2026)"
 
-#: ../../zero-allocation.rst:418
+#: ../../zero-allocation.rst:417
 msgid "``Mutex``"
 msgstr "``Mutex``"
 
-#: ../../zero-allocation.rst:419
+#: ../../zero-allocation.rst:418
 msgid "Spin lock"
 msgstr "Spin lock"
 
-#: ../../zero-allocation.rst:420
+#: ../../zero-allocation.rst:419
 msgid "spent set, 16 threads"
 msgstr "spent set, 16 थ्रेड"
 
-#: ../../zero-allocation.rst:421
+#: ../../zero-allocation.rst:420
 msgid "10.8 M/s"
 msgstr "10.8 M/s"
 
-#: ../../zero-allocation.rst:422
+#: ../../zero-allocation.rst:421
 msgid "8.6 M/s"
 msgstr "8.6 M/s"
 
-#: ../../zero-allocation.rst:423
+#: ../../zero-allocation.rst:422
 msgid "spent set, 64 threads (more than the CPUs)"
 msgstr "spent set, 64 थ्रेड (CPU से अधिक)"
 
-#: ../../zero-allocation.rst:424
+#: ../../zero-allocation.rst:423
 msgid "11.2 M/s"
 msgstr "11.2 M/s"
 
-#: ../../zero-allocation.rst:425
+#: ../../zero-allocation.rst:424
 msgid "6.9 M/s"
 msgstr "6.9 M/s"
 
-#: ../../zero-allocation.rst:426
+#: ../../zero-allocation.rst:425
 msgid "GCRA on six hot addresses, 16 threads"
 msgstr "छह व्यस्त पतों पर GCRA, 16 थ्रेड"
 
-#: ../../zero-allocation.rst:427
+#: ../../zero-allocation.rst:426
 msgid "44.9 M/s"
 msgstr "44.9 M/s"
 
-#: ../../zero-allocation.rst:428
+#: ../../zero-allocation.rst:427
 msgid "19.3 M/s"
 msgstr "19.3 M/s"
 
-#: ../../zero-allocation.rst:429
+#: ../../zero-allocation.rst:428
 msgid "GCRA on six hot addresses, 64 threads"
 msgstr "छह व्यस्त पतों पर GCRA, 64 थ्रेड"
 
-#: ../../zero-allocation.rst:430
+#: ../../zero-allocation.rst:429
 msgid "37.4 M/s"
 msgstr "37.4 M/s"
 
-#: ../../zero-allocation.rst:431
+#: ../../zero-allocation.rst:430
 msgid "6.5 M/s"
 msgstr "6.5 M/s"
 
-#: ../../zero-allocation.rst:433
+#: ../../zero-allocation.rst:432
 msgid ""
 "An edge server runs more connection threads than CPUs, and a spin lock "
 "whose holder is preempted makes every waiter burn its time slice, so we "
@@ -1591,11 +1603,11 @@ msgstr ""
 "जाता: कोई ऑपरेशन शार्ड पकड़े हुए panic नहीं करता, और यदि करे भी तो शार्ड "
 "संरचनात्मक रूप से वैध रहता है।"
 
-#: ../../zero-allocation.rst:435
+#: ../../zero-allocation.rst:434
 msgid "The Robin Hood Spent Set"
 msgstr "Robin Hood spent set"
 
-#: ../../zero-allocation.rst:438
+#: ../../zero-allocation.rst:437
 msgid ""
 "Only accepted proofs enter the spent set (Part III). It has 16 shards, "
 "each an open-addressed array of 4,096 slots of ``Option<Entry>``, where "
@@ -1614,11 +1626,11 @@ msgstr ""
 "अपने घर के उससे अधिक निकट है जितनी खोजी जा रही कुंजी अपने घर के, वह वहीं "
 "रुक जाता है।"
 
-#: ../../zero-allocation.rst:440
+#: ../../zero-allocation.rst:439
 msgid "Implementation: ``Table::insert``"
 msgstr "इम्प्लीमेंटेशन: ``Table::insert``"
 
-#: ../../zero-allocation.rst:442
+#: ../../zero-allocation.rst:441
 msgid ""
 "Inserts a spent tag with its expiry, reclaiming expired slots on the way. "
 "In ``crates/store/src/spent.rs`` (crate ``sibuna-store``)."
@@ -1626,7 +1638,7 @@ msgstr ""
 "एक spent टैग को उसकी समाप्ति के साथ डालता है, रास्ते में समाप्त स्लॉट "
 "वापस लेते हुए। ``crates/store/src/spent.rs`` में (क्रेट ``sibuna-store``)।"
 
-#: ../../zero-allocation.rst:444
+#: ../../zero-allocation.rst:443
 msgid ""
 "fn insert(\n"
 "    &mut self,\n"
@@ -1703,7 +1715,7 @@ msgstr ""
 "    Err(SpendError::Full)\n"
 "}"
 
-#: ../../zero-allocation.rst:483
+#: ../../zero-allocation.rst:482
 msgid ""
 "The expired-slot rule is the subtle part: an expired entry may be "
 "overwritten in place only by a key at least as far from its home, "
@@ -1721,11 +1733,11 @@ msgstr ""
 "पाथ का अनुकरण करती है (``can_insert``) और जाँचती है कि सीमित विस्थापन "
 "किसी जीवित टैग को खोए बिना सफल हो सकता है।"
 
-#: ../../zero-allocation.rst:485 ../../zero-allocation.rst:685
+#: ../../zero-allocation.rst:484 ../../zero-allocation.rst:683
 msgid "Invariant"
 msgstr "अपरिवर्तनीय नियम"
 
-#: ../../zero-allocation.rst:487
+#: ../../zero-allocation.rst:486
 msgid ""
 "A refused insertion never evicts a live tag. A tag that was spent and has "
 "not expired is therefore always found, and the refusal "
@@ -1736,7 +1748,7 @@ msgstr ""
 "(``SpendError::Full``) सेवा से इनकार तो कर सकती है लेकिन कभी रीप्ले संभव "
 "नहीं बनाती।"
 
-#: ../../zero-allocation.rst:489
+#: ../../zero-allocation.rst:488
 msgid ""
 "A slot is ``Option<Entry>``. An empty slot has no tag to read, so there "
 "is no ``occupied`` flag that a reader could forget to check, and "
@@ -1751,11 +1763,11 @@ msgstr ""
 "(``DoubleSpend`` और ``Full``), और ``SpendError`` ठीक इन्हीं के नाम देता "
 "है।"
 
-#: ../../zero-allocation.rst:491
+#: ../../zero-allocation.rst:490
 msgid "GCRA: Rate Limiting in One Integer"
 msgstr "GCRA: एक पूर्णांक में रेट लिमिटिंग"
 
-#: ../../zero-allocation.rst:494
+#: ../../zero-allocation.rst:493
 msgid ""
 "The Generic Cell Rate Algorithm (ATM Forum, 1996) is the "
 "virtual-scheduling form of the leaky bucket. Per client it stores one "
@@ -1769,7 +1781,7 @@ msgstr ""
 "लिए उत्सर्जन अंतराल :math:`T = \\max(1, \\lceil W / N \\rceil)` और बर्स्ट "
 "टॉलरेंस :math:`\\tau = (N - 1) T` के साथ:"
 
-#: ../../zero-allocation.rst:496
+#: ../../zero-allocation.rst:495
 msgid ""
 "\\text{arrival at } t \\text{ conforms} \\iff \\mathrm{TAT} \\le t + "
 "\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
@@ -1779,11 +1791,11 @@ msgstr ""
 "\\tau, \\quad \\text{then } \\mathrm{TAT} \\leftarrow "
 "\\max(\\mathrm{TAT}, t) + T."
 
-#: ../../zero-allocation.rst:500
+#: ../../zero-allocation.rst:499
 msgid "Theorem (token-bucket bound)"
 msgstr "प्रमेय (token-bucket सीमा)"
 
-#: ../../zero-allocation.rst:502
+#: ../../zero-allocation.rst:501
 msgid ""
 "After the first conforming arrival at :math:`t_1`, the :math:`k`-th "
 "conforming arrival satisfies :math:`t_k - t_1 \\ge (k - 1) T - \\tau`. "
@@ -1814,7 +1826,19 @@ msgstr ""
 "अस्वीकृत होता है, और 200 ms के हर गुणज पर होने वाले आगमन को TAT ठीक रेखा "
 "पर मिलता है, इसलिए वह स्वीकृत होता है।"
 
-#: ../../zero-allocation.rst:507
+#: ../../zero-allocation.rst:504
+msgid ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/gcra.typ\": draw\n"
+"#show: chart.with(lang: \"en\")\n"
+"#draw()\n"
+msgstr ""
+"#import \"chart.typ\": chart\n"
+"#import \"draw/gcra.typ\": draw\n"
+"#show: chart.with(lang: \"hi\")\n"
+"#draw()\n"
+
+#: ../../zero-allocation.rst:504
 msgid ""
 "GCRA admission for a limit of 5 per second: a burst of five, then one "
 "every 200 ms. An arrival is admitted when the TAT it finds lies on or "
@@ -1824,11 +1848,11 @@ msgstr ""
 "पर एक। कोई आगमन तब स्वीकृत होता है जब उसे मिलने वाला TAT रेखा :math:`t + "
 "\\tau` पर या उसके नीचे हो।"
 
-#: ../../zero-allocation.rst:509
+#: ../../zero-allocation.rst:507
 msgid "Worked example: five per second by hand"
 msgstr "हल किया गया उदाहरण: हाथ से प्रति सेकंड पाँच"
 
-#: ../../zero-allocation.rst:511
+#: ../../zero-allocation.rst:509
 msgid ""
 "Take :math:`N = 5` and :math:`W = 1000` ms, so :math:`T = 200` ms and "
 ":math:`\\tau = 800` ms, and let a client that has been idle send six "
@@ -1858,11 +1882,11 @@ msgstr ""
 "``gcra_admits_exactly_the_burst_then_drains_at_the_emission_rate`` ठीक "
 "इन्हीं संख्याओं की जाँच करता है।"
 
-#: ../../zero-allocation.rst:513
+#: ../../zero-allocation.rst:511
 msgid "Implementation: ``arrive``"
 msgstr "इम्प्लीमेंटेशन: ``arrive``"
 
-#: ../../zero-allocation.rst:515
+#: ../../zero-allocation.rst:513
 msgid ""
 "Applies one arrival to the cells of a locked shard and returns the "
 "decision, the retry delay and the remaining budget. In "
@@ -1872,7 +1896,7 @@ msgstr ""
 "देरी और शेष बजट लौटाता है। ``crates/store/src/limiter.rs`` में (क्रेट "
 "``sibuna-store``)।"
 
-#: ../../zero-allocation.rst:517
+#: ../../zero-allocation.rst:515
 msgid ""
 "fn arrive(\n"
 "    cells: &mut [Cell; SLOTS_PER_SHARD],\n"
@@ -1934,7 +1958,7 @@ msgstr ""
 "    // ... remaining = min(rate, floor((t + tau - TAT) / T) + 1)\n"
 "}"
 
-#: ../../zero-allocation.rst:549
+#: ../../zero-allocation.rst:547
 msgid ""
 "The shard's ``check`` takes the lock and calls ``arrive`` with the locked "
 "cells; the guard releases the lock when ``check`` returns. Cells are 16 "
@@ -1962,11 +1986,11 @@ msgstr ""
 "seed किया गया क्लाइंट पते का Wyhash है, इसलिए अलग-अलग scope में एक ही "
 "क्लाइंट के स्वतंत्र बजट होते हैं।"
 
-#: ../../zero-allocation.rst:551
+#: ../../zero-allocation.rst:549
 msgid "The Versioned Ban Table"
 msgstr "संस्करण वाली बैन टेबल"
 
-#: ../../zero-allocation.rst:554
+#: ../../zero-allocation.rst:552
 msgid ""
 "Bans use 4,096 slots with atomic version, key and expiry fields, "
 "open-addressed by a keyed hash of the banned address with an 8-slot probe "
@@ -1981,11 +2005,11 @@ msgstr ""
 "पाठक कोई लॉक नहीं लेते, केवल एक स्थिर सम (even) संस्करण स्वीकार करते हैं, "
 "और समवर्ती बदलावों पर दोबारा प्रयास करते हैं।"
 
-#: ../../zero-allocation.rst:556
+#: ../../zero-allocation.rst:554
 msgid "Implementation: ``BanTable::ban`` and ``BanTable::read_slot``"
 msgstr "इम्प्लीमेंटेशन: ``BanTable::ban`` और ``BanTable::read_slot``"
 
-#: ../../zero-allocation.rst:558
+#: ../../zero-allocation.rst:556
 msgid ""
 "The writer's bracket and the reader's consistent snapshot. In "
 "``crates/store/src/ban_table.rs`` (crate ``sibuna-store``)."
@@ -1993,7 +2017,7 @@ msgstr ""
 "writer का कोष्ठक (bracket) और पाठक का सुसंगत स्नैपशॉट। "
 "``crates/store/src/ban_table.rs`` में (क्रेट ``sibuna-store``)।"
 
-#: ../../zero-allocation.rst:560
+#: ../../zero-allocation.rst:558
 msgid ""
 "pub fn ban(&self, banned: &[u8], until: u64, now: u64) {\n"
 "    let key = slot_key(banned);\n"
@@ -2053,7 +2077,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:590
+#: ../../zero-allocation.rst:588
 msgid ""
 "Sequential consistency prevents mixing an old identity with a replacement "
 "expiry: every access belongs to one total order, which keeps the argument "
@@ -2075,11 +2099,11 @@ msgstr ""
 "किया गया स्लॉट probe chain में आगे की किसी टकराने वाली कुंजी को छिपा सकता "
 "है।"
 
-#: ../../zero-allocation.rst:592
+#: ../../zero-allocation.rst:590
 msgid "The MPSC Incident Ring"
 msgstr "MPSC घटना रिंग"
 
-#: ../../zero-allocation.rst:595
+#: ../../zero-allocation.rst:593
 msgid ""
 "When the Shield surface denies a request or the honeypot fires, the "
 "incident is copied into a fixed record of about 1.3 KB (client address, "
@@ -2101,7 +2125,7 @@ msgstr ""
 "नया रिकॉर्ड छोड़ देती है, यह टिकाऊपन की गारंटी नहीं बल्कि एक स्पष्ट "
 "हानि-नीति है। drop काउंटर उस हानि को दृश्य बनाता है।"
 
-#: ../../zero-allocation.rst:597
+#: ../../zero-allocation.rst:595
 msgid ""
 "/// Copies `incident` into the ring; a full ring drops it and counts the "
 "drop.\n"
@@ -2121,7 +2145,7 @@ msgstr ""
 "    }\n"
 "}"
 
-#: ../../zero-allocation.rst:606
+#: ../../zero-allocation.rst:604
 msgid ""
 "After moving a record into a pending batch, the storage thread retains "
 "it, together with the prepared rows, until the commit is confirmed; it "
@@ -2132,7 +2156,7 @@ msgstr ""
 "पंक्तियों के साथ, कमिट की पुष्टि होने तक रखता है; वह डेटाबेस त्रुटि पर "
 "उसे चुपचाप नहीं फेंकता, और रीट्राई वही बैच लिखता है।"
 
-#: ../../zero-allocation.rst:608
+#: ../../zero-allocation.rst:606
 msgid ""
 "Each slot carries a sequence number that tells producers whether the slot "
 "is free and the consumer whether it is full, so neither side takes a "
@@ -2152,7 +2176,7 @@ msgstr ""
 "``UnsafeCell<MaybeUninit<T>>`` स्लॉट में रखता है, और हर ``unsafe`` ब्लॉक "
 "प्रोटोकॉल के उस चरण का नाम देता है जो उसे उचित ठहराता है:"
 
-#: ../../zero-allocation.rst:610
+#: ../../zero-allocation.rst:608
 msgid ""
 "if diff == 0 {\n"
 "    // Relaxed: the CAS only arbitrates which producer owns position "
@@ -2202,7 +2226,7 @@ msgstr ""
 "    return Err(value);\n"
 "}"
 
-#: ../../zero-allocation.rst:633
+#: ../../zero-allocation.rst:631
 msgid ""
 "Two conventions of the ring are types, not comments. On a full ring "
 "``push`` returns ``Err(value)``, handing the record back so the caller "
@@ -2218,11 +2242,11 @@ msgstr ""
 "अद्वितीय ``Consumer`` पर दावा करना होता है, इसलिए दूसरा consumer या तो "
 "कंपाइल नहीं होता या रन टाइम पर अस्वीकार होता है।"
 
-#: ../../zero-allocation.rst:635
+#: ../../zero-allocation.rst:633
 msgid "Read-Copy-Update Engine Publication"
 msgstr "इंजन का read-copy-update प्रकाशन"
 
-#: ../../zero-allocation.rst:638
+#: ../../zero-allocation.rst:636
 msgid ""
 "The policy engine is rebuilt off the hot path when policies change. "
 "Requests must never observe a half-built engine, and an engine must never "
@@ -2236,7 +2260,7 @@ msgstr ""
 "``EngineSlot`` में ``Arc<Engine>`` के रूप में प्रकाशित करता है, और हर "
 "कनेक्शन उसे एक ``EngineCache`` के ज़रिए पढ़ता है:"
 
-#: ../../zero-allocation.rst:641
+#: ../../zero-allocation.rst:639
 msgid ""
 "The storage thread builds Engine v2 off the request path and publishes it "
 "into the EngineSlot, which holds an RwLock around the current Arc and an "
@@ -2256,7 +2280,7 @@ msgstr ""
 "है, read lock लेता है और v2 के Arc का clone बनाता है। B के छोड़ते ही "
 "Engine v1 मुक्त हो जाता है।"
 
-#: ../../zero-allocation.rst:641
+#: ../../zero-allocation.rst:639
 msgid ""
 "// zero-allocation.rst: engine publication. After EngineSlot::publish "
 "and\n"
@@ -2335,7 +2359,7 @@ msgstr ""
 "    label-side: left),\n"
 ")\n"
 
-#: ../../zero-allocation.rst:641
+#: ../../zero-allocation.rst:639
 msgid ""
 "Engine publication. The storage thread publishes a complete engine and "
 "advances the generation; each connection checks the generation with one "
@@ -2347,11 +2371,11 @@ msgstr ""
 "प्रकाशित Arc को केवल किसी प्रकाशन के बाद clone करता है। पुराना इंजन तब "
 "मुक्त होता है जब उसे रखने वाला अंतिम cache उसे छोड़ देता है।"
 
-#: ../../zero-allocation.rst:644
+#: ../../zero-allocation.rst:642
 msgid "Implementation: ``EngineSlot::publish`` and ``EngineCache::refresh``"
 msgstr "इम्प्लीमेंटेशन: ``EngineSlot::publish`` और ``EngineCache::refresh``"
 
-#: ../../zero-allocation.rst:646
+#: ../../zero-allocation.rst:644
 msgid ""
 "Publication of a complete engine, and one connection's view of it. In "
 "``cmd/sibuna/src/slot.rs`` (crate ``sibuna``)."
@@ -2359,7 +2383,7 @@ msgstr ""
 "पूरे इंजन का प्रकाशन, और एक कनेक्शन की ओर से उसका दृश्य। "
 "``cmd/sibuna/src/slot.rs`` में (क्रेट ``sibuna``)।"
 
-#: ../../zero-allocation.rst:648
+#: ../../zero-allocation.rst:646
 msgid ""
 "pub struct EngineSlot {\n"
 "    current: RwLock<Arc<Engine>>,\n"
@@ -2432,7 +2456,7 @@ msgstr ""
 "    self.engine.get_or_insert_with(|| slot.load())\n"
 "}"
 
-#: ../../zero-allocation.rst:683
+#: ../../zero-allocation.rst:681
 msgid ""
 "The generation is stored with release ordering after the engine is in "
 "place, and loaded with acquire ordering: a reader that sees a new "
@@ -2453,7 +2477,7 @@ msgstr ""
 "है। एक पाठक एक अनुरोध के लिए एक इंजन पीछे हो सकता है; वह कभी आधा बना इंजन "
 "नहीं देख सकता, क्योंकि स्लॉट में केवल पूरे इंजन ही संग्रहीत होते हैं।"
 
-#: ../../zero-allocation.rst:687
+#: ../../zero-allocation.rst:685
 msgid ""
 "Every engine a request reads is complete, and no engine is freed while "
 "any request or connection cache holds it. The first holds because an "
@@ -2467,7 +2491,7 @@ msgstr ""
 "पूरी तरह बन चुका होता है; दूसरी इसलिए क्योंकि हर पाठक एक ``Arc`` रखता है, "
 "और इंजन केवल अपने अंतिम ``Arc`` के साथ ही छोड़ा जाता है।"
 
-#: ../../zero-allocation.rst:689
+#: ../../zero-allocation.rst:687
 msgid ""
 "Why a cache and not simply a lock? SID 0010 asked us to measure the read "
 "cost with 16 threads and choose between ``RwLock<Arc<Engine>>`` and a "
@@ -2483,62 +2507,62 @@ msgstr ""
 "generation प्रति प्रकाशन एक बार लिखी जाती है और अन्यथा केवल पढ़ी जाती है, "
 "इसलिए हर कोर अपनी प्रति रखता है:"
 
-#: ../../zero-allocation.rst:691
+#: ../../zero-allocation.rst:689
 msgid ""
 "Cost of one engine read, Ryzen 9 5950X, 16 threads reading in a loop "
 "(October 2026)"
 msgstr ""
 "एक इंजन रीड की लागत, Ryzen 9 5950X, लूप में पढ़ते 16 थ्रेड (अक्टूबर 2026)"
 
-#: ../../zero-allocation.rst:694
+#: ../../zero-allocation.rst:692
 msgid "Reader"
 msgstr "पाठक"
 
-#: ../../zero-allocation.rst:695
+#: ../../zero-allocation.rst:693
 msgid "1 thread"
 msgstr "1 थ्रेड"
 
-#: ../../zero-allocation.rst:696
+#: ../../zero-allocation.rst:694
 msgid "16 threads"
 msgstr "16 थ्रेड"
 
-#: ../../zero-allocation.rst:697
+#: ../../zero-allocation.rst:695
 msgid "``RwLock`` read guard only"
 msgstr "केवल ``RwLock`` read guard"
 
-#: ../../zero-allocation.rst:698
+#: ../../zero-allocation.rst:696
 msgid "4.2 ns"
 msgstr "4.2 ns"
 
-#: ../../zero-allocation.rst:699
+#: ../../zero-allocation.rst:697
 msgid "752 ns"
 msgstr "752 ns"
 
-#: ../../zero-allocation.rst:700
+#: ../../zero-allocation.rst:698
 msgid "``RwLock`` read and ``Arc`` clone"
 msgstr "``RwLock`` read और ``Arc`` clone"
 
-#: ../../zero-allocation.rst:701
+#: ../../zero-allocation.rst:699
 msgid "7.6 ns"
 msgstr "7.6 ns"
 
-#: ../../zero-allocation.rst:702
+#: ../../zero-allocation.rst:700
 msgid "833 ns"
 msgstr "833 ns"
 
-#: ../../zero-allocation.rst:703
+#: ../../zero-allocation.rst:701
 msgid "generation check with a cached ``Arc``"
 msgstr "cache किए गए ``Arc`` के साथ generation जाँच"
 
-#: ../../zero-allocation.rst:704
+#: ../../zero-allocation.rst:702
 msgid "0.8 ns"
 msgstr "0.8 ns"
 
-#: ../../zero-allocation.rst:705
+#: ../../zero-allocation.rst:703
 msgid "1.8 ns"
 msgstr "1.8 ns"
 
-#: ../../zero-allocation.rst:707
+#: ../../zero-allocation.rst:705
 msgid ""
 "Under contention the cached read is more than 400 times cheaper than the "
 "lock, so the request path uses the cache and the ``RwLock`` only on the "
@@ -2559,11 +2583,11 @@ msgstr ""
 "(``benchmarks/results/primitives-latest.json`` में ``engine_bytes``), "
 "जिसमें 128 नियम, 128-बाइट नियम नाम और 8,192 trie नोड की क्षमता है।"
 
-#: ../../zero-allocation.rst:709
+#: ../../zero-allocation.rst:707
 msgid "Why ``Arc`` and not reader counts"
 msgstr "``Arc`` क्यों, reader count क्यों नहीं"
 
-#: ../../zero-allocation.rst:711
+#: ../../zero-allocation.rst:709
 msgid ""
 "The fixed-memory alternative keeps two engine slots, each with a reader "
 "count and its own allocation arena. A request pins a slot by incrementing "
@@ -2587,7 +2611,7 @@ msgstr ""
 "अगले प्रकाशन को अटका देगा, जब तक कि हर अनुरोध प्रॉक्सी I/O शुरू होने से "
 "पहले अपना स्लॉट न छोड़ दे।"
 
-#: ../../zero-allocation.rst:713
+#: ../../zero-allocation.rst:711
 msgid ""
 "``Arc`` reference counting needs none of this. The storage thread builds "
 "a fresh ``Engine`` from each snapshot and publishes it; nothing is "
@@ -2612,11 +2636,11 @@ msgstr ""
 "जो घंटों चल सकता है, प्रॉक्सी होने से पहले अपना cache किया गया इंजन छोड़ "
 "देता है।"
 
-#: ../../zero-allocation.rst:715
+#: ../../zero-allocation.rst:713
 msgid "Exercise 5.2"
 msgstr "अभ्यास 5.2"
 
-#: ../../zero-allocation.rst:717
+#: ../../zero-allocation.rst:715
 msgid ""
 "Using the GCRA theorem, compute the maximum number of requests a single "
 "client can get through in the first 3 seconds after being idle, for "
@@ -2628,11 +2652,11 @@ msgstr ""
 "अनुरोध सफलतापूर्वक भेज सकता है। इसकी तुलना एक निश्चित 10-सेकंड विंडो "
 "काउंटर से और एक सच्चे sliding-window log से करें।"
 
-#: ../../zero-allocation.rst:719
+#: ../../zero-allocation.rst:717
 msgid "Explain the invariant"
 msgstr "अपरिवर्तनीय नियम समझाएँ"
 
-#: ../../zero-allocation.rst:721
+#: ../../zero-allocation.rst:719
 msgid ""
 "Explain why an expired Robin Hood entry can be overwritten only by a key "
 "with a distance at least as large, using a three-slot example."
